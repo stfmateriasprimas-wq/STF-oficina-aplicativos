@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STF GROUP · Sistema de Control de Desarrollo y Rendimiento</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans (Modern Geometric SaaS Typography) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js for Smooth Curves & Glow Bars -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- App Wrapper with subtle background tone -->
+  <div class="app-container">
+    
+    <!-- Floating Minimalist Sidebar (Exact to Design) -->
+    <aside class="floating-sidebar">
+      <div class="sidebar-logo">
+        <div class="monogram-logo">
+          <span>STF</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-view="dashboard" title="Dashboard General">
+          <i data-lucide="home"></i>
+        </button>
+        <button class="nav-btn" data-view="projects" title="Aplicativos y Módulos">
+          <i data-lucide="layers"></i>
+        </button>
+        <button class="nav-btn" data-view="developers" title="Rendimiento del Equipo">
+          <i data-lucide="users"></i>
+        </button>
+        <button class="nav-btn" data-view="analytics" title="Métricas y QA">
+          <i data-lucide="bar-chart-3"></i>
+        </button>
+        <button class="nav-btn" data-view="settings" title="Configuraciones">
+          <i data-lucide="settings"></i>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-btn logout-btn" id="btnLogout" onclick="window.location.href='login.html'" title="Cerrar Sesión (Ir a Pantalla de Login)">
+          <i data-lucide="log-out"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-viewport">
+
+      <!-- Top Header Navigation -->
+      <header class="top-header">
+        <div class="header-search">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="globalSearch" placeholder="Buscar aplicativo, módulo o programador...">
+            <span class="search-shortcut">⌘K</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="pill-btn primary-glow-btn" id="btnNewProject" onclick="openNewProjectModal()">
+            <i data-lucide="plus"></i>
+            <span>Nuevo Aplicativo</span>
+          </button>
+          
+          <button class="pill-btn secondary-btn" id="btnAssignTask" onclick="openAssignIntegrationModal()">
+            <i data-lucide="check-square"></i>
+            <span>Asignar Tarea</span>
+          </button>
+
+          <button class="pill-btn secondary-btn" id="btnExportReport" onclick="exportExecutiveReport()">
+            <i data-lucide="file-spreadsheet"></i>
+            <span>Reporte Ejecutivo</span>
+          </button>
+
+          <!-- Google Sheets Database Live Sync Pill -->
+          <button class="pill-btn secondary-btn sheets-sync-pill" id="btnOpenSheetsModal" onclick="openSheetsModal()" title="Base de Datos Google Sheets">
+            <i data-lucide="table"></i>
+            <span id="sheetsStatusLabel">Google Sheets</span>
+            <span class="sheets-live-dot offline" id="sheetsLiveDot"></span>
+          </button>
+
+          <div class="dropdown-pill">
+            <span>STF Sistemas TI</span>
+            <i data-lucide="chevron-down"></i>
+          </div>
+
+          <button class="icon-circle-btn notification-btn" title="Notificaciones de Alertas">
+            <i data-lucide="bell"></i>
+            <span class="notification-badge">3</span>
+          </button>
+
+          <!-- Interactive Developer Profile Selector (Header) -->
+          <div class="header-dev-selector-wrapper" id="headerDevSelectorWrapper">
+            <button class="header-user-btn" id="btnHeaderUserSelect" title="Cambiar desarrollador activo">
+              <img src="" alt="Desarrollador" id="headerUserAvatar" class="user-avatar">
+              <div class="header-user-text">
+                <span class="user-tag-caption">Programador Activo</span>
+                <strong id="headerUserName">Jose Guzman</strong>
+              </div>
+              <i data-lucide="chevron-down" class="header-dropdown-icon"></i>
+            </button>
+
+            <!-- Dropdown Options -->
+            <div class="header-dev-dropdown" id="headerDevDropdown">
+              <div class="dropdown-title-label">Ver Métricas por Desarrollador:</div>
+              <div class="dev-drop-item" onclick="selectDeveloper('dev_jg')">
+                <img src="" id="dropImg_dev_jg" class="mini-drop-avatar">
+                <div>
+                  <strong>Jose Guzman</strong>
+                  <span>Colchas, Lab, Geo, Torre</span>
+                </div>
+              </div>
+              <div class="dev-drop-item" onclick="selectDeveloper('dev_jd')">
+                <img src="" id="dropImg_dev_jd" class="mini-drop-avatar">
+                <div>
+                  <strong>Juan David</strong>
+                  <span>Calidad, Torre de Control</span>
+                </div>
+              </div>
+              <div class="dev-drop-item" onclick="selectDeveloper('dev_mocho')">
+                <img src="" id="dropImg_dev_mocho" class="mini-drop-avatar">
+                <div>
+                  <strong>Mocho</strong>
+                  <span>Tintorería, Torre de Control</span>
+                </div>
+              </div>
+              <div class="dev-drop-item" onclick="selectDeveloper('dev_ee')">
+                <img src="" id="dropImg_dev_ee" class="mini-drop-avatar">
+                <div>
+                  <strong>Esteban Escobar</strong>
+                  <span>Torre de Control (Onboarding)</span>
+                </div>
+              </div>
+              <div class="dev-drop-divider"></div>
+              <div class="dev-drop-item all-devs-item" onclick="selectDeveloper('all')">
+                <div class="global-icon-circle">🌐</div>
+                <div>
+                  <strong>Vista Global (Todos)</strong>
+                  <span>Portafolio General STF (6)</span>
+                </div>
+              </div>
+              <div class="dev-drop-divider"></div>
+              <div class="dev-drop-item" onclick="window.location.href='login.html'" style="color: #EF4444;">
+                <div class="global-icon-circle" style="background: rgba(239, 68, 68, 0.1); color: #EF4444;"><i data-lucide="log-out" style="width: 14px; height: 14px;"></i></div>
+                <div>
+                  <strong style="color: #EF4444;">Cerrar Sesión</strong>
+                  <span>Ir a pantalla de acceso</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Welcome Banner & Page Title -->
+      <section class="welcome-section">
+        <div class="welcome-text">
+          <h1 class="welcome-title">Estado de Desarrollo · <span class="text-gradient">STF GROUP</span></h1>
+          <p class="welcome-subtitle">Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.</p>
+        </div>
+        <div class="quick-stats-pills">
+          <div class="stat-chip">
+            <span class="chip-dot dot-green"></span>
+            <span class="chip-label">6 Aplicativos Activos</span>
+          </div>
+          <div class="stat-chip">
+            <span class="chip-dot dot-amber"></span>
+            <span class="chip-label">1 En Riesgo</span>
+          </div>
+          <div class="stat-chip">
+            <span class="chip-dot dot-blue"></span>
+            <span class="chip-label">Promedio General: <strong id="globalAvgBadge">74.2%</strong></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 1: DASHBOARD GENERAL -->
+      <section class="view-panel active" id="view-dashboard">
+        <!-- Dashboard Grid (Matches exact 3-column / 3-row layout of the reference images) -->
+        <div class="dashboard-grid">
+
+          <!-- ROW 1, COL 1: The Iconic Stacked Cards Widget (Blue, Orange, Lilac tabs) -->
+          <div class="grid-card stacked-cards-container">
+            <div class="stacked-deck" id="stackedDeck">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+
+          <!-- ROW 1, COL 2: Overview Spline Chart (Exact curve and legend style) -->
+          <div class="grid-card overview-chart-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">Curva de Avance vs. Estimado</h2>
+                <div class="chart-badges">
+                  <span class="chart-badge-item">
+                    <span class="dot-indicator dot-purple"></span> Avance Real STF: <strong id="chartCurrentMetric">76.4%</strong>
+                  </span>
+                  <span class="chart-badge-item">
+                    <span class="dot-indicator dot-orange"></span> Meta Proyectada: <strong id="chartTargetMetric">70.0%</strong>
+                  </span>
+                </div>
+              </div>
+              <div class="header-right">
+                <div class="select-pill-wrapper">
+                  <select id="overviewTimeRange">
+                    <option value="30">Últimos 30 días</option>
+                    <option value="90">Último trimestre</option>
+                    <option value="year">Año en curso</option>
+                  </select>
+                  <i data-lucide="chevron-down" class="select-arrow"></i>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="overviewSplineChart"></canvas>
+            </div>
+          </div>
+
+          <!-- ROW 2, COL 1: Segmented Capsule Progress Bar (Exact from image) -->
+          <div class="grid-card progress-capsules-card">
+            <div class="card-header">
+              <div class="header-left">
+                <span class="card-eyebrow">Objetivo de Entrega Trimestral</span>
+                <h2 class="card-large-stat" id="capsuleStatDisplay">78% Completado</h2>
+                <span class="card-period-label" id="capsulePeriodLabel">Periodo: Q4 (Octubre - Diciembre)</span>
+              </div>
+              <div class="header-right">
+                <button class="icon-bubble interactive-bubble" id="btnQuarterlyGoal" onclick="openQuarterlyGoalModal()" title="Configurar y auditar objetivo trimestral" aria-label="Configurar objetivo trimestral">
+                  <i data-lucide="calendar"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Vertical Capsule Dash Progress Bar (Identical visual pattern to image) -->
+            <div class="capsule-progress-track" id="capsuleProgressTrack">
+              <!-- 36 vertical pill dashes generated via JS -->
+            </div>
+
+            <div class="capsule-footer-metrics">
+              <div class="metric-pair">
+                <span class="pair-label">Módulos Entregados:</span>
+                <strong class="pair-value" id="modulesDeliveredStat">24 de 32</strong>
+              </div>
+              <div class="metric-pair">
+                <span class="pair-label">Fase Actual Dominante:</span>
+                <strong class="pair-value text-blue" id="dominantPhaseStat">Pruebas QA & UAT</strong>
+              </div>
+              <div class="metric-pair">
+                <span class="pair-label">Cumplimiento:</span>
+                <strong class="pair-value text-green" id="complianceStat">En Tiempo (+4d)</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 2, COL 2: Innovative 4-Card Team Grid Showcase (Devs & Workload) -->
+          <div class="grid-card quick-team-card">
+            <div class="card-header">
+              <div class="header-left">
+                <div class="header-pretitle">
+                  <span class="sub-badge-pill">
+                    <i data-lucide="users"></i>
+                    <span>Talento TI & Capacidad Operativa</span>
+                  </span>
+                </div>
+                <h2 class="card-title">Equipo de Desarrollo</h2>
+                <span class="card-subtext">Haz clic en un programador para filtrar métricas, baraja y sistemas auditados</span>
+              </div>
+              <div class="header-right">
+                <button class="pill-btn secondary-btn small-btn" id="btnAddDeveloper" title="Registrar nuevo programador">
+                  <i data-lucide="user-plus"></i>
+                  <span>Nuevo Dev</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4 Interactive Developer Cards Grid -->
+            <div class="team-cards-grid" id="teamCardsGrid">
+              <!-- Dynamically populated via JavaScript (Jose, Juan, Mocho, Esteban) -->
+            </div>
+
+            <!-- Sleek Footer Action Strip for the Active Developer -->
+            <div class="team-footer-strip">
+              <div class="tfs-left">
+                <div class="tfs-indicator">
+                  <span class="pulse-online-dot"></span>
+                  <span class="tfs-text">Programador Activo: <strong id="activeDevName">Jose Guzman</strong> (<span id="activeDevRole">Senior Fullstack</span>)</span>
+                  <span class="tfs-score-pill" id="activeDevScore">⭐ 95% Eficiencia</span>
+                </div>
+                <div class="dev-projects-tags-list" id="selectedDevProjectsTags">
+                  <!-- Dynamically rendered project tag pills -->
+                </div>
+              </div>
+
+              <div class="tfs-right">
+                <button class="pill-btn primary-glow-btn small-glow" id="btnOpenDevDetail">
+                  <i data-lucide="external-link"></i>
+                  <span>Ver Ficha Dev</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROW 3: VELOCITY / SPRINTS BAR CHART (Orbix Studio Money Movement Style - Full Width) -->
+          <div class="grid-card velocity-chart-card">
+            <div class="card-header">
+              <div class="header-left">
+                <div class="header-pretitle">
+                  <span class="sub-badge-pill">
+                    <i data-lucide="activity"></i>
+                    <span>Métricas Ágiles & Rendimiento de Sprints</span>
+                  </span>
+                </div>
+                <h2 class="card-title">Velocidad de Entrega (Sprints)</h2>
+                <span class="card-subtext">Historias y módulos culminados por semana con seguimiento a la meta comprometida</span>
+              </div>
+              <div class="header-right velocity-header-actions">
+                <div class="velocity-target-legend" id="velocityTargetLegend">
+                  <span class="legend-target-line"></span>
+                  <span class="legend-target-label" id="velocityLegendLabel">Meta Benchmark: <strong>8 Mods / Sem</strong></span>
+                </div>
+                <div class="select-pill-wrapper">
+                  <select id="velocityFilter">
+                    <option value="weeks" selected>Últimas 8 semanas</option>
+                    <option value="months">Por mes</option>
+                  </select>
+                  <i data-lucide="chevron-down" class="select-arrow"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3 Executive Velocity KPI Metric Cards -->
+            <div class="velocity-executive-metrics">
+              <div class="vem-card">
+                <div class="vem-top">
+                  <span class="vem-label">Módulos Entregados</span>
+                  <span class="vem-badge badge-green" id="vStatTasksBadge">
+                    <i data-lucide="trending-up"></i>
+                    <span id="vStatTasksTrend">+18.4%</span>
+                  </span>
+                </div>
+                <div class="vem-value-row">
+                  <strong class="vem-val text-blue" id="vStatTasks">42 Tareas</strong>
+                  <span class="vem-sub" id="vStatTasksSub">acumuladas en 8 sprints</span>
+                </div>
+              </div>
+
+              <div class="vem-card vem-card-highlight">
+                <div class="vem-top">
+                  <span class="vem-label" id="vStatRecordLabel">Sprint Récord (Pico Máximo)</span>
+                  <span class="vem-badge badge-purple" id="vStatRecordBadge">
+                    <i data-lucide="award"></i>
+                    <span id="vStatRecordBadgeText">Pico Histórico</span>
+                  </span>
+                </div>
+                <div class="vem-value-row">
+                  <strong class="vem-val text-purple" id="vStatRecord">Sem 6 · 12 Mods</strong>
+                  <span class="vem-sub" id="vStatRecordSub">150% de la meta (+4 mods de superávit)</span>
+                </div>
+              </div>
+
+              <div class="vem-card">
+                <div class="vem-top">
+                  <span class="vem-label">Tiempo Total Invertido</span>
+                  <span class="vem-badge badge-blue" id="vStatHoursBadge">
+                    <i data-lucide="clock"></i>
+                    <span id="vStatHoursAvg">7.5 hrs / entrega</span>
+                  </span>
+                </div>
+                <div class="vem-value-row">
+                  <strong class="vem-val text-dark" id="vStatHours">318 hrs</strong>
+                  <span class="vem-sub" id="vStatHoursSub">98.5% en tiempo sin bloqueos críticos</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clean Bar Chart with Floating Peak Tooltip -->
+            <div class="chart-container-bar">
+              <canvas id="velocityBarChart"></canvas>
+            </div>
+
+            <!-- Interactive Sprint Breakdown Digest (Full-width agile progress strip) -->
+            <div class="velocity-sprint-digest" id="velocitySprintDigest">
+              <!-- Populated via JavaScript dynamically for weeks / months -->
+            </div>
+          </div>
+
+          <!-- ROW 4: LIVE APPLICATIONS TABLE (Full-Width Horizontal Layout) -->
+          <div class="grid-card systems-table-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">Sistemas en Desarrollo</h2>
+                <span class="card-subtext">Avance por fases auditadas de STF GROUP en formato horizontal completo</span>
+              </div>
+              <div class="header-right">
+                <button class="text-link-btn" id="btnRefreshTable">Ver Todos (6)</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="systems-table">
+                <thead>
+                  <tr>
+                    <th>Aplicativo / Sistema</th>
+                    <th>Líder Asignado</th>
+                    <th>Fase Actual</th>
+                    <th>Avance %</th>
+                    <th>Estado</th>
+                    <th class="text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="systemsTableBody">
+                  <!-- Populated via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ROW 4: SUPER ADMIN LIVE INTEGRATIONS & EFFECTIVENESS CONTROLLER (Full-Width) -->
+          <div class="grid-card integrations-control-card">
+            <div class="card-header">
+              <div class="header-left">
+                <div class="super-admin-badge-strip">
+                  <span class="super-admin-shield-pill">
+                    <i data-lucide="shield-check"></i>
+                    <span>Control de Supervisión · Super Admin (Jefe TI)</span>
+                  </span>
+                  <span class="auto-metric-tag">
+                    <i data-lucide="cpu"></i>
+                    <span>Medición 100% Automatizada en Tiempo Real</span>
+                  </span>
+                </div>
+                <h2 class="card-title">Integraciones Operativas & Tiempos en Vivo</h2>
+                <span class="card-subtext">Cálculo dinámico de días transcurridos vs deadline y proyección del avance esperado por desarrollador</span>
+              </div>
+              
+              <div class="header-right integrations-header-actions">
+                <button class="pill-btn primary-glow-btn small-glow" id="btnOpenNewIntegrationModal">
+                  <i data-lucide="plus"></i>
+                  <span>Asignar Integración</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Filter tabs for integrations -->
+            <div class="integrations-filter-bar">
+              <div class="int-filter-pills" id="intFilterPills">
+                <button class="filter-pill active" data-int-filter="all">
+                  <span>Todas las Tareas</span>
+                  <span class="pill-counter" id="countIntAll">6</span>
+                </button>
+                <button class="filter-pill" data-int-filter="in_progress">
+                  <span>En Desarrollo</span>
+                  <span class="pill-counter" id="countIntActive">5</span>
+                </button>
+                <button class="filter-pill" data-int-filter="risk">
+                  <span>En Riesgo / Vencidas</span>
+                  <span class="pill-counter" id="countIntRisk">1</span>
+                </button>
+                <button class="filter-pill" data-int-filter="evaluated">
+                  <span>Auditadas & Calificadas</span>
+                  <span class="pill-counter" id="countIntDone">1</span>
+                </button>
+              </div>
+
+              <div class="int-legend-hints">
+                <span class="friendly-legend-chip ontime"><span class="legend-dot ontime"></span> Ritmo óptimo</span>
+                <span class="friendly-legend-chip risk"><span class="legend-dot risk"></span> En riesgo / retraso</span>
+                <span class="friendly-legend-chip done"><span class="legend-dot done"></span> Auditada con impacto</span>
+              </div>
+            </div>
+
+            <!-- Container for the dynamic integration cards -->
+            <div class="integrations-list-grid" id="integrationsCardsList">
+              <!-- Dynamically populated via JavaScript -->
+            </div>
+          </div>
+
+        </div> <!-- /dashboard-grid -->
+      </section>
+
+      <!-- VIEW 2: APLICATIVOS Y MÓDULOS (PORTAFOLIO COMPLETO & KANBAN) -->
+      <section class="view-panel" id="view-projects">
+        <div class="section-toolbar">
+          <div class="filter-pills-row" id="brandFilterPills">
+            <button class="filter-pill active" data-filter="all">Todos los Sistemas (6)</button>
+            <button class="filter-pill" data-filter="Grupal">Desarrollo Grupal</button>
+            <button class="filter-pill" data-filter="Manufactura">Manufactura & Confección</button>
+            <button class="filter-pill" data-filter="Textil">Planta & Textil</button>
+            <button class="filter-pill" data-filter="Talleres">Logística & Talleres</button>
+            <button class="filter-pill" data-filter="Calidad">Calidad</button>
+          </div>
+
+          <div class="view-switch-btns">
+            <button class="switch-btn active" id="btnViewGrid" title="Vista en Cuadrícula">
+              <i data-lucide="layout-grid"></i>
+            </button>
+            <button class="switch-btn" id="btnViewKanban" title="Vista en Tablero Kanban">
+              <i data-lucide="columns-3"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Projects Grid View -->
+        <div class="projects-cards-grid" id="projectsCardsGrid">
+          <!-- Populated via JavaScript -->
+        </div>
+
+        <!-- Projects Kanban View (Hidden by default) -->
+        <div class="projects-kanban-board" id="projectsKanbanBoard" style="display: none;">
+          <!-- 4 Kanban Columns: Requisitos, Backend/Core, Frontend/QA, Desplegado -->
+        </div>
+      </section>
+
+      <!-- VIEW 3: RENDIMIENTO DEL EQUIPO (DEVELOPER SCORECARD CENTER) -->
+      <section class="view-panel" id="view-developers">
+        <!-- Team Macro Metrics -->
+        <div class="devs-metrics-summary-grid">
+          <div class="grid-card metric-summary-card">
+            <div class="m-icon-pill icon-blue">
+              <i data-lucide="users"></i>
+            </div>
+            <div>
+              <span class="m-label">Programadores Activos</span>
+              <h3 class="m-value">5 Ingenieros</h3>
+              <span class="m-hint text-green">100% Capacidad Asignada</span>
+            </div>
+          </div>
+
+          <div class="grid-card metric-summary-card">
+            <div class="m-icon-pill icon-green">
+              <i data-lucide="clock"></i>
+            </div>
+            <div>
+              <span class="m-label">Cumplimiento a Tiempo</span>
+              <h3 class="m-value">91.8%</h3>
+              <span class="m-hint text-green">+3.4% vs mes anterior</span>
+            </div>
+          </div>
+
+          <div class="grid-card metric-summary-card">
+            <div class="m-icon-pill icon-purple">
+              <i data-lucide="shield-check"></i>
+            </div>
+            <div>
+              <span class="m-label">Índice Calidad QA</span>
+              <h3 class="m-value">92.8%</h3>
+              <span class="m-hint">Baja tasa de bugs en producción</span>
+            </div>
+          </div>
+
+          <div class="grid-card metric-summary-card">
+            <div class="m-icon-pill icon-orange">
+              <i data-lucide="zap"></i>
+            </div>
+            <div>
+              <span class="m-label">Velocidad Promedio</span>
+              <h3 class="m-value">8.4 Tareas/Sem</h3>
+              <span class="m-hint text-blue">Ritmo constante</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dev Cards Grid -->
+        <div class="devs-full-grid" id="devsFullGrid">
+          <!-- Populated via JavaScript -->
+        </div>
+      </section>
+
+      <!-- VIEW 4: MÉTRICAS Y QA (ANALYTICS & REPORTES) -->
+      <section class="view-panel" id="view-analytics">
+        <div class="analytics-grid">
+          <!-- Brand Distribution Chart -->
+          <div class="grid-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">Avance Ponderado por Marca / Categoría</h2>
+                <span class="card-subtext">Progreso de digitalización en unidades de negocio STF GROUP</span>
+              </div>
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="brandsProgressChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Quality / Bugs Chart -->
+          <div class="grid-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">Estado de Pruebas QA & Incidencias</h2>
+                <span class="card-subtext">Defectos detectados vs. subsanados antes de producción</span>
+              </div>
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="qaBugsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase Bottleneck Table -->
+        <div class="grid-card" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="header-left">
+              <h2 class="card-title">Matriz de Cuellos de Botella y Tiempo en Fases</h2>
+              <span class="card-subtext">Detección temprana de fases con mayor esfuerzo de desarrollo</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="systems-table">
+              <thead>
+                <tr>
+                  <th>Fase del Ciclo de Vida</th>
+                  <th>Peso Ponderado</th>
+                  <th>Sistemas en Esta Fase</th>
+                  <th>Días Promedio</th>
+                  <th>Riesgo de Desviación</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>1. Levantamiento & Requisitos</strong></td>
+                  <td>10%</td>
+                  <td>0 Aplicativos (Completada en todos)</td>
+                  <td>6 días</td>
+                  <td><span class="status-pill status-ontime">Controlado</span></td>
+                </tr>
+                <tr>
+                  <td><strong>2. Arquitectura & Diseño UI/UX</strong></td>
+                  <td>15%</td>
+                  <td>0 Aplicativos (Aprobada)</td>
+                  <td>10 días</td>
+                  <td><span class="status-pill status-ontime">Controlado</span></td>
+                </tr>
+                <tr>
+                  <td><strong>3. Desarrollo Backend & Lógica Core</strong></td>
+                  <td>30%</td>
+                  <td>2 Aplicativos (Checkout & App Móvil)</td>
+                  <td>22 días</td>
+                  <td><span class="status-pill status-ontime">En tiempo</span></td>
+                </tr>
+                <tr>
+                  <td><strong>4. Frontend & Integración</strong></td>
+                  <td>25%</td>
+                  <td>2 Aplicativos (WMS Logística & Portal B2B)</td>
+                  <td>18 días</td>
+                  <td><span class="status-pill status-risk">Atención Requerida</span></td>
+                </tr>
+                <tr>
+                  <td><strong>5. Pruebas QA & UAT</strong></td>
+                  <td>15%</td>
+                  <td>2 Aplicativos (POS Studio F & Integrador SAP)</td>
+                  <td>14 días</td>
+                  <td><span class="status-pill status-ontime">En tiempo</span></td>
+                </tr>
+                <tr>
+                  <td><strong>6. Despliegue en Producción</strong></td>
+                  <td>5%</td>
+                  <td>0 Aplicativos en fase final</td>
+                  <td>3 días</td>
+                  <td><span class="status-pill status-ontime">Programado</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: CONFIGURACIÓN & METODOLOGÍA -->
+      <section class="view-panel" id="view-settings">
+        <div class="settings-grid">
+          <!-- Ponderation Settings Card -->
+          <div class="grid-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">Ponderación Oficial de Fases de Desarrollo</h2>
+                <span class="card-subtext">Criterio porcentual auditado para la medición del avance</span>
+              </div>
+            </div>
+            
+            <div class="phases-settings-list" id="settingsPhasesList">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Data Management & Backups -->
+          <div class="grid-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">Respaldo y Datos de STF GROUP</h2>
+                <span class="card-subtext">Exporta, importa o reinicia los datos de seguimiento</span>
+              </div>
+            </div>
+
+            <div class="settings-actions-box">
+              <p style="color: var(--text-body); font-size: 14px; margin-bottom: 16px;">
+                Toda la información se encuentra guardada de manera segura y persistente en tu navegador. Puedes descargar un respaldo en formato JSON para compartirlo con el equipo de tecnología.
+              </p>
+
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="pill-btn primary-glow-btn" id="btnDownloadBackup">
+                  <i data-lucide="download"></i>
+                  <span>Descargar Respaldo JSON</span>
+                </button>
+
+                <button class="pill-btn secondary-btn" id="btnResetFactoryData">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span>Restablecer Datos de Demostración</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+    </main>
+  </div>
+
+  <!-- MODAL: System Detail & Phase Breakdown (Calculates real weighted %) -->
+  <div class="modal-backdrop" id="modalSystemDetail">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-tag" id="modalSysCode">STF-APP-01</span>
+          <h2 class="modal-title" id="modalSysTitle">POS Omnicanal Studio F</h2>
+          <p class="modal-subtitle" id="modalSysDesc">Sistema integral de facturación rápida, inventario local y pasarela de pago para tiendas físicas.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseSystemModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- System Key Info Grid -->
+        <div class="sys-summary-row">
+          <div class="summary-box">
+            <span class="s-label">Desarrollador Responsable</span>
+            <div class="s-user">
+              <img src="" alt="" id="modalSysDevImg" class="mini-avatar">
+              <strong id="modalSysDevName">Carlos Mendoza</strong>
+            </div>
+          </div>
+          <div class="summary-box">
+            <span class="s-label">Fecha Límite</span>
+            <strong id="modalSysDeadline">15 Noviembre 2026</strong>
+          </div>
+          <div class="summary-box">
+            <span class="s-label">Estado de Salud</span>
+            <span class="status-pill status-ontime" id="modalSysHealth">En Tiempo</span>
+          </div>
+          <div class="summary-box highlight-box">
+            <span class="s-label">Avance Real Ponderado</span>
+            <div class="big-progress-val">
+              <span id="modalSysProgress">88%</span>
+              <div class="mini-progress-track">
+                <div class="mini-progress-fill" id="modalSysProgressFill" style="width: 88%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6 Phases Checklist (The real engineering method for accurate %) -->
+        <div class="phases-accordion-section">
+          <h3 class="section-heading">Fases de Desarrollo (Marca para recalcular el % en tiempo real):</h3>
+          <div class="phases-list" id="modalPhasesList">
+            <!-- Dynamically populated phases with weighted percentages -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="pill-btn secondary-btn" id="btnCancelSysModal">Cerrar</button>
+        <button class="pill-btn primary-glow-btn" id="btnSaveSysChanges">
+          <i data-lucide="check"></i>
+          <span>Guardar Cambios</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Developer Scorecard (Performance & Workload) -->
+  <div class="modal-backdrop" id="modalDevScorecard">
+    <div class="modal-card modal-card-medium">
+      <div class="modal-header">
+        <div class="dev-modal-profile">
+          <img src="" alt="" id="devModalImg" class="dev-large-avatar">
+          <div>
+            <h2 class="modal-title" id="devModalName">Carlos Mendoza</h2>
+            <p class="modal-subtitle" id="devModalRole">Senior Fullstack Developer · STF Tech Team</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="btnCloseDevModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 4 KPI Cards for the Developer -->
+        <div class="dev-kpi-grid">
+          <div class="kpi-mini-card">
+            <span class="kpi-label">Entregas a Tiempo</span>
+            <h3 class="kpi-number text-blue" id="devKpiOnTime">96%</h3>
+            <span class="kpi-sub">12 de 13 sprints cumplidos</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-label">Calidad (Baja tasa bugs)</span>
+            <h3 class="kpi-number text-green" id="devKpiQuality">94%</h3>
+            <span class="kpi-sub">Solo 3 incidencias en QA</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-label">Sistemas Asignados</span>
+            <h3 class="kpi-number text-purple" id="devKpiApps">2 Apps</h3>
+            <span class="kpi-sub">Carga equilibrada</span>
+          </div>
+          <div class="kpi-mini-card">
+            <span class="kpi-label">Puntaje Global</span>
+            <h3 class="kpi-number text-orange" id="devKpiScore">9.5 / 10</h3>
+            <span class="kpi-sub">Alto Desempeño</span>
+          </div>
+        </div>
+
+        <h3 class="section-heading" style="margin-top: 24px;">Aplicativos Asignados Actualmente:</h3>
+        <div class="dev-apps-list" id="devAssignedAppsList">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="pill-btn primary-glow-btn" id="btnCloseDevScorecardBtn">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create New Project -->
+  <div class="modal-backdrop" id="modalNewProject">
+    <div class="modal-card modal-card-medium">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 class="modal-title">Registrar Nuevo Aplicativo</h2>
+          <p class="modal-subtitle">Añade un nuevo sistema al portafolio de STF GROUP para comenzar a medir su avance.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseNewProjModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="newProjectForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="newSysName">Nombre del Aplicativo / Sistema *</label>
+            <input type="text" id="newSysName" required placeholder="Ej: App Móvil Fidelización Studio F" class="form-input">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newSysCategory">Categoría / Marca</label>
+              <select id="newSysCategory" class="form-input">
+                <option value="Studio F">Studio F</option>
+                <option value="ELA">ELA</option>
+                <option value="CEDI & Logística">CEDI & Logística</option>
+                <option value="Finanzas & ERP">Finanzas & ERP</option>
+                <option value="Omnicanalidad">Omnicanalidad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="newSysDev">Programador Asignado *</label>
+              <select id="newSysDev" class="form-input" required>
+                <!-- Populated via JS -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newSysDeadline">Fecha Límite Comprometida *</label>
+              <input type="date" id="newSysDeadline" required class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="newSysPriority">Prioridad Estratégica</label>
+              <select id="newSysPriority" class="form-input">
+                <option value="Alta">Alta (Crítico para el negocio)</option>
+                <option value="Media" selected>Media</option>
+                <option value="Baja">Baja</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newSysDesc">Objetivo y Alcance del Sistema</label>
+            <textarea id="newSysDesc" rows="3" placeholder="Describe brevemente el propósito de este aplicativo..." class="form-input"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="pill-btn secondary-btn" id="btnCancelNewProj">Cancelar</button>
+          <button type="submit" class="pill-btn primary-glow-btn">
+            <i data-lucide="plus-circle"></i>
+            <span>Crear Aplicativo</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 1: Asignar Nueva Integración / Tarea (Super Admin) -->
+  <div class="modal-backdrop" id="modalAssignIntegration">
+    <div class="modal-card modal-card-medium">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="super-admin-shield-pill">
+            <i data-lucide="shield-check"></i>
+            <span>Super Admin TI · Asignación Operativa</span>
+          </div>
+          <h2 class="modal-title" style="margin-top: 6px;">Asignar Integración en Planta</h2>
+          <p class="modal-subtitle">Establece el módulo, fecha límite y ponderación para cálculo 100% automático del ritmo de desarrollo.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseAssignModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="assignIntegrationForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="assignIntName">Nombre de la Integración / Módulo Operativo *</label>
+            <input type="text" id="assignIntName" required placeholder="Ej: Conexión Báscula Digital en Mesa de Corte" class="form-input">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="assignIntApp">Aplicativo Destino *</label>
+              <select id="assignIntApp" class="form-input" required>
+                <!-- Populated via JS -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="assignIntDev">Desarrollador Responsable *</label>
+              <select id="assignIntDev" class="form-input" required>
+                <!-- Populated via JS -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="assignIntStartDate">Fecha de Inicio *</label>
+              <input type="date" id="assignIntStartDate" required class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="assignIntDeadline">Fecha Límite Comprometida (Deadline) *</label>
+              <input type="date" id="assignIntDeadline" required class="form-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-label-row">
+              <label for="assignIntWeight">Peso Ponderado en el Aplicativo:</label>
+              <span class="weight-badge-val" id="assignIntWeightVal">15%</span>
+            </div>
+            <input type="range" id="assignIntWeight" min="5" max="30" step="5" value="15" class="range-slider">
+            <small class="input-helper">Porcentaje que aportará esta entrega al avance global del sistema al ser auditada por el Jefe.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="assignIntDesc">Objetivo Operativo & Utilidad para Operarios</label>
+            <textarea id="assignIntDesc" rows="3" placeholder="Describe qué problema operativo resuelve en planta y qué requerimientos debe cumplir..." class="form-input"></textarea>
+          </div>
+
+          <!-- Dynamic Live Calculation Estimate Card -->
+          <div class="assign-preview-card" id="assignPreviewCard">
+            <div class="preview-metric">
+              <span class="p-label">Plazo Asignado:</span>
+              <strong class="p-val" id="previewDaysAssigned">10 días laborables</strong>
+            </div>
+            <div class="preview-metric">
+              <span class="p-label">Monitoreo:</span>
+              <strong class="p-val text-blue">Reloj en vivo 100% automatizado</strong>
+            </div>
+            <div class="preview-metric">
+              <span class="p-label">Impacto Máximo:</span>
+              <strong class="p-val text-green" id="previewMaxPoints">+15.0% al sistema</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="pill-btn secondary-btn" id="btnCancelAssignModal">Cancelar</button>
+          <button type="submit" class="pill-btn primary-glow-btn">
+            <i data-lucide="check-circle"></i>
+            <span>Oficializar Tarea en Vivo</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Auditoría & Calificación de Calidad y Efectividad (Super Admin) -->
+  <div class="modal-backdrop" id="modalEvaluateIntegration">
+    <div class="modal-card modal-card-medium">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="super-admin-shield-pill">
+            <i data-lucide="award"></i>
+            <span>Dictamen de Calidad · Super Admin (Jefe TI)</span>
+          </div>
+          <h2 class="modal-title" id="evalTaskName" style="margin-top: 6px;">Auditoría de Integración</h2>
+          <p class="modal-subtitle">Calificación técnica del Jefe. El sistema calculará matemáticamente los puntos sumados al aplicativo y a la efectividad del desarrollador.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseEvalModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Dev & System Diagnostic Bar -->
+        <div class="eval-diagnostic-bar">
+          <div class="eval-dev-info">
+            <img src="" id="evalDevAvatar" class="eval-avatar" alt="Dev">
+            <div>
+              <strong id="evalDevName">Jose Guzman</strong>
+              <span id="evalAppName" class="eval-app-tag">COLCHAS</span>
+            </div>
+          </div>
+          
+          <div class="eval-time-verdict" id="evalTimeVerdict">
+            <!-- Populated via JS: e.g. "✓ Entregada a tiempo (1 día antes)" or "⚠️ Entregada con retraso" -->
+          </div>
+        </div>
+
+        <!-- 3 Interactive Technical Quality Sliders -->
+        <div class="evaluation-sliders-group">
+          <h4 class="sliders-group-title">Rúbrica de Evaluación Técnica (0 - 100%):</h4>
+
+          <div class="eval-slider-row">
+            <div class="eval-slider-header">
+              <span class="eval-param-title">1. Estabilidad Técnica & Arquitectura</span>
+              <strong class="eval-param-score" id="valScoreStability">95%</strong>
+            </div>
+            <input type="range" id="sliderStability" min="0" max="100" value="95" class="range-slider">
+            <span class="eval-param-hint">Manejo de excepciones, robustez del backend y conexión sin fallos.</span>
+          </div>
+
+          <div class="eval-slider-row">
+            <div class="eval-slider-header">
+              <span class="eval-param-title">2. Usabilidad & Adopción por Operarios de Planta</span>
+              <strong class="eval-param-score" id="valScoreUsability">92%</strong>
+            </div>
+            <input type="range" id="sliderUsability" min="0" max="100" value="92" class="range-slider">
+            <span class="eval-param-hint">Facilidad de interfaz en planta de producción, rapidez y feedback claro.</span>
+          </div>
+
+          <div class="eval-slider-row">
+            <div class="eval-slider-header">
+              <span class="eval-param-title">3. Calidad de Código & Pruebas QA</span>
+              <strong class="eval-param-score" id="valScoreQA">96%</strong>
+            </div>
+            <input type="range" id="sliderQA" min="0" max="100" value="96" class="range-slider">
+            <span class="eval-param-hint">Código limpio, documentación técnica y cero incidencias críticas.</span>
+          </div>
+        </div>
+
+        <!-- Real-time Mathematical Calculation Box -->
+        <div class="eval-math-impact-box">
+          <div class="math-main-score">
+            <span class="math-sub">Efectividad Global Obtenida</span>
+            <strong class="math-big" id="evalOverallQuality">94.3%</strong>
+            <span class="badge-pill-verified">✓ Verificado Matemáticamente</span>
+          </div>
+
+          <div class="math-impact-details">
+            <div class="math-col">
+              <span class="m-col-title">Suma al Aplicativo:</span>
+              <div class="m-col-val text-green" id="evalAddedPoints">+14.1%</div>
+              <span class="m-col-sub" id="evalFormulaExplain">(Peso 15% × 94.3% Calidad)</span>
+            </div>
+
+            <div class="math-col">
+              <span class="m-col-title">Efectividad Dev:</span>
+              <div class="m-col-val text-blue" id="evalDevScoreImpact">+0.8%</div>
+              <span class="m-col-sub">Impacto directo en scorecard</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Super Admin Notes -->
+        <div class="form-group" style="margin-top: 18px;">
+          <label for="evalNotes">Observaciones & Dictamen Oficial del Jefe de Desarrollo:</label>
+          <textarea id="evalNotes" rows="3" class="form-input" placeholder="Ej: Implementación aprobada con felicitaciones. Se validó pesaje en vivo con 40 rollos de tela sin error."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="pill-btn secondary-btn" id="btnCancelEvalModal">Cerrar</button>
+        <button type="button" class="pill-btn primary-glow-btn" id="btnConfirmEvaluation">
+          <i data-lucide="award"></i>
+          <span>Firmar Auditoría & Aplicar Métricas</span>
+        </button>
+      </div>
+    </div>
+  <!-- MODAL: Configuración y Medición de Objetivo Trimestral -->
+  <div class="modal-backdrop" id="modalQuarterlyGoal">
+    <div class="modal-card modal-card-medium" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-tag" style="background: rgba(77, 109, 255, 0.12); color: var(--primary-blue);">
+            <i data-lucide="calendar" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i> Planificación Estratégica TI
+          </span>
+          <h2 class="modal-title" style="margin-top: 4px;">Objetivo de Entrega Trimestral</h2>
+          <p class="modal-subtitle">Configura las metas de entrega del trimestre, ajusta el periodo y gestiona la medición del avance global.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseQuarterlyModal" onclick="closeQuarterlyGoalModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Resumen de Métricas Actuales en Vivo -->
+        <div class="sys-summary-row" style="margin-bottom: 20px;">
+          <div class="summary-box">
+            <span class="s-label">Avance Global Real</span>
+            <strong id="modalQCurrentProgress" class="text-blue" style="font-size: 20px;">61.7%</strong>
+          </div>
+          <div class="summary-box">
+            <span class="s-label">Módulos Entregados</span>
+            <strong id="modalQModulesCount" style="font-size: 20px;">21 de 36</strong>
+          </div>
+          <div class="summary-box">
+            <span class="s-label">Fase Dominante</span>
+            <span id="modalQDominantPhase" class="status-pill status-ontime" style="font-size: 11px; white-space: normal; text-align: center;">Backend & Integraciones</span>
+          </div>
+        </div>
+
+        <!-- Formulario de Configuración del Periodo y Meta -->
+        <div class="quarterly-form-card" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; margin-bottom: 20px;">
+          <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="sliders" style="width: 15px; height: 15px; color: var(--primary-blue);"></i> Parámetros de Medición del Trimestre
+          </h4>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="inputQuarterPeriod" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Periodo / Trimestre:</label>
+              <select id="inputQuarterPeriod" class="form-input" onchange="toggleCustomPeriodInput(this.value)">
+                <option value="Q4 (Octubre - Diciembre)">Q4 (Octubre - Diciembre) - Periodo Activo</option>
+                <option value="Q1 (Enero - Marzo)">Q1 (Enero - Marzo)</option>
+                <option value="Q2 (Abril - Junio)">Q2 (Abril - Junio)</option>
+                <option value="Q3 (Julio - Septiembre)">Q3 (Julio - Septiembre)</option>
+                <option value="custom">Periodo Personalizado...</option>
+              </select>
+              <input type="text" id="inputCustomPeriod" class="form-input" placeholder="Ej: Especial Cierre Año 2026" style="display: none; margin-top: 6px;">
+            </div>
+
+            <div class="form-group">
+              <label for="inputTargetPercentage" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Meta Proyectada (% Hito Naranja):</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="number" id="inputTargetPercentage" class="form-input" min="10" max="100" step="5" value="70">
+                <span style="font-weight: 700; color: var(--text-muted); font-size: 14px;">%</span>
+              </div>
+              <small style="font-size: 11px; color: var(--text-muted);">Posiciona la cápsula naranja de meta en la barra.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="inputComplianceStatus" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Estado de Cumplimiento:</label>
+              <select id="inputComplianceStatus" class="form-input">
+                <option value="En Tiempo (+4d)">🟢 En Tiempo (+4 días)</option>
+                <option value="En Tiempo (Al día)">🟢 En Tiempo (Al día)</option>
+                <option value="En Tiempo (+2d)">🟢 En Tiempo (+2 días)</option>
+                <option value="En Riesgo (-2d)">🟡 En Riesgo (-2 días de holgura)</option>
+                <option value="Retrasado (-5d)">🔴 Retrasado (-5 días)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="inputQuarterDeadline" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Fecha Límite Trimestral:</label>
+              <input type="date" id="inputQuarterDeadline" class="form-input" value="2026-12-31">
+            </div>
+          </div>
+        </div>
+
+        <!-- Explicación & Auditoría Directa de Medición -->
+        <div class="measurement-audit-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
+          <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="activity" style="width: 15px; height: 15px; color: var(--accent-green);"></i> ¿Cómo agregar o cambiar los datos de medición?
+          </h4>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+            Los datos de medición se calculan automáticamente a partir de las <strong>fases de desarrollo</strong> de cada aplicativo. Haz clic en <strong>"Auditar Fases"</strong> en cualquiera de los sistemas para marcar módulos completados y ver cómo el avance trimestral sube en tiempo real:
+          </p>
+
+          <div class="quick-apps-audit-list" id="modalQuarterlyAppsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+            <!-- Renderizado dinámico de los aplicativos con barra y botón auditar -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="pill-btn secondary-btn" onclick="closeQuarterlyGoalModal()">Cerrar</button>
+        <button type="button" class="pill-btn primary-glow-btn" onclick="saveQuarterlyGoal()">
+          <i data-lucide="check"></i>
+          <span>Guardar Configuración Trimestral</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Integración & Base de Datos Google Sheets -->
+  <div class="modal-backdrop" id="modalSheetsSync">
+    <div class="modal-card modal-card-medium" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-tag" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+            <i data-lucide="database" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i> Base de Datos en Tiempo Real
+          </span>
+          <h2 class="modal-title" style="margin-top: 4px;">Sincronización con Google Sheets</h2>
+          <p class="modal-subtitle">Conecta un documento Sheets para almacenar automáticamente auditorías, cambios de fases y bitácora del sistema.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseSheetsModal" onclick="closeSheetsModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Estado de Conexión & Métricas -->
+        <div class="sys-summary-row" style="margin-bottom: 0;">
+          <div class="summary-box">
+            <span class="s-label">Estado de la Nube</span>
+            <span id="modalSheetsStatusBadge" class="status-pill status-risk" style="margin-top: 4px; display: inline-block;">⚪ Desconectado</span>
+          </div>
+          <div class="summary-box">
+            <span class="s-label">Última Sincronización</span>
+            <strong id="modalSheetsLastSync" style="font-size: 13.5px; color: var(--text-dark); margin-top: 4px; display: block;">Sin sincronizaciones</strong>
+          </div>
+          <div class="summary-box">
+            <span class="s-label">Tablas Gestionadas</span>
+            <span class="status-pill status-ontime" style="font-size: 11px; margin-top: 4px; display: inline-block;">5 Hojas Automáticas</span>
+          </div>
+        </div>
+
+        <!-- Formulario de Configuración URL Web App -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
+          <label for="inputSheetsWebAppUrl" style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+            <span>URL de la Aplicación Web (Google Apps Script):</span>
+            <span style="font-size: 11px; font-weight: 500; color: #64748B;">Método Web App seguro</span>
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="url" id="inputSheetsWebAppUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="flex: 1; font-family: monospace; font-size: 12px;">
+            <button type="button" class="pill-btn primary-glow-btn" id="btnSaveSheetsUrl" onclick="saveSheetsUrl()" style="white-space: nowrap;">
+              <i data-lucide="check"></i>
+              <span>Guardar</span>
+            </button>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+            <button type="button" class="pill-btn secondary-btn" id="btnTestSheetsConnection" onclick="testSheetsConnection()" style="font-size: 12px; padding: 6px 12px;">
+              <i data-lucide="wifi"></i>
+              <span>Probar Conexión</span>
+            </button>
+            <button type="button" class="pill-btn secondary-btn" id="btnSyncFullDatabase" onclick="triggerFullSheetsSync()" style="font-size: 12px; padding: 6px 12px; background: #ECFDF5; color: #047857; border-color: #A7F3D0;">
+              <i data-lucide="refresh-cw"></i>
+              <span>Sincronizar Portafolio Completo Ahora</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Instrucciones Desplegables de Instalación en 3 Pasos -->
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <h4 style="font-size: 13px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="book-open" style="width: 15px; height: 15px; color: var(--primary-blue);"></i> Guía Rápida para Conectar tu Google Sheet
+            </h4>
+            <button type="button" class="pill-btn secondary-btn" onclick="copyAppsScriptCode()" style="font-size: 11px; padding: 4px 10px;" title="Copiar código Apps Script al portapapeles">
+              <i data-lucide="copy"></i>
+              <span id="btnCopyScriptText">Copiar Código Apps Script</span>
+            </button>
+          </div>
+
+          <ol style="font-size: 12px; color: var(--text-body); line-height: 1.6; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+            <li>Crea una hoja en blanco en <a href="https://sheets.new" target="_blank" style="color: var(--primary-blue); font-weight: 600; text-decoration: underline;">sheets.new</a> (ej: <em>"STF GROUP - Control Aplicativos"</em>).</li>
+            <li>En la hoja ve al menú <strong>Extensiones > Apps Script</strong>, pega el código que copiaste y guárdalo.</li>
+            <li>Haz clic en <strong>Implementar > Nueva implementación > Aplicación web</strong>. Selecciona acceso: <em>"Cualquier usuario"</em>, implementa y copia la URL resultante aquí.</li>
+          </ol>
+        </div>
+
+        <!-- Bitácora de Cambios Recientes (Live Feed) -->
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <h4 style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="history" style="width: 14px; height: 14px; color: #64748B;"></i> Últimas Operaciones Registradas
+            </h4>
+            <span style="font-size: 11px; color: #94A3B8;">Historial en vivo</span>
+          </div>
+          <div id="sheetsRecentLogsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;">
+            <!-- Renderizado dinámico de logs -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="pill-btn secondary-btn" onclick="closeSheetsModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Message -->
+  <div class="toast-notification" id="toastNotification">
+    <i data-lucide="check-circle" class="toast-icon"></i>
+    <span id="toastMessage">Operación realizada exitosamente</span>
+  </div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/sheets-sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

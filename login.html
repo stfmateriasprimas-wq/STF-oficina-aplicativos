@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STF GROUP · Acceso de Ingeniería & Desarrollo</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans (4K Geometric Typography) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Login Stylesheet (4K & High-DPI Optimized) -->
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+  <!-- CINEMATIC VIDEO BACKGROUND LAYER: STF Headquarters + Futuristic Developer Code -->
+  <div class="cyber-bg-container" id="cyberBgContainer">
+    <!-- STF Company Headquarters Video Feed (Continuous Aerial Drone Motion) -->
+    <div class="bg-building-cinematic">
+      <img src="assets/stf-aerial-headquarters-hd.jpg" alt="STF GROUP Aerial Headquarters" class="bg-building-img" id="bgBuildingImg">
+    </div>
+
+    <!-- Video Scanlines & CRT Mesh Effect -->
+    <div class="video-scanlines"></div>
+
+    <!-- Dark Blurred Vignette Overlay -->
+    <div class="video-dark-vignette"></div>
+
+  </div>
+
+  <!-- Ambient Cinematic Warm Glow (Full Viewport, Seamless Feathering) -->
+  <div class="ambient-glow"></div>
+
+  <!-- SPEED OF LIGHT PERSPECTIVE TUNNEL CANVAS (Right Half Light Rain & Ground Trails) -->
+  <canvas id="lightTunnelCanvas" class="light-tunnel-canvas"></canvas>
+
+  <!-- FULLSCREEN STAGE: Shorter lamp on the left, Dark & Gold Card on the right -->
+  <main class="fullscreen-stage">
+
+    <!-- THE MINIMALIST FLOOR LAMP (Shorter, Proportional, Borderless Optical Diffusion) -->
+    <div class="lamp-stage" id="lampStage">
+      <!-- Seamless Conical Light Beam with feathered optical decay -->
+      <div class="light-beam-cone"></div>
+
+      <!-- Lamp Head (Shade + Diffuser Bulb) -->
+      <div class="lamp-head">
+        <div class="lamp-shade-disc"></div>
+        <div class="lamp-bulb-diffuser"></div>
+      </div>
+
+      <!-- Interactive Pull String & Golden Brass Tassel Handle -->
+      <div class="pull-string-wrapper" id="pullString" title="Haz clic o jala la cuerda para encender/apagar la lámpara" aria-label="Interruptor de lámpara">
+        <div class="pull-cord-line" id="pullCordLine"></div>
+        <div class="pull-handle" id="pullHandle"></div>
+      </div>
+
+      <!-- Proportional Shorter Vertical Stem -->
+      <div class="lamp-stem"></div>
+
+      <!-- Heavy Circular Floor Base -->
+      <div class="lamp-base"></div>
+
+      <!-- Floor Reflection Puddle -->
+      <div class="floor-puddle"></div>
+    </div>
+
+    <!-- THE TRANSLUCENT FROSTED GLASS LOGIN TAG ("Etiqueta Trasparentosa") -->
+    <div class="login-card-container glass-tag-plaque" id="loginCard">
+      <!-- STF GROUP Official Corporate Logo Header -->
+      <div class="card-logo-header">
+        <img src="assets/stf-group-logo-4k.png" alt="STF GROUP S.A. - STUDIO F, ela, STUDIO F MAN" class="card-brand-logo">
+      </div>
+
+      <form class="login-form glass-form" id="loginForm">
+        <!-- User Name / Email Field (Translucent Glass Pill with Right Icon) -->
+        <div class="glass-input-group">
+          <div class="glass-input-wrapper">
+            <input type="email" id="loginEmail" class="glass-form-input" placeholder="User Name" value="jguzman@stfgroup.com" required autocomplete="email">
+            <i data-lucide="user" class="glass-input-icon-right"></i>
+          </div>
+        </div>
+
+        <!-- Password Field (Translucent Glass Pill with Eye Toggle Right Icon) -->
+        <div class="glass-input-group">
+          <div class="glass-input-wrapper">
+            <input type="password" id="loginPassword" class="glass-form-input" placeholder="Password" value="stf2026pass" required autocomplete="current-password">
+            <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('loginPassword', this)" title="Ver / Ocultar contraseña" aria-label="Toggle password visibility">
+              <i data-lucide="eye-off"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me Option -->
+        <div class="glass-remember-row">
+          <label class="glass-remember-label">
+            <input type="checkbox" id="rememberMe" checked class="glass-checkbox">
+            <span>Remember me</span>
+          </label>
+        </div>
+
+        <!-- Translucent Frosted Glass Pill Login Button -->
+        <button type="submit" class="btn-glass-pill" id="btnSignIn">
+          <span>Login</span>
+        </button>
+
+        <!-- Quick Developer Test Selector (Frosted Translucent Chips) -->
+        <div class="quick-devs-section glass-quick-section">
+          <div class="quick-devs-title glass-quick-title">Acceso rápido por desarrollador:</div>
+          <div class="devs-chips-row">
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_jg')" title="Iniciar como Jose Guzman">
+              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face" alt="Jose Guzman">
+              <span>Jose Guzman</span>
+            </button>
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_jd')" title="Iniciar como Juan David">
+              <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop&crop=face" alt="Juan David">
+              <span>Juan David</span>
+            </button>
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_mocho')" title="Iniciar como Mocho">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="Mocho">
+              <span>Mocho</span>
+            </button>
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_ee')" title="Iniciar como Esteban Escobar">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face" alt="Esteban Escobar">
+              <span>Esteban Escobar</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Login Feedback Toast -->
+  <div class="login-toast" id="loginToast">
+    <i data-lucide="check-circle-2"></i>
+    <span id="loginToastMsg">Operación completada</span>
+  </div>
+
+  <!-- Interactive Logic -->
+  <script src="js/light-tunnel.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

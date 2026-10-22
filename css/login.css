@@ -1,0 +1,994 @@
+/* ==========================================================================
+   STF GROUP · FULLSCREEN 4K PULL-STRING LAMP LOGIN
+   Dark & Gold Luxury Contrast · Seamless Optical Beam · Watermark Logo
+   ========================================================================== */
+
+:root {
+  --bg-dark-off: #000000;
+  --bg-dark-on: #000000;
+  --gold-primary: #F5C542;
+  --gold-light: #FFE885;
+  --gold-dark: #C28E14;
+  --gold-deep: #7A5302;
+  --gold-gradient: linear-gradient(135deg, #FFF0A3 0%, #F5C542 30%, #D49B1E 68%, #9E7307 100%);
+  --gold-border: rgba(245, 197, 66, 0.36);
+  --gold-glow: rgba(245, 197, 66, 0.45);
+  --card-bg: rgba(9, 11, 16, 0.96);
+  --text-main: #FFFFFF;
+  --text-muted: #8E96A6;
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--bg-dark-off);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  user-select: none;
+  transition: background-color 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Ambient Radial Warmth: Expanded smoothly to 440px around the lamp */
+.ambient-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 440px at 29vw 47%, 
+    rgba(255, 235, 150, 0.34) 0%, 
+    rgba(255, 215, 100, 0.18) 32%, 
+    rgba(255, 195, 75, 0.05) 66%, 
+    rgba(255, 185, 50, 0.01) 88%, 
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+}
+
+body.lamp-on {
+  background-color: var(--bg-dark-on);
+}
+
+body.lamp-on .ambient-glow {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   SPEED OF LIGHT PERSPECTIVE TUNNEL CANVAS (Dual-Zone Right Half Animation)
+   ========================================================================== */
+.light-tunnel-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transform: scale(0.99);
+  filter: blur(2px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.lamp-on .light-tunnel-canvas {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px);
+}
+
+/* ==========================================================================
+   FUTURISTIC CINEMATIC VIDEO BACKGROUND & CODE MATRIX (STF HQ + DEVELOPER HUD)
+   ========================================================================== */
+.cyber-bg-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  background: #000000;
+}
+
+/* STF Headquarters Continuous 4K Drone Video Movement */
+.bg-building-cinematic {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  animation: droneCameraPan 45s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  transform-origin: 65% 45%;
+}
+
+.bg-building-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Heavily blurred and deeply dark as requested: difuminado en oscuro */
+  filter: blur(10px) brightness(0.08) contrast(1.15) saturate(0.5);
+  transition: filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, filter;
+}
+
+body.lamp-on .bg-building-img {
+  /* Almost totally dark so the background is solid black outside the lamp */
+  filter: blur(12px) brightness(0.03) contrast(1.1) saturate(0.2);
+}
+
+@keyframes droneCameraPan {
+  0% {
+    transform: scale(1.02) translate(0%, 0%);
+  }
+  33% {
+    transform: scale(1.09) translate(-2%, -1.2%);
+  }
+  66% {
+    transform: scale(1.06) translate(1.5%, -0.8%);
+  }
+  100% {
+    transform: scale(1.11) translate(-1%, 1.2%);
+  }
+}
+
+/* Video Scanlines (Subtle CRT Broadcast Mesh) */
+.video-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.45) 3px,
+    rgba(0, 0, 0, 0.45) 4px
+  );
+  opacity: 0.70;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark Blurred Luxury Vignette & Cyber Radial Mask - Pitch-black outside yellow circle */
+.video-dark-vignette {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 50% 50%, rgba(2, 3, 6, 0.70) 0%, rgba(2, 3, 6, 0.94) 55%, #000000 100%),
+    linear-gradient(180deg, rgba(2, 3, 6, 0.96) 0%, rgba(2, 3, 6, 0.42) 20%, rgba(2, 3, 6, 0.42) 75%, rgba(2, 3, 6, 0.98) 100%);
+  z-index: 2;
+  pointer-events: none;
+  transition: background 0.85s ease;
+}
+
+body.lamp-on .video-dark-vignette {
+  /* Concentrated illumination smoothly expanded to ~440px radius, pure jet-black everywhere outside */
+  background: radial-gradient(circle 440px at 29vw 47%, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.72) 58%, rgba(0, 0, 0, 0.96) 82%, #000000 100%);
+}
+
+/* Real Developer Matrix Rain Canvas - Hidden until lamp turns on */
+.code-matrix-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.85s ease;
+}
+
+body.lamp-on .code-matrix-canvas {
+  opacity: 0.10;
+}
+
+/* ==========================================================================
+   FULLSCREEN STAGE (Lamp on the left, Card on the right)
+   ========================================================================== */
+.fullscreen-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8vw 0 4vw;
+  z-index: 5;
+}
+
+/* ==========================================================================
+   LEFT: THE FLOOR LAMP (Lower height, natural proportions, borderless light)
+   ========================================================================== */
+.lamp-stage {
+  position: relative;
+  width: 50vw;
+  max-width: 780px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.lamp-stage * {
+  pointer-events: auto;
+}
+
+/* Seamless Conical Light Beam (Expanded to ~440px illumination radius) */
+.light-beam-cone {
+  position: absolute;
+  top: 258px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  max-width: 90vw;
+  height: 580px;
+  background: linear-gradient(180deg, 
+    rgba(255, 248, 205, 0.68) 0%, 
+    rgba(255, 230, 140, 0.38) 18%, 
+    rgba(255, 210, 85, 0.14) 52%, 
+    rgba(255, 195, 60, 0.02) 78%, 
+    transparent 100%);
+  /* Polygon corners stay well inside the div to prevent any border clipping */
+  clip-path: polygon(42% 0%, 58% 0%, 84% 100%, 16% 100%);
+  filter: blur(18px);
+  mask-image: radial-gradient(ellipse at 50% 16%, black 42%, transparent 84%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 16%, black 42%, transparent 84%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+}
+
+body.lamp-on .light-beam-cone {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   WATER-DROP WATERMARK LOGO (4K High Resolution, No Background)
+   ========================================================================== */
+.watermark-container {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 370px;
+  max-width: 78%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 3;
+}
+
+body.lamp-on .watermark-container {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.02);
+}
+
+.watermark-logo-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.40;
+  filter: drop-shadow(0 0 18px rgba(255, 225, 140, 0.55)) contrast(1.15) brightness(1.25);
+  mix-blend-mode: screen;
+  transition: opacity 0.4s ease;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Soft water-drop ambient sheen */
+.watermark-container::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 245, 200, 0.16) 0%, transparent 68%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.75s ease;
+}
+
+body.lamp-on .watermark-container::after {
+  opacity: 1;
+}
+
+/* Lamp Head (Shade + Diffuser Bulb: Lowered Height) */
+.lamp-head {
+  position: absolute;
+  top: 242px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+}
+
+.lamp-shade-disc {
+  width: 165px;
+  height: 17px;
+  background: linear-gradient(180deg, #3A3D4C 0%, #17181F 100%);
+  border-radius: 15px 15px 4px 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+.lamp-bulb-diffuser {
+  width: 105px;
+  height: 9px;
+  background: #181920;
+  border-radius: 0 0 12px 12px;
+  transition: all 0.4s ease;
+}
+
+body.lamp-on .lamp-bulb-diffuser {
+  background: #FFFFF2;
+  box-shadow: 0 0 20px 4px rgba(255, 240, 170, 0.95), 0 0 40px 10px rgba(255, 215, 90, 0.50);
+}
+
+/* Proportional Shorter Vertical Stem */
+.lamp-stem {
+  position: absolute;
+  top: 260px;
+  bottom: 42px;
+  width: 6px;
+  background: linear-gradient(90deg, #1C1D24 0%, #363945 45%, #16171E 100%);
+  border-radius: 3px;
+  z-index: 4;
+}
+
+/* Heavy Circular Floor Base */
+.lamp-base {
+  position: absolute;
+  bottom: 34px;
+  width: 135px;
+  height: 18px;
+  background: linear-gradient(180deg, #343746 0%, #14151C 100%);
+  border-radius: 50% / 100% 100% 0 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  z-index: 5;
+}
+
+/* Floor Light Pool: Subtle compact contact sheen */
+.floor-puddle {
+  position: absolute;
+  bottom: 24px;
+  width: 220px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 225, 140, 0.20) 0%, rgba(255, 210, 80, 0.05) 45%, transparent 75%);
+  filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.55s ease;
+  z-index: 1;
+}
+
+body.lamp-on .floor-puddle {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   THE INTERACTIVE PULL STRING (With spring physics & golden tassel)
+   ========================================================================== */
+.pull-string-wrapper {
+  position: absolute;
+  top: 256px;
+  right: calc(50% - 62px);
+  width: 30px;
+  height: 125px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  z-index: 15;
+  user-select: none;
+}
+
+.pull-string-wrapper:active {
+  cursor: grabbing;
+}
+
+.pull-cord-line {
+  width: 2px;
+  height: 68px;
+  background: linear-gradient(180deg, #888C9B 0%, #555763 100%);
+  transform-origin: top center;
+  transition: height 0.15s ease-out;
+}
+
+.pull-handle {
+  width: 15px;
+  height: 25px;
+  border-radius: 6px 6px 8px 8px;
+  background: linear-gradient(135deg, #FFF3A8 0%, #F5C542 40%, #D49B1E 75%, #8B6305 100%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), 0 0 10px rgba(245, 197, 66, 0.4), inset 0 1px 1.5px #FFFFFF;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
+  animation: handleGlowPulse 2.4s infinite ease-in-out;
+}
+
+@keyframes handleGlowPulse {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), 0 0 8px rgba(245, 197, 66, 0.25), inset 0 1px 1.5px #FFFFFF;
+  }
+  50% {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 20px rgba(245, 197, 66, 0.75), inset 0 1px 1.5px #FFFFFF;
+  }
+}
+
+body.lamp-on .pull-handle {
+  animation: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), 0 0 12px rgba(245, 197, 66, 0.45), inset 0 1px 1.5px #FFFFFF;
+}
+
+.pull-handle::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #E5B22A;
+  margin-bottom: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.pull-string-wrapper:hover .pull-handle {
+  transform: translateY(3px) scale(1.08);
+  box-shadow: 0 6px 18px rgba(245, 197, 66, 0.75), inset 0 1px 1.5px #FFFFFF;
+}
+
+.pull-string-wrapper.is-pulling .pull-cord-line {
+  height: 90px;
+}
+
+.pull-string-wrapper.is-pulling .pull-handle {
+  transform: translateY(22px) scale(1.1);
+}
+
+.pull-string-wrapper.spring-bounce {
+  animation: stringBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes stringBounce {
+  0% { transform: translateY(20px); }
+  40% { transform: translateY(-7px); }
+  70% { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+
+/* ==========================================================================
+   RIGHT: THE TRANSLUCENT FROSTED GLASS LOGIN TAG ("Etiqueta Trasparentosa")
+   Matches exact user reference mockup with deep glassmorphic transparency
+   ========================================================================== */
+.login-card-container.glass-tag-plaque {
+  width: 410px;
+  max-width: 90vw;
+  margin-right: 2.5vw;
+  background: rgba(14, 18, 28, 0.38); /* Ultra-translucent frosted glass */
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 30px;
+  padding: 34px 32px 30px 32px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75),
+              0 0 35px rgba(80, 227, 194, 0.08),
+              inset 0 1px 1.5px rgba(255, 255, 255, 0.22);
+  position: relative;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(45px) scale(0.96);
+  filter: blur(8px);
+  transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+body.lamp-on .login-card-container.glass-tag-plaque {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0) scale(1);
+  filter: blur(0px);
+}
+
+/* Card Header (Corporate STF GROUP original design, transparent, centered) */
+.card-logo-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 0 0 6px 0;
+}
+
+.card-brand-logo {
+  width: 100%;
+  max-width: 250px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 14px rgba(245, 197, 66, 0.15));
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.card-brand-logo:hover {
+  transform: scale(1.02);
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 20px rgba(245, 197, 66, 0.25));
+}
+
+/* Glass Tag Typography Header (Login / Welcome back) */
+.glass-title-block {
+  margin-bottom: 20px;
+}
+
+.glass-hero-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.glass-hero-sub {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.2px;
+}
+
+/* Glass Form & Capsule Inputs */
+.glass-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.glass-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.glass-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.glass-form-input {
+  width: 100%;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 0 46px 0 18px;
+  font-family: var(--font-family);
+  font-size: 14.5px;
+  color: #FFFFFF;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.glass-form-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+}
+
+.glass-form-input:focus {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.14);
+}
+
+/* Right-aligned icon in inputs */
+.glass-input-icon-right {
+  position: absolute;
+  right: 16px;
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.65);
+  pointer-events: none;
+}
+
+.glass-eye-toggle {
+  position: absolute;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.glass-eye-toggle:hover {
+  color: #FFFFFF;
+}
+
+.glass-eye-toggle i, .glass-eye-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Remember Me Checkbox Row */
+.glass-remember-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: -2px;
+  margin-bottom: 4px;
+}
+
+.glass-remember-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  user-select: none;
+}
+
+.glass-checkbox {
+  accent-color: var(--gold-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* Translucent Frosted Glass Pill Login Button */
+.btn-glass-pill {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  margin-top: 4px;
+}
+
+.btn-glass-pill:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.48);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 255, 255, 0.15);
+}
+
+.btn-glass-pill:active {
+  transform: translateY(1px);
+}
+
+/* Reference Mockup Signup Link */
+.glass-signup-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.glass-signup-link {
+  color: #FFFFFF;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.glass-signup-link:hover {
+  color: #50E3C2;
+  text-shadow: 0 0 10px rgba(80, 227, 194, 0.6);
+  text-decoration: underline;
+}
+
+/* Frosted Glass Quick Presets */
+.glass-quick-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-quick-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.glass-dev-chip {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  transition: all 0.25s ease !important;
+}
+
+.glass-dev-chip:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-signin i, .btn-signin svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.25s ease;
+}
+
+.btn-signin:hover i, .btn-signin:hover svg {
+  transform: translateX(4px);
+}
+
+/* Divider */
+.divider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.divider-text {
+  font-size: 11.5px;
+  color: #6C7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Google SSO Button */
+.btn-google {
+  width: 100%;
+  height: 46px;
+  background: rgba(18, 19, 26, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.25s ease;
+}
+
+.btn-google:hover {
+  background: rgba(25, 27, 36, 0.95);
+  border-color: rgba(245, 197, 66, 0.4);
+  transform: translateY(-1.5px);
+}
+
+.btn-google:active {
+  transform: scale(0.98);
+}
+
+/* Quick Dev Switcher Chips */
+.quick-devs-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.quick-devs-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8E96A6;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+.devs-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dev-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #A0AEC0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dev-chip:hover {
+  background: rgba(245, 197, 66, 0.15);
+  border-color: var(--gold-primary);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.dev-chip img {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Toast alert inside login */
+.login-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(30px);
+  background: #181920;
+  border: 1px solid var(--gold-border);
+  padding: 12px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+.login-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.login-toast i, .login-toast svg {
+  color: var(--gold-primary);
+  width: 18px;
+  height: 18px;
+}
+
+/* ==========================================================================
+   4K & HIGH-DPI ULTRA RESOLUTION MEDIA RULES (2160p & Large Retina Displays)
+   ========================================================================== */
+@media (min-width: 2000px) or (min-height: 1150px) {
+  .fullscreen-stage {
+    padding: 0 8vw 0 6vw;
+  }
+
+  .lamp-stage {
+    width: 52vw;
+    max-width: 1100px;
+  }
+
+  .light-beam-cone {
+    top: 280px;
+    width: 960px;
+    filter: blur(34px);
+    height: calc(100vh - 320px);
+  }
+
+  .lamp-head {
+    top: 264px;
+  }
+
+  .lamp-shade-disc {
+    width: 210px;
+    height: 22px;
+  }
+
+  .lamp-bulb-diffuser {
+    width: 140px;
+    height: 12px;
+  }
+
+  .lamp-stem {
+    top: 286px;
+    width: 8px;
+  }
+
+  .lamp-base {
+    width: 175px;
+    height: 22px;
+  }
+
+  .pull-string-wrapper {
+    top: 280px;
+    right: calc(50% - 80px);
+  }
+
+  .watermark-container {
+    width: 520px;
+    top: 55%;
+  }
+
+  .login-card-container {
+    width: 520px;
+    padding: 48px 44px;
+    border-radius: 34px;
+  }
+
+  .card-brand-logo {
+    max-width: 320px;
+  }
+
+  .fullscreen-code-pre {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+}
+
+/* Responsive for Tablets and Mobile */
+@media (max-width: 960px) {
+  html, body {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .fullscreen-code-pre {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .fullscreen-stage {
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 40px 20px 40px 20px;
+    height: auto;
+    gap: 30px;
+  }
+  
+  .lamp-stage {
+    width: 100%;
+    height: 380px;
+    transform: scale(0.9);
+  }
+
+  .login-card-container {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
