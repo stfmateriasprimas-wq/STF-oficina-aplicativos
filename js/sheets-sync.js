@@ -19,6 +19,21 @@
     init() {
       this.url = localStorage.getItem(STORAGE_KEYS.URL) || '';
       this.updateUiStatus();
+
+      const btnOpen = document.getElementById('btnOpenSheetsModal');
+      if (btnOpen) {
+        btnOpen.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.openSheetsModal();
+        });
+      }
+
+      const backdrop = document.getElementById('modalSheetsSync');
+      if (backdrop) {
+        backdrop.addEventListener('click', (e) => {
+          if (e.target.id === 'modalSheetsSync') window.closeSheetsModal();
+        });
+      }
     },
 
     getUrl() {
@@ -344,9 +359,15 @@
   // --- UI Modal Handlers ---
   window.openSheetsModal = function () {
     const modal = document.getElementById('modalSheetsSync');
-    if (!modal) return;
+    if (!modal) {
+      console.warn('modalSheetsSync no encontrado');
+      return;
+    }
 
     modal.classList.add('show');
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.pointerEvents = 'auto';
 
     const inputUrl = document.getElementById('inputSheetsWebAppUrl');
     if (inputUrl) {
@@ -360,7 +381,12 @@
 
   window.closeSheetsModal = function () {
     const modal = document.getElementById('modalSheetsSync');
-    if (modal) modal.classList.remove('show');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = '';
+      modal.style.opacity = '';
+      modal.style.pointerEvents = '';
+    }
   };
 
   window.saveSheetsUrl = function () {
