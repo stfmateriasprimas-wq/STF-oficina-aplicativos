@@ -241,6 +241,18 @@ const STF_REAL_DATA = {
   // Integraciones y Tareas Asignadas por el Super Admin (Jefe de Desarrollo)
   integrations: [
     {
+      id: "int_juan_indicador",
+      name: "hacer indicador - juan",
+      appId: "app_calidad",
+      devId: "dev_jd",
+      startDate: "2026-10-22",
+      deadline: "2026-10-29",
+      weight: 15,
+      status: "in_progress",
+      description: "pasar indicadopres manuales a digitales",
+      evaluation: null
+    },
+    {
       id: "int_0",
       name: "Gateway de Autenticación & Roles Operativos",
       appId: "app_torre",

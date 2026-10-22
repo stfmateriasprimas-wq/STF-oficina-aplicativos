@@ -6,6 +6,8 @@
 (function () {
   'use strict';
 
+  const DEFAULT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+
   const STORAGE_KEYS = {
     URL: 'STF_SHEETS_WEBAPP_URL',
     HISTORY: 'STF_SHEETS_HISTORY_LOG',
@@ -13,11 +15,13 @@
   };
 
   const SheetsSync = {
-    url: '',
+    url: DEFAULT_WEBAPP_URL,
     isSyncing: false,
 
     init() {
-      this.url = localStorage.getItem(STORAGE_KEYS.URL) || '';
+      const stored = localStorage.getItem(STORAGE_KEYS.URL);
+      this.url = (stored && stored.startsWith('https://script.google.com/macros/s/')) ? stored : DEFAULT_WEBAPP_URL;
+      localStorage.setItem(STORAGE_KEYS.URL, this.url);
       this.updateUiStatus();
 
       const btnOpen = document.getElementById('btnOpenSheetsModal');
