@@ -44,6 +44,11 @@
 
       if (!this.isConnected()) {
         console.info('[SheetsSync] URL de Google Sheets no configurada. Cambio guardado localmente.');
+        setTimeout(() => {
+          if (typeof window.showToast === 'function') {
+            window.showToast('ℹ️ Tarea guardada localmente. Conecta tu Google Sheet en el botón superior.');
+          }
+        }, 1200);
         return { status: 'local_only', message: 'Guardado localmente. Configura la URL de Sheets para sincronizar en la nube.' };
       }
 
@@ -67,6 +72,12 @@
 
         this.setSyncingState(false);
         this.updateUiStatus();
+
+        setTimeout(() => {
+          if (typeof window.showToast === 'function') {
+            window.showToast('☁️ ¡Cambio sincronizado en tu Google Sheet!');
+          }
+        }, 1200);
 
         return { status: 'success', message: 'Sincronizado con Google Sheets exitosamente' };
       } catch (err) {
@@ -211,10 +222,26 @@
         };
       });
 
+      const taskList = (appState.integrations || []).map(item => {
+        const app = appState.applications ? appState.applications.find(a => a.id === item.appId) : null;
+        const dev = appState.developers ? appState.developers.find(d => d.id === item.devId) : null;
+        return {
+          id: item.id,
+          name: item.name,
+          appName: app ? app.name : 'Sistema',
+          devName: dev ? dev.name : 'Desarrollador',
+          weight: item.weight || 15,
+          deadline: item.deadline || '',
+          status: item.status === 'evaluated' ? 'Auditoría Oficializada' : 'En Progreso',
+          evaluation: item.evaluation || null
+        };
+      });
+
       const payload = {
         action: 'sync_full_state',
         user: window.activeSelectedDevId ? getDevNameById(window.activeSelectedDevId) : 'Jose Guzman',
-        applications: appList
+        applications: appList,
+        integrations: taskList
       };
 
       return await this.sendPayload(payload);

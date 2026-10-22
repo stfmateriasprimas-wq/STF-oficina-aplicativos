@@ -198,7 +198,7 @@ function doPost(e) {
     // ACCIÓN 1: Registrar Evento en Bitácora de Cambios
     // =========================================================================
     if (action === "log_update") {
-      var sBitacora = ss.getSheetByName(TABS.BITACORA);
+      var sBitacora = getOrCreateSheet(ss, TABS.BITACORA);
       sBitacora.appendRow([
         now.getTime(),
         dateStr,
@@ -221,7 +221,7 @@ function doPost(e) {
     // ACCIÓN 2: Registrar Avance en Fases de Desarrollo
     // =========================================================================
     if (action === "log_phase") {
-      var sAvances = ss.getSheetByName(TABS.AVANCES);
+      var sAvances = getOrCreateSheet(ss, TABS.AVANCES);
       sAvances.appendRow([
         now.getTime(),
         dateStr,
@@ -235,7 +235,7 @@ function doPost(e) {
       ]);
 
       // También registrar en bitácora
-      var sBit = ss.getSheetByName(TABS.BITACORA);
+      var sBit = getOrCreateSheet(ss, TABS.BITACORA);
       sBit.appendRow([
         now.getTime(),
         dateStr,
@@ -258,7 +258,7 @@ function doPost(e) {
     // ACCIÓN 3: Registrar Asignación de Tarea / Integración
     // =========================================================================
     if (action === "log_task") {
-      var sTareas = ss.getSheetByName(TABS.TAREAS);
+      var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
       sTareas.appendRow([
         payload.taskId || ("int_" + now.getTime()),
         payload.taskName || "",
@@ -271,7 +271,7 @@ function doPost(e) {
         dateStr
       ]);
 
-      var sBitTask = ss.getSheetByName(TABS.BITACORA);
+      var sBitTask = getOrCreateSheet(ss, TABS.BITACORA);
       sBitTask.appendRow([
         now.getTime(),
         dateStr,
@@ -294,7 +294,7 @@ function doPost(e) {
     // ACCIÓN 4: Registrar Auditoría de Calidad
     // =========================================================================
     if (action === "log_audit") {
-      var sAuditorias = ss.getSheetByName(TABS.AUDITORIAS);
+      var sAuditorias = getOrCreateSheet(ss, TABS.AUDITORIAS);
       sAuditorias.appendRow([
         now.getTime(),
         dateStr,
@@ -307,7 +307,7 @@ function doPost(e) {
         payload.notes || ""
       ]);
 
-      var sBit2 = ss.getSheetByName(TABS.BITACORA);
+      var sBit2 = getOrCreateSheet(ss, TABS.BITACORA);
       sBit2.appendRow([
         now.getTime(),
         dateStr,
@@ -330,7 +330,7 @@ function doPost(e) {
     // ACCIÓN 4: Sincronización Completa del Estado de los Aplicativos
     // =========================================================================
     if (action === "sync_full_state") {
-      var sSistemas = ss.getSheetByName(TABS.SISTEMAS);
+      var sSistemas = getOrCreateSheet(ss, TABS.SISTEMAS);
       // Limpiar datos antiguos conservando encabezados
       var lastRow = sSistemas.getLastRow();
       if (lastRow > 1) {
@@ -351,22 +351,47 @@ function doPost(e) {
         ]);
       }
 
-      var sBit3 = ss.getSheetByName(TABS.BITACORA);
+      // Sincronizar también todas las tareas/integraciones operativas
+      var tasks = payload.integrations || [];
+      if (tasks.length > 0) {
+        var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
+        var lastRowTasks = sTareas.getLastRow();
+        if (lastRowTasks > 1) {
+          sTareas.deleteRows(2, lastRowTasks - 1);
+        }
+        for (var t = 0; t < tasks.length; t++) {
+          var tsk = tasks[t];
+          sTareas.appendRow([
+            tsk.id || ("int_" + t),
+            tsk.name || "",
+            tsk.appName || "",
+            tsk.devName || "",
+            tsk.weight || 0,
+            tsk.deadline || "",
+            tsk.status || "En Progreso",
+            tsk.evaluation ? (tsk.evaluation.qualityScore + " / 100") : "Pendiente de Auditoría",
+            dateStr
+          ]);
+        }
+      }
+
+      var sBit3 = getOrCreateSheet(ss, TABS.BITACORA);
       sBit3.appendRow([
         now.getTime(),
         dateStr,
         payload.user || "Administrador",
         "SYNC_TOTAL",
         "Todos los Sistemas",
-        "Sincronización completa de portafolio (" + apps.length + " aplicativos actualizados)",
+        "Sincronización completa de portafolio (" + apps.length + " aplicativos y " + tasks.length + " tareas sincronizadas)",
         "v2.6",
         ""
       ]);
 
       return createJsonResponse({
         status: "success",
-        message: "Base de datos actualizada con " + apps.length + " aplicativos",
+        message: "Base de datos actualizada con " + apps.length + " aplicativos y " + tasks.length + " tareas",
         count: apps.length,
+        taskCount: tasks.length,
         date: dateStr
       });
     }
