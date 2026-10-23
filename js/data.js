@@ -59,9 +59,10 @@ const STF_REAL_DATA = {
     {
       id: "dev_jg",
       name: "Jose Guzman",
-      role: "Desarrollador de Software",
+      username: "jose@guzman",
+      role: "desarrollador",
       avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face",
-      email: "jguzman@stfgroup.com",
+      email: "joseoneiber711@gmail.com",
       onTimeDelivery: 95,
       codeQuality: 93,
       sprintsCompleted: 16,
@@ -71,9 +72,10 @@ const STF_REAL_DATA = {
     {
       id: "dev_jd",
       name: "Juan David",
-      role: "Desarrollador de Software",
+      username: "juan@david",
+      role: "desarrollador",
       avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop&crop=face",
-      email: "juandavid@stfgroup.com",
+      email: "juan.david@studiof.com.co",
       onTimeDelivery: 94,
       codeQuality: 96,
       sprintsCompleted: 14,
@@ -81,11 +83,25 @@ const STF_REAL_DATA = {
       activeProjects: ["app_calidad", "app_torre"]
     },
     {
+      id: "dev_ee",
+      name: "Esteban Escobar",
+      username: "esteban@escobar",
+      role: "desarrollador",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+      email: "esteban.escobar@studiof.com.co",
+      onTimeDelivery: 95,
+      codeQuality: 94,
+      sprintsCompleted: 8,
+      score: "9.3 / 10",
+      activeProjects: ["app_torre"]
+    },
+    {
       id: "dev_mocho",
-      name: "Mocho",
-      role: "Desarrollador de Software",
+      name: "Jhon Eyder (Mocho)",
+      username: "jhon@eyder",
+      role: "desarrollador",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-      email: "mocho@stfgroup.com",
+      email: "jhon.eyder@studiof.com.co",
       onTimeDelivery: 91,
       codeQuality: 92,
       sprintsCompleted: 12,
@@ -93,16 +109,17 @@ const STF_REAL_DATA = {
       activeProjects: ["app_tintoreria", "app_torre"]
     },
     {
-      id: "dev_ee",
-      name: "Esteban Escobar",
-      role: "Desarrollador de Software (Onboarding)",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
-      email: "eescobar@stfgroup.com",
-      onTimeDelivery: 95,
-      codeQuality: 94,
-      sprintsCompleted: 8,
-      score: "9.3 / 10",
-      activeProjects: ["app_torre"]
+      id: "dev_ediaz",
+      name: "Edwin Diaz",
+      username: "ediaz",
+      role: "Admin",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
+      email: "edwin.diaz@studiof.com.co",
+      onTimeDelivery: 99,
+      codeQuality: 98,
+      sprintsCompleted: 24,
+      score: "9.9 / 10",
+      activeProjects: ["app_torre", "app_colchas", "app_laboratorio", "app_calidad", "app_tintoreria", "app_geo"]
     }
   ],
 
@@ -347,6 +364,21 @@ function getStoredData() {
     try {
       const parsed = JSON.parse(local);
       if (parsed.developers && parsed.developers.some(d => d.name === "Jose Guzman") && parsed.integrations) {
+        // Asegurar que dev_ediaz (ADMIN) esté presente
+        if (!parsed.developers.some(d => d.id === 'dev_ediaz')) {
+          const ediazDev = STF_REAL_DATA.developers.find(d => d.id === 'dev_ediaz');
+          if (ediazDev) parsed.developers.push(ediazDev);
+        }
+        // Asegurar usernames y roles oficiales
+        STF_REAL_DATA.developers.forEach(officialDev => {
+          const target = parsed.developers.find(d => d.id === officialDev.id);
+          if (target) {
+            target.username = officialDev.username;
+            target.role = officialDev.role;
+            if (officialDev.email) target.email = officialDev.email;
+          }
+        });
+        saveData(parsed);
         return parsed;
       }
     } catch (e) {

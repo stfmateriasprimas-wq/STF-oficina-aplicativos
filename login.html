@@ -77,18 +77,18 @@
       </div>
 
       <form class="login-form glass-form" id="loginForm">
-        <!-- User Name / Email Field (Translucent Glass Pill with Right Icon) -->
+        <!-- User Name / Login Field (Columna 2: Usuario_Logueo) -->
         <div class="glass-input-group">
           <div class="glass-input-wrapper">
-            <input type="email" id="loginEmail" class="glass-form-input" placeholder="User Name" value="jguzman@stfgroup.com" required autocomplete="email">
+            <input type="text" id="loginEmail" class="glass-form-input" placeholder="Usuario (Ej: jose@guzman o ediaz)" value="jose@guzman" required autocomplete="username">
             <i data-lucide="user" class="glass-input-icon-right"></i>
           </div>
         </div>
 
-        <!-- Password Field (Translucent Glass Pill with Eye Toggle Right Icon) -->
+        <!-- Password Field (Columna 1: ID / Contraseña) -->
         <div class="glass-input-group">
           <div class="glass-input-wrapper">
-            <input type="password" id="loginPassword" class="glass-form-input" placeholder="Password" value="stf2026pass" required autocomplete="current-password">
+            <input type="password" id="loginPassword" class="glass-form-input" placeholder="ID / Contraseña (Ej: 1073524622)" value="1073524622" required autocomplete="current-password">
             <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('loginPassword', this)" title="Ver / Ocultar contraseña" aria-label="Toggle password visibility">
               <i data-lucide="eye-off"></i>
             </button>
@@ -99,34 +99,38 @@
         <div class="glass-remember-row">
           <label class="glass-remember-label">
             <input type="checkbox" id="rememberMe" checked class="glass-checkbox">
-            <span>Remember me</span>
+            <span>Recordar sesión</span>
           </label>
         </div>
 
         <!-- Translucent Frosted Glass Pill Login Button -->
         <button type="submit" class="btn-glass-pill" id="btnSignIn">
-          <span>Login</span>
+          <span>Ingresar al Sistema</span>
         </button>
 
-        <!-- Quick Developer Test Selector (Frosted Translucent Chips) -->
+        <!-- Quick Access Selector: Conectado a Hoja Usuarios en Google Sheets -->
         <div class="quick-devs-section glass-quick-section">
-          <div class="quick-devs-title glass-quick-title">Acceso rápido por desarrollador:</div>
+          <div class="quick-devs-title glass-quick-title">Usuarios Autorizados (Hoja Google Sheets):</div>
           <div class="devs-chips-row">
-            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_jg')" title="Iniciar como Jose Guzman">
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_jg')" title="Jose Guzman · Columna 2: jose@guzman · Columna 1: 1073524622 · Rol: desarrollador">
               <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face" alt="Jose Guzman">
               <span>Jose Guzman</span>
             </button>
-            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_jd')" title="Iniciar como Juan David">
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_jd')" title="Juan David · Columna 2: juan@david · Columna 1: 1107047649 · Rol: desarrollador">
               <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop&crop=face" alt="Juan David">
               <span>Juan David</span>
             </button>
-            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_mocho')" title="Iniciar como Mocho">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="Mocho">
-              <span>Mocho</span>
-            </button>
-            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_ee')" title="Iniciar como Esteban Escobar">
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_ee')" title="Esteban Escobar · Columna 2: esteban@escobar · Columna 1: 1111 · Rol: desarrollador">
               <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face" alt="Esteban Escobar">
               <span>Esteban Escobar</span>
+            </button>
+            <button type="button" class="dev-chip glass-dev-chip" onclick="selectDevPreset('dev_mocho')" title="Jhon Eyder · Columna 2: jhon@eyder · Columna 1: 1010159672 · Rol: desarrollador">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="Jhon Eyder">
+              <span>Jhon Eyder</span>
+            </button>
+            <button type="button" class="dev-chip glass-dev-chip admin-chip" onclick="selectDevPreset('dev_ediaz')" title="ADMIN / ediaz · Columna 2: ediaz · Columna 1: Admin · Rol: Admin">
+              <span class="admin-badge-icon">🛡️</span>
+              <strong>ADMIN (ediaz)</strong>
             </button>
           </div>
         </div>

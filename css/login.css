@@ -746,6 +746,24 @@ body.lamp-on .login-card-container.glass-tag-plaque {
   color: #FFFFFF !important;
 }
 
+.admin-chip {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.3) 0%, rgba(245, 197, 66, 0.18) 100%) !important;
+  border-color: rgba(245, 197, 66, 0.5) !important;
+  color: #FFF3A8 !important;
+}
+
+.admin-chip:hover {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.5) 0%, rgba(245, 197, 66, 0.35) 100%) !important;
+  border-color: #F5C542 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 14px rgba(245, 197, 66, 0.35) !important;
+}
+
+.admin-badge-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
 .btn-signin i, .btn-signin svg {
   width: 16px;
   height: 16px;

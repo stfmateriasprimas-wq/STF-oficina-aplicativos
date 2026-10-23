@@ -267,6 +267,23 @@
     },
 
     /**
+     * Sincronizar tabla de Usuarios autorizados con Google Sheets
+     */
+    async syncUsers(usersList) {
+      const payload = {
+        action: 'sync_users',
+        users: usersList || [
+          { id: "1073524622", username: "jose@guzman", role: "desarrollador", email: "joseoneiber711@gmail.com" },
+          { id: "1107047649", username: "juan@david", role: "desarrollador", email: "" },
+          { id: "1111", username: "esteban@escobar", role: "desarrollador", email: "" },
+          { id: "1010159672", username: "jhon@eyder", role: "desarrollador", email: "" },
+          { id: "Admin", username: "ediaz", role: "Admin", email: "edwin.diaz@studiof.com.co" }
+        ]
+      };
+      return await this.sendPayload(payload);
+    },
+
+    /**
      * Historial local para visualización rápida en UI
      */
     recordLocalHistory(payload) {

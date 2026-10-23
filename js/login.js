@@ -168,79 +168,156 @@ function togglePasswordVisibility(inputId, btn) {
   }
 }
 
-// Developer Quick Preset Switcher
-const DEVELOPERS_PRESETS = [
+// Base de Datos Oficial de Usuarios y Credenciales Autorizadas (Sincronizada con Google Sheets Hoja 'Usuarios')
+// Columna 1: ID (Contraseña de logueo)
+// Columna 2: Usuario_Logueo (Nombres de ingreso)
+// Columna 3: Rol (desarrollador | Admin)
+// Columna 4: Correo
+const STF_USERS_CREDENTIALS = [
   {
     id: "dev_jg",
+    idPassword: "1073524622",
+    username: "jose@guzman",
+    role: "desarrollador",
     name: "Jose Guzman",
-    email: "jguzman@stfgroup.com",
+    email: "joseoneiber711@gmail.com",
     avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
   },
   {
     id: "dev_jd",
+    idPassword: "1107047649",
+    username: "juan@david",
+    role: "desarrollador",
     name: "Juan David",
-    email: "jdavid@stfgroup.com",
+    email: "",
     avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop&crop=face"
   },
   {
+    id: "dev_ee",
+    idPassword: "1111",
+    username: "esteban@escobar",
+    role: "desarrollador",
+    name: "Esteban Escobar",
+    email: "",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face"
+  },
+  {
     id: "dev_mocho",
-    name: "Mocho",
-    email: "mocho@stfgroup.com",
+    idPassword: "1010159672",
+    username: "jhon@eyder",
+    role: "desarrollador",
+    name: "Jhon Eyder",
+    email: "",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
   },
   {
-    id: "dev_ee",
-    name: "Esteban Escobar",
-    email: "eescobar@stfgroup.com",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face"
+    id: "dev_ediaz",
+    idPassword: "Admin",
+    username: "ediaz",
+    role: "Admin",
+    name: "Edwin Diaz",
+    email: "edwin.diaz@studiof.com.co",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face"
   }
 ];
 
-function selectDevPreset(devId) {
-  const dev = DEVELOPERS_PRESETS.find(d => d.id === devId);
-  if (!dev) return;
+const DEVELOPERS_PRESETS = STF_USERS_CREDENTIALS;
 
-  const emailInput = document.getElementById('loginEmail');
+function selectDevPreset(devId) {
+  const user = STF_USERS_CREDENTIALS.find(u => u.id === devId);
+  if (!user) return;
+
+  const userInput = document.getElementById('loginEmail');
   const passInput = document.getElementById('loginPassword');
 
-  if (emailInput) emailInput.value = dev.email;
-  if (passInput) passInput.value = "stf2026pass";
+  // Columna 2: Usuario de logueo
+  if (userInput) userInput.value = user.username;
+  // Columna 1: ID / Contraseña
+  if (passInput) passInput.value = user.idPassword;
 
-  // Remember active dev in localStorage
-  localStorage.setItem('STF_ACTIVE_DEV_ID', dev.id);
-
-  showLoginToast(`Credenciales cargadas para ${dev.name}`);
+  showLoginToast(`Credenciales cargadas: ${user.name} (${user.username}) · Rol: ${user.role}`);
 }
 
-// Form Submission & Redirect
+// Form Submission & Redirect with Columna 2 & Columna 3 Anchoring
 function handleLoginSubmit(e) {
   e.preventDefault();
 
-  const email = document.getElementById('loginEmail')?.value.trim();
-  const pass = document.getElementById('loginPassword')?.value;
+  const enteredUser = (document.getElementById('loginEmail')?.value || '').trim();
+  const enteredPass = (document.getElementById('loginPassword')?.value || '').trim();
   const btn = document.getElementById('btnSignIn');
 
-  if (!email || !pass) {
+  if (!enteredUser || !enteredPass) {
     showLoginToast('Por favor completa todos los campos');
+    return;
+  }
+
+  // 1. Validar Usuario (Columna 2 de Google Sheets o Correo en Columna 4)
+  const normalizedUser = enteredUser.toLowerCase();
+  const matchedUser = STF_USERS_CREDENTIALS.find(u => 
+    u.username.toLowerCase() === normalizedUser || 
+    (u.email && u.email.toLowerCase() === normalizedUser) ||
+    u.id.toLowerCase() === normalizedUser
+  );
+
+  if (!matchedUser) {
+    showLoginToast('⚠️ Usuario no encontrado. Verifica el usuario ingresado (Columna 2)');
+    return;
+  }
+
+  // 2. Validar ID / Contraseña (Columna 1 de Google Sheets)
+  if (String(matchedUser.idPassword).trim() !== enteredPass) {
+    showLoginToast('🔒 Contraseña / ID incorrecto para ' + matchedUser.name + ' (Columna 1)');
     return;
   }
 
   // Visual button loading state
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Validando Credenciales...`;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando Acceso...`;
   }
 
-  // Match developer or default to Jose Guzman
-  const matchedDev = DEVELOPERS_PRESETS.find(d => d.email.toLowerCase() === email.toLowerCase()) || DEVELOPERS_PRESETS[0];
-  localStorage.setItem('STF_ACTIVE_DEV_ID', matchedDev.id);
+  // 3. ANCLAR COLUMNA 2 (Usuario_Logueo) Y COLUMNA 3 (Rol) AL SISTEMA
+  const sessionUser = {
+    id: matchedUser.id,
+    name: matchedUser.name,
+    username: matchedUser.username, // Columna 2
+    role: matchedUser.role,         // Columna 3
+    email: matchedUser.email,       // Columna 4
+    idPassword: matchedUser.idPassword, // Columna 1
+    avatar: matchedUser.avatar
+  };
+
+  localStorage.setItem('STF_LOGGED_USER', JSON.stringify(sessionUser));
+  localStorage.setItem('STF_USER_ROLE', matchedUser.role);            // Columna 3 anclada
+  localStorage.setItem('STF_LOGGED_USERNAME', matchedUser.username);  // Columna 2 anclada
+  localStorage.setItem('STF_ACTIVE_DEV_ID', matchedUser.id);
   sessionStorage.setItem('STF_AUTH_SESSION', 'authenticated');
 
-  showLoginToast(`¡Bienvenido, ${matchedDev.name}! Accediendo al sistema...`);
+  // Registrar login en la bitácora de Google Sheets en tiempo real
+  try {
+    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+    fetch(GOOGLE_SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'log_update',
+        developer: matchedUser.name,
+        eventType: 'LOGIN_EXITOSO',
+        appName: 'Portal de Ingeniería',
+        description: `Ingreso autenticado: Usuario [${matchedUser.username}] | Rol [${matchedUser.role}]`,
+        version: 'v2.6'
+      })
+    }).catch(() => {});
+  } catch (err) {
+    console.warn("Could not log to Sheets bitacora:", err);
+  }
+
+  showLoginToast(`¡Bienvenido, ${matchedUser.name}! Rol: [${matchedUser.role}]. Redirigiendo...`);
 
   setTimeout(() => {
     window.location.href = 'index.html';
-  }, 900);
+  }, 750);
 }
 
 // Quick Google SSO Demo Login

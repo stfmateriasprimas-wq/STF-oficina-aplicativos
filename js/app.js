@@ -5,7 +5,15 @@
  */
 
 let appState = getStoredData();
-let activeSelectedDevId = appState.developers[0].id;
+
+// Sesión autenticada y anclaje de Columna 2 (Usuario) y Columna 3 (Rol)
+const savedLoggedUserJson = localStorage.getItem('STF_LOGGED_USER');
+let loggedUser = null;
+if (savedLoggedUserJson) {
+  try { loggedUser = JSON.parse(savedLoggedUserJson); } catch(e) {}
+}
+
+let activeSelectedDevId = (loggedUser && loggedUser.id) || localStorage.getItem('STF_ACTIVE_DEV_ID') || (appState.developers[0] && appState.developers[0].id) || 'dev_jg';
 let currentEditingSysId = null;
 
 // Chart Instances
@@ -517,16 +525,25 @@ function selectDeveloper(devId) {
   // 1. Update header profile selector
   const headerAvatar = document.getElementById('headerUserAvatar');
   const headerName = document.getElementById('headerUserName');
+  const headerRoleBadge = document.getElementById('headerUserRoleBadge');
   const dropdown = document.getElementById('headerDevDropdown');
   if (dropdown) dropdown.classList.remove('show');
 
   if (devId === 'all') {
     if (headerName) headerName.textContent = 'Vista Global';
     if (headerAvatar) headerAvatar.src = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&h=100&fit=crop';
+    if (headerRoleBadge) headerRoleBadge.innerHTML = '🌐 Portafolio General';
   } else {
     const dev = getDeveloperById(devId);
     if (headerName) headerName.textContent = dev.name;
     if (headerAvatar) headerAvatar.src = dev.avatar;
+    if (headerRoleBadge) {
+      if (dev.role === 'Admin') {
+        headerRoleBadge.innerHTML = '<span style="color:#F5C542; font-weight:700;">🛡️ Admin</span>';
+      } else {
+        headerRoleBadge.innerHTML = '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador</span>';
+      }
+    }
   }
 
   // 2. Re-render developer cards grid (updates active card)
@@ -2243,8 +2260,17 @@ function initApp() {
   const firstDev = getDeveloperById(activeSelectedDevId);
   const headerAvatar = document.getElementById('headerUserAvatar');
   const headerName = document.getElementById('headerUserName');
+  const headerRoleBadge = document.getElementById('headerUserRoleBadge');
+
   if (headerAvatar && firstDev) headerAvatar.src = firstDev.avatar;
   if (headerName && firstDev) headerName.textContent = firstDev.name;
+  if (headerRoleBadge && firstDev) {
+    if (firstDev.role === 'Admin') {
+      headerRoleBadge.innerHTML = '<span style="color:#F5C542; font-weight:700;">🛡️ Admin</span>';
+    } else {
+      headerRoleBadge.innerHTML = '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador</span>';
+    }
+  }
 
   appState.developers.forEach(dev => {
     const dropImg = document.getElementById(`dropImg_${dev.id}`);

@@ -26,7 +26,8 @@ var TABS = {
   AVANCES: "Avances_Fases",
   TAREAS: "Tareas_Integraciones",
   AUDITORIAS: "Auditorias_Calidad",
-  SISTEMAS: "Estado_Sistemas"
+  SISTEMAS: "Estado_Sistemas",
+  USUARIOS: "Usuarios"
 };
 
 /**
@@ -116,6 +117,23 @@ function initializeSheets() {
     ]);
     formatHeaderRow(sSistemas, "#7C3AED"); // Purple
   }
+
+  // 6. Usuarios (Credenciales y Roles de Acceso)
+  var sUsuarios = getOrCreateSheet(ss, TABS.USUARIOS);
+  if (sUsuarios.getLastRow() === 0) {
+    sUsuarios.appendRow([
+      "ID",
+      "Usuario_Logueo",
+      "Rol",
+      "Correo"
+    ]);
+    formatHeaderRow(sUsuarios, "#0F172A"); // Slate dark
+    sUsuarios.appendRow(["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com"]);
+    sUsuarios.appendRow(["1107047649", "juan@david", "desarrollador", ""]);
+    sUsuarios.appendRow(["1111", "esteban@escobar", "desarrollador", ""]);
+    sUsuarios.appendRow(["1010159672", "jhon@eyder", "desarrollador", ""]);
+    sUsuarios.appendRow(["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co"]);
+  }
 }
 
 function getOrCreateSheet(ss, name) {
@@ -168,6 +186,24 @@ function doGet(e) {
     }
 
     return createJsonResponse({ status: "success", data: data });
+  }
+
+  if (action === "get_users") {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sU = getOrCreateSheet(ss, TABS.USUARIOS);
+    var uRows = sU.getDataRange().getValues();
+    var usersList = [];
+    if (uRows.length > 1) {
+      for (var r = 1; r < uRows.length; r++) {
+        usersList.push({
+          idPassword: String(uRows[r][0]).trim(),
+          username: String(uRows[r][1]).trim(),
+          role: String(uRows[r][2]).trim(),
+          email: String(uRows[r][3]).trim()
+        });
+      }
+    }
+    return createJsonResponse({ status: "success", users: usersList });
   }
 
   return createJsonResponse({ status: "error", message: "Acción no reconocida" });
@@ -392,6 +428,45 @@ function doPost(e) {
         message: "Base de datos actualizada con " + apps.length + " aplicativos y " + tasks.length + " tareas",
         count: apps.length,
         taskCount: tasks.length,
+        date: dateStr
+      });
+    }
+
+    // =========================================================================
+    // ACCIÓN 5: Sincronizar Usuarios
+    // =========================================================================
+    if (action === "sync_users") {
+      var sUsers = getOrCreateSheet(ss, TABS.USUARIOS);
+      var lastRowUsers = sUsers.getLastRow();
+      if (lastRowUsers > 1) {
+        sUsers.deleteRows(2, lastRowUsers - 1);
+      } else if (lastRowUsers === 0) {
+        sUsers.appendRow(["ID", "Usuario_Logueo", "Rol", "Correo"]);
+        formatHeaderRow(sUsers, "#0F172A");
+      }
+
+      var uData = payload.users || [
+        { id: "1073524622", username: "jose@guzman", role: "desarrollador", email: "joseoneiber711@gmail.com" },
+        { id: "1107047649", username: "juan@david", role: "desarrollador", email: "" },
+        { id: "1111", username: "esteban@escobar", role: "desarrollador", email: "" },
+        { id: "1010159672", username: "jhon@eyder", role: "desarrollador", email: "" },
+        { id: "Admin", username: "ediaz", role: "Admin", email: "edwin.diaz@studiof.com.co" }
+      ];
+
+      for (var k = 0; k < uData.length; k++) {
+        var userItem = uData[k];
+        sUsers.appendRow([
+          userItem.id || userItem.idPassword || "",
+          userItem.username || "",
+          userItem.role || "desarrollador",
+          userItem.email || ""
+        ]);
+      }
+
+      return createJsonResponse({
+        status: "success",
+        message: "Pestaña Usuarios actualizada exitosamente con " + uData.length + " usuarios",
+        count: uData.length,
         date: dateStr
       });
     }
