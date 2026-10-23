@@ -4300,17 +4300,16 @@ body {
   justify-content: center;
 }
 
-/* La Hoja Oficial A4 de Papel con Marca de Agua */
+/* La Hoja Oficial A4 de Papel con Marca de Agua (Diseño Corporativo Limpio Hoja Única) */
 .report-paper {
-  width: 100%;
-  max-width: 800px;
+  width: 794px;
   min-height: 1120px;
+  max-height: 1122px;
   background: #FFFFFF;
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   border: 1px solid #CBD5E1;
-  border-top: 5px solid #0F172A;
-  padding: 42px 48px;
+  padding: 24px 32px;
   position: relative;
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: #0F172A;
@@ -4318,15 +4317,15 @@ body {
   box-sizing: border-box;
 }
 
-/* Marca de Agua (Gota de agua) centrada y transparente */
+/* Marca de Agua (Gota de agua) centrada y sutil */
 .report-watermark-overlay {
   position: absolute;
-  top: 52%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 66%;
-  max-width: 490px;
-  opacity: 0.055;
+  width: 58%;
+  max-width: 440px;
+  opacity: 0.045;
   pointer-events: none;
   user-select: none;
   z-index: 1;
@@ -4344,251 +4343,128 @@ body {
   z-index: 2;
 }
 
-/* Elementos del Documento Ejecutivo Oficial */
-.rep-security-top-ribbon {
+/* Cabecera Corporativa Limpia (Sin cajas negras, sin códigos QR ni badges de seguridad) */
+.rep-clean-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: #0F172A;
-  color: #FFFFFF;
-  padding: 6px 14px;
-  border-radius: 4px 4px 0 0;
-  margin: -42px -48px 18px -48px;
-  font-size: 9.5px;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-}
-
-.sec-ribbon-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sec-pill-alert {
-  background: #DC2626;
-  color: #FFFFFF;
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 8.5px;
-  font-weight: 800;
-}
-
-.sec-ribbon-text {
-  color: #E2E8F0;
-}
-
-.sec-ribbon-right {
-  color: #94A3B8;
-  font-family: monospace;
-  font-size: 9px;
-}
-
-.rep-doc-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
+  align-items: flex-start;
+  padding-bottom: 10px;
   border-bottom: 2px solid #0F172A;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.rep-doc-brand-area {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.rep-brand-badge-box {
-  width: 46px;
-  height: 46px;
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  border: 2px solid #334155;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
-  flex-shrink: 0;
-}
-
-.rep-brand-badge-stf {
-  font-size: 14px;
-  font-weight: 900;
-  color: #FFFFFF;
-  letter-spacing: 1.5px;
-  line-height: 1;
-}
-
-.rep-brand-badge-sub {
-  font-size: 7.5px;
-  font-weight: 700;
-  color: #818CF8;
-  letter-spacing: 0.8px;
-}
-
-.rep-brand-info {
+.rep-clean-brand {
   display: flex;
   flex-direction: column;
 }
 
-.rep-brand-company-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.rep-brand-name {
-  font-size: 17px;
+.rep-brand-company-title {
+  font-size: 19px;
   font-weight: 900;
   letter-spacing: 0.8px;
   color: #0F172A;
   margin: 0;
+  line-height: 1.1;
 }
 
-.rep-brand-tag-verified {
-  font-size: 8.5px;
-  font-weight: 800;
-  color: #059669;
-  background: #ECFDF5;
-  border: 1px solid #A7F3D0;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.rep-brand-dept {
+.rep-brand-direction {
   font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   color: #4338CA;
-  margin: 2px 0 0;
+  margin: 3px 0 0;
 }
 
-.rep-brand-subdept {
-  font-size: 9px;
+.rep-brand-division {
+  font-size: 8.5px;
   color: #64748B;
   margin: 1px 0 0;
+  font-weight: 500;
 }
 
-.rep-doc-security-meta {
+.rep-clean-meta {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
   text-align: right;
-}
-
-.rep-qr-sec-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 6px;
-  padding: 3px 6px;
-}
-
-.rep-qr-svg {
-  display: block;
-}
-
-.rep-qr-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 2px;
-}
-
-.rep-qr-folio {
-  font-size: 8.5px;
-  font-weight: 800;
-  font-family: monospace;
-  color: #0F172A;
-}
-
-.rep-qr-label {
-  font-size: 7px;
-  color: #94A3B8;
-}
-
-.rep-doc-cert-data {
-  font-size: 10px;
-  color: #64748B;
-  line-height: 1.4;
-}
-
-.rep-cert-status-badge {
-  display: inline-block;
-  background: #EEF2FF;
-  color: #4338CA;
-  border: 1px solid #C7D2FE;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 8.5px;
-  font-weight: 800;
-  margin-top: 3px;
-  letter-spacing: 0.3px;
-}
-
-.rep-doc-title-block {
-  margin-bottom: 14px;
-  border-bottom: 1px solid #E2E8F0;
-  padding-bottom: 8px;
-}
-
-.rep-doc-title-pre {
+  gap: 2px;
   font-size: 9px;
+  color: #64748B;
+}
+
+.rep-meta-row strong {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.rep-meta-folio {
+  font-family: monospace;
+  font-weight: 800;
+  color: #0F172A;
+  font-size: 10px;
+}
+
+/* Bloque del Título Principal */
+.rep-clean-title-block {
+  margin-bottom: 10px;
+}
+
+.rep-title-tag {
+  font-size: 8.5px;
   font-weight: 800;
   color: #6366F1;
   letter-spacing: 1px;
   text-transform: uppercase;
+  display: block;
   margin-bottom: 2px;
 }
 
-.rep-doc-main-title {
-  font-size: 15.5px;
+.rep-clean-main-title {
+  font-size: 14.5px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   color: #0F172A;
   margin: 0 0 2px;
+  line-height: 1.2;
 }
 
-.rep-doc-subtitle {
-  font-size: 10.5px;
+.rep-clean-subtitle {
+  font-size: 9.5px;
   color: #475569;
   margin: 0;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
-/* Barra de Parámetros del Filtro */
-.rep-doc-params-strip {
+/* Franja de Parámetros Auditados (Sin desbordamiento ni cortes de texto) */
+.rep-params-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1.2fr 1.3fr 1.3fr 0.9fr;
   gap: 8px;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 7px 12px;
-  margin-bottom: 16px;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
 }
 
-.rep-param-item {
+.rep-param-col {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-.rep-param-label {
-  font-size: 9px;
+.rep-param-tag {
+  font-size: 8px;
   font-weight: 700;
   text-transform: uppercase;
   color: #94A3B8;
   letter-spacing: 0.3px;
+  margin-bottom: 1px;
 }
 
-.rep-param-value {
-  font-size: 11px;
+.rep-param-data {
+  font-size: 10px;
   font-weight: 700;
   color: #1E293B;
   white-space: nowrap;
@@ -4596,19 +4472,19 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Grilla de 4 Tarjetas de Métricas Medibles */
+/* 4 Tarjetas de Métricas de Desempeño y Efectividad */
 .rep-kpis-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .rep-kpi-card {
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
   position: relative;
   overflow: hidden;
 }
@@ -4628,83 +4504,77 @@ body {
 .rep-kpi-card.card-tasks::before { background: #F59E0B; }
 
 .rep-kpi-val {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #0F172A;
   line-height: 1.1;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .rep-kpi-lbl {
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 700;
   text-transform: uppercase;
   color: #64748B;
-  letter-spacing: 0.3px;
-  line-height: 1.25;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
 }
 
 .rep-kpi-sub {
-  font-size: 9px;
+  font-size: 8px;
   color: #94A3B8;
   margin-top: 2px;
   display: block;
 }
 
-/* Secciones de Contenido y Tablas */
-.rep-section-title {
-  font-size: 11.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: #0F172A;
-  margin: 16px 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-left: 3px solid #4F46E5;
-  padding-left: 8px;
-}
-
-/* Perfil Destacado del Programador (cuando se filtra por uno) */
+/* Ficha del Desarrollador (Individual) */
 .rep-dev-spotlight-card {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin-bottom: 12px;
+  border-radius: 8px;
+  padding: 7px 12px;
+  margin-bottom: 10px;
 }
 
 .rep-dev-avatar {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #E2E8F0;
+  flex-shrink: 0;
 }
 
 .rep-dev-details {
   flex: 1;
+  min-width: 0;
 }
 
 .rep-dev-name {
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 800;
   color: #0F172A;
 }
 
 .rep-dev-submeta {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: #64748B;
+}
+
+.rep-dev-extra {
+  font-size: 8.5px;
+  color: #475569;
+  margin-top: 1px;
 }
 
 .rep-dev-kpis-mini {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   text-align: right;
+  flex-shrink: 0;
 }
 
 .rep-dev-mini-stat {
@@ -4713,24 +4583,39 @@ body {
 }
 
 .rep-dev-stat-val {
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 800;
   color: #0F172A;
 }
 
 .rep-dev-stat-lbl {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   color: #94A3B8;
   text-transform: uppercase;
 }
 
-/* Tablas Ejecutivas Formales */
+/* Encabezados de Sección */
+.rep-section-header {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #0F172A;
+  margin: 10px 0 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 3px solid #4F46E5;
+  padding-left: 6px;
+}
+
+/* Tablas Ejecutivas Formales y Compactas */
 .rep-formal-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10.5px;
-  margin-bottom: 12px;
+  font-size: 9px;
+  margin-bottom: 10px;
 }
 
 .rep-formal-table th {
@@ -4738,14 +4623,14 @@ body {
   color: #FFFFFF;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 9px;
-  letter-spacing: 0.4px;
-  padding: 7px 10px;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  padding: 5px 8px;
   text-align: left;
 }
 
 .rep-formal-table td {
-  padding: 7px 10px;
+  padding: 5px 8px;
   border-bottom: 1px solid #F1F5F9;
   color: #1E293B;
   vertical-align: middle;
@@ -4755,46 +4640,45 @@ body {
   background: #F8FAFC;
 }
 
-.rep-formal-table tr:hover td {
-  background: #F1F5F9;
-}
-
 .rep-badge-ontime {
   background: #ECFDF5;
   color: #059669;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-block;
 }
 
 .rep-badge-risk {
   background: #FEF2F2;
   color: #DC2626;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-block;
 }
 
 .rep-badge-eval {
   background: #EFF6FF;
   color: #2563EB;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-block;
 }
 
 .rep-progress-bar-mini {
-  width: 65px;
-  height: 6px;
+  width: 50px;
+  height: 5px;
   background: #E2E8F0;
   border-radius: 3px;
   overflow: hidden;
   display: inline-block;
   vertical-align: middle;
-  margin-right: 6px;
+  margin-right: 5px;
 }
 
 .rep-progress-bar-fill {
@@ -4803,178 +4687,109 @@ body {
   border-radius: 3px;
 }
 
-/* Matriz de Gobernanza y Ciberseguridad */
-.rep-gov-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 12px;
-  margin-bottom: 12px;
-}
-
-.rep-gov-card {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 7px 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-.gov-title {
-  font-size: 8.5px;
-  font-weight: 700;
-  color: #64748B;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.gov-val {
-  font-size: 11.5px;
-  font-weight: 800;
-  margin: 1px 0;
-}
-
-.gov-sub {
-  font-size: 8px;
-  color: #94A3B8;
-}
-
-/* Caja de Dictamen y Conclusiones */
+/* Caja de Dictamen y Conclusiones de TI */
 .rep-conclusions-box {
   background: #F8FAFC;
-  border-left: 4px solid #10B981;
-  border-radius: 6px;
-  padding: 9px 12px;
-  margin-top: 12px;
-  margin-bottom: 18px;
+  border-left: 3.5px solid #10B981;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  margin-bottom: 10px;
 }
 
 .rep-conclusions-title {
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
   color: #0F172A;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .rep-conclusions-text {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: #334155;
-  line-height: 1.45;
+  line-height: 1.4;
   margin: 0;
 }
 
-/* Bloque Oficial de Firma Digital con Sello Circular */
+/* Bloque Oficial de Firma Digital */
 .rep-signature-block {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 8px;
   page-break-inside: avoid;
 }
 
 .rep-signature-card {
-  width: 320px;
+  width: 290px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.rep-sig-seal-and-stroke {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  height: 60px;
-  margin-bottom: 4px;
-}
-
-.rep-official-digital-seal {
-  width: 58px;
-  height: 58px;
-  flex-shrink: 0;
-}
-
-.seal-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 
 .rep-signature-image-box {
-  height: 58px;
-  flex: 1;
+  height: 48px;
+  width: 100%;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
 }
 
 .rep-signature-img {
-  max-height: 54px;
-  max-width: 180px;
+  max-height: 44px;
+  max-width: 200px;
   object-fit: contain;
 }
 
 .rep-sig-placeholder {
-  font-size: 9.5px;
+  font-size: 8.5px;
   color: #94A3B8;
   font-style: italic;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
 }
 
 .rep-signature-line {
-  width: 280px;
+  width: 240px;
   height: 1.5px;
   background: #0F172A;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .rep-signer-name {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #0F172A;
 }
 
 .rep-signer-role {
-  font-size: 9.5px;
+  font-size: 8.5px;
   color: #475569;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .rep-signature-cert-hash {
-  font-size: 8px;
+  font-size: 7.5px;
   color: #6366F1;
-  margin-top: 4px;
+  margin-top: 3px;
   font-family: monospace;
-  letter-spacing: 0.3px;
   font-weight: 600;
 }
 
-.rep-signature-time {
-  font-size: 7.5px;
-  color: #94A3B8;
-  margin-top: 2px;
-  font-family: monospace;
-}
-
+/* Pie de Página Legal */
 .rep-doc-footer-legal {
   border-top: 1px solid #E2E8F0;
-  padding-top: 8px;
-  margin-top: 18px;
+  padding-top: 6px;
+  margin-top: 10px;
   display: flex;
   justify-content: space-between;
-  font-size: 8.5px;
+  font-size: 8px;
   color: #94A3B8;
 }
 
@@ -5059,19 +4874,23 @@ body {
     border-radius: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding: 10mm 12mm !important;
+    padding: 8mm 10mm !important;
     min-height: auto !important;
+    max-height: 280mm !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .report-watermark-overlay {
-    opacity: 0.08 !important;
+    opacity: 0.06 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 4mm;
   }
 }
 
