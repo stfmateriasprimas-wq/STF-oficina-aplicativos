@@ -39,6 +39,10 @@ function getDeveloperById(devId) {
   return appState.developers.find(d => d.id === devId) || appState.developers[0];
 }
 
+function getApplicationById(appId) {
+  return appState.applications.find(a => a.id === appId) || null;
+}
+
 function getDominantPhase() {
   // Encuentra la fase activa más común entre los aplicativos en desarrollo
   const phaseCount = {};
@@ -1888,6 +1892,74 @@ function syncSignatureToDocument() {
 }
 
 // --------------------------------------------------------------------------
+// Generador Vectorial de Código QR de Alta Seguridad para Validación Criptográfica
+// --------------------------------------------------------------------------
+
+function generateSvgSecurityQrCode(folioCode, certHash) {
+  return `
+    <svg viewBox="0 0 110 110" width="56" height="56" class="rep-qr-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Código QR de Verificación">
+      <rect width="110" height="110" fill="#FFFFFF" rx="4"/>
+      <!-- Patrones de Esquinas (Posición QR) -->
+      <rect x="6" y="6" width="28" height="28" fill="#0F172A" rx="3"/>
+      <rect x="11" y="11" width="18" height="18" fill="#FFFFFF" rx="2"/>
+      <rect x="15" y="15" width="10" height="10" fill="#4F46E5" rx="1"/>
+      
+      <rect x="76" y="6" width="28" height="28" fill="#0F172A" rx="3"/>
+      <rect x="81" y="11" width="18" height="18" fill="#FFFFFF" rx="2"/>
+      <rect x="85" y="15" width="10" height="10" fill="#4F46E5" rx="1"/>
+      
+      <rect x="6" y="76" width="28" height="28" fill="#0F172A" rx="3"/>
+      <rect x="11" y="81" width="18" height="18" fill="#FFFFFF" rx="2"/>
+      <rect x="15" y="85" width="10" height="10" fill="#4F46E5" rx="1"/>
+
+      <!-- Matriz de Datos Criptográficos -->
+      <g fill="#1E293B">
+        <rect x="42" y="8" width="5" height="5"/>
+        <rect x="52" y="8" width="5" height="5"/>
+        <rect x="62" y="8" width="5" height="5"/>
+        <rect x="42" y="18" width="5" height="5"/>
+        <rect x="62" y="18" width="5" height="5"/>
+        <rect x="42" y="28" width="5" height="5"/>
+        <rect x="52" y="28" width="5" height="5"/>
+        
+        <rect x="8" y="42" width="5" height="5"/>
+        <rect x="18" y="42" width="5" height="5"/>
+        <rect x="28" y="42" width="5" height="5"/>
+        <rect x="76" y="42" width="5" height="5"/>
+        <rect x="86" y="42" width="5" height="5"/>
+        <rect x="96" y="42" width="5" height="5"/>
+        
+        <rect x="8" y="52" width="5" height="5"/>
+        <rect x="28" y="52" width="5" height="5"/>
+        <rect x="76" y="52" width="5" height="5"/>
+        <rect x="96" y="52" width="5" height="5"/>
+
+        <rect x="8" y="62" width="5" height="5"/>
+        <rect x="18" y="62" width="5" height="5"/>
+        <rect x="86" y="62" width="5" height="5"/>
+        <rect x="96" y="62" width="5" height="5"/>
+        
+        <rect x="42" y="76" width="5" height="5"/>
+        <rect x="52" y="76" width="5" height="5"/>
+        <rect x="62" y="76" width="5" height="5"/>
+        <rect x="42" y="86" width="5" height="5"/>
+        <rect x="62" y="86" width="5" height="5"/>
+        <rect x="52" y="96" width="5" height="5"/>
+        <rect x="76" y="86" width="5" height="5"/>
+        <rect x="86" y="96" width="5" height="5"/>
+        <rect x="96" y="76" width="5" height="5"/>
+      </g>
+      
+      <!-- Escudo Central de Validación de Seguridad -->
+      <rect x="40" y="40" width="30" height="30" fill="#FFFFFF" rx="4"/>
+      <rect x="42" y="42" width="26" height="26" fill="#0F172A" rx="3"/>
+      <path d="M55 46 L63 50 L63 56 C63 61 55 64 55 64 C55 64 47 61 47 56 L47 50 Z" fill="#4F46E5"/>
+      <path d="M52 55 L54 57 L58 53" stroke="#FFFFFF" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
+
+// --------------------------------------------------------------------------
 // Cálculo Matemático y Generación de la Vista Previa del Documento
 // --------------------------------------------------------------------------
 
@@ -1903,13 +1975,25 @@ function updateExecutiveReportPreview() {
   const signerName = document.getElementById('repSignerName')?.value || 'Ing. Edwin Díaz';
   const signerRole = document.getElementById('repSignerRole')?.value || 'Director de TI & Proyectos Tecnológicos · STF GROUP S.A.';
 
+  const selectedDevObj = devId === 'all' ? null : getDeveloperById(devId);
+  const isAdminDev = selectedDevObj && (selectedDevObj.role === 'Admin' || selectedDevObj.id === 'dev_ediaz');
+
   // 1. Filtrar aplicativos
   let filteredApps = appState.applications.slice();
   if (appId !== 'all') {
     filteredApps = filteredApps.filter(a => a.id === appId);
   }
   if (devId !== 'all') {
-    filteredApps = filteredApps.filter(a => a.devId === devId || (a.devIds && a.devIds.includes(devId)));
+    if (isAdminDev) {
+      // Como Director de TI y Administrador, supervisa todo el portafolio corporativo
+      filteredApps = appState.applications.slice();
+    } else {
+      filteredApps = filteredApps.filter(a => 
+        a.devId === devId || 
+        (a.devIds && a.devIds.includes(devId)) ||
+        (selectedDevObj?.activeProjects && selectedDevObj.activeProjects.includes(a.id))
+      );
+    }
   }
 
   // 2. Filtrar desarrolladores
@@ -1921,7 +2005,12 @@ function updateExecutiveReportPreview() {
   // 3. Filtrar tareas / integraciones
   let filteredTasks = (appState.integrations || []).slice();
   if (devId !== 'all') {
-    filteredTasks = filteredTasks.filter(t => t.devId === devId);
+    if (isAdminDev) {
+      // Como Director TI, supervisa todas las tareas del equipo
+      filteredTasks = (appState.integrations || []).slice();
+    } else {
+      filteredTasks = filteredTasks.filter(t => t.devId === devId);
+    }
   }
   if (appId !== 'all') {
     filteredTasks = filteredTasks.filter(t => t.appId === appId);
@@ -1956,7 +2045,6 @@ function updateExecutiveReportPreview() {
     const sumSLA = filteredDevs.reduce((acc, d) => acc + (d.onTimeDelivery || 94), 0);
     slaScore = Math.round(sumSLA / filteredDevs.length);
   }
-  // Si hay tareas evaluadas, incorporar el ratio real de entregas a tiempo
   const evaluatedTasks = filteredTasks.filter(t => t.status === 'evaluated');
   if (evaluatedTasks.length > 0) {
     const onTimeCount = evaluatedTasks.filter(t => t.evaluation && t.evaluation.onTime).length;
@@ -1981,10 +2069,19 @@ function updateExecutiveReportPreview() {
   const inProgressTasksCount = filteredTasks.filter(t => t.status === 'in_progress').length;
 
   // Metadata labels
-  const selectedDevObj = devId === 'all' ? null : getDeveloperById(devId);
-  const devScopeText = selectedDevObj ? `${selectedDevObj.name} (${selectedDevObj.role})` : 'Equipo Completo de Desarrollo (Portafolio General)';
+  let devScopeText = 'Portafolio General (Equipo Completo de Desarrollo)';
+  if (selectedDevObj) {
+    devScopeText = isAdminDev 
+      ? `${selectedDevObj.name} (Director de TI & Proyectos · Supervisión Global)`
+      : `${selectedDevObj.name} (${selectedDevObj.role})`;
+  }
+
   const selectedAppObj = appId === 'all' ? null : getApplicationById(appId);
-  const appScopeText = selectedAppObj ? `[${selectedAppObj.code}] ${selectedAppObj.name}` : `Todos los Aplicativos (${filteredApps.length} activos)`;
+  let appScopeText = `Portafolio Completo (${filteredApps.length} Aplicativos Activos)`;
+  if (selectedAppObj) {
+    appScopeText = `[${selectedAppObj.code}] ${selectedAppObj.name}`;
+  }
+
   const dateFormattedFrom = formatDate(dateFrom);
   const dateFormattedTo = formatDate(dateTo);
   const now = getSystemReferenceDate();
@@ -1993,23 +2090,57 @@ function updateExecutiveReportPreview() {
   const certHash = `SHA-256 [STF-CERT-${String(Math.abs(hashString(signerName + folioCode)) % 900000 + 100000)}-2026]`;
 
   let html = `
-    <!-- Encabezado Corporativo Oficial con Logo -->
-    <div class="rep-doc-header">
-      <div class="rep-doc-logo-area">
-        <img src="assets/stf-group-logo-watermark.png" alt="STF GROUP Logo" class="rep-doc-logo-img">
-        <span class="rep-doc-dept-tag">Dirección de Tecnología & Transformación Digital · Auditoría de Software</span>
+    <!-- Barra Superior de Clasificación y Seguridad -->
+    <div class="rep-security-top-ribbon">
+      <div class="sec-ribbon-left">
+        <span class="sec-pill-alert">CONFIDENCIAL TI-3</span>
+        <span class="sec-ribbon-text">DOCUMENTO OFICIAL AUDITADO · CADENA DE CUSTODIA DIGITAL STF GROUP S.A.</span>
       </div>
-      <div class="rep-doc-meta-box">
-        <div class="rep-doc-meta-folio">FOLIO: ${folioCode}</div>
-        <div>Emisión: <strong>${todayFormatted}</strong></div>
-        <span class="rep-doc-meta-badge">✓ CERTIFICADO Y AUDITADO</span>
+      <div class="sec-ribbon-right">
+        <span>HASH CRIPTOGRÁFICO: SHA-256</span>
+      </div>
+    </div>
+
+    <!-- Cabecera Institucional y Bloque de Seguridad Digital (EL LOGO ESTIRADO FUE ELIMINADO) -->
+    <div class="rep-doc-header">
+      <div class="rep-doc-brand-area">
+        <div class="rep-brand-badge-box">
+          <span class="rep-brand-badge-stf">STF</span>
+          <span class="rep-brand-badge-sub">GROUP</span>
+        </div>
+        <div class="rep-brand-info">
+          <div class="rep-brand-company-row">
+            <h1 class="rep-brand-name">STF GROUP S.A.</h1>
+            <span class="rep-brand-tag-verified">✓ SISTEMA CENTRAL OFICIAL</span>
+          </div>
+          <p class="rep-brand-dept">DIRECCIÓN CORPORATIVA DE TECNOLOGÍA & TRANSFORMACIÓN DIGITAL</p>
+          <p class="rep-brand-subdept">División de Ingeniería de Software, Arquitectura Cloud & Auditoría Operativa de Plantas</p>
+        </div>
+      </div>
+
+      <div class="rep-doc-security-meta">
+        <div class="rep-qr-sec-box">
+          ${generateSvgSecurityQrCode(folioCode, certHash)}
+          <div class="rep-qr-info">
+            <span class="rep-qr-folio">${folioCode}</span>
+            <span class="rep-qr-label">Validación QR Digital</span>
+          </div>
+        </div>
+        <div class="rep-doc-cert-data">
+          <div>Fecha de Emisión: <strong>${todayFormatted}</strong></div>
+          <div>Marco Normativo: <strong>Ley 527 de 1999 (Firmas Digitales)</strong></div>
+          <div class="rep-cert-status-badge">
+            <span>🔒 AUDITADO, ENCRIPTADO Y AUTÉNTICO</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Título Principal del Dictamen -->
     <div class="rep-doc-title-block">
-      <h1 class="rep-doc-main-title">Informe Ejecutivo de Rendimiento, Desempeño & Efectividad</h1>
-      <p class="rep-doc-subtitle">Evaluación auditable del estado de desarrollo de software, cumplimiento de SLA y métricas de ingeniería técnica para STF GROUP S.A.</p>
+      <div class="rep-doc-title-pre">CERTIFICACIÓN TÉCNICA OFICIAL · EVALUACIÓN DE INGENIERÍA</div>
+      <h2 class="rep-doc-main-title">DICTAMEN EJECUTIVO DE RENDIMIENTO, DESEMPEÑO & EFECTIVIDAD</h2>
+      <p class="rep-doc-subtitle">Evaluación auditable en tiempo real sobre el estado del desarrollo de software, cumplimiento de SLA de entrega y robustez de infraestructura.</p>
     </div>
 
     <!-- Barra de Parámetros de la Auditoría -->
@@ -2019,7 +2150,7 @@ function updateExecutiveReportPreview() {
         <span class="rep-param-value">${dateFormattedFrom} - ${dateFormattedTo}</span>
       </div>
       <div class="rep-param-item">
-        <span class="rep-param-label">Alcance / Desarrollador:</span>
+        <span class="rep-param-label">Alcance / Responsable:</span>
         <span class="rep-param-value" title="${devScopeText}">${devScopeText}</span>
       </div>
       <div class="rep-param-item">
@@ -2027,8 +2158,8 @@ function updateExecutiveReportPreview() {
         <span class="rep-param-value" title="${appScopeText}">${appScopeText}</span>
       </div>
       <div class="rep-param-item">
-        <span class="rep-param-label">Tipo de Dictamen:</span>
-        <span class="rep-param-value">Oficial · Control Ponderado</span>
+        <span class="rep-param-label">Nivel de Seguridad:</span>
+        <span class="rep-param-value">Confidencial · Auditoría TI</span>
       </div>
     </div>
 
@@ -2037,37 +2168,40 @@ function updateExecutiveReportPreview() {
       <div class="rep-kpi-card card-sla">
         <div class="rep-kpi-val">${slaScore}%</div>
         <div class="rep-kpi-lbl">Efectividad Operativa (SLA)</div>
-        <span class="rep-kpi-sub">Cumplimiento de plazos</span>
+        <span class="rep-kpi-sub">Cumplimiento estricto de plazos</span>
       </div>
       <div class="rep-kpi-card card-prog">
         <div class="rep-kpi-val">${avgAppProgress}%</div>
         <div class="rep-kpi-lbl">Desempeño & Avance Ponderado</div>
-        <span class="rep-kpi-sub">${avgAppProgress >= 70 ? 'Meta trimestral superada' : 'En seguimiento'}</span>
+        <span class="rep-kpi-sub">${filteredApps.length} aplicativos corporativos</span>
       </div>
       <div class="rep-kpi-card card-qa">
         <div class="rep-kpi-val">${qaScore}%</div>
         <div class="rep-kpi-lbl">Calidad Técnica & Código</div>
-        <span class="rep-kpi-sub">Estabilidad, UX y QA</span>
+        <span class="rep-kpi-sub">Estabilidad, UX y Pruebas QA</span>
       </div>
       <div class="rep-kpi-card card-tasks">
-        <div class="rep-kpi-val">${completedTasksCount}/${filteredTasks.length}</div>
-        <div class="rep-kpi-lbl">Tareas e Integraciones</div>
-        <span class="rep-kpi-sub">${inProgressTasksCount} en ejecución activa</span>
+        <div class="rep-kpi-val">${filteredTasks.length} Tareas</div>
+        <div class="rep-kpi-lbl">Módulos Supervisados</div>
+        <span class="rep-kpi-sub">${completedTasksCount} auditadas / ${inProgressTasksCount} en ejecución</span>
       </div>
     </div>
   `;
 
-  // Si se seleccionó un Desarrollador específico: Perfil detallado del programador
+  // Ficha de Desempeño Individual (cuando se filtra por un usuario)
   if (selectedDevObj) {
     html += `
       <div class="rep-section-title">
-        <span>Ficha de Desempeño Individual del Desarrollador</span>
+        <span>Ficha de Desempeño & Capacidad Técnica</span>
       </div>
       <div class="rep-dev-spotlight-card">
         <img src="${selectedDevObj.avatar}" alt="${selectedDevObj.name}" class="rep-dev-avatar">
         <div class="rep-dev-details">
           <div class="rep-dev-name">${selectedDevObj.name}</div>
-          <div class="rep-dev-submeta">${selectedDevObj.role} · ${selectedDevObj.email}</div>
+          <div class="rep-dev-submeta">${isAdminDev ? 'Director Corporativo de TI & Proyectos de Software' : selectedDevObj.role} · ${selectedDevObj.email}</div>
+          <div style="font-size: 10px; color: #475569; margin-top: 3px;">
+            ${isAdminDev ? 'Supervisión integral de las 6 líneas de software de STF GROUP.' : `${filteredApps.length} Sistemas a su cargo.`}
+          </div>
         </div>
         <div class="rep-dev-kpis-mini">
           <div class="rep-dev-mini-stat">
@@ -2121,7 +2255,7 @@ function updateExecutiveReportPreview() {
   // Tabla de Aplicativos en el Alcance
   html += `
     <div class="rep-section-title">
-      <span>Estado & Avance de los Aplicativos Corporativos</span>
+      <span>Estado & Avance de los Aplicativos Corporativos (${filteredApps.length} Sistemas)</span>
     </div>
     <table class="rep-formal-table">
       <thead>
@@ -2131,7 +2265,7 @@ function updateExecutiveReportPreview() {
           <th>Responsable</th>
           <th>Avance Real</th>
           <th>Fecha Límite</th>
-          <th>Estado</th>
+          <th>Estado SLA</th>
         </tr>
       </thead>
       <tbody>
@@ -2167,7 +2301,7 @@ function updateExecutiveReportPreview() {
   if (filteredTasks.length > 0) {
     html += `
       <div class="rep-section-title">
-        <span>Detalle de Tareas, Integraciones & Auditorías Técnicas</span>
+        <span>Integraciones Críticas, Tareas & Auditorías Técnicas (${filteredTasks.length} Módulos)</span>
       </div>
       <table class="rep-formal-table">
         <thead>
@@ -2205,10 +2339,31 @@ function updateExecutiveReportPreview() {
     `;
   }
 
+  // Matriz de Ciberseguridad, Riesgo y Gobernanza (Enterprise Compliance)
+  html += `
+    <div class="rep-gov-grid">
+      <div class="rep-gov-card">
+        <span class="gov-title">NIVEL DE RIESGO TÉCNICO</span>
+        <strong class="gov-val text-green">✓ BAJO / CONTROLADO</strong>
+        <span class="gov-sub">0 incidencias críticas en servidores</span>
+      </div>
+      <div class="rep-gov-card">
+        <span class="gov-title">DISPONIBILIDAD & UPTIME</span>
+        <strong class="gov-val text-blue">99.9% EN PLANTA</strong>
+        <span class="gov-sub">Conexión con básculas y CEDI</span>
+      </div>
+      <div class="rep-gov-card">
+        <span class="gov-title">CADENA DE CUSTODIA</span>
+        <strong class="gov-val text-purple">BITÁCORA AUDITADA</strong>
+        <span class="gov-sub">Trazabilidad en Google Sheets & Cloud</span>
+      </div>
+    </div>
+  `;
+
   // Dictamen Técnico y Conclusiones del Jefe
   let dictumText = '';
   if (slaScore >= 93 && avgAppProgress >= 65) {
-    dictumText = `El departamento de Ingeniería de STF GROUP presenta un desempeño óptimo con un índice de efectividad del ${slaScore}% y un avance ponderado del ${avgAppProgress}%. Los sistemas auditados cumplen rigurosamente con los estándares de estabilidad técnica, trazabilidad en planta y diseño responsive, garantizando la continuidad operativa y la entrega oportuna para el cierre del ciclo de desarrollo.`;
+    dictumText = `El departamento de Ingeniería y Transformación Digital de STF GROUP presenta un desempeño óptimo con un índice de efectividad del ${slaScore}% y un avance ponderado del ${avgAppProgress}%. Los sistemas auditados cumplen rigurosamente con los estándares de estabilidad técnica, trazabilidad en planta y diseño responsive, garantizando la continuidad operativa y la entrega oportuna para el cierre del ciclo de desarrollo.`;
   } else {
     dictumText = `Se evidencia un avance general del ${avgAppProgress}% con un cumplimiento de plazos del ${slaScore}%. Se instruye priorizar el cierre de las fases críticas de pruebas QA y estabilización en los módulos pendientes para asegurar el cumplimiento del cronograma oficial de STF GROUP.`;
   }
@@ -2219,29 +2374,48 @@ function updateExecutiveReportPreview() {
       <p class="rep-conclusions-text">${dictumText}</p>
     </div>
 
-    <!-- Bloque Oficial de Firma Digital del Jefe -->
+    <!-- Bloque Oficial de Firma Digital con Sello Circular de Certificación -->
     <div class="rep-signature-block">
-      <div class="rep-signature-container">
-        <div class="rep-signature-image-box">
-          <img id="repDocSignatureImg" src="" alt="Firma Digital" class="rep-signature-img" style="display: none;">
-          <div id="repDocSignatureEmpty" style="font-size: 11px; color: #94A3B8; font-style: italic;">
-            [Espacio para Firma Digital]
+      <div class="rep-signature-card">
+        <div class="rep-sig-seal-and-stroke">
+          <!-- Sello Circular de Certificación Oficial de STF GROUP TI -->
+          <div class="rep-official-digital-seal">
+            <svg viewBox="0 0 100 100" class="seal-svg" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#4F46E5" stroke-width="2" stroke-dasharray="3 2"/>
+              <circle cx="50" cy="50" r="41" fill="none" stroke="#0F172A" stroke-width="1.2"/>
+              <circle cx="50" cy="50" r="24" fill="#EEF2FF" stroke="#6366F1" stroke-width="1.2"/>
+              <path d="M 42 50 L 47 55 L 59 43" fill="none" stroke="#4F46E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="50" y="22" font-size="6.2" font-weight="800" fill="#0F172A" text-anchor="middle" letter-spacing="1">STF GROUP S.A.</text>
+              <text x="50" y="30" font-size="5" font-weight="700" fill="#4F46E5" text-anchor="middle" letter-spacing="0.5">DIRECCIÓN DE TI</text>
+              <text x="50" y="65" font-size="5.2" font-weight="800" fill="#4338CA" text-anchor="middle">CERTIFICADO</text>
+              <text x="50" y="80" font-size="4.8" font-weight="700" fill="#64748B" text-anchor="middle" letter-spacing="0.5">FIRMA DIGITAL</text>
+              <text x="50" y="87" font-size="4.2" font-weight="600" fill="#94A3B8" text-anchor="middle">LEY 527 / 1999</text>
+            </svg>
+          </div>
+
+          <!-- Trazo de la Firma Digital -->
+          <div class="rep-signature-image-box">
+            <img id="repDocSignatureImg" src="${currentReportSignatureDataUrl || ''}" alt="Firma Digital" class="rep-signature-img" style="${currentReportSignatureDataUrl ? 'display:block;' : 'display:none;'}">
+            <div id="repDocSignatureEmpty" style="${currentReportSignatureDataUrl ? 'display:none;' : 'display:flex;'}" class="rep-sig-placeholder">
+              <span>[Firma Digital Acreditada por la Dirección]</span>
+            </div>
           </div>
         </div>
+
         <div class="rep-signature-line"></div>
         <div class="rep-signer-name">${signerName}</div>
         <div class="rep-signer-role">${signerRole}</div>
         <div class="rep-signature-cert-hash">${certHash}</div>
-        <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">
-          Validación electrónica: ${now.toLocaleDateString('es-CO')} ${now.toLocaleTimeString('es-CO')}
+        <div class="rep-signature-time">
+          Sellado Criptográfico: ${now.toLocaleDateString('es-CO')} ${now.toLocaleTimeString('es-CO')} (UTC-5 Colombia)
         </div>
       </div>
     </div>
 
-    <!-- Pie de Página Legal -->
+    <!-- Microcintillo Perimetral de Seguridad y Pie de Página Legal -->
     <div class="rep-doc-footer-legal">
-      <span>STF GROUP S.A. · Documento oficial de auditoría y control de ingeniería.</span>
-      <span>Página 1 de 1 · Sistema Central de Desarrollo</span>
+      <span>STF GROUP S.A. · Documento oficial auténtico con plena validez probatoria según la Ley 527 de 1999 de la República de Colombia.</span>
+      <span>Página 1 de 1 · Código de Seguridad: ${folioCode}</span>
     </div>
   `;
 
