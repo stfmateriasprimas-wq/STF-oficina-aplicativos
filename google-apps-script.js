@@ -31,6 +31,16 @@ var TABS = {
 };
 
 /**
+ * Menú personalizado automático en la barra superior de Google Sheets
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('⚙️ STF SISTEMA')
+    .addItem('🚀 Inicializar Hojas y Usuarios', 'initializeSheets')
+    .addToUi();
+}
+
+/**
  * Inicializa y da formato profesional a las pestañas si no existen
  */
 function initializeSheets() {
