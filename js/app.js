@@ -2327,20 +2327,42 @@ function downloadExecutiveReportDoc() {
     return;
   }
 
-  showToast('Generando documento PDF oficial con marca de agua y firma...');
+  showToast('Generando documento PDF oficial desde la parte superior...');
 
-  // Configuración de márgenes en 0 para respetar exactamente el padding interno de la hoja A4 y garantizar 1 sola página
+  // 1. Guardar la posición de scroll actual del usuario
+  const prevScrollY = window.scrollY || window.pageYOffset || 0;
+  const prevScrollX = window.scrollX || window.pageXOffset || 0;
+
+  // 2. Desplazar a la parte superior (0, 0) antes de capturar para evitar que html2canvas
+  // herede el desplazamiento del scroll de la página y genere un hueco en blanco superior
+  window.scrollTo(0, 0);
+  const previewViewport = document.querySelector('.report-preview-viewport');
+  if (previewViewport) previewViewport.scrollTop = 0;
+
+  // 3. Configuración estricta de márgenes y coordenadas a cero (0, 0) para iniciar arriba del todo
   const opt = {
     margin: [0, 0, 0, 0],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      scrollY: 0,
+      scrollX: 0,
+      y: 0,
+      x: 0,
+      windowWidth: 794
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
   html2pdf().set(opt).from(element).save().then(() => {
+    // Restaurar la posición original de scroll del usuario
+    window.scrollTo(prevScrollX, prevScrollY);
     showToast('Reporte ejecutivo PDF descargado exitosamente.');
   }).catch(err => {
+    window.scrollTo(prevScrollX, prevScrollY);
     console.error('Error al generar PDF con html2pdf:', err);
     showToast('Abriendo cuadro de diálogo de impresión como PDF...');
     window.print();
@@ -2348,6 +2370,9 @@ function downloadExecutiveReportDoc() {
 }
 
 function printExecutiveReportDoc() {
+  window.scrollTo(0, 0);
+  const previewViewport = document.querySelector('.report-preview-viewport');
+  if (previewViewport) previewViewport.scrollTop = 0;
   window.print();
 }
 
