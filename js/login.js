@@ -328,7 +328,18 @@ function quickDemoLogin() {
     btn.innerHTML = `<span>Autenticando con Google Workspace...</span>`;
   }
 
-  localStorage.setItem('STF_ACTIVE_DEV_ID', 'dev_jg');
+  const adminDemo = {
+    id: 'dev_ediaz',
+    name: 'Edwin Diaz',
+    username: 'ediaz',
+    role: 'Admin',
+    email: 'edwin.diaz@studiof.com.co',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face'
+  };
+  localStorage.setItem('STF_LOGGED_USER', JSON.stringify(adminDemo));
+  localStorage.setItem('STF_USER_ROLE', adminDemo.role);
+  localStorage.setItem('STF_LOGGED_USERNAME', adminDemo.username);
+  localStorage.setItem('STF_ACTIVE_DEV_ID', adminDemo.id);
   sessionStorage.setItem('STF_AUTH_SESSION', 'authenticated');
 
   showLoginToast('Autenticación corporativa exitosa. Redirigiendo...');

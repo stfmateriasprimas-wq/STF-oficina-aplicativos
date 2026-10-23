@@ -51,7 +51,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="nav-btn logout-btn" id="btnLogout" onclick="window.location.href='login.html'" title="Cerrar Sesión (Ir a Pantalla de Login)">
+        <button class="nav-btn logout-btn" id="btnLogout" onclick="logoutApp()" title="Cerrar Sesión (Cambiar de Usuario)">
           <i data-lucide="log-out"></i>
         </button>
       </div>
@@ -105,23 +105,36 @@
 
           <!-- Interactive Developer Profile Selector (Header) -->
           <div class="header-dev-selector-wrapper" id="headerDevSelectorWrapper">
-            <button class="header-user-btn" id="btnHeaderUserSelect" title="Cambiar vista / usuario">
+            <button class="header-user-btn" id="btnHeaderUserSelect" title="Sesión de Usuario Activa">
               <img src="" alt="Usuario" id="headerUserAvatar" class="user-avatar">
               <div class="header-user-text">
-                <span class="user-tag-caption" id="headerUserRoleBadge">👨‍💻 Desarrollador</span>
-                <strong id="headerUserName">Jose Guzman</strong>
+                <span class="user-tag-caption" id="headerUserRoleBadge">🛡️ Admin</span>
+                <strong id="headerUserName">Edwin Diaz</strong>
               </div>
               <i data-lucide="chevron-down" class="header-dropdown-icon"></i>
             </button>
 
             <!-- Dropdown Options -->
             <div class="header-dev-dropdown" id="headerDevDropdown">
-              <div class="dropdown-title-label">Usuarios & Roles (Google Sheets):</div>
+              <!-- Active Session Info Card -->
+              <div class="dropdown-session-header" id="dropdownSessionHeader">
+                <div class="dsh-label">Sesión Autenticada:</div>
+                <div class="dsh-user-row">
+                  <img src="" id="dropdownSessionAvatar" class="dsh-avatar" alt="Sesión">
+                  <div class="dsh-info">
+                    <strong id="dropdownSessionName">Edwin Diaz</strong>
+                    <span id="dropdownSessionRole" style="color: #F5C542;">🛡️ Admin · ediaz</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dev-drop-divider"></div>
+              <div class="dropdown-title-label">Filtrar Dashboard por Desarrollador:</div>
               <div class="dev-drop-item" onclick="selectDeveloper('dev_ediaz')">
                 <img src="" id="dropImg_dev_ediaz" class="mini-drop-avatar">
                 <div>
                   <strong style="color: #F5C542;">🛡️ Edwin Diaz · Admin</strong>
-                  <span>ediaz · Dirección TI</span>
+                  <span>ediaz · Supervisión Global</span>
                 </div>
               </div>
               <div class="dev-drop-item" onclick="selectDeveloper('dev_jg')">
@@ -161,11 +174,11 @@
                 </div>
               </div>
               <div class="dev-drop-divider"></div>
-              <div class="dev-drop-item" onclick="window.location.href='login.html'" style="color: #EF4444;">
+              <div class="dev-drop-item" onclick="logoutApp()" style="color: #EF4444;">
                 <div class="global-icon-circle" style="background: rgba(239, 68, 68, 0.1); color: #EF4444;"><i data-lucide="log-out" style="width: 14px; height: 14px;"></i></div>
                 <div>
                   <strong style="color: #EF4444;">Cerrar Sesión</strong>
-                  <span>Ir a pantalla de acceso</span>
+                  <span>Cambiar de usuario e ir a login</span>
                 </div>
               </div>
             </div>

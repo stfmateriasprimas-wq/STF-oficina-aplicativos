@@ -410,6 +410,52 @@ body {
   gap: 4px;
 }
 
+.dropdown-session-header {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid #E2E8F0;
+  margin-bottom: 2px;
+}
+
+.dsh-label {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.dsh-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dsh-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #38BDF8;
+  flex-shrink: 0;
+}
+
+.dsh-info strong {
+  display: block;
+  font-size: 13px;
+  color: var(--text-dark);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dsh-info span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
 .dropdown-title-label {
   font-size: 11px;
   font-weight: 700;

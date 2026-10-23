@@ -539,46 +539,100 @@ function renderDevelopersSection() {
   if (window.lucide) lucide.createIcons();
 }
 
-function selectDeveloper(devId) {
-  activeSelectedDevId = devId;
-
-  // 1. Update header profile selector
+// ==========================================================================
+// SESIÓN DE USUARIO AUTENTICADO & LOGOUT
+// ==========================================================================
+function renderHeaderSessionUser() {
   const headerAvatar = document.getElementById('headerUserAvatar');
   const headerName = document.getElementById('headerUserName');
   const headerRoleBadge = document.getElementById('headerUserRoleBadge');
-  const dropdown = document.getElementById('headerDevDropdown');
-  if (dropdown) dropdown.classList.remove('show');
 
-  if (devId === 'all') {
-    if (headerName) headerName.textContent = 'Vista Global';
-    if (headerAvatar) headerAvatar.src = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&h=100&fit=crop';
-    if (headerRoleBadge) headerRoleBadge.innerHTML = '🌐 Portafolio General';
-  } else {
-    const dev = getDeveloperById(devId);
-    if (headerName) headerName.textContent = dev.name;
-    if (headerAvatar) headerAvatar.src = dev.avatar;
-    if (headerRoleBadge) {
-      if (dev.role === 'Admin') {
-        headerRoleBadge.innerHTML = '<span style="color:#F5C542; font-weight:700;">🛡️ Admin</span>';
-      } else {
-        headerRoleBadge.innerHTML = '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador</span>';
-      }
+  if (!loggedUser) {
+    const saved = localStorage.getItem('STF_LOGGED_USER');
+    if (saved) {
+      try { loggedUser = JSON.parse(saved); } catch(e) {}
     }
   }
 
-  // 2. Re-render developer cards grid (updates active card)
+  // Si no hay sesión previa en localStorage, usar Edwin Díaz (Admin) por defecto
+  const session = loggedUser || {
+    id: 'dev_ediaz',
+    name: 'Edwin Diaz',
+    username: 'ediaz',
+    role: 'Admin',
+    email: 'edwin.diaz@studiof.com.co',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face'
+  };
+
+  const isAdmin = (session.role && session.role.toLowerCase() === 'admin');
+
+  if (headerName) {
+    headerName.textContent = session.name || 'Edwin Diaz';
+  }
+
+  if (headerAvatar) {
+    headerAvatar.src = session.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face';
+    headerAvatar.alt = session.name || 'Usuario';
+  }
+
+  if (headerRoleBadge) {
+    if (isAdmin) {
+      headerRoleBadge.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; font-weight:700; color:#F59E0B;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#38BDF8;"></span> ADMIN</span>';
+    } else {
+      headerRoleBadge.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; font-weight:600; color:#38BDF8;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981;"></span> Desarrollador</span>';
+    }
+  }
+
+  // Tarjeta de sesión activa dentro del menú dropdown (si existe en el DOM)
+  const dshName = document.getElementById('dropdownSessionName');
+  const dshAvatar = document.getElementById('dropdownSessionAvatar');
+  const dshRole = document.getElementById('dropdownSessionRole');
+  if (dshName) dshName.textContent = session.name || 'Edwin Diaz';
+  if (dshAvatar) dshAvatar.src = session.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face';
+  if (dshRole) {
+    dshRole.innerHTML = isAdmin 
+      ? '<span style="color:#F59E0B; font-weight:600;">🛡️ Admin · ' + (session.username || 'ediaz') + '</span>'
+      : '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador · ' + (session.username || '') + '</span>';
+  }
+}
+
+function logoutApp() {
+  localStorage.removeItem('STF_LOGGED_USER');
+  localStorage.removeItem('STF_USER_ROLE');
+  localStorage.removeItem('STF_LOGGED_USERNAME');
+  localStorage.removeItem('STF_ACTIVE_DEV_ID');
+  sessionStorage.removeItem('STF_AUTH_SESSION');
+  window.location.href = 'login.html';
+}
+
+window.renderHeaderSessionUser = renderHeaderSessionUser;
+window.logoutApp = logoutApp;
+
+function selectDeveloper(devId) {
+  activeSelectedDevId = devId;
+
+  // Cerrar el dropdown del header si estaba abierto
+  const dropdown = document.getElementById('headerDevDropdown');
+  if (dropdown) dropdown.classList.remove('show');
+
+  // NOTA CRÍTICA (REQUERIMIENTO DE USUARIO):
+  // La identidad del usuario en el encabezado superior (#headerUserAvatar, #headerUserName, #headerUserRoleBadge)
+  // representa estrictamente al usuario logueado en la sesión (loggedUser) y NUNCA debe mutar al hacer clic
+  // o seleccionar cualquiera de los programadores. Solo cambia cuando el usuario cierra sesión e inicia con otra cuenta.
+
+  // 1. Re-render developer cards grid (actualiza el estado visual de la tarjeta seleccionada)
   renderDevelopersSection();
 
-  // 3. Update Stacked Cards ("Las Etiquetas" in top left box) with THIS developer's projects!
+  // 2. Update Stacked Cards ("Las Etiquetas" en el cuadrante superior izquierdo) con los proyectos del programador
   renderStackedDeck(devId);
 
-  // 4. Update the Quick Dev Strip and project tags
+  // 3. Update the Quick Dev Strip and project tags
   updateQuickDevStrip();
 
-  // 5. Update systems table
+  // 4. Update systems table
   renderSystemsTable();
 
-  // 6. Update Overview Spline Chart according to active developer & current period
+  // 5. Update Overview Spline Chart according to active developer & current period
   updateOverviewChart();
 }
 
@@ -2996,21 +3050,8 @@ function initApp() {
   // Lucide icons
   lucide.createIcons();
 
-  // Set initial header user info and dropdown avatars
-  const firstDev = getDeveloperById(activeSelectedDevId);
-  const headerAvatar = document.getElementById('headerUserAvatar');
-  const headerName = document.getElementById('headerUserName');
-  const headerRoleBadge = document.getElementById('headerUserRoleBadge');
-
-  if (headerAvatar && firstDev) headerAvatar.src = firstDev.avatar;
-  if (headerName && firstDev) headerName.textContent = firstDev.name;
-  if (headerRoleBadge && firstDev) {
-    if (firstDev.role === 'Admin') {
-      headerRoleBadge.innerHTML = '<span style="color:#F5C542; font-weight:700;">🛡️ Admin</span>';
-    } else {
-      headerRoleBadge.innerHTML = '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador</span>';
-    }
-  }
+  // Inicializar exclusivamente los datos del usuario autenticado en la cabecera
+  renderHeaderSessionUser();
 
   appState.developers.forEach(dev => {
     const dropImg = document.getElementById(`dropImg_${dev.id}`);
