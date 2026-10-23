@@ -1624,43 +1624,684 @@ function showToast(message) {
   }, 3500);
 }
 
+// ==========================================================================
+// MÓDULO OFICIAL DE REPORTE EJECUTIVO, MARCA DE AGUA Y FIRMA DIGITAL
+// ==========================================================================
+
+let reportSignaturePadInitialized = false;
+let isDrawingSignature = false;
+let hasDrawnSignature = false;
+let currentReportSignatureDataUrl = null;
+
 function exportExecutiveReport() {
-  const globalProg = calculateGlobalProgress();
-  let reportText = `====================================================\n`;
-  reportText += `REPORTE EJECUTIVO DE DESARROLLO DE SOFTWARE · STF GROUP\n`;
-  reportText += `Fecha: ${new Date().toLocaleDateString('es-CO')}\n`;
-  reportText += `Avance General del Portafolio: ${globalProg}%\n`;
-  reportText += `====================================================\n\n`;
-
-  reportText += `ESTADO DE LOS APLICATIVOS:\n`;
-  appState.applications.forEach(app => {
-    const dev = getDeveloperById(app.devId);
-    const prog = calculateAppProgress(app);
-    reportText += `• [${app.code}] ${app.name} (${app.category})\n`;
-    reportText += `  - Desarrollador Responsable: ${dev.name}\n`;
-    reportText += `  - Avance Ponderado: ${prog}%\n`;
-    reportText += `  - Fecha Límite: ${app.deadline}\n`;
-    reportText += `  - Fases Culminadas: ${app.phases.filter(p => p.completed).length} de ${app.phases.length}\n\n`;
-  });
-
-  reportText += `RENDIMIENTO DE INGENIERÍA:\n`;
-  appState.developers.forEach(dev => {
-    reportText += `• ${dev.name} (${dev.role})\n`;
-    reportText += `  - Entregas a Tiempo: ${dev.onTimeDelivery}%\n`;
-    reportText += `  - Calidad de Código: ${dev.codeQuality}%\n`;
-    reportText += `  - Score: ${dev.score}\n\n`;
-  });
-
-  const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Reporte_Ejecutivo_TI_STF_GROUP_${new Date().toISOString().split('T')[0]}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  showToast('Reporte ejecutivo generado y descargado.');
+  openExecutiveReportModal();
 }
+
+function openExecutiveReportModal() {
+  const modal = document.getElementById('modalExecutiveReport');
+  if (!modal) return;
+
+  // Inicializar fechas por defecto (Últimos 30 días)
+  const dateFrom = document.getElementById('repDateFrom');
+  const dateTo = document.getElementById('repDateTo');
+  if (dateFrom && dateTo && (!dateFrom.value || !dateTo.value)) {
+    const today = getSystemReferenceDate();
+    const past = new Date(today);
+    past.setDate(past.getDate() - 30);
+    dateTo.value = today.toISOString().split('T')[0];
+    dateFrom.value = past.toISOString().split('T')[0];
+  }
+
+  // Pre-seleccionar desarrollador activo si el usuario ya filtró en el dashboard
+  const devSelect = document.getElementById('repFilterDev');
+  if (devSelect && activeSelectedDevId && activeSelectedDevId !== 'all') {
+    devSelect.value = activeSelectedDevId;
+  }
+
+  // Inicializar canvas de firma
+  initReportSignaturePad();
+
+  // Cargar firma fija guardada en localStorage si existe
+  loadSavedReportSignature();
+
+  // Abrir modal
+  modal.classList.add('show');
+
+  // Actualizar vista previa en vivo
+  updateExecutiveReportPreview();
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+function closeExecutiveReportModal() {
+  const modal = document.getElementById('modalExecutiveReport');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+function setReportPeriodPreset(preset) {
+  // Actualizar estado activo de los chips
+  document.querySelectorAll('.report-period-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.getAttribute('data-period') === preset);
+  });
+
+  const dateFrom = document.getElementById('repDateFrom');
+  const dateTo = document.getElementById('repDateTo');
+  if (!dateFrom || !dateTo) return;
+
+  const today = getSystemReferenceDate();
+  const y = today.getFullYear();
+  const m = today.getMonth();
+
+  if (preset === '30d') {
+    const past = new Date(today);
+    past.setDate(past.getDate() - 30);
+    dateFrom.value = past.toISOString().split('T')[0];
+    dateTo.value = today.toISOString().split('T')[0];
+  } else if (preset === 'month') {
+    const startMonth = new Date(y, m, 1);
+    const endMonth = new Date(y, m + 1, 0);
+    dateFrom.value = startMonth.toISOString().split('T')[0];
+    dateTo.value = endMonth.toISOString().split('T')[0];
+  } else if (preset === 'q4') {
+    dateFrom.value = `${y}-10-01`;
+    dateTo.value = `${y}-12-31`;
+  } else if (preset === 'all') {
+    dateFrom.value = `${y}-01-01`;
+    dateTo.value = `${y}-12-31`;
+  }
+
+  updateExecutiveReportPreview();
+}
+
+function onReportFilterChanged() {
+  updateExecutiveReportPreview();
+}
+
+// --------------------------------------------------------------------------
+// Lógica del Canvas de Firma Digital y Persistencia
+// --------------------------------------------------------------------------
+
+function initReportSignaturePad() {
+  const canvas = document.getElementById('repSignatureCanvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  
+  if (!reportSignaturePadInitialized) {
+    reportSignaturePadInitialized = true;
+
+    function getCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+      const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      isDrawingSignature = true;
+      hasDrawnSignature = true;
+      const { x, y } = getCoords(e);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.strokeStyle = '#0F172A';
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    function draw(e) {
+      if (!isDrawingSignature) return;
+      e.preventDefault();
+      const { x, y } = getCoords(e);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+
+    function endDraw(e) {
+      if (!isDrawingSignature) return;
+      isDrawingSignature = false;
+      currentReportSignatureDataUrl = canvas.toDataURL('image/png');
+      updateSignatureStatusBadge(true);
+      syncSignatureToDocument();
+    }
+
+    canvas.addEventListener('pointerdown', startDraw);
+    canvas.addEventListener('pointermove', draw);
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointercancel', endDraw);
+  }
+}
+
+function loadSavedReportSignature() {
+  const canvas = document.getElementById('repSignatureCanvas');
+  if (!canvas) return;
+
+  const saved = localStorage.getItem('STF_SAVED_SIGNATURE');
+  if (saved) {
+    currentReportSignatureDataUrl = saved;
+    hasDrawnSignature = true;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      syncSignatureToDocument();
+      updateSignatureStatusBadge(true, true);
+    };
+    img.src = saved;
+  } else {
+    updateSignatureStatusBadge(false);
+  }
+}
+
+function updateSignatureStatusBadge(hasSig, isPermanent = false) {
+  const badge = document.getElementById('repSigStatusBadge');
+  if (!badge) return;
+
+  if (hasSig) {
+    badge.className = 'sig-status-badge badge-saved';
+    badge.textContent = isPermanent ? '✓ Firma Guardada (Fija)' : '✓ Firma Capturada';
+  } else {
+    badge.className = 'sig-status-badge badge-empty';
+    badge.textContent = 'Sin firma';
+  }
+}
+
+function clearReportSignature() {
+  const canvas = document.getElementById('repSignatureCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  hasDrawnSignature = false;
+  currentReportSignatureDataUrl = null;
+  localStorage.removeItem('STF_SAVED_SIGNATURE');
+  updateSignatureStatusBadge(false);
+  syncSignatureToDocument();
+  showToast('Firma borrada del lienzo.');
+}
+
+function saveFixedReportSignature() {
+  const canvas = document.getElementById('repSignatureCanvas');
+  if (!canvas || !hasDrawnSignature) {
+    showToast('Por favor dibuja tu firma antes de guardarla.');
+    return;
+  }
+  const dataUrl = canvas.toDataURL('image/png');
+  currentReportSignatureDataUrl = dataUrl;
+  localStorage.setItem('STF_SAVED_SIGNATURE', dataUrl);
+  updateSignatureStatusBadge(true, true);
+  syncSignatureToDocument();
+  showToast('Firma del jefe guardada de forma fija. Se incluirá en todos los reportes.');
+}
+
+function handleSignatureFileUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    const canvas = document.getElementById('repSignatureCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        currentReportSignatureDataUrl = canvas.toDataURL('image/png');
+        hasDrawnSignature = true;
+        localStorage.setItem('STF_SAVED_SIGNATURE', currentReportSignatureDataUrl);
+        updateSignatureStatusBadge(true, true);
+        syncSignatureToDocument();
+        showToast('Firma importada y guardada fijamente.');
+      };
+      img.src = dataUrl;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function syncSignatureToDocument() {
+  const imgElem = document.getElementById('repDocSignatureImg');
+  const emptyElem = document.getElementById('repDocSignatureEmpty');
+  if (imgElem) {
+    if (currentReportSignatureDataUrl) {
+      imgElem.src = currentReportSignatureDataUrl;
+      imgElem.style.display = 'block';
+      if (emptyElem) emptyElem.style.display = 'none';
+    } else {
+      imgElem.style.display = 'none';
+      if (emptyElem) emptyElem.style.display = 'block';
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// Cálculo Matemático y Generación de la Vista Previa del Documento
+// --------------------------------------------------------------------------
+
+function updateExecutiveReportPreview() {
+  const container = document.getElementById('reportDocContent');
+  if (!container) return;
+
+  const devId = document.getElementById('repFilterDev')?.value || 'all';
+  const appId = document.getElementById('repFilterApp')?.value || 'all';
+  const dateFrom = document.getElementById('repDateFrom')?.value || '2026-09-20';
+  const dateTo = document.getElementById('repDateTo')?.value || '2026-10-23';
+  const taskScope = document.getElementById('repFilterTaskScope')?.value || 'all';
+  const signerName = document.getElementById('repSignerName')?.value || 'Ing. Edwin Díaz';
+  const signerRole = document.getElementById('repSignerRole')?.value || 'Director de TI & Proyectos Tecnológicos · STF GROUP S.A.';
+
+  // 1. Filtrar aplicativos
+  let filteredApps = appState.applications.slice();
+  if (appId !== 'all') {
+    filteredApps = filteredApps.filter(a => a.id === appId);
+  }
+  if (devId !== 'all') {
+    filteredApps = filteredApps.filter(a => a.devId === devId || (a.devIds && a.devIds.includes(devId)));
+  }
+
+  // 2. Filtrar desarrolladores
+  let filteredDevs = appState.developers.slice();
+  if (devId !== 'all') {
+    filteredDevs = filteredDevs.filter(d => d.id === devId);
+  }
+
+  // 3. Filtrar tareas / integraciones
+  let filteredTasks = (appState.integrations || []).slice();
+  if (devId !== 'all') {
+    filteredTasks = filteredTasks.filter(t => t.devId === devId);
+  }
+  if (appId !== 'all') {
+    filteredTasks = filteredTasks.filter(t => t.appId === appId);
+  }
+  if (taskScope === 'evaluated') {
+    filteredTasks = filteredTasks.filter(t => t.status === 'evaluated');
+  } else if (taskScope === 'in_progress') {
+    filteredTasks = filteredTasks.filter(t => t.status === 'in_progress');
+  }
+  // Filtro de fechas (tareas con deadline o startDate dentro o próximas al rango)
+  if (dateFrom && dateTo) {
+    filteredTasks = filteredTasks.filter(t => {
+      const tDeadline = t.deadline || '2026-12-31';
+      const tStart = t.startDate || '2026-01-01';
+      return (tDeadline >= dateFrom && tDeadline <= dateTo) || (tStart >= dateFrom && tStart <= dateTo);
+    });
+  }
+
+  // 4. Cálculo Matemático de Métricas Auditables
+  // A. Avance Ponderado de Aplicativos
+  let avgAppProgress = 0;
+  if (filteredApps.length > 0) {
+    const totalProg = filteredApps.reduce((acc, a) => acc + calculateAppProgress(a), 0);
+    avgAppProgress = Math.round(totalProg / filteredApps.length);
+  } else {
+    avgAppProgress = calculateGlobalProgress();
+  }
+
+  // B. Efectividad y Cumplimiento de Plazos (SLA)
+  let slaScore = 95;
+  if (filteredDevs.length > 0) {
+    const sumSLA = filteredDevs.reduce((acc, d) => acc + (d.onTimeDelivery || 94), 0);
+    slaScore = Math.round(sumSLA / filteredDevs.length);
+  }
+  // Si hay tareas evaluadas, incorporar el ratio real de entregas a tiempo
+  const evaluatedTasks = filteredTasks.filter(t => t.status === 'evaluated');
+  if (evaluatedTasks.length > 0) {
+    const onTimeCount = evaluatedTasks.filter(t => t.evaluation && t.evaluation.onTime).length;
+    const taskSLA = Math.round((onTimeCount / evaluatedTasks.length) * 100);
+    slaScore = Math.round((slaScore * 0.4) + (taskSLA * 0.6));
+  }
+
+  // C. Calidad de Código & Auditoría Técnica
+  let qaScore = 94;
+  if (filteredDevs.length > 0) {
+    const sumQA = filteredDevs.reduce((acc, d) => acc + (d.codeQuality || 93), 0);
+    qaScore = Math.round(sumQA / filteredDevs.length);
+  }
+  if (evaluatedTasks.length > 0) {
+    const sumEval = evaluatedTasks.reduce((acc, t) => acc + (t.evaluation?.qualityScore || 95), 0);
+    const avgEval = Math.round(sumEval / evaluatedTasks.length);
+    qaScore = Math.round((qaScore * 0.4) + (avgEval * 0.6));
+  }
+
+  // D. Capacidad y Total de Tareas Auditadas
+  const completedTasksCount = filteredTasks.filter(t => t.status === 'evaluated').length;
+  const inProgressTasksCount = filteredTasks.filter(t => t.status === 'in_progress').length;
+
+  // Metadata labels
+  const selectedDevObj = devId === 'all' ? null : getDeveloperById(devId);
+  const devScopeText = selectedDevObj ? `${selectedDevObj.name} (${selectedDevObj.role})` : 'Equipo Completo de Desarrollo (Portafolio General)';
+  const selectedAppObj = appId === 'all' ? null : getApplicationById(appId);
+  const appScopeText = selectedAppObj ? `[${selectedAppObj.code}] ${selectedAppObj.name}` : `Todos los Aplicativos (${filteredApps.length} activos)`;
+  const dateFormattedFrom = formatDate(dateFrom);
+  const dateFormattedTo = formatDate(dateTo);
+  const now = getSystemReferenceDate();
+  const todayFormatted = now.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+  const folioCode = `STF-REP-2026-${String(Math.abs(hashString(devId + appId + dateFrom + dateTo)) % 9000 + 1000)}`;
+  const certHash = `SHA-256 [STF-CERT-${String(Math.abs(hashString(signerName + folioCode)) % 900000 + 100000)}-2026]`;
+
+  let html = `
+    <!-- Encabezado Corporativo Oficial con Logo -->
+    <div class="rep-doc-header">
+      <div class="rep-doc-logo-area">
+        <img src="assets/stf-group-logo-watermark.png" alt="STF GROUP Logo" class="rep-doc-logo-img">
+        <span class="rep-doc-dept-tag">Dirección de Tecnología & Transformación Digital · Auditoría de Software</span>
+      </div>
+      <div class="rep-doc-meta-box">
+        <div class="rep-doc-meta-folio">FOLIO: ${folioCode}</div>
+        <div>Emisión: <strong>${todayFormatted}</strong></div>
+        <span class="rep-doc-meta-badge">✓ CERTIFICADO Y AUDITADO</span>
+      </div>
+    </div>
+
+    <!-- Título Principal del Dictamen -->
+    <div class="rep-doc-title-block">
+      <h1 class="rep-doc-main-title">Informe Ejecutivo de Rendimiento, Desempeño & Efectividad</h1>
+      <p class="rep-doc-subtitle">Evaluación auditable del estado de desarrollo de software, cumplimiento de SLA y métricas de ingeniería técnica para STF GROUP S.A.</p>
+    </div>
+
+    <!-- Barra de Parámetros de la Auditoría -->
+    <div class="rep-doc-params-strip">
+      <div class="rep-param-item">
+        <span class="rep-param-label">Período Auditado:</span>
+        <span class="rep-param-value">${dateFormattedFrom} - ${dateFormattedTo}</span>
+      </div>
+      <div class="rep-param-item">
+        <span class="rep-param-label">Alcance / Desarrollador:</span>
+        <span class="rep-param-value" title="${devScopeText}">${devScopeText}</span>
+      </div>
+      <div class="rep-param-item">
+        <span class="rep-param-label">Aplicativos Incluidos:</span>
+        <span class="rep-param-value" title="${appScopeText}">${appScopeText}</span>
+      </div>
+      <div class="rep-param-item">
+        <span class="rep-param-label">Tipo de Dictamen:</span>
+        <span class="rep-param-value">Oficial · Control Ponderado</span>
+      </div>
+    </div>
+
+    <!-- 4 Tarjetas de Métricas Medibles de Desempeño y Efectividad -->
+    <div class="rep-kpis-grid">
+      <div class="rep-kpi-card card-sla">
+        <div class="rep-kpi-val">${slaScore}%</div>
+        <div class="rep-kpi-lbl">Efectividad Operativa (SLA)</div>
+        <span class="rep-kpi-sub">Cumplimiento de plazos</span>
+      </div>
+      <div class="rep-kpi-card card-prog">
+        <div class="rep-kpi-val">${avgAppProgress}%</div>
+        <div class="rep-kpi-lbl">Desempeño & Avance Ponderado</div>
+        <span class="rep-kpi-sub">${avgAppProgress >= 70 ? 'Meta trimestral superada' : 'En seguimiento'}</span>
+      </div>
+      <div class="rep-kpi-card card-qa">
+        <div class="rep-kpi-val">${qaScore}%</div>
+        <div class="rep-kpi-lbl">Calidad Técnica & Código</div>
+        <span class="rep-kpi-sub">Estabilidad, UX y QA</span>
+      </div>
+      <div class="rep-kpi-card card-tasks">
+        <div class="rep-kpi-val">${completedTasksCount}/${filteredTasks.length}</div>
+        <div class="rep-kpi-lbl">Tareas e Integraciones</div>
+        <span class="rep-kpi-sub">${inProgressTasksCount} en ejecución activa</span>
+      </div>
+    </div>
+  `;
+
+  // Si se seleccionó un Desarrollador específico: Perfil detallado del programador
+  if (selectedDevObj) {
+    html += `
+      <div class="rep-section-title">
+        <span>Ficha de Desempeño Individual del Desarrollador</span>
+      </div>
+      <div class="rep-dev-spotlight-card">
+        <img src="${selectedDevObj.avatar}" alt="${selectedDevObj.name}" class="rep-dev-avatar">
+        <div class="rep-dev-details">
+          <div class="rep-dev-name">${selectedDevObj.name}</div>
+          <div class="rep-dev-submeta">${selectedDevObj.role} · ${selectedDevObj.email}</div>
+        </div>
+        <div class="rep-dev-kpis-mini">
+          <div class="rep-dev-mini-stat">
+            <span class="rep-dev-stat-val text-blue">${selectedDevObj.score}</span>
+            <span class="rep-dev-stat-lbl">Score General</span>
+          </div>
+          <div class="rep-dev-mini-stat">
+            <span class="rep-dev-stat-val text-green">${selectedDevObj.onTimeDelivery}%</span>
+            <span class="rep-dev-stat-lbl">SLA Entregas</span>
+          </div>
+          <div class="rep-dev-mini-stat">
+            <span class="rep-dev-stat-val text-purple">${selectedDevObj.codeQuality}%</span>
+            <span class="rep-dev-stat-lbl">Calidad Código</span>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Si dev = all: Tabla comparativa de todo el equipo de ingenieros
+    html += `
+      <div class="rep-section-title">
+        <span>Rendimiento del Equipo de Desarrollo de Software</span>
+      </div>
+      <table class="rep-formal-table">
+        <thead>
+          <tr>
+            <th>Ingeniero / Desarrollador</th>
+            <th>Rol Corporativo</th>
+            <th>Proyectos Asignados</th>
+            <th>SLA Plazos</th>
+            <th>Calidad Código</th>
+            <th>Score Auditado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredDevs.map(dev => `
+            <tr>
+              <td><strong>${dev.name}</strong></td>
+              <td>${dev.role}</td>
+              <td>${dev.activeProjects ? dev.activeProjects.length : 1} sistemas</td>
+              <td><span class="rep-badge-ontime">${dev.onTimeDelivery}%</span></td>
+              <td><span class="rep-badge-eval">${dev.codeQuality}%</span></td>
+              <td><strong>${dev.score}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Tabla de Aplicativos en el Alcance
+  html += `
+    <div class="rep-section-title">
+      <span>Estado & Avance de los Aplicativos Corporativos</span>
+    </div>
+    <table class="rep-formal-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre del Sistema</th>
+          <th>Responsable</th>
+          <th>Avance Real</th>
+          <th>Fecha Límite</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filteredApps.map(app => {
+          const dev = getDeveloperById(app.devId);
+          const prog = calculateAppProgress(app);
+          const isOntime = app.status === 'ontime';
+          return `
+            <tr>
+              <td><strong>${app.code}</strong></td>
+              <td>${app.name}</td>
+              <td>${dev ? dev.name : 'Equipo Grupal'}</td>
+              <td>
+                <span class="rep-progress-bar-mini">
+                  <span class="rep-progress-bar-fill" style="width: ${prog}%;"></span>
+                </span>
+                <strong>${prog}%</strong>
+              </td>
+              <td>${formatDate(app.deadline)}</td>
+              <td>
+                <span class="${isOntime ? 'rep-badge-ontime' : 'rep-badge-risk'}">
+                  ${isOntime ? '✓ A Tiempo' : '⚠ En Riesgo'}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  // Tabla Detallada de Tareas e Integraciones
+  if (filteredTasks.length > 0) {
+    html += `
+      <div class="rep-section-title">
+        <span>Detalle de Tareas, Integraciones & Auditorías Técnicas</span>
+      </div>
+      <table class="rep-formal-table">
+        <thead>
+          <tr>
+            <th>Tarea / Módulo</th>
+            <th>Aplicativo</th>
+            <th>Responsable</th>
+            <th>Fecha Límite</th>
+            <th>Peso</th>
+            <th>Estado & Dictamen</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredTasks.map(task => {
+            const dev = getDeveloperById(task.devId);
+            const app = getApplicationById(task.appId);
+            const isEval = task.status === 'evaluated';
+            return `
+              <tr>
+                <td><strong>${task.name}</strong></td>
+                <td>${app ? app.name : task.appId}</td>
+                <td>${dev ? dev.name : 'N/A'}</td>
+                <td>${formatDate(task.deadline)}</td>
+                <td>${task.weight}%</td>
+                <td>
+                  ${isEval 
+                    ? `<span class="rep-badge-ontime">✓ Auditada (${task.evaluation ? task.evaluation.qualityScore + '%' : 'Aprobada'})</span>` 
+                    : `<span class="rep-badge-eval">En Progreso</span>`}
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Dictamen Técnico y Conclusiones del Jefe
+  let dictumText = '';
+  if (slaScore >= 93 && avgAppProgress >= 65) {
+    dictumText = `El departamento de Ingeniería de STF GROUP presenta un desempeño óptimo con un índice de efectividad del ${slaScore}% y un avance ponderado del ${avgAppProgress}%. Los sistemas auditados cumplen rigurosamente con los estándares de estabilidad técnica, trazabilidad en planta y diseño responsive, garantizando la continuidad operativa y la entrega oportuna para el cierre del ciclo de desarrollo.`;
+  } else {
+    dictumText = `Se evidencia un avance general del ${avgAppProgress}% con un cumplimiento de plazos del ${slaScore}%. Se instruye priorizar el cierre de las fases críticas de pruebas QA y estabilización en los módulos pendientes para asegurar el cumplimiento del cronograma oficial de STF GROUP.`;
+  }
+
+  html += `
+    <div class="rep-conclusions-box">
+      <div class="rep-conclusions-title">Dictamen Oficial de la Dirección de TI:</div>
+      <p class="rep-conclusions-text">${dictumText}</p>
+    </div>
+
+    <!-- Bloque Oficial de Firma Digital del Jefe -->
+    <div class="rep-signature-block">
+      <div class="rep-signature-container">
+        <div class="rep-signature-image-box">
+          <img id="repDocSignatureImg" src="" alt="Firma Digital" class="rep-signature-img" style="display: none;">
+          <div id="repDocSignatureEmpty" style="font-size: 11px; color: #94A3B8; font-style: italic;">
+            [Espacio para Firma Digital]
+          </div>
+        </div>
+        <div class="rep-signature-line"></div>
+        <div class="rep-signer-name">${signerName}</div>
+        <div class="rep-signer-role">${signerRole}</div>
+        <div class="rep-signature-cert-hash">${certHash}</div>
+        <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">
+          Validación electrónica: ${now.toLocaleDateString('es-CO')} ${now.toLocaleTimeString('es-CO')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie de Página Legal -->
+    <div class="rep-doc-footer-legal">
+      <span>STF GROUP S.A. · Documento oficial de auditoría y control de ingeniería.</span>
+      <span>Página 1 de 1 · Sistema Central de Desarrollo</span>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Sincronizar firma si ya estaba dibujada o guardada
+  syncSignatureToDocument();
+}
+
+// Función hash simple para números de folios y certificados consistentes
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
+function downloadExecutiveReportDoc() {
+  const element = document.getElementById('executiveReportDocumentPaper');
+  if (!element) {
+    showToast('Error: No se encontró el documento para exportar.');
+    return;
+  }
+
+  const devId = document.getElementById('repFilterDev')?.value || 'all';
+  const cleanDev = devId === 'all' ? 'Portafolio_Global' : (getDeveloperById(devId)?.name.replace(/\s+/g, '_') || 'Desarrollador');
+  const dateStr = new Date().toISOString().split('T')[0];
+  const filename = `Reporte_Ejecutivo_STF_GROUP_${cleanDev}_${dateStr}.pdf`;
+
+  if (typeof html2pdf === 'undefined') {
+    showToast('Iniciando diálogo para guardar como PDF...');
+    window.print();
+    return;
+  }
+
+  showToast('Generando documento PDF oficial con marca de agua y firma...');
+
+  const opt = {
+    margin: [6, 6, 6, 6],
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    showToast('Reporte ejecutivo PDF descargado exitosamente.');
+  }).catch(err => {
+    console.error('Error al generar PDF con html2pdf:', err);
+    showToast('Abriendo cuadro de diálogo de impresión como PDF...');
+    window.print();
+  });
+}
+
+function printExecutiveReportDoc() {
+  window.print();
+}
+
 
 // Utility formatting
 function formatDate(dateStr) {

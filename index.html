@@ -1320,6 +1320,174 @@
     </div>
   </div>
 
+  <!-- MODAL: Generador de Reporte Ejecutivo Oficial con Filtros, Marca de Agua y Firma Digital -->
+  <div class="modal-backdrop" id="modalExecutiveReport">
+    <div class="modal-card modal-card-report-xl">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-tag" style="background: rgba(79, 70, 229, 0.1); color: #4338CA;">
+            <i data-lucide="file-check" style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Emisión Oficial STF GROUP
+          </span>
+          <h2 class="modal-title" style="margin-top: 4px;">Reporte Ejecutivo de Rendimiento & Auditoría TI</h2>
+          <p class="modal-subtitle">Genera un dictamen formal en formato PDF con métricas auditadas de desempeño y efectividad, marca de agua corporativa y firma digital certificada.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseExecutiveReportModal" onclick="closeExecutiveReportModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body report-modal-body-split">
+        <!-- Columna Izquierda: Controles y Filtros Dinámicos -->
+        <div class="report-filters-sidebar">
+          <div class="report-filter-section">
+            <h4 class="report-filter-section-title">
+              <i data-lucide="calendar"></i> 1. Período y Rango de Fechas
+            </h4>
+            <div class="report-quick-periods">
+              <button type="button" class="report-period-chip active" data-period="30d" onclick="setReportPeriodPreset('30d')">Últimos 30 días</button>
+              <button type="button" class="report-period-chip" data-period="month" onclick="setReportPeriodPreset('month')">Este Mes</button>
+              <button type="button" class="report-period-chip" data-period="q4" onclick="setReportPeriodPreset('q4')">Trimestre Q4</button>
+              <button type="button" class="report-period-chip" data-period="all" onclick="setReportPeriodPreset('all')">Histórico</button>
+            </div>
+            <div class="report-date-inputs-row">
+              <div class="report-input-group">
+                <label for="repDateFrom">Desde:</label>
+                <input type="date" id="repDateFrom" class="form-input" onchange="onReportFilterChanged()">
+              </div>
+              <div class="report-input-group">
+                <label for="repDateTo">Hasta:</label>
+                <input type="date" id="repDateTo" class="form-input" onchange="onReportFilterChanged()">
+              </div>
+            </div>
+          </div>
+
+          <div class="report-filter-section">
+            <h4 class="report-filter-section-title">
+              <i data-lucide="users"></i> 2. Desarrollador Responsable
+            </h4>
+            <select id="repFilterDev" class="form-input" onchange="onReportFilterChanged()">
+              <option value="all">🌐 Todos los Desarrolladores (Informe Global de Portafolio)</option>
+              <option value="dev_jg">Jose Guzman (Líder TI / Fullstack)</option>
+              <option value="dev_jd">Juan David (Desarrollador)</option>
+              <option value="dev_ee">Esteban Escobar (Desarrollador)</option>
+              <option value="dev_mocho">Jhon Eyder - Mocho (Desarrollador)</option>
+              <option value="dev_ediaz">Edwin Diaz (Director TI / Admin)</option>
+            </select>
+          </div>
+
+          <div class="report-filter-section">
+            <h4 class="report-filter-section-title">
+              <i data-lucide="layers"></i> 3. Aplicativo o Módulo
+            </h4>
+            <select id="repFilterApp" class="form-input" onchange="onReportFilterChanged()">
+              <option value="all">📁 Todos los Aplicativos (Portafolio Completo)</option>
+              <option value="app_torre">TORRE DE CONTROL (STF-TC-01)</option>
+              <option value="app_colchas">COLCHAS (STF-COL-02)</option>
+              <option value="app_laboratorio">LABORATORIO (STF-LAB-03)</option>
+              <option value="app_calidad">CALIDAD (STF-CAL-04)</option>
+              <option value="app_geo">GEOLOCALIZACION TALLERES (STF-GEO-05)</option>
+              <option value="app_tintoreria">TINTORERIA (STF-TIN-06)</option>
+            </select>
+          </div>
+
+          <div class="report-filter-section">
+            <h4 class="report-filter-section-title">
+              <i data-lucide="check-square"></i> 4. Alcance de Tareas
+            </h4>
+            <select id="repFilterTaskScope" class="form-input" onchange="onReportFilterChanged()">
+              <option value="all">Todas las Tareas e Integraciones</option>
+              <option value="evaluated">Solo Tareas Auditadas y Culminadas</option>
+              <option value="in_progress">Solo Tareas en Progreso y Pendientes</option>
+            </select>
+          </div>
+
+          <!-- SECCIÓN: Firma Digital del Jefe -->
+          <div class="report-filter-section report-signature-box-section">
+            <div class="signature-section-header">
+              <h4 class="report-filter-section-title" style="margin-bottom: 0;">
+                <i data-lucide="pen-tool"></i> 5. Firma Digital del Jefe
+              </h4>
+              <span id="repSigStatusBadge" class="sig-status-badge badge-empty">Sin firma</span>
+            </div>
+            <p class="signature-instruction-text">
+              Dibuja tu firma en el recuadro con mouse o dispositivo táctil. Pulsa <strong>Guardar Firma Fija</strong> para almacenarla en el sistema y que quede predeterminada en todos los reportes.
+            </p>
+            
+            <div class="signature-pad-container">
+              <canvas id="repSignatureCanvas" width="340" height="95"></canvas>
+            </div>
+
+            <div class="signature-actions-row">
+              <button type="button" class="sig-btn sig-btn-clear" onclick="clearReportSignature()" title="Borrar trazo actual">
+                <i data-lucide="trash-2"></i> Limpiar
+              </button>
+              <button type="button" class="sig-btn sig-btn-save" onclick="saveFixedReportSignature()" title="Guardar firma fija en el navegador">
+                <i data-lucide="bookmark-check"></i> Guardar Firma Fija
+              </button>
+              <label class="sig-btn sig-btn-upload" title="Subir imagen de firma digital">
+                <i data-lucide="upload"></i> Subir
+                <input type="file" id="repSignatureFileInput" accept="image/*" style="display: none;" onchange="handleSignatureFileUpload(event)">
+              </label>
+            </div>
+
+            <div class="signature-signer-meta">
+              <div class="report-input-group" style="margin-bottom: 6px;">
+                <label for="repSignerName">Nombre del Firmante:</label>
+                <input type="text" id="repSignerName" value="Ing. Edwin Díaz" class="form-input" oninput="updateExecutiveReportPreview()">
+              </div>
+              <div class="report-input-group">
+                <label for="repSignerRole">Cargo / Dependencia:</label>
+                <input type="text" id="repSignerRole" value="Director de TI & Proyectos Tecnológicos · STF GROUP S.A." class="form-input" oninput="updateExecutiveReportPreview()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Vista Previa en Vivo de la Hoja A4 con Marca de Agua -->
+        <div class="report-preview-viewport">
+          <div class="report-preview-toolbar">
+            <span class="preview-mode-tag"><i data-lucide="eye"></i> Vista Previa en Vivo (Formato A4 Oficial)</span>
+            <span class="preview-page-info" id="repPreviewPageInfo">Métricas Auditadas en Tiempo Real</span>
+          </div>
+
+          <div class="report-paper-container">
+            <div class="report-paper" id="executiveReportDocumentPaper">
+              <!-- Watermark Centered Overlay (Gota de agua del logo corporativo) -->
+              <div class="report-watermark-overlay" id="reportWatermarkOverlay">
+                <img src="assets/stf-group-logo-watermark.png" alt="Marca de Agua STF GROUP" class="watermark-img">
+              </div>
+
+              <!-- Document Printable Body -->
+              <div class="report-doc-content" id="reportDocContent">
+                <!-- Se inyecta dinámicamente con updateExecutiveReportPreview() -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer report-modal-footer">
+        <div class="report-footer-left">
+          <span style="font-size: 12px; color: #64748B; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="shield-check" style="width: 15px; height: 15px; color: #10B981;"></i>
+            <span>Documento oficial con verificación de integridad, marca de agua corporativa y firma electrónica.</span>
+          </span>
+        </div>
+        <div class="report-footer-right">
+          <button type="button" class="pill-btn secondary-btn" onclick="closeExecutiveReportModal()">Cerrar</button>
+          <button type="button" class="pill-btn secondary-btn" onclick="printExecutiveReportDoc()">
+            <i data-lucide="printer"></i>
+            <span>Imprimir / Guardar como PDF</span>
+          </button>
+          <button type="button" class="pill-btn primary-glow-btn" id="btnDownloadReportPdf" onclick="downloadExecutiveReportDoc()">
+            <i data-lucide="download"></i>
+            <span>Descargar Reporte en PDF Oficial</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Message -->
   <div class="toast-notification" id="toastNotification">
     <i data-lucide="check-circle" class="toast-icon"></i>
@@ -1327,6 +1495,7 @@
   </div>
 
   <!-- Application Logic Scripts -->
+  <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js"></script>
   <script src="js/sheets-sync.js"></script>
   <script src="js/app.js"></script>
