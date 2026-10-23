@@ -64,13 +64,60 @@ function getDominantPhase() {
 // 1. Render The Stacked Cards (Dynamic by Selected Developer)
 let activeDeckApps = [];
 
+// Paletas oficiales y armónicas para cada sistema de STF GROUP
+const DECK_SYSTEM_PALETTES = {
+  app_torre: {
+    bg: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", // Royal Violet
+    shadow: "0 12px 26px -4px rgba(124, 58, 237, 0.45)"
+  },
+  app_colchas: {
+    bg: "linear-gradient(135deg, #FFA947 0%, #FF8D1D 100%)", // Sunset Orange
+    shadow: "0 12px 26px -4px rgba(255, 141, 29, 0.45)"
+  },
+  app_laboratorio: {
+    bg: "linear-gradient(135deg, #6B88FF 0%, #4D6DFF 100%)", // Electric Blue
+    shadow: "0 12px 26px -4px rgba(77, 109, 255, 0.48)"
+  },
+  app_calidad: {
+    bg: "linear-gradient(135deg, #10B981 0%, #059669 100%)", // Emerald Green
+    shadow: "0 12px 26px -4px rgba(16, 185, 129, 0.45)"
+  },
+  app_tintoreria: {
+    bg: "linear-gradient(135deg, #06B6D4 0%, #0284C7 100%)", // Cyan Ocean
+    shadow: "0 12px 26px -4px rgba(2, 132, 199, 0.45)"
+  },
+  app_geo: {
+    bg: "linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)", // Ruby Red
+    shadow: "0 12px 26px -4px rgba(225, 29, 72, 0.45)"
+  }
+};
+
+const DEFAULT_DECK_GRADIENTS = [
+  { bg: "linear-gradient(135deg, #6B88FF 0%, #4D6DFF 100%)", shadow: "0 12px 26px -4px rgba(77, 109, 255, 0.48)" },
+  { bg: "linear-gradient(135deg, #FFA947 0%, #FF8D1D 100%)", shadow: "0 12px 26px -4px rgba(255, 141, 29, 0.45)" },
+  { bg: "linear-gradient(135deg, #10B981 0%, #059669 100%)", shadow: "0 12px 26px -4px rgba(16, 185, 129, 0.45)" },
+  { bg: "linear-gradient(135deg, #06B6D4 0%, #0284C7 100%)", shadow: "0 12px 26px -4px rgba(2, 132, 199, 0.45)" },
+  { bg: "linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)", shadow: "0 12px 26px -4px rgba(225, 29, 72, 0.45)" },
+  { bg: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", shadow: "0 12px 26px -4px rgba(124, 58, 237, 0.45)" }
+];
+
+function getAppDeckPalette(app, idx) {
+  if (app && DECK_SYSTEM_PALETTES[app.id]) return DECK_SYSTEM_PALETTES[app.id];
+  return DEFAULT_DECK_GRADIENTS[idx % DEFAULT_DECK_GRADIENTS.length];
+}
+
 function renderStackedDeck(devId = activeSelectedDevId) {
   const deckContainer = document.getElementById('stackedDeck');
   if (!deckContainer) return;
 
-  // Filter apps by selected developer (or all if 'all')
+  const currentDev = getDeveloperById(devId);
+  const isDevAdmin = (currentDev && currentDev.role === 'Admin') || devId === 'dev_ediaz' || devId === 'all' || (loggedUser && loggedUser.role === 'Admin' && (!devId || devId === 'dev_ediaz' || devId === 'all'));
+
   let devApps = [];
-  if (devId && devId !== 'all') {
+  if (isDevAdmin) {
+    // Para el ADMIN o Vista Global: Mostrar TODOS los 6 aplicativos de STF GROUP
+    devApps = [...appState.applications];
+  } else if (devId) {
     devApps = appState.applications.filter(a => a.devId === devId || (a.devIds && a.devIds.includes(devId)));
   } else {
     devApps = [...appState.applications];
@@ -93,150 +140,116 @@ function cycleStackedDeckByAppId(appId) {
   }
 }
 
+function cycleStackedDeckNext(e) {
+  if (e) e.stopPropagation();
+  if (activeDeckApps.length <= 1) return;
+  const first = activeDeckApps.shift();
+  activeDeckApps.push(first);
+  renderDeckFromList(activeDeckApps);
+}
+
+function cycleStackedDeckPrev(e) {
+  if (e) e.stopPropagation();
+  if (activeDeckApps.length <= 1) return;
+  const last = activeDeckApps.pop();
+  activeDeckApps.unshift(last);
+  renderDeckFromList(activeDeckApps);
+}
+
 function renderDeckFromList(appsList) {
   const deckContainer = document.getElementById('stackedDeck');
   if (!deckContainer || !appsList || appsList.length === 0) return;
 
+  const total = appsList.length;
   const app0 = appsList[0];
   const dev0 = getDeveloperById(app0.devId);
   const prog0 = calculateAppProgress(app0);
 
-  if (appsList.length === 1) {
-    // 1 Project (e.g. Esteban Escobar)
-    deckContainer.innerHTML = `
-      <div class="deck-tab deck-tab-active" style="top: 0;" data-app-id="${app0.id}">
+  // Background apps are appsList[1] to appsList[total - 1]
+  const bgApps = appsList.slice(1);
+  const bgCount = bgApps.length;
+
+  // Staggering step so all tabs remain visible and aligned
+  let step = 36;
+  if (bgCount >= 5) step = 25;
+  else if (bgCount === 4) step = 28;
+  else if (bgCount === 3) step = 32;
+  else if (bgCount === 2) step = 36;
+
+  const activeTop = bgCount * step;
+  const containerHeight = activeTop + 185;
+  deckContainer.style.height = `${containerHeight}px`;
+
+  let html = '';
+
+  // Render background tabs from back (last) to front (first) so they stack with proper z-index
+  for (let i = bgCount - 1; i >= 0; i--) {
+    const bgApp = bgApps[i];
+    const bgProg = calculateAppProgress(bgApp);
+    const topPos = i * step;
+    const zIdx = i + 1;
+    const pal = getAppDeckPalette(bgApp, i);
+
+    html += `
+      <div class="deck-tab deck-tab-dynamic"
+           style="top: ${topPos}px; z-index: ${zIdx}; background: ${pal.bg}; box-shadow: ${pal.shadow};"
+           onclick="cycleStackedDeckByAppId('${bgApp.id}')"
+           title="Clic para traer al frente: ${bgApp.name} (${bgProg}%)">
         <div class="deck-tab-header">
-          <span class="deck-tab-name">${app0.name}</span>
-          <span class="deck-tab-metric">${prog0}%</span>
-        </div>
-        <div class="deck-card-body">
-          <div class="deck-notch-wrapper">
-            <div class="deck-badge-pill">
-              <span>${app0.isGroupProject ? '👥 Proyecto Grupal' : 'Prioridad ' + app0.priority}</span>
-            </div>
-            <button class="deck-add-btn" onclick="openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
-              <i data-lucide="edit-3"></i>
-            </button>
-          </div>
-          
-          <div class="deck-main-stat">
-            <span class="deck-stat-label">Avance Real Ponderado <span class="trend-up">+14.5% mes</span></span>
-            <div class="deck-stat-number">${prog0}%</div>
-          </div>
-
-          <div class="deck-footer-info">
-            <div class="dev-lead-pill">
-              <img src="${dev0.avatar}" alt="${dev0.name}">
-              <span>${dev0.name}</span>
-            </div>
-            <span class="delivery-date-pill">Límite: ${formatShortDate(app0.deadline)}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  } else if (appsList.length === 2) {
-    // 2 Projects (e.g. Juan David or Mocho)
-    const app1 = appsList[1];
-    const prog1 = calculateAppProgress(app1);
-
-    deckContainer.innerHTML = `
-      <!-- Background Tab 1 (Orange) -->
-      <div class="deck-tab deck-tab-2" style="top: 0;" onclick="cycleStackedDeckByAppId('${app1.id}')" title="Clic para ver ${app1.name}">
-        <div class="deck-tab-header">
-          <span class="deck-tab-name">${app1.name}</span>
-          <span class="deck-tab-metric">${prog1}%</span>
-        </div>
-      </div>
-
-      <!-- Front Lilac Card with Action Notch -->
-      <div class="deck-tab deck-tab-active" style="top: 48px;" data-app-id="${app0.id}">
-        <div class="deck-tab-header">
-          <span class="deck-tab-name">${app0.name}</span>
-          <span class="deck-tab-metric">${prog0}%</span>
-        </div>
-        <div class="deck-card-body">
-          <div class="deck-notch-wrapper">
-            <div class="deck-badge-pill">
-              <span>${app0.isGroupProject ? '👥 Proyecto Grupal' : 'Prioridad ' + app0.priority}</span>
-            </div>
-            <button class="deck-add-btn" onclick="openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
-              <i data-lucide="edit-3"></i>
-            </button>
-          </div>
-          
-          <div class="deck-main-stat">
-            <span class="deck-stat-label">Avance Real Ponderado <span class="trend-up">+14.5% mes</span></span>
-            <div class="deck-stat-number">${prog0}%</div>
-          </div>
-
-          <div class="deck-footer-info">
-            <div class="dev-lead-pill">
-              <img src="${dev0.avatar}" alt="${dev0.name}">
-              <span>${dev0.name}</span>
-            </div>
-            <span class="delivery-date-pill">Límite: ${formatShortDate(app0.deadline)}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  } else {
-    // 3 or more Projects (e.g. Jose Guzman or Global)
-    const app1 = appsList[1];
-    const app2 = appsList[2];
-    const prog1 = calculateAppProgress(app1);
-    const prog2 = calculateAppProgress(app2);
-
-    deckContainer.innerHTML = `
-      <!-- Top Blue Tab -->
-      <div class="deck-tab deck-tab-1" onclick="cycleStackedDeckByAppId('${app2.id}')" title="Clic para ver ${app2.name}">
-        <div class="deck-tab-header">
-          <span class="deck-tab-name">${app2.name}</span>
-          <span class="deck-tab-metric">${prog2}%</span>
-        </div>
-      </div>
-
-      <!-- Middle Orange Tab -->
-      <div class="deck-tab deck-tab-2" onclick="cycleStackedDeckByAppId('${app1.id}')" title="Clic para ver ${app1.name}">
-        <div class="deck-tab-header">
-          <span class="deck-tab-name">${app1.name}</span>
-          <span class="deck-tab-metric">${prog1}%</span>
-        </div>
-      </div>
-
-      <!-- Front Lilac Card with Action Notch -->
-      <div class="deck-tab deck-tab-active" data-app-id="${app0.id}">
-        <div class="deck-tab-header">
-          <span class="deck-tab-name">${app0.name}</span>
-          <span class="deck-tab-metric">${prog0}%</span>
-        </div>
-        <div class="deck-card-body">
-          <div class="deck-notch-wrapper">
-            <div class="deck-badge-pill">
-              <span>${app0.isGroupProject ? '👥 Proyecto Grupal' : 'Prioridad ' + app0.priority}</span>
-            </div>
-            <button class="deck-add-btn" onclick="openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
-              <i data-lucide="edit-3"></i>
-            </button>
-          </div>
-          
-          <div class="deck-main-stat">
-            <span class="deck-stat-label">Avance Real Ponderado <span class="trend-up">+14.5% mes</span></span>
-            <div class="deck-stat-number">${prog0}%</div>
-          </div>
-
-          <div class="deck-footer-info">
-            <div class="dev-lead-pill">
-              <img src="${dev0.avatar}" alt="${dev0.name}">
-              <span>${dev0.name}</span>
-            </div>
-            <span class="delivery-date-pill">Límite: ${formatShortDate(app0.deadline)}</span>
-          </div>
+          <span class="deck-tab-name">${bgApp.name}</span>
+          <span class="deck-tab-metric">${bgProg}%</span>
         </div>
       </div>
     `;
   }
 
-  lucide.createIcons();
+  // Active Front Card
+  const activePal = getAppDeckPalette(app0, 0);
+  const activeZ = bgCount + 10;
+
+  html += `
+    <div class="deck-tab deck-tab-active" style="top: ${activeTop}px; z-index: ${activeZ};" data-app-id="${app0.id}">
+      <div class="deck-tab-header" style="background: ${activePal.bg};">
+        <span class="deck-tab-name">${app0.name}</span>
+        <span class="deck-tab-metric">${prog0}%</span>
+      </div>
+      <div class="deck-card-body">
+        <div class="deck-notch-wrapper">
+          <div class="deck-badge-pill">
+            <span>${app0.isGroupProject ? '👥 Proyecto Grupal' : 'Prioridad ' + app0.priority}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            ${total > 1 ? `
+              <div class="deck-cycle-controls" style="display: inline-flex; align-items: center; gap: 4px; background: #F1F5F9; padding: 3px 8px; border-radius: 20px; border: 1px solid #E2E8F0;">
+                <button type="button" class="deck-mini-arrow" onclick="cycleStackedDeckPrev(event)" title="Proyecto anterior" style="border:none; background:transparent; cursor:pointer; color:#64748B; padding:0 3px; font-size:13px; font-weight:700; line-height:1;">◀</button>
+                <span style="font-size: 11px; font-weight: 750; color: #334155; letter-spacing: 0.2px;">${total} Proyectos</span>
+                <button type="button" class="deck-mini-arrow" onclick="cycleStackedDeckNext(event)" title="Siguiente proyecto" style="border:none; background:transparent; cursor:pointer; color:#64748B; padding:0 3px; font-size:13px; font-weight:700; line-height:1;">▶</button>
+              </div>
+            ` : ''}
+            <button class="deck-add-btn" onclick="openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
+              <i data-lucide="edit-3"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="deck-main-stat">
+          <span class="deck-stat-label">Avance Real Ponderado <span class="trend-up">+14.5% mes</span></span>
+          <div class="deck-stat-number">${prog0}%</div>
+        </div>
+
+        <div class="deck-footer-info">
+          <div class="dev-lead-pill">
+            <img src="${dev0.avatar}" alt="${dev0.name}">
+            <span>${dev0.name}</span>
+          </div>
+          <span class="delivery-date-pill">Límite: ${formatShortDate(app0.deadline)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  deckContainer.innerHTML = html;
+  if (window.lucide) lucide.createIcons();
 }
 
 // 2. Render Vertical Capsule Progress Bar
@@ -467,7 +480,10 @@ function renderDevelopersSection() {
 
   gridEl.innerHTML = appState.developers.map(dev => {
     const isSelected = dev.id === activeSelectedDevId;
-    const assigned = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
+    const isDevAdmin = dev.role === 'Admin' || dev.id === 'dev_ediaz';
+    const assigned = isDevAdmin 
+      ? appState.applications 
+      : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
     const assignedCount = assigned.length;
     
     // Average progress across their assigned projects
@@ -495,13 +511,13 @@ function renderDevelopersSection() {
 
         <div class="dci-info">
           <strong class="dci-name">${dev.name}</strong>
-          <span class="dci-role">${dev.role}</span>
+          <span class="dci-role">${isDevAdmin ? '🛡️ Director TI / Admin' : dev.role}</span>
         </div>
 
         <div class="dci-workload">
           <div class="dci-workload-meta">
             <span class="dci-meta-label">Capacidad Asignada</span>
-            <span class="dci-meta-val">${assignedCount} Sistema${assignedCount !== 1 ? 's' : ''}</span>
+            <span class="dci-meta-val">${assignedCount} Sistema${assignedCount !== 1 ? 's' : ''}${isDevAdmin ? ' (Global)' : ''}</span>
           </div>
           <div class="dci-progress-track">
             <div class="dci-progress-fill" style="width: ${avgProgress}%; background: ${barColor};"></div>
@@ -569,11 +585,20 @@ function updateQuickDevStrip() {
   const scoreEl = document.getElementById('activeDevScore');
   const tagsContainer = document.getElementById('selectedDevProjectsTags');
 
-  // Find all projects assigned to this developer (individual or group)
-  const assigned = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
+  // Find all projects assigned to this developer (or all if Admin)
+  const isDevAdmin = (dev && dev.role === 'Admin') || activeSelectedDevId === 'dev_ediaz' || activeSelectedDevId === 'all';
+  const assigned = isDevAdmin
+    ? appState.applications
+    : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
 
   if (nameEl) nameEl.textContent = dev.name;
-  if (roleEl) roleEl.textContent = `${dev.role} · ${assigned.length} Sistema${assigned.length !== 1 ? 's' : ''}`;
+  if (roleEl) {
+    if (isDevAdmin) {
+      roleEl.textContent = `🛡️ Director TI / Admin · Supervisión Total (${assigned.length} Sistemas)`;
+    } else {
+      roleEl.textContent = `${dev.role} · ${assigned.length} Sistema${assigned.length !== 1 ? 's' : ''}`;
+    }
+  }
   if (scoreEl) scoreEl.textContent = `⭐ ${dev.onTimeDelivery}% Eficiencia`;
 
   // Render clean project tag pills
@@ -2836,12 +2861,17 @@ window.closeQuarterlyGoalModal = closeQuarterlyGoalModal;
 window.saveQuarterlyGoal = saveQuarterlyGoal;
 window.saveSystemChanges = saveSystemChanges;
 window.cycleStackedDeckByAppId = cycleStackedDeckByAppId;
-window.selectDeveloperFromCard = selectDeveloperFromCard;
+window.cycleStackedDeckNext = cycleStackedDeckNext;
+window.cycleStackedDeckPrev = cycleStackedDeckPrev;
+window.selectDeveloper = selectDeveloper;
+window.selectDeveloperFromCard = selectDeveloper;
 window.handleCreateNewProject = handleCreateNewProject;
 window.handleAssignIntegrationSubmit = handleAssignIntegrationSubmit;
 window.handleConfirmEvaluation = handleConfirmEvaluation;
 window.exportExecutiveReport = exportExecutiveReport;
 window.switchView = switchView;
 window.showToast = showToast;
+window.renderStackedDeck = renderStackedDeck;
+window.getDeveloperById = getDeveloperById;
 
 

@@ -718,6 +718,38 @@ body {
   filter: brightness(1.04);
 }
 
+/* Dynamic Stacked Tabs for 4, 5, 6+ Apps (Admin Portfolio) */
+.deck-tab-dynamic {
+  left: 0;
+  height: 75px;
+  color: #FFFFFF;
+  border-radius: 22px;
+  padding: 13px 18px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              box-shadow 0.3s ease,
+              filter 0.25s ease;
+  user-select: none;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-sizing: border-box;
+}
+
+.deck-tab-dynamic:hover {
+  transform: translateY(-7px) scale(1.028);
+  filter: brightness(1.06);
+  z-index: 40 !important;
+  box-shadow: 0 22px 42px -4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.deck-mini-arrow {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.deck-mini-arrow:hover {
+  color: #2563EB !important;
+  transform: scale(1.25);
+}
+
 /* Tab 3 / Active Front Card: Lilac Header + White Body */
 .deck-tab-active {
   top: 72px;
