@@ -38,6 +38,13 @@
           if (e.target.id === 'modalSheetsSync') window.closeSheetsModal();
         });
       }
+
+      // Auto-sincronización inicial en segundo plano desde Google Sheets
+      if (this.isConnected()) {
+        setTimeout(() => {
+          this.pullCloudData(true);
+        }, 1200);
+      }
     },
 
     getUrl() {
@@ -284,6 +291,317 @@
     },
 
     /**
+     * Búsqueda flexible de Aplicativo por ID, Nombre o Código
+     */
+    findApp(nameOrId) {
+      if (!nameOrId || !window.appState || !Array.isArray(window.appState.applications)) return null;
+      const t = String(nameOrId).toLowerCase().trim();
+      return window.appState.applications.find(a => 
+        a.id.toLowerCase() === t ||
+        a.name.toLowerCase() === t ||
+        t.includes(a.name.toLowerCase()) ||
+        a.name.toLowerCase().includes(t) ||
+        (a.code && (a.code.toLowerCase() === t || t.includes(a.code.toLowerCase())))
+      ) || null;
+    },
+
+    /**
+     * Búsqueda flexible de Desarrollador por ID, Nombre o Usuario
+     */
+    findDev(nameOrId) {
+      if (!nameOrId || !window.appState || !Array.isArray(window.appState.developers)) return null;
+      const t = String(nameOrId).toLowerCase().trim();
+      return window.appState.developers.find(d => 
+        d.id.toLowerCase() === t ||
+        d.name.toLowerCase() === t ||
+        t.includes(d.name.toLowerCase()) ||
+        d.name.toLowerCase().includes(t) ||
+        (d.username && d.username.toLowerCase() === t)
+      ) || null;
+    },
+
+    /**
+     * Cargar y Sincronizar Solicitudes, Tareas y Avances desde Google Sheets hacia el Sistema
+     */
+    async pullCloudData(silent = false) {
+      if (!this.isConnected()) {
+        if (!silent && typeof window.showToast === 'function') {
+          window.showToast('ℹ️ Conecta tu Google Sheet para sincronizar solicitudes en la nube.');
+        }
+        return { success: false, message: 'Google Sheets no conectado.' };
+      }
+
+      this.setSyncingState(true);
+
+      try {
+        let syncedCount = 0;
+        let phaseUpdatesCount = 0;
+        let fullDataLoaded = false;
+
+        // 1. Intentar get_all_data (Endpoint directo de tablas en Apps Script)
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 7000);
+          const res = await fetch(`${this.url}?action=get_all_data&_t=${Date.now()}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success' && Array.isArray(json.tasks) && json.tasks.length > 0) {
+              fullDataLoaded = true;
+              syncedCount = this.mergeCloudTasks(json.tasks);
+              if (Array.isArray(json.systems) && json.systems.length > 0) {
+                this.mergeCloudSystems(json.systems);
+              }
+            }
+          }
+        } catch (err) {
+          // get_all_data puede no existir si el script desplegado es v2.6 anterior, usamos fallback
+        }
+
+        // 2. Fallback inteligente: Consultar Bitácora de Cambios (get_updates)
+        if (!fullDataLoaded) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(`${this.url}?action=get_updates&_t=${Date.now()}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+              const json = await res.json();
+              if (json.status === 'success' && Array.isArray(json.data)) {
+                const result = this.mergeUpdatesFromBitacora(json.data);
+                syncedCount = result.taskCount;
+                phaseUpdatesCount = result.phaseCount;
+              }
+            }
+          } catch (e) {
+            console.warn('[SheetsSync] Error consultando bitácora de Google Sheets:', e);
+          }
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleDateString('es-CO') + ' ' + now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        localStorage.setItem(STORAGE_KEYS.LAST_SYNC, timeStr);
+
+        this.setSyncingState(false);
+        this.updateUiStatus();
+
+        // Refrescar todas las vistas en pantalla
+        if (typeof window.refreshAllViews === 'function') {
+          window.refreshAllViews();
+        }
+
+        if (!silent) {
+          let msg = `☁️ ¡Sincronización con Google Sheets completada!`;
+          if (syncedCount > 0) msg += ` Se cargaron ${syncedCount} solicitudes/tareas.`;
+          if (phaseUpdatesCount > 0) msg += ` Se actualizaron ${phaseUpdatesCount} fases.`;
+          if (typeof window.showToast === 'function') {
+            window.showToast(msg);
+          }
+        }
+
+        return { success: true, syncedCount, phaseUpdatesCount };
+      } catch (err) {
+        this.setSyncingState(false);
+        console.warn('[SheetsSync] Error en pullCloudData:', err);
+        return { success: false, message: err.message };
+      }
+    },
+
+    /**
+     * Fusionar tareas directas de la hoja Tareas_Integraciones
+     */
+    mergeCloudTasks(tasksList) {
+      if (!Array.isArray(tasksList) || !window.appState) return 0;
+      const state = window.appState;
+      if (!Array.isArray(state.integrations)) state.integrations = [];
+
+      let count = 0;
+      tasksList.forEach(task => {
+        const tName = (task.name || task.Tarea || '').trim();
+        if (!tName) return;
+
+        const appObj = this.findApp(task.appName || task.Aplicativo);
+        const devObj = this.findDev(task.devName || task.developer || task.Desarrollador);
+        const tId = String(task.id || task.ID_Tarea || `int_${Date.now()}`);
+
+        const existing = state.integrations.find(i => 
+          i.id === tId || 
+          i.name.trim().toLowerCase() === tName.toLowerCase()
+        );
+
+        const isEval = String(task.status || task.Estado || '').toLowerCase().includes('audit') || 
+                       String(task.status || task.Estado || '').toLowerCase().includes('aprob');
+
+        if (existing) {
+          if (isEval && existing.status !== 'evaluated') {
+            existing.status = 'evaluated';
+            existing.evaluation = existing.evaluation || {
+              evalDate: task.createdDate || '2026-10-23',
+              onTime: true,
+              qualityScore: 95,
+              pointsAdded: existing.weight || 15
+            };
+            count++;
+          }
+        } else {
+          const newTask = {
+            id: tId,
+            name: tName,
+            appId: appObj ? appObj.id : 'app_torre',
+            devId: devObj ? devObj.id : 'dev_jg',
+            startDate: task.startDate || '2026-10-19',
+            deadline: task.deadline || task.Fecha_Entrega || '2026-11-15',
+            weight: Number(task.weight || task['Ponderacion_%']) || 15,
+            status: isEval ? 'evaluated' : 'in_progress',
+            description: task.description || 'Integración asignada desde Google Sheets.',
+            evaluation: isEval ? {
+              evalDate: task.createdDate || '2026-10-23',
+              onTime: true,
+              qualityScore: 95,
+              pointsAdded: Number(task.weight || task['Ponderacion_%']) || 15
+            } : null
+          };
+          state.integrations.unshift(newTask);
+          count++;
+        }
+      });
+
+      if (count > 0 && typeof window.saveData === 'function') {
+        window.saveData(state);
+      }
+      return count;
+    },
+
+    /**
+     * Fusionar sistemas desde la hoja Estado_Sistemas
+     */
+    mergeCloudSystems(sysList) {
+      if (!Array.isArray(sysList) || !window.appState || !Array.isArray(window.appState.applications)) return;
+      sysList.forEach(sys => {
+        const sName = (sys.name || sys.Nombre || '').trim();
+        const appObj = this.findApp(sName);
+        if (appObj && sys.slaStatus) {
+          if (sys.slaStatus.toLowerCase().includes('riesgo')) appObj.status = 'risk';
+        }
+      });
+    },
+
+    /**
+     * Extraer y cargar solicitudes y fases registradas en la Bitácora de Google Sheets
+     */
+    mergeUpdatesFromBitacora(updates) {
+      if (!Array.isArray(updates) || updates.length === 0 || !window.appState) return { taskCount: 0, phaseCount: 0 };
+      const state = window.appState;
+      if (!Array.isArray(state.integrations)) state.integrations = [];
+
+      let taskCount = 0;
+      let phaseCount = 0;
+
+      const taskRegex = /Tarea '([^']+)' asignada a ([^(]+)\(\+\s*(\d+)% avance,\s*plazo:\s*([^)]+)\)/;
+      const phaseRegex = /Fase '([^']+)' actualizada al (\d+)% \(Completada:\s*([^)]+)\)/;
+      const auditRegex = /Auditoría aplicada a ([^:]+):\s*([\d.]+)\s*pts/;
+
+      // Procesar en orden cronológico (del más antiguo al más reciente)
+      const chronological = updates.slice().reverse();
+
+      chronological.forEach(item => {
+        const desc = item.Descripcion || item.description || '';
+        const evType = item.Tipo_Evento || item.eventType || '';
+        const appName = item.Aplicativo || item.appName || '';
+
+        // A. Cargar Tareas / Solicitudes asignadas en Google Sheets
+        if (evType === 'ASIGNACION_INTEGRACION') {
+          const m = desc.match(taskRegex);
+          if (m) {
+            const taskName = m[1].trim();
+            const devName = m[2].trim();
+            const weight = parseInt(m[3]) || 15;
+            const deadline = m[4].trim();
+
+            const appObj = this.findApp(appName);
+            const devObj = this.findDev(devName);
+
+            const existing = state.integrations.find(i => 
+              i.name.trim().toLowerCase() === taskName.toLowerCase() ||
+              (item.Timestamp && i.id === `int_${item.Timestamp}`)
+            );
+
+            if (!existing) {
+              const newTask = {
+                id: item.Timestamp ? `int_${item.Timestamp}` : `int_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                name: taskName,
+                appId: appObj ? appObj.id : 'app_torre',
+                devId: devObj ? devObj.id : 'dev_jg',
+                startDate: '2026-10-19',
+                deadline: deadline,
+                weight: weight,
+                status: 'in_progress',
+                description: `Solicitud e integración técnica asignada y registrada en Google Sheets para ${appName}.`,
+                evaluation: null
+              };
+              state.integrations.unshift(newTask);
+              taskCount++;
+            }
+          }
+        }
+
+        // B. Cargar Cambios de Fases
+        if (evType === 'CAMBIO_FASE') {
+          const m = desc.match(phaseRegex);
+          if (m) {
+            const phaseName = m[1].trim();
+            const completed = m[3].toUpperCase().includes('SÍ') || m[3].toUpperCase().includes('SI');
+
+            const appObj = this.findApp(appName);
+            if (appObj && Array.isArray(appObj.phases)) {
+              const targetPhase = appObj.phases.find(p => 
+                p.name.toLowerCase().includes(phaseName.toLowerCase()) || 
+                phaseName.toLowerCase().includes(p.name.toLowerCase())
+              );
+              if (targetPhase && completed && !targetPhase.completed) {
+                targetPhase.completed = true;
+                phaseCount++;
+              }
+            }
+          }
+        }
+
+        // C. Cargar Auditorías Firmadas
+        if (evType === 'AUDITORIA_FIRMADA') {
+          const m = desc.match(auditRegex);
+          if (m) {
+            const score = parseFloat(m[2]) || 95;
+            const appObj = this.findApp(appName);
+            if (appObj) {
+              const pendingTask = state.integrations.find(i => i.appId === appObj.id && i.status === 'in_progress');
+              if (pendingTask) {
+                pendingTask.status = 'evaluated';
+                pendingTask.evaluation = {
+                  evalDate: item.Fecha_Hora ? item.Fecha_Hora.split('T')[0] : '2026-10-23',
+                  onTime: true,
+                  daysDifference: 0,
+                  stabilityScore: score,
+                  usabilityScore: score,
+                  qaScore: score,
+                  qualityScore: score,
+                  pointsAdded: (pendingTask.weight || 15) * (score / 100),
+                  evaluator: item.Desarrollador || 'Super Admin',
+                  notes: desc
+                };
+              }
+            }
+          }
+        }
+      });
+
+      if ((taskCount > 0 || phaseCount > 0) && typeof window.saveData === 'function') {
+        window.saveData(state);
+      }
+
+      return { taskCount, phaseCount };
+    },
+
+    /**
      * Historial local para visualización rápida en UI
      */
     recordLocalHistory(payload) {
@@ -469,6 +787,23 @@
     }
     renderRecentSheetsLogs();
   };
+
+  window.triggerPullCloudData = async function () {
+    if (!SheetsSync.isConnected()) {
+      if (typeof window.showToast === 'function') {
+        window.showToast('Primero debes configurar y guardar la URL de Google Sheets.');
+      }
+      return;
+    }
+
+    if (typeof window.showToast === 'function') {
+      window.showToast('📥 Consultando Google Sheets en tiempo real...');
+    }
+
+    const res = await SheetsSync.pullCloudData(false);
+    renderRecentSheetsLogs();
+  };
+
 
   window.copyAppsScriptCode = async function () {
     const btnText = document.getElementById('btnCopyScriptText');

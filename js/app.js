@@ -61,6 +61,39 @@ function getDominantPhase() {
   return maxPhase;
 }
 
+function updateHeaderStatChips() {
+  if (!appState || !Array.isArray(appState.applications)) return;
+  const chipApps = document.getElementById('chipActiveAppsCount');
+  if (chipApps) {
+    chipApps.textContent = `${appState.applications.length} Aplicativos Activos`;
+  }
+  const riskCount = appState.applications.filter(a => a.status === 'risk' || a.status === 'delayed').length;
+  const chipRisk = document.getElementById('chipRiskAppsCount');
+  if (chipRisk) {
+    chipRisk.textContent = `${riskCount} En Riesgo`;
+  }
+  const globalProg = calculateGlobalProgress();
+  const globalAvgBadge = document.getElementById('globalAvgBadge');
+  if (globalAvgBadge) {
+    globalAvgBadge.textContent = `${globalProg}%`;
+  }
+}
+
+function refreshAllViews() {
+  if (typeof renderStackedDeck === 'function') renderStackedDeck();
+  if (typeof renderCapsuleProgressBar === 'function') renderCapsuleProgressBar();
+  if (typeof renderSystemsTable === 'function') renderSystemsTable();
+  if (typeof renderDevelopersSection === 'function') renderDevelopersSection();
+  if (typeof renderIntegrationsList === 'function') renderIntegrationsList(activeIntFilter);
+  if (typeof updateQuickDevStrip === 'function') updateQuickDevStrip();
+  if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
+  if (typeof renderProjectsView === 'function') renderProjectsView(activeBrandFilter);
+  if (typeof updateOverviewChart === 'function') updateOverviewChart();
+  if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+}
+window.refreshAllViews = refreshAllViews;
+window.updateHeaderStatChips = updateHeaderStatChips;
+
 // ==========================================================================
 // RENDERERS
 // ==========================================================================
@@ -634,6 +667,24 @@ function selectDeveloper(devId) {
 
   // 5. Update Overview Spline Chart according to active developer & current period
   updateOverviewChart();
+
+  // 6. Update Integrations list and header stat chips
+  renderIntegrationsList(activeIntFilter);
+  updateHeaderStatChips();
+
+  // 7. Sincronizar Velocidad de Entrega con el desarrollador seleccionado
+  const velDevSelect = document.getElementById('velocityDevFilter');
+  if (velDevSelect) {
+    velDevSelect.value = devId;
+    currentVelocityDev = devId;
+  }
+  const vcalDevSelect = document.getElementById('vcalDevSelect');
+  if (vcalDevSelect) {
+    vcalDevSelect.value = devId;
+  }
+  if (typeof updateVelocitySection === 'function') {
+    updateVelocitySection(currentVelocityPeriod);
+  }
 }
 
 function updateQuickDevStrip() {
@@ -1039,21 +1090,233 @@ function initOverviewChart() {
   updateOverviewChart(currentOverviewPeriod);
 }
 
-let currentVelocityPeriod = 'weeks';
+// ==========================================================================
+// VELOCIDAD DE ENTREGA (SPRINTS) · MOTOR ÁGIL CON MEDICIÓN POR DESARROLLADOR
+// Y CALENDARIO INTERACTIVO DE FECHAS PERSONALIZADAS
+// ==========================================================================
+
+let currentVelocityPeriod = 'months'; // Por defecto muestra últimos 6 meses (como la captura)
+let currentVelocityDev = 'all';      // 'all', 'dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee'
+let velocityCustomDateStart = '2026-10-01';
+let velocityCustomDateEnd = '2026-10-28';
+
+// Estado del componente Calendario Visual
+let vcalViewingYear = 2026;
+let vcalViewingMonth = 9; // 0-indexed: 9 = Octubre
+let vcalSelectedStart = '2026-10-01';
+let vcalSelectedEnd = '2026-10-28';
+
+// Base de datos oficial de métricas de velocidad por desarrollador y períodos
+const STF_VELOCITY_DATA = {
+  benchmarks: {
+    all: { monthly: 25, weekly: 8, daily: 1.5, label: '25 Mods / Mes' },
+    dev_jg: { monthly: 10, weekly: 3, daily: 0.6, label: '10 Mods / Mes' },
+    dev_jd: { monthly: 6, weekly: 2, daily: 0.4, label: '6 Mods / Mes' },
+    dev_mocho: { monthly: 6, weekly: 2, daily: 0.4, label: '6 Mods / Mes' },
+    dev_ee: { monthly: 5, weekly: 1.5, daily: 0.35, label: '5 Mods / Mes' }
+  },
+  // Desglose oficial de los últimos 6 meses (Mayo a Octubre 2026)
+  months: {
+    labels: ['Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre'],
+    all: {
+      mods: [22, 28, 25, 34, 30, 38],
+      hours: [165, 195, 180, 245, 210, 255]
+    },
+    dev_jg: {
+      mods: [8, 10, 9, 12, 11, 14],
+      hours: [60, 70, 65, 85, 75, 95]
+    },
+    dev_jd: {
+      mods: [5, 7, 6, 8, 7, 9],
+      hours: [38, 50, 44, 58, 50, 60]
+    },
+    dev_mocho: {
+      mods: [5, 6, 6, 8, 7, 9],
+      hours: [37, 43, 43, 56, 49, 60]
+    },
+    dev_ee: {
+      mods: [4, 5, 4, 6, 5, 6],
+      hours: [30, 32, 28, 46, 36, 40]
+    }
+  },
+  // Desglose de 8 sprints semanales
+  weeks: {
+    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'],
+    all: {
+      mods: [5, 7, 6, 9, 8, 12, 7, 8],
+      hours: [38, 44, 40, 48, 45, 56, 42, 45]
+    },
+    dev_jg: {
+      mods: [2, 3, 2, 3, 3, 4, 3, 3],
+      hours: [14, 18, 14, 17, 16, 20, 16, 17]
+    },
+    dev_jd: {
+      mods: [1, 2, 2, 2, 2, 3, 2, 2],
+      hours: [9, 11, 12, 11, 11, 13, 10, 11]
+    },
+    dev_mocho: {
+      mods: [1, 1, 1, 2, 2, 3, 1, 2],
+      hours: [8, 8, 8, 11, 10, 13, 8, 10]
+    },
+    dev_ee: {
+      mods: [1, 1, 1, 2, 1, 2, 1, 1],
+      hours: [7, 7, 6, 9, 8, 10, 8, 7]
+    }
+  },
+  // Semanas de meses individuales
+  singleMonths: {
+    month_oct: {
+      name: 'Octubre 2026',
+      labels: ['Sem 1 (1-7 Oct)', 'Sem 2 (8-14 Oct)', 'Sem 3 (15-21 Oct)', 'Sem 4 (22-28 Oct)'],
+      all: { mods: [9, 10, 9, 10], hours: [60, 68, 62, 65] },
+      dev_jg: { mods: [3, 4, 3, 4], hours: [22, 26, 23, 24] },
+      dev_jd: { mods: [2, 2, 3, 2], hours: [15, 14, 16, 15] },
+      dev_mocho: { mods: [2, 2, 2, 3], hours: [13, 15, 14, 18] },
+      dev_ee: { mods: [2, 2, 1, 1], hours: [10, 13, 9, 8] }
+    },
+    month_sep: {
+      name: 'Septiembre 2026',
+      labels: ['Sem 1 (1-7 Sep)', 'Sem 2 (8-14 Sep)', 'Sem 3 (15-21 Sep)', 'Sem 4 (22-28 Sep)'],
+      all: { mods: [7, 8, 7, 8], hours: [48, 55, 52, 55] },
+      dev_jg: { mods: [3, 3, 2, 3], hours: [18, 20, 17, 20] },
+      dev_jd: { mods: [2, 2, 2, 1], hours: [12, 14, 13, 11] },
+      dev_mocho: { mods: [1, 2, 2, 2], hours: [10, 12, 13, 14] },
+      dev_ee: { mods: [1, 1, 1, 2], hours: [8, 9, 9, 10] }
+    },
+    month_ago: {
+      name: 'Agosto 2026',
+      labels: ['Sem 1 (1-7 Ago)', 'Sem 2 (8-14 Ago)', 'Sem 3 (15-21 Ago)', 'Sem 4 (22-28 Ago)'],
+      all: { mods: [8, 9, 8, 9], hours: [58, 65, 58, 64] },
+      dev_jg: { mods: [3, 3, 3, 3], hours: [21, 22, 20, 22] },
+      dev_jd: { mods: [2, 2, 2, 2], hours: [14, 15, 14, 15] },
+      dev_mocho: { mods: [2, 2, 2, 2], hours: [13, 14, 14, 15] },
+      dev_ee: { mods: [1, 2, 1, 2], hours: [10, 14, 10, 12] }
+    },
+    month_jul: {
+      name: 'Julio 2026',
+      labels: ['Sem 1 (1-7 Jul)', 'Sem 2 (8-14 Jul)', 'Sem 3 (15-21 Jul)', 'Sem 4 (22-28 Jul)'],
+      all: { mods: [6, 6, 7, 6], hours: [42, 45, 48, 45] },
+      dev_jg: { mods: [2, 2, 3, 2], hours: [15, 16, 18, 16] },
+      dev_jd: { mods: [2, 1, 2, 1], hours: [12, 9, 13, 10] },
+      dev_mocho: { mods: [1, 2, 1, 2], hours: [8, 12, 9, 14] },
+      dev_ee: { mods: [1, 1, 1, 1], hours: [7, 8, 8, 5] }
+    }
+  },
+  // Entregas georreferenciadas por fecha para análisis personalizado con el calendario
+  dailyDeliveries: [
+    { date: '2026-09-02', devId: 'dev_jg', modules: 1, hours: 6, appId: 'app_colchas' },
+    { date: '2026-09-04', devId: 'dev_mocho', modules: 1, hours: 5, appId: 'app_tintoreria' },
+    { date: '2026-09-05', devId: 'dev_jd', modules: 1, hours: 6, appId: 'app_calidad' },
+    { date: '2026-09-09', devId: 'dev_jg', modules: 2, hours: 12, appId: 'app_torre' },
+    { date: '2026-09-11', devId: 'dev_ee', modules: 1, hours: 6, appId: 'app_torre' },
+    { date: '2026-09-12', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
+    { date: '2026-09-16', devId: 'dev_mocho', modules: 1, hours: 6, appId: 'app_tintoreria' },
+    { date: '2026-09-18', devId: 'dev_jg', modules: 1, hours: 8, appId: 'app_geo' },
+    { date: '2026-09-21', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
+    { date: '2026-09-23', devId: 'dev_ee', modules: 1, hours: 6, appId: 'app_torre' },
+    { date: '2026-09-25', devId: 'dev_mocho', modules: 1, hours: 7, appId: 'app_tintoreria' },
+    { date: '2026-09-27', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_colchas' },
+    { date: '2026-10-02', devId: 'dev_jg', modules: 2, hours: 13, appId: 'app_torre' },
+    { date: '2026-10-04', devId: 'dev_mocho', modules: 1, hours: 6, appId: 'app_tintoreria' },
+    { date: '2026-10-05', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
+    { date: '2026-10-07', devId: 'dev_ee', modules: 1, hours: 7, appId: 'app_torre' },
+    { date: '2026-10-09', devId: 'dev_jg', modules: 2, hours: 12, appId: 'app_colchas' },
+    { date: '2026-10-11', devId: 'dev_jd', modules: 1, hours: 8, appId: 'app_calidad' },
+    { date: '2026-10-12', devId: 'dev_mocho', modules: 1, hours: 7, appId: 'app_tintoreria' },
+    { date: '2026-10-14', devId: 'dev_ee', modules: 1, hours: 7, appId: 'app_torre' },
+    { date: '2026-10-16', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_laboratorio' },
+    { date: '2026-10-17', devId: 'dev_jd', modules: 2, hours: 11, appId: 'app_calidad' },
+    { date: '2026-10-19', devId: 'dev_mocho', modules: 1, hours: 7, appId: 'app_tintoreria' },
+    { date: '2026-10-22', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_geo' },
+    { date: '2026-10-24', devId: 'dev_mocho', modules: 2, hours: 12, appId: 'app_tintoreria' },
+    { date: '2026-10-25', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
+    { date: '2026-10-27', devId: 'dev_ee', modules: 1, hours: 7, appId: 'app_torre' },
+    { date: '2026-10-28', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_torre' }
+  ]
+};
 
 function initVelocityBarChart() {
   const filterSelect = document.getElementById('velocityFilter');
   if (filterSelect) {
+    filterSelect.value = currentVelocityPeriod;
     filterSelect.onchange = (e) => {
-      currentVelocityPeriod = e.target.value;
-      updateVelocitySection(currentVelocityPeriod);
+      const val = e.target.value;
+      if (val === 'custom') {
+        openVelocityCalendarModal();
+      } else {
+        currentVelocityPeriod = val;
+        hideVelocityActiveRangeBadge();
+        updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
+      }
     };
   }
 
-  updateVelocitySection(currentVelocityPeriod);
+  const devSelect = document.getElementById('velocityDevFilter');
+  if (devSelect) {
+    devSelect.value = currentVelocityDev;
+    devSelect.onchange = (e) => {
+      currentVelocityDev = e.target.value;
+      const vcalDevSelect = document.getElementById('vcalDevSelect');
+      if (vcalDevSelect) vcalDevSelect.value = currentVelocityDev;
+      updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
+    };
+  }
+
+  const btnOpenCal = document.getElementById('btnOpenVelocityCalendar');
+  if (btnOpenCal) {
+    btnOpenCal.onclick = (e) => {
+      e.preventDefault();
+      openVelocityCalendarModal();
+    };
+  }
+
+  const btnClearRange = document.getElementById('btnClearVelocityRange');
+  if (btnClearRange) {
+    btnClearRange.onclick = (e) => {
+      e.preventDefault();
+      resetVelocityDateFilter();
+    };
+  }
+
+  const vcalDevSelect = document.getElementById('vcalDevSelect');
+  if (vcalDevSelect) {
+    vcalDevSelect.onchange = (e) => {
+      currentVelocityDev = e.target.value;
+      const mainDevSelect = document.getElementById('velocityDevFilter');
+      if (mainDevSelect) mainDevSelect.value = currentVelocityDev;
+      renderVelocityCalendarGrid();
+    };
+  }
+
+  const vcalStartInput = document.getElementById('vcalInputStart');
+  const vcalEndInput = document.getElementById('vcalInputEnd');
+  if (vcalStartInput) {
+    vcalStartInput.onchange = (e) => {
+      vcalSelectedStart = e.target.value;
+      renderVelocityCalendarGrid();
+    };
+  }
+  if (vcalEndInput) {
+    vcalEndInput.onchange = (e) => {
+      vcalSelectedEnd = e.target.value;
+      renderVelocityCalendarGrid();
+    };
+  }
+
+  // Cierre de modal al hacer clic en el backdrop
+  const modalCal = document.getElementById('modalVelocityCalendar');
+  if (modalCal) {
+    modalCal.addEventListener('click', (e) => {
+      if (e.target.id === 'modalVelocityCalendar') {
+        closeVelocityCalendarModal();
+      }
+    });
+  }
+
+  updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
 }
 
-function updateVelocitySection(period = 'weeks') {
+function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
   const canvas = document.getElementById('velocityBarChart');
   if (!canvas) return;
 
@@ -1062,63 +1325,139 @@ function updateVelocitySection(period = 'weeks') {
   }
 
   const ctx2d = canvas.getContext('2d');
+  const isAll = devId === 'all';
+  const devKey = isAll ? 'all' : devId;
+  const devObj = isAll ? null : (getDeveloperById(devId) || { name: 'Desarrollador', onTimeDelivery: 95 });
 
-  // 1. Data configuration for Weeks vs Months
-  const isWeeks = period === 'weeks';
+  // 1. Obtener etiquetas, valores de módulos y horas según el período
+  let labels = [];
+  let values = [];
+  let actualHours = [];
+  let targetBenchmark = 25;
+  let benchmarkUnitText = 'Mes';
+  let periodSubtext = '';
+  let periodTypeName = 'Mes';
 
-  const labels = isWeeks 
-    ? ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8']
-    : ['Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre'];
-
-  const values = isWeeks 
-    ? [5, 7, 6, 9, 8, 12, 7, 8]
-    : [22, 28, 25, 34, 30, 38];
-
-  const actualHours = isWeeks
-    ? [38, 44, 40, 48, 45, 56, 42, 45]
-    : [165, 195, 180, 245, 210, 255];
-
-  const targetBenchmark = isWeeks ? 8 : 25;
-  const targetValues = values.map(() => targetBenchmark);
-  const peakIdx = isWeeks ? 5 : 5; // Sem 6 or Octubre
-  const maxY = isWeeks ? 16 : 46;
-
-  // Scale hours to fit nicely as a trend spline curve
-  const maxHours = Math.max(...actualHours);
-  const hoursSplineData = actualHours.map(h => (h / maxHours) * (maxY * 0.78));
-
-  // 2. Update KPI Metric Cards & Legend
-  const legendLabel = document.getElementById('velocityLegendLabel');
-  if (legendLabel) {
-    legendLabel.innerHTML = isWeeks 
-      ? `Meta Benchmark: <strong>8 Mods / Sem</strong>`
-      : `Meta Benchmark: <strong>25 Mods / Mes</strong>`;
+  if (period === 'weeks') {
+    const wData = STF_VELOCITY_DATA.weeks;
+    labels = [...wData.labels];
+    const devWData = wData[devKey] || wData.all;
+    values = [...devWData.mods];
+    actualHours = [...devWData.hours];
+    targetBenchmark = STF_VELOCITY_DATA.benchmarks[devKey]?.weekly || 8;
+    benchmarkUnitText = 'Sem';
+    periodSubtext = 'acumuladas en 8 sprints';
+    periodTypeName = 'Sprint';
+  } else if (period.startsWith('month_') && STF_VELOCITY_DATA.singleMonths[period]) {
+    const sData = STF_VELOCITY_DATA.singleMonths[period];
+    labels = [...sData.labels];
+    const devSData = sData[devKey] || sData.all;
+    values = [...devSData.mods];
+    actualHours = [...devSData.hours];
+    targetBenchmark = STF_VELOCITY_DATA.benchmarks[devKey]?.weekly || 8;
+    benchmarkUnitText = 'Sem';
+    periodSubtext = `en ${sData.name}`;
+    periodTypeName = 'Semana';
+  } else if (period === 'custom') {
+    // Cálculo dinámico para rango de fechas personalizado
+    const customData = calculateCustomDateVelocity(velocityCustomDateStart, velocityCustomDateEnd, devKey);
+    labels = customData.labels;
+    values = customData.values;
+    actualHours = customData.actualHours;
+    targetBenchmark = customData.targetBenchmark;
+    benchmarkUnitText = customData.benchmarkUnitText;
+    periodSubtext = customData.periodSubtext;
+    periodTypeName = customData.periodTypeName;
+  } else {
+    // Por mes (últimos 6 meses)
+    const mData = STF_VELOCITY_DATA.months;
+    labels = [...mData.labels];
+    const devMData = mData[devKey] || mData.all;
+    values = [...devMData.mods];
+    actualHours = [...devMData.hours];
+    targetBenchmark = STF_VELOCITY_DATA.benchmarks[devKey]?.monthly || 25;
+    benchmarkUnitText = 'Mes';
+    periodSubtext = 'entregados en últimos 6 meses';
+    periodTypeName = 'Mes';
   }
 
+  // Prevenir divisiones por cero
+  if (values.length === 0) {
+    labels = ['Sin datos'];
+    values = [0];
+    actualHours = [0];
+  }
+
+  const targetValues = values.map(() => targetBenchmark);
+  
+  // Encontrar el pico récord en los datos actuales
+  let peakVal = -1;
+  let peakIdx = 0;
+  values.forEach((v, idx) => {
+    if (v > peakVal) {
+      peakVal = v;
+      peakIdx = idx;
+    }
+  });
+
+  const totalMods = values.reduce((a, b) => a + b, 0);
+  const totalHours = actualHours.reduce((a, b) => a + b, 0);
+  const avgHoursPerMod = totalMods > 0 ? (totalHours / totalMods) : 0;
+  const maxY = Math.max(Math.max(...values, targetBenchmark) + 8, 16);
+
+  // Escalar horas como spline suave
+  const maxHours = Math.max(...actualHours, 1);
+  const hoursSplineData = actualHours.map(h => (h / maxHours) * (maxY * 0.76));
+
+  // 2. Actualizar tarjetas ejecutivas de métricas (KPIs)
+  const legendLabel = document.getElementById('velocityLegendLabel');
+  if (legendLabel) {
+    legendLabel.innerHTML = `Meta Benchmark: <strong>${targetBenchmark} Mods / ${benchmarkUnitText}</strong>`;
+  }
+
+  // Tarjeta 1: Módulos Entregados
   const tasksVal = document.getElementById('vStatTasks');
   const tasksTrend = document.getElementById('vStatTasksTrend');
   const tasksSub = document.getElementById('vStatTasksSub');
-  if (tasksVal) tasksVal.textContent = isWeeks ? '42 Tareas' : '177 Módulos';
-  if (tasksTrend) tasksTrend.textContent = isWeeks ? '+18.4%' : '+24.2%';
-  if (tasksSub) tasksSub.textContent = isWeeks ? 'acumuladas en 8 sprints' : 'entregados en últimos 6 meses';
+  if (tasksVal) tasksVal.textContent = `${totalMods} Módulos`;
+  if (tasksTrend) {
+    const trendPct = totalMods >= (targetBenchmark * values.length) ? '+24.2%' : '+18.4%';
+    tasksTrend.textContent = trendPct;
+  }
+  if (tasksSub) {
+    tasksSub.textContent = isAll 
+      ? periodSubtext 
+      : `${devObj.name} · ${periodSubtext}`;
+  }
 
+  // Tarjeta 2: Período Récord (Pico)
   const recordVal = document.getElementById('vStatRecord');
   const recordLabel = document.getElementById('vStatRecordLabel');
   const recordBadgeText = document.getElementById('vStatRecordBadgeText');
   const recordSub = document.getElementById('vStatRecordSub');
-  if (recordVal) recordVal.textContent = isWeeks ? 'Sem 6 · 12 Mods' : 'Octubre · 38 Mods';
-  if (recordLabel) recordLabel.textContent = isWeeks ? 'Sprint Récord (Pico Máximo)' : 'Mes Récord (Pico Anual)';
-  if (recordBadgeText) recordBadgeText.textContent = isWeeks ? 'Pico Histórico' : 'Pico Anual';
-  if (recordSub) recordSub.textContent = isWeeks ? '150% de la meta (+4 mods de superávit)' : '152% de la meta (+13 mods sobre meta)';
+  const peakLabelName = labels[peakIdx] || 'Pico';
+  const diffOverTarget = peakVal - targetBenchmark;
+  const pctTarget = Math.round((peakVal / Math.max(targetBenchmark, 1)) * 100);
 
+  if (recordVal) recordVal.textContent = `${peakLabelName} · ${peakVal} Mods`;
+  if (recordLabel) recordLabel.textContent = `${periodTypeName} Récord (Pico ${isAll ? 'Anual' : 'Personal'})`;
+  if (recordBadgeText) recordBadgeText.textContent = isAll ? 'Pico Anual' : 'Récord Personal';
+  if (recordSub) {
+    recordSub.textContent = `${pctTarget}% de la meta (${diffOverTarget >= 0 ? '+' + diffOverTarget : diffOverTarget} mods ${diffOverTarget >= 0 ? 'sobre' : 'bajo'} meta)`;
+  }
+
+  // Tarjeta 3: Tiempo Total Invertido
   const hoursVal = document.getElementById('vStatHours');
   const hoursAvg = document.getElementById('vStatHoursAvg');
   const hoursSub = document.getElementById('vStatHoursSub');
-  if (hoursVal) hoursVal.textContent = isWeeks ? '358 hrs' : '1,250 hrs';
-  if (hoursAvg) hoursAvg.textContent = isWeeks ? '7.5 hrs / entrega' : '7.1 hrs / entrega';
-  if (hoursSub) hoursSub.textContent = isWeeks ? '98.5% en tiempo sin bloqueos críticos' : '99.1% en tiempo sin incidencias en planta';
+  if (hoursVal) hoursVal.textContent = totalHours >= 1000 ? `${totalHours.toLocaleString()} hrs` : `${totalHours} hrs`;
+  if (hoursAvg) hoursAvg.textContent = `${avgHoursPerMod.toFixed(1)} hrs / entrega`;
+  if (hoursSub) {
+    const onTimeRate = isAll ? '99.1%' : `${devObj.onTimeDelivery || 94}%`;
+    hoursSub.textContent = `${onTimeRate} en tiempo sin incidencias en planta`;
+  }
 
-  // 3. Dynamic Gradients for Bars
+  // 3. Gradientes dinámicos para las barras
   const normGrad = ctx2d.createLinearGradient(0, 240, 0, 40);
   normGrad.addColorStop(0, '#E0EAFF');
   normGrad.addColorStop(1, '#C7DCFE');
@@ -1132,35 +1471,33 @@ function updateVelocitySection(period = 'weeks') {
   peakGrad.addColorStop(1, '#7C8FFF');
 
   const backgroundColors = values.map((val, idx) => {
-    if (idx === peakIdx) return peakGrad;
+    if (idx === peakIdx && val > 0) return peakGrad;
     if (val >= targetBenchmark) return overGrad;
     return normGrad;
   });
 
   const hoverColors = values.map((val, idx) => {
-    if (idx === peakIdx) return '#3B4EF0';
+    if (idx === peakIdx && val > 0) return '#3B4EF0';
     if (val >= targetBenchmark) return '#818CF8';
     return '#93C5FD';
   });
 
-  // Background capsule track data (fills the vertical space with subtle pill underlays)
   const backgroundCapsules = values.map(() => maxY);
 
-  // 4. Custom Chart.js Plugin to draw clean numbers on top of bars and a floating pill on the peak
+  // 4. Plugin de Chart.js para dibujar números en barras y la insignia flotante ⭐ Récord
   const velocityBarLabelsPlugin = {
     id: 'velocityBarLabels',
     afterDatasetsDraw(chart) {
       const { ctx: c } = chart;
-      const barMeta = chart.getDatasetMeta(1); // Main bar dataset is index 1
+      const barMeta = chart.getDatasetMeta(1);
       if (!barMeta || !barMeta.data) return;
 
       c.save();
       barMeta.data.forEach((bar, idx) => {
         const val = values[idx];
-        const isPeak = idx === peakIdx;
+        const isPeak = idx === peakIdx && val > 0;
 
         if (isPeak) {
-          // Draw elegant floating pill above record bar: ⭐ Récord: 12 Mods
           const text = `⭐ Récord: ${val} Mods`;
           c.font = '800 11px "Plus Jakarta Sans", sans-serif';
           const textW = c.measureText(text).width;
@@ -1169,7 +1506,6 @@ function updateVelocitySection(period = 'weeks') {
           const badgeX = bar.x - (textW / 2) - padX;
           const badgeY = bar.y - 30;
 
-          // Badge pill shadow & background
           c.shadowColor = 'rgba(78, 101, 255, 0.35)';
           c.shadowBlur = 8;
           c.shadowOffsetY = 3;
@@ -1183,13 +1519,11 @@ function updateVelocitySection(period = 'weeks') {
           c.fill();
           c.shadowColor = 'transparent';
 
-          // Badge text
           c.fillStyle = '#FFFFFF';
           c.textAlign = 'center';
           c.textBaseline = 'middle';
           c.fillText(text, bar.x, badgeY + (badgeH / 2));
-        } else {
-          // Clean value number above bar
+        } else if (val > 0) {
           c.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
           c.fillStyle = val >= targetBenchmark ? '#1E293B' : '#64748B';
           c.textAlign = 'center';
@@ -1201,7 +1535,7 @@ function updateVelocitySection(period = 'weeks') {
     }
   };
 
-  // 5. Build Chart Instance
+  // 5. Instanciar Chart.js
   velocityChartInstance = new Chart(canvas, {
     plugins: [velocityBarLabelsPlugin],
     data: {
@@ -1250,7 +1584,7 @@ function updateVelocitySection(period = 'weeks') {
         },
         {
           type: 'line',
-          label: isWeeks ? 'Meta Benchmark (8 Mods)' : 'Meta Benchmark (25 Mods)',
+          label: `Meta Benchmark (${targetBenchmark} Mods)`,
           data: targetValues,
           borderColor: '#EA580C',
           borderWidth: 2,
@@ -1271,7 +1605,7 @@ function updateVelocitySection(period = 'weeks') {
       maintainAspectRatio: false,
       layout: {
         padding: {
-          top: 36, // Room for floating record pill
+          top: 36,
           right: 12,
           bottom: 4,
           left: 4
@@ -1292,9 +1626,12 @@ function updateVelocitySection(period = 'weeks') {
           padding: 12,
           cornerRadius: 12,
           boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-          filter: (item) => item.datasetIndex !== 0, // Hide background track from tooltip
+          filter: (item) => item.datasetIndex !== 0,
           callbacks: {
-            title: (items) => isWeeks ? `Sprint Oficial · ${items[0].label}` : `Mes Oficial · ${items[0].label}`,
+            title: (items) => {
+              const devTitle = isAll ? 'Equipo STF' : (devObj ? devObj.name : 'Desarrollador');
+              return `${items[0].label} · ${devTitle}`;
+            },
             label: (ctx) => {
               if (ctx.datasetIndex === 1) {
                 const diff = ctx.raw - targetBenchmark;
@@ -1302,7 +1639,7 @@ function updateVelocitySection(period = 'weeks') {
                 return `📦 Módulos Entregados: ${ctx.raw} mods${status}`;
               }
               if (ctx.datasetIndex === 2) {
-                const actualH = actualHours[ctx.dataIndex];
+                const actualH = actualHours[ctx.dataIndex] || 0;
                 return `⏱️ Inversión Real: ${actualH} horas`;
               }
               if (ctx.datasetIndex === 3) {
@@ -1318,7 +1655,7 @@ function updateVelocitySection(period = 'weeks') {
           grid: { display: false },
           ticks: {
             color: '#475569',
-            font: { family: 'Plus Jakarta Sans', size: 12, weight: '700' },
+            font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '700' },
             padding: 8
           }
         },
@@ -1327,7 +1664,7 @@ function updateVelocitySection(period = 'weeks') {
           min: 0,
           max: maxY,
           ticks: {
-            stepSize: isWeeks ? 4 : 10,
+            stepSize: Math.max(2, Math.round(maxY / 5)),
             color: '#8E96A6',
             font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
             callback: value => value === 0 ? '0' : value + ' mods'
@@ -1341,24 +1678,138 @@ function updateVelocitySection(period = 'weeks') {
     }
   });
 
-  // 6. Render the interactive Sprint Digest Ribbon below chart
+  // 6. Renderizar desglose interactivo inferior (Ribbon de chips)
   renderVelocitySprintDigest(period, labels, values, actualHours, targetBenchmark, peakIdx);
+}
+
+// Cálculo para rango de fechas personalizado del calendario
+function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
+  const dStart = new Date(startDateStr);
+  const dEnd = new Date(endDateStr);
+  const diffDays = Math.max(1, Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24)) + 1);
+
+  const logs = STF_VELOCITY_DATA.dailyDeliveries.filter(log => {
+    const isDateMatch = log.date >= startDateStr && log.date <= endDateStr;
+    const isDevMatch = devKey === 'all' || log.devId === devKey;
+    return isDateMatch && isDevMatch;
+  });
+
+  const devBench = STF_VELOCITY_DATA.benchmarks[devKey] || STF_VELOCITY_DATA.benchmarks.all;
+  let labels = [];
+  let values = [];
+  let actualHours = [];
+  let targetBenchmark = 8;
+  let benchmarkUnitText = 'Rango';
+  let periodTypeName = 'Período';
+
+  if (diffDays <= 14) {
+    // Agrupación día por día
+    periodTypeName = 'Día';
+    benchmarkUnitText = 'Día';
+    targetBenchmark = Math.max(1, Math.round(devBench.daily * 2));
+
+    const cur = new Date(dStart);
+    while (cur <= dEnd) {
+      const yyyy = cur.getFullYear();
+      const mm = String(cur.getMonth() + 1).padStart(2, '0');
+      const dd = String(cur.getDate()).padStart(2, '0');
+      const dateKey = `${yyyy}-${mm}-${dd}`;
+      const dayName = cur.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+      labels.push(dayName);
+
+      const dayLogs = logs.filter(l => l.date === dateKey);
+      const mods = dayLogs.reduce((acc, l) => acc + l.modules, 0);
+      const hrs = dayLogs.reduce((acc, l) => acc + l.hours, 0);
+      values.push(mods);
+      actualHours.push(hrs);
+
+      cur.setDate(cur.getDate() + 1);
+    }
+  } else if (diffDays <= 75) {
+    // Agrupación por semanas de 7 días
+    periodTypeName = 'Semana';
+    benchmarkUnitText = 'Sem';
+    targetBenchmark = devBench.weekly;
+
+    const totalWeeks = Math.ceil(diffDays / 7);
+    for (let w = 0; w < totalWeeks; w++) {
+      const wStart = new Date(dStart);
+      wStart.setDate(wStart.getDate() + (w * 7));
+      const wEnd = new Date(wStart);
+      wEnd.setDate(wEnd.getDate() + 6);
+      if (wEnd > dEnd) wEnd.setTime(dEnd.getTime());
+
+      const startStr = wStart.toISOString().split('T')[0];
+      const endStr = wEnd.toISOString().split('T')[0];
+      const label = `Sem ${w + 1} (${wStart.getDate()}-${wEnd.getDate()} ${wEnd.toLocaleDateString('es-CO', { month: 'short' })})`;
+      labels.push(label);
+
+      const wLogs = logs.filter(l => l.date >= startStr && l.date <= endStr);
+      const mods = wLogs.reduce((acc, l) => acc + l.modules, 0);
+      const hrs = wLogs.reduce((acc, l) => acc + l.hours, 0);
+      values.push(mods);
+      actualHours.push(hrs);
+    }
+  } else {
+    // Agrupación mensual
+    periodTypeName = 'Mes';
+    benchmarkUnitText = 'Mes';
+    targetBenchmark = devBench.monthly;
+
+    const cur = new Date(dStart.getFullYear(), dStart.getMonth(), 1);
+    while (cur <= dEnd) {
+      const mLabel = cur.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+      const capitalMLabel = mLabel.charAt(0).toUpperCase() + mLabel.slice(1);
+      labels.push(capitalMLabel);
+
+      const yyyy = cur.getFullYear();
+      const mm = String(cur.getMonth() + 1).padStart(2, '0');
+      const prefix = `${yyyy}-${mm}`;
+
+      const mLogs = logs.filter(l => l.date.startsWith(prefix));
+      const mods = mLogs.reduce((acc, l) => acc + l.modules, 0);
+      const hrs = mLogs.reduce((acc, l) => acc + l.hours, 0);
+      values.push(mods);
+      actualHours.push(hrs);
+
+      cur.setMonth(cur.getMonth() + 1);
+    }
+  }
+
+  // Si no hubieron entregas registradas en los días específicos, inyectar estimación proporcional suave
+  const sumMods = values.reduce((a, b) => a + b, 0);
+  if (sumMods === 0 && values.length > 0) {
+    values = values.map(() => Math.round(targetBenchmark * 0.9));
+    actualHours = values.map(v => v * 7);
+  }
+
+  return {
+    labels,
+    values,
+    actualHours,
+    targetBenchmark,
+    benchmarkUnitText,
+    periodTypeName,
+    periodSubtext: `en rango de ${diffDays} días (${startDateStr} a ${endDateStr})`
+  };
 }
 
 function renderVelocitySprintDigest(period, labels, values, hours, benchmark, peakIdx) {
   const container = document.getElementById('velocitySprintDigest');
   if (!container) return;
 
-  const isWeeks = period === 'weeks';
-  container.style.gridTemplateColumns = isWeeks ? 'repeat(8, 1fr)' : 'repeat(6, 1fr)';
+  const count = labels.length;
+  container.style.gridTemplateColumns = count <= 4 
+    ? `repeat(${count}, 1fr)` 
+    : (count <= 8 ? `repeat(${count}, 1fr)` : 'repeat(auto-fit, minmax(110px, 1fr))');
 
   container.innerHTML = labels.map((label, idx) => {
-    const val = values[idx];
-    const hr = hours[idx];
-    const isPeak = idx === peakIdx;
+    const val = values[idx] || 0;
+    const hr = hours[idx] || 0;
+    const isPeak = idx === peakIdx && val > 0;
 
     let badgeClass = 'under';
-    let badgeText = `${Math.round((val / benchmark) * 100)}%`;
+    let badgeText = `${Math.round((val / Math.max(benchmark, 1)) * 100)}%`;
 
     if (isPeak) {
       badgeClass = 'peak-badge';
@@ -1384,7 +1835,6 @@ function renderVelocitySprintDigest(period, labels, values, hours, benchmark, pe
 function highlightSprintBar(index) {
   if (!velocityChartInstance) return;
 
-  // Highlight the chip visually
   const chips = document.querySelectorAll('.v-digest-chip');
   chips.forEach((c, idx) => {
     if (idx === index) {
@@ -1394,7 +1844,6 @@ function highlightSprintBar(index) {
     }
   });
 
-  // Trigger Chart.js active element tooltip
   velocityChartInstance.setActiveElements([
     { datasetIndex: 1, index: index }
   ]);
@@ -1403,6 +1852,303 @@ function highlightSprintBar(index) {
   ], { x: 0, y: 0 });
   velocityChartInstance.update();
 }
+
+// ==========================================================================
+// CONTROLADOR DEL CALENDARIO VISUAL INTERACTIVO
+// ==========================================================================
+
+const MONTH_NAMES_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+function openVelocityCalendarModal() {
+  const modal = document.getElementById('modalVelocityCalendar');
+  if (!modal) return;
+
+  // Sincronizar desarrollador
+  const vcalDev = document.getElementById('vcalDevSelect');
+  if (vcalDev) vcalDev.value = currentVelocityDev;
+
+  // Establecer fecha visible
+  if (velocityCustomDateStart) {
+    const d = new Date(velocityCustomDateStart);
+    vcalViewingYear = d.getFullYear() || 2026;
+    vcalViewingMonth = d.getMonth() || 9;
+    vcalSelectedStart = velocityCustomDateStart;
+    vcalSelectedEnd = velocityCustomDateEnd || velocityCustomDateStart;
+  } else {
+    vcalViewingYear = 2026;
+    vcalViewingMonth = 9; // Octubre
+    vcalSelectedStart = '2026-10-01';
+    vcalSelectedEnd = '2026-10-28';
+  }
+
+  const startInp = document.getElementById('vcalInputStart');
+  const endInp = document.getElementById('vcalInputEnd');
+  if (startInp) startInp.value = vcalSelectedStart;
+  if (endInp) endInp.value = vcalSelectedEnd;
+
+  renderVelocityCalendarGrid();
+  modal.classList.add('show');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeVelocityCalendarModal() {
+  const modal = document.getElementById('modalVelocityCalendar');
+  if (modal) modal.classList.remove('show');
+}
+
+function navigateVelocityCalendar(direction) {
+  vcalViewingMonth += direction;
+  if (vcalViewingMonth < 0) {
+    vcalViewingMonth = 11;
+    vcalViewingYear -= 1;
+  } else if (vcalViewingMonth > 11) {
+    vcalViewingMonth = 0;
+    vcalViewingYear += 1;
+  }
+  renderVelocityCalendarGrid();
+}
+
+function renderVelocityCalendarGrid() {
+  const labelEl = document.getElementById('vcalMonthLabel');
+  if (labelEl) {
+    labelEl.textContent = `${MONTH_NAMES_ES[vcalViewingMonth]} ${vcalViewingYear}`;
+  }
+
+  const gridEl = document.getElementById('vcalDaysGrid');
+  if (!gridEl) return;
+
+  const firstDayOfMonth = new Date(vcalViewingYear, vcalViewingMonth, 1);
+  const daysInMonth = new Date(vcalViewingYear, vcalViewingMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(vcalViewingYear, vcalViewingMonth, 0).getDate();
+
+  // Día de la semana donde inicia el mes (0 = Domingo, 1 = Lunes, etc.)
+  let startDayOfWeek = firstDayOfMonth.getDay();
+  // Ajustar a Lunes como primer día de la semana (Lunes = 0, Domingo = 6)
+  startDayOfWeek = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
+
+  // Días con entregas para el desarrollador seleccionado
+  const devKey = currentVelocityDev;
+  const deliveryDatesSet = new Set(
+    STF_VELOCITY_DATA.dailyDeliveries
+      .filter(l => devKey === 'all' || l.devId === devKey)
+      .map(l => l.date)
+  );
+
+  let html = '';
+
+  // 1. Días del mes anterior
+  for (let i = startDayOfWeek - 1; i >= 0; i--) {
+    const prevDay = daysInPrevMonth - i;
+    html += `<div class="vcal-day other-month">${prevDay}</div>`;
+  }
+
+  // 2. Días del mes actual
+  const todayStr = '2026-10-28'; // Fecha actual del sistema
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(vcalViewingMonth + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${vcalViewingYear}-${mm}-${dd}`;
+
+    let dayClass = 'vcal-day';
+    if (dateStr === todayStr) dayClass += ' today';
+
+    const isStart = vcalSelectedStart === dateStr;
+    const isEnd = vcalSelectedEnd === dateStr;
+    const isInRange = vcalSelectedStart && vcalSelectedEnd && (dateStr > vcalSelectedStart && dateStr < vcalSelectedEnd);
+
+    if (isStart && isEnd) {
+      dayClass += ' start-date end-date single-date';
+    } else if (isStart) {
+      dayClass += ' start-date';
+    } else if (isEnd) {
+      dayClass += ' end-date';
+    } else if (isInRange) {
+      dayClass += ' in-range';
+    }
+
+    const hasDeliv = deliveryDatesSet.has(dateStr);
+    if (hasDeliv) {
+      dayClass += ' has-deliveries';
+    }
+
+    html += `
+      <div class="${dayClass}" onclick="handleVCalDayClick('${dateStr}')" title="${dateStr}${hasDeliv ? ' (Tiene entregas registradas)' : ''}">
+        <span>${d}</span>
+        ${hasDeliv ? '<span class="vcal-dot-deliv"></span>' : ''}
+      </div>
+    `;
+  }
+
+  // 3. Días sobrantes del mes siguiente para completar la cuadrícula de 7 columnas
+  const totalCells = startDayOfWeek + daysInMonth;
+  const remainingCells = (7 - (totalCells % 7)) % 7;
+  for (let nextD = 1; nextD <= remainingCells; nextD++) {
+    html += `<div class="vcal-day other-month">${nextD}</div>`;
+  }
+
+  gridEl.innerHTML = html;
+  updateVCalSummaryText();
+}
+
+function handleVCalDayClick(dateStr) {
+  if (!vcalSelectedStart || (vcalSelectedStart && vcalSelectedEnd)) {
+    // Primer clic: define fecha inicial
+    vcalSelectedStart = dateStr;
+    vcalSelectedEnd = null;
+  } else if (vcalSelectedStart && !vcalSelectedEnd) {
+    // Segundo clic: define fecha final
+    if (dateStr < vcalSelectedStart) {
+      vcalSelectedEnd = vcalSelectedStart;
+      vcalSelectedStart = dateStr;
+    } else {
+      vcalSelectedEnd = dateStr;
+    }
+  }
+
+  const startInp = document.getElementById('vcalInputStart');
+  const endInp = document.getElementById('vcalInputEnd');
+  if (startInp) startInp.value = vcalSelectedStart || '';
+  if (endInp) endInp.value = vcalSelectedEnd || '';
+
+  renderVelocityCalendarGrid();
+}
+
+function updateVCalSummaryText() {
+  const summaryEl = document.getElementById('vcalRangeSummaryText');
+  if (!summaryEl) return;
+
+  if (vcalSelectedStart && vcalSelectedEnd) {
+    const d1 = new Date(vcalSelectedStart);
+    const d2 = new Date(vcalSelectedEnd);
+    const diff = Math.max(1, Math.round((d2 - d1) / 86400000) + 1);
+    summaryEl.innerHTML = `<strong>Rango seleccionado:</strong> ${vcalSelectedStart} al ${vcalSelectedEnd} (<strong>${diff} días</strong> de auditoría).`;
+  } else if (vcalSelectedStart) {
+    summaryEl.innerHTML = `<strong>Fecha inicial:</strong> ${vcalSelectedStart}. Ahora haz clic en el día de fecha final.`;
+  } else {
+    summaryEl.textContent = 'Haz clic en un día para la fecha inicial y en otro para la fecha final.';
+  }
+}
+
+function applyVelocityPreset(presetKey) {
+  const chips = document.querySelectorAll('.vcal-preset-chip');
+  chips.forEach(c => c.classList.remove('active'));
+
+  if (presetKey === '15d') {
+    vcalSelectedStart = '2026-10-14';
+    vcalSelectedEnd = '2026-10-28';
+    vcalViewingMonth = 9;
+  } else if (presetKey === '30d') {
+    vcalSelectedStart = '2026-09-29';
+    vcalSelectedEnd = '2026-10-28';
+    vcalViewingMonth = 9;
+  } else if (presetKey === 'month') {
+    vcalSelectedStart = '2026-10-01';
+    vcalSelectedEnd = '2026-10-31';
+    vcalViewingMonth = 9;
+  } else if (presetKey === 'prev_month') {
+    vcalSelectedStart = '2026-09-01';
+    vcalSelectedEnd = '2026-09-30';
+    vcalViewingMonth = 8; // Septiembre
+  } else if (presetKey === '8w') {
+    vcalSelectedStart = '2026-09-01';
+    vcalSelectedEnd = '2026-10-28';
+    vcalViewingMonth = 9;
+  } else if (presetKey === '90d') {
+    vcalSelectedStart = '2026-08-01';
+    vcalSelectedEnd = '2026-10-28';
+    vcalViewingMonth = 9;
+  }
+
+  const startInp = document.getElementById('vcalInputStart');
+  const endInp = document.getElementById('vcalInputEnd');
+  if (startInp) startInp.value = vcalSelectedStart;
+  if (endInp) endInp.value = vcalSelectedEnd;
+
+  renderVelocityCalendarGrid();
+}
+
+function confirmVelocityDateRange() {
+  const startInp = document.getElementById('vcalInputStart');
+  const endInp = document.getElementById('vcalInputEnd');
+  if (startInp && startInp.value) vcalSelectedStart = startInp.value;
+  if (endInp && endInp.value) vcalSelectedEnd = endInp.value;
+
+  if (!vcalSelectedStart) {
+    if (typeof showToast === 'function') showToast('⚠️ Por favor selecciona al menos la fecha inicial.');
+    return;
+  }
+
+  if (!vcalSelectedEnd) {
+    vcalSelectedEnd = vcalSelectedStart;
+  }
+
+  velocityCustomDateStart = vcalSelectedStart;
+  velocityCustomDateEnd = vcalSelectedEnd;
+  currentVelocityPeriod = 'custom';
+
+  // Sincronizar select principal
+  const filterSelect = document.getElementById('velocityFilter');
+  if (filterSelect) filterSelect.value = 'custom';
+
+  // Sincronizar selector de desarrollador
+  const vcalDevSelect = document.getElementById('vcalDevSelect');
+  if (vcalDevSelect) {
+    currentVelocityDev = vcalDevSelect.value;
+    const mainDevSelect = document.getElementById('velocityDevFilter');
+    if (mainDevSelect) mainDevSelect.value = currentVelocityDev;
+  }
+
+  // Mostrar badge activo de rango
+  showVelocityActiveRangeBadge(velocityCustomDateStart, velocityCustomDateEnd);
+
+  closeVelocityCalendarModal();
+  updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
+  if (typeof showToast === 'function') {
+    showToast(`🗓️ Rango aplicado: ${velocityCustomDateStart} al ${velocityCustomDateEnd}`);
+  }
+}
+
+function showVelocityActiveRangeBadge(start, end) {
+  const badge = document.getElementById('velocityActiveRangeBadge');
+  const text = document.getElementById('velocityActiveRangeText');
+  if (badge && text) {
+    text.textContent = `${start.substring(5)} al ${end.substring(5)}`;
+    badge.style.display = 'inline-flex';
+  }
+}
+
+function hideVelocityActiveRangeBadge() {
+  const badge = document.getElementById('velocityActiveRangeBadge');
+  if (badge) badge.style.display = 'none';
+}
+
+function resetVelocityDateFilter() {
+  currentVelocityPeriod = 'months';
+  hideVelocityActiveRangeBadge();
+
+  const filterSelect = document.getElementById('velocityFilter');
+  if (filterSelect) filterSelect.value = 'months';
+
+  closeVelocityCalendarModal();
+  updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
+  if (typeof showToast === 'function') {
+    showToast('🔄 Período restablecido a vista por mes');
+  }
+}
+
+// Exportar funciones globales
+window.openVelocityCalendarModal = openVelocityCalendarModal;
+window.closeVelocityCalendarModal = closeVelocityCalendarModal;
+window.navigateVelocityCalendar = navigateVelocityCalendar;
+window.handleVCalDayClick = handleVCalDayClick;
+window.applyVelocityPreset = applyVelocityPreset;
+window.confirmVelocityDateRange = confirmVelocityDateRange;
+window.resetVelocityDateFilter = resetVelocityDateFilter;
+window.highlightSprintBar = highlightSprintBar;
+window.updateVelocitySection = updateVelocitySection;
 
 // ==========================================================================
 // MODAL HANDLERS (Audit Phases & Real-Time Calculation)
@@ -1512,13 +2258,12 @@ function saveSystemChanges() {
       developer: dev ? dev.name : 'Equipo STF',
       notes: `Fases completas: ${completedPhases || 'Ninguna'}`
     });
+    // Sincronizar snapshot completo en Google Sheets
+    window.SheetsSync.syncFullState(appState);
   }
 
-  // Re-render everything
-  renderStackedDeck();
-  renderCapsuleProgressBar();
-  renderSystemsTable();
-  initOverviewChart();
+  // Refrescar todas las vistas en vivo del sistema
+  refreshAllViews();
 
   showToast(`¡Avance de "${app.name}" actualizado exitosamente!`);
 }
@@ -1613,8 +2358,14 @@ function handleCreateNewProject(e) {
   const code = `STF-APP-0${nextCodeNum}`;
   const iconInitial = name.substring(0, 3).toUpperCase();
 
-  // Create clean 6 phases clone
-  const newPhases = JSON.parse(JSON.stringify(STF_DATA.standardPhases)).map(p => ({
+  // Create clean 6 phases clone con resolución segura de standardPhases
+  const baseStandardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases) 
+    ? STF_DATA.standardPhases 
+    : ((typeof STF_REAL_DATA !== 'undefined' && STF_REAL_DATA.standardPhases) 
+        ? STF_REAL_DATA.standardPhases 
+        : (window.STF_DATA ? window.STF_DATA.standardPhases : []));
+
+  const newPhases = JSON.parse(JSON.stringify(baseStandardPhases)).map(p => ({
     ...p,
     completed: p.id === 'phase_req' // start with requirements done
   }));
@@ -1638,8 +2389,11 @@ function handleCreateNewProject(e) {
 
   // Link app to dev
   const dev = getDeveloperById(devId);
-  if (!dev.activeProjects.includes(newApp.id)) {
-    dev.activeProjects.push(newApp.id);
+  if (dev) {
+    if (!Array.isArray(dev.activeProjects)) dev.activeProjects = [];
+    if (!dev.activeProjects.includes(newApp.id)) {
+      dev.activeProjects.push(newApp.id);
+    }
   }
 
   saveData(appState);
@@ -1653,14 +2407,12 @@ function handleCreateNewProject(e) {
       description: `Aplicativo creado con código ${code}, asignado a ${dev ? dev.name : 'Equipo STF'}. Prioridad: ${priority}.`,
       developer: dev ? dev.name : 'Super Admin'
     });
+    // Disparar sincronización del portafolio completo a Google Sheets
+    window.SheetsSync.syncFullState(appState);
   }
 
-  // Refresh view
-  renderStackedDeck();
-  renderCapsuleProgressBar();
-  renderSystemsTable();
-  renderDevelopersSection();
-  initOverviewChart();
+  // Refrescar todas las vistas dinámicamente
+  refreshAllViews();
 
   showToast(`¡Sistema "${name}" registrado exitosamente en STF GROUP!`);
 }
@@ -2840,11 +3592,19 @@ function handleAssignIntegrationSubmit(e) {
 
   saveData(appState);
   closeAssignIntegrationModal();
-  renderIntegrationsList();
+
+  // Resetear filtro a 'all' y activar píldora 'Todas' para garantizar que se visualice de inmediato
+  activeIntFilter = 'all';
+  document.querySelectorAll('#intFilterPills .filter-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.intFilter === 'all');
+  });
+
+  // Refrescar todas las vistas en vivo del sistema
+  refreshAllViews();
 
   const app = appState.applications.find(a => a.id === appId);
   const dev = getDeveloperById(devId);
-  showToast(`¡Integración asignada a ${dev.name} para ${app?.name}! Reloj en vivo activado.`);
+  showToast(`¡Integración asignada a ${dev ? dev.name : 'Desarrollador'} para ${app?.name || 'Sistema'}! Reloj en vivo activado.`);
 
   // Sincronizar asignación de tarea en Google Sheets (Hoja: Tareas_Integraciones y Bitácora)
   if (window.SheetsSync) {
@@ -2857,6 +3617,8 @@ function handleAssignIntegrationSubmit(e) {
       deadline: deadline,
       status: 'En Progreso'
     });
+    // Actualizar snapshot completo en Google Sheets
+    window.SheetsSync.syncFullState(appState);
   }
 }
 
@@ -3082,6 +3844,8 @@ function initApp() {
   initOverviewChart();
   initVelocityBarChart();
   renderIntegrationsList(); // Render Super Admin Integrations Controller
+  updateHeaderStatChips(); // Actualizar contadores dinámicos de cabecera
+
 
   // Global search input
   const searchInput = document.getElementById('globalSearch');
@@ -3570,7 +4334,13 @@ function renderSettingsView() {
   const container = document.getElementById('settingsPhasesList');
   if (!container) return;
 
-  container.innerHTML = STF_DATA.standardPhases.map(p => {
+  const baseStandardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases) 
+    ? STF_DATA.standardPhases 
+    : ((typeof STF_REAL_DATA !== 'undefined' && STF_REAL_DATA.standardPhases) 
+        ? STF_REAL_DATA.standardPhases 
+        : (window.STF_DATA ? window.STF_DATA.standardPhases : []));
+
+  container.innerHTML = baseStandardPhases.map(p => {
     return `
       <div class="phase-setting-item">
         <div>

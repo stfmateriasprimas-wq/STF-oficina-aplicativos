@@ -1634,7 +1634,121 @@ body {
 .velocity-header-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.velocity-dev-select-wrap,
+.velocity-period-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-pill);
+  padding: 0 12px 0 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.velocity-dev-select-wrap:hover,
+.velocity-period-select-wrap:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 3px 8px rgba(78, 101, 255, 0.08);
+}
+
+.velocity-dev-select-wrap .select-prefix-icon,
+.velocity-period-select-wrap .select-prefix-icon {
+  width: 14px;
+  height: 14px;
+  color: #6366F1;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.velocity-dev-select-wrap select,
+.velocity-period-select-wrap select {
+  border: none;
+  background: transparent;
+  padding: 7px 22px 7px 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1E293B;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.velocity-cal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border: 1px solid #C7D2FE;
+  color: #4338CA;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.12);
+}
+
+.velocity-cal-btn:hover {
+  background: #4E65FF;
+  color: #FFFFFF;
+  border-color: #4E65FF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(78, 101, 255, 0.28);
+}
+
+.velocity-cal-btn i, .velocity-cal-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.velocity-active-range-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 750;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+}
+
+.velocity-active-range-pill i, .velocity-active-range-pill svg {
+  width: 13px;
+  height: 13px;
+  color: #059669;
+}
+
+.btn-clear-range {
+  background: transparent;
+  border: none;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-range:hover {
+  color: #DC2626;
+  transform: scale(1.15);
 }
 
 .velocity-target-legend {
@@ -1656,6 +1770,346 @@ body {
   background: #EA580C;
   border-radius: 2px;
   display: inline-block;
+}
+
+/* ==========================================================================
+   MODAL: CALENDARIO INTERACTIVO DE VELOCIDAD
+   ========================================================================== */
+.modal-card-velocity-cal {
+  max-width: 580px;
+  border-radius: 22px;
+  background: #FFFFFF;
+}
+
+.velocity-cal-modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vcal-dev-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.vcal-dev-strip label {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.vcal-dev-strip label i, .vcal-dev-strip label svg {
+  width: 14px;
+  height: 14px;
+  color: #4E65FF;
+}
+
+.vcal-dev-select {
+  flex: 1;
+  max-width: 320px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+.vcal-presets-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vcal-presets-title {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vcal-presets-title i, .vcal-presets-title svg {
+  width: 13px;
+  height: 13px;
+  color: #F59E0B;
+}
+
+.vcal-presets-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vcal-preset-chip {
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.vcal-preset-chip:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4338CA;
+  transform: translateY(-1px);
+}
+
+.vcal-preset-chip.active {
+  background: #4E65FF;
+  border-color: #4E65FF;
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(78, 101, 255, 0.25);
+}
+
+/* Visual Calendar Container */
+.vcal-visual-container {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.vcal-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.vcal-nav-btn {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.18s ease;
+}
+
+.vcal-nav-btn:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4E65FF;
+}
+
+.vcal-nav-btn i, .vcal-nav-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.vcal-month-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.2px;
+}
+
+.vcal-weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.vcal-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.vcal-day {
+  height: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.vcal-day:hover:not(.other-month) {
+  background: #EEF2FF;
+  color: #4E65FF;
+  font-weight: 750;
+}
+
+.vcal-day.other-month {
+  color: #CBD5E1;
+  cursor: default;
+}
+
+.vcal-day.today {
+  border: 1.5px dashed #6366F1;
+}
+
+.vcal-day.start-date {
+  background: #4E65FF !important;
+  color: #FFFFFF !important;
+  font-weight: 800;
+  border-radius: 10px 0 0 10px;
+  box-shadow: 0 3px 8px rgba(78, 101, 255, 0.35);
+}
+
+.vcal-day.end-date {
+  background: #4E65FF !important;
+  color: #FFFFFF !important;
+  font-weight: 800;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 3px 8px rgba(78, 101, 255, 0.35);
+}
+
+.vcal-day.single-date {
+  border-radius: 10px !important;
+}
+
+.vcal-day.in-range {
+  background: #E0EAFF !important;
+  color: #1E3A8A !important;
+  border-radius: 0;
+  font-weight: 700;
+}
+
+.vcal-day.has-deliveries .vcal-dot-deliv {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #10B981;
+  position: absolute;
+  bottom: 2px;
+}
+
+.vcal-day.start-date .vcal-dot-deliv,
+.vcal-day.end-date .vcal-dot-deliv {
+  background: #FFFFFF;
+}
+
+.vcal-legend-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.vcal-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.vcal-dot-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.vcal-dot-indicator.dot-start { background: #4E65FF; }
+.vcal-dot-indicator.dot-range { background: #E0EAFF; border: 1px solid #93C5FD; }
+.vcal-dot-indicator.dot-delivery { background: #10B981; }
+
+.vcal-inputs-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vcal-input-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vcal-input-col label {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vcal-input-col label i, .vcal-input-col label svg {
+  width: 13px;
+  height: 13px;
+  color: #6366F1;
+}
+
+.vcal-input-arrow {
+  color: #94A3B8;
+  font-weight: 800;
+  font-size: 16px;
+  margin-top: 16px;
+}
+
+.vcal-range-summary {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vcal-range-summary i, .vcal-range-summary svg {
+  width: 15px;
+  height: 15px;
+  color: #3B82F6;
+  flex-shrink: 0;
+}
+
+.vcal-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #EDF1F7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 /* 3 Executive Velocity KPI Metric Cards */

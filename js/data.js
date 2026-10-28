@@ -355,10 +355,17 @@ const STF_REAL_DATA = {
   ]
 };
 
+// Alias de compatibilidad global para STF_DATA y STF_REAL_DATA
+const STF_DATA = STF_REAL_DATA;
+if (typeof window !== 'undefined') {
+  window.STF_REAL_DATA = STF_REAL_DATA;
+  window.STF_DATA = STF_REAL_DATA;
+}
+
 // Guardar o inicializar en LocalStorage con migración inteligente
 function getStoredData() {
   const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V6';
-  const local = localStorage.getItem(STORAGE_KEY);
+  const local = (typeof localStorage !== 'undefined') ? localStorage.getItem(STORAGE_KEY) : null;
   
   if (local) {
     try {
@@ -369,15 +376,23 @@ function getStoredData() {
           const ediazDev = STF_REAL_DATA.developers.find(d => d.id === 'dev_ediaz');
           if (ediazDev) parsed.developers.push(ediazDev);
         }
-        // Asegurar usernames y roles oficiales
+        // Asegurar usernames, roles oficiales y array de proyectos activos
         STF_REAL_DATA.developers.forEach(officialDev => {
           const target = parsed.developers.find(d => d.id === officialDev.id);
           if (target) {
             target.username = officialDev.username;
             target.role = officialDev.role;
             if (officialDev.email) target.email = officialDev.email;
+            if (!Array.isArray(target.activeProjects)) target.activeProjects = [...(officialDev.activeProjects || [])];
           }
         });
+        // Asegurar que applications e integrations sean arrays válidos
+        if (!Array.isArray(parsed.applications) || parsed.applications.length === 0) {
+          parsed.applications = JSON.parse(JSON.stringify(STF_REAL_DATA.applications));
+        }
+        if (!Array.isArray(parsed.integrations)) {
+          parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations));
+        }
         saveData(parsed);
         return parsed;
       }
@@ -392,5 +407,8 @@ function getStoredData() {
 }
 
 function saveData(data) {
-  localStorage.setItem('STF_GROUP_REAL_DATA_V6', JSON.stringify(data));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('STF_GROUP_REAL_DATA_V6', JSON.stringify(data));
+  }
 }
+
