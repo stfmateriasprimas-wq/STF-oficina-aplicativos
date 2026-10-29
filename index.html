@@ -189,17 +189,17 @@
       <!-- Welcome Banner & Page Title -->
       <section class="welcome-section">
         <div class="welcome-text">
-          <h1 class="welcome-title">Estado de Desarrollo · <span class="text-gradient">STF GROUP</span></h1>
-          <p class="welcome-subtitle">Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.</p>
+          <h1 class="welcome-title" id="mainWelcomeTitle">Estado de Desarrollo · <span class="text-gradient">STF GROUP</span></h1>
+          <p class="welcome-subtitle" id="mainWelcomeSubtitle">Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.</p>
         </div>
-        <div class="quick-stats-pills">
+        <div class="quick-stats-pills" id="mainQuickStatsPills">
           <div class="stat-chip">
             <span class="chip-dot dot-green"></span>
-            <span class="chip-label">6 Aplicativos Activos</span>
+            <span class="chip-label" id="chipActiveApps">6 Aplicativos Activos</span>
           </div>
           <div class="stat-chip">
             <span class="chip-dot dot-amber"></span>
-            <span class="chip-label">1 En Riesgo</span>
+            <span class="chip-label" id="chipRiskApps">1 En Riesgo</span>
           </div>
           <div class="stat-chip">
             <span class="chip-dot dot-blue"></span>
@@ -555,34 +555,121 @@
         </div> <!-- /dashboard-grid -->
       </section>
 
-      <!-- VIEW 2: APLICATIVOS Y MÓDULOS (PORTAFOLIO COMPLETO & KANBAN) -->
+      <!-- VIEW 2: APLICATIVOS Y MÓDULOS (PORTAFOLIO DE SISTEMAS INDUSTRIALES) -->
       <section class="view-panel" id="view-projects">
-        <div class="section-toolbar">
-          <div class="filter-pills-row" id="brandFilterPills">
-            <button class="filter-pill active" data-filter="all">Todos los Sistemas (6)</button>
-            <button class="filter-pill" data-filter="Grupal">Desarrollo Grupal</button>
-            <button class="filter-pill" data-filter="Manufactura">Manufactura & Confección</button>
-            <button class="filter-pill" data-filter="Textil">Planta & Textil</button>
-            <button class="filter-pill" data-filter="Talleres">Logística & Talleres</button>
-            <button class="filter-pill" data-filter="Calidad">Calidad</button>
+        
+        <!-- Industrial Executive KPI Summary (Cockpit de Efectividad) -->
+        <div class="industrial-kpi-bar" id="industrialKpiBar">
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-indigo">
+              <i data-lucide="factory"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">Cobertura de Planta</span>
+              <h3 class="ind-kpi-value" id="kpiActiveSystemsCount">6 Macro-Sistemas</h3>
+              <span class="ind-kpi-sub"><strong style="color: #059669;">100%</strong> Cadena Textil & Confección</span>
+            </div>
           </div>
 
-          <div class="view-switch-btns">
-            <button class="switch-btn active" id="btnViewGrid" title="Vista en Cuadrícula">
-              <i data-lucide="layout-grid"></i>
-            </button>
-            <button class="switch-btn" id="btnViewKanban" title="Vista en Tablero Kanban">
-              <i data-lucide="columns-3"></i>
-            </button>
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-emerald">
+              <i data-lucide="check-circle-2"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">Despliegue Productivo</span>
+              <h3 class="ind-kpi-value" id="kpiProdSystemsCount">1 en Producción</h3>
+              <span class="ind-kpi-sub"><strong style="color: #059669;">SLA 99.8%</strong> · COLCHAS en vivo</span>
+            </div>
+          </div>
+
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-blue">
+              <i data-lucide="trending-up"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">Efectividad de Entregas</span>
+              <h3 class="ind-kpi-value" id="kpiOnTimeRate">83.3% En Tiempo</h3>
+              <span class="ind-kpi-sub">5 de 6 dentro del cronograma</span>
+            </div>
+          </div>
+
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-amber">
+              <i data-lucide="alert-triangle"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">Foco Crítico de Atención</span>
+              <h3 class="ind-kpi-value" id="kpiRiskSystemsCount">1 En Riesgo</h3>
+              <span class="ind-kpi-sub" style="color: #D97706;">GEO UBICACIÓN · Desfase GPS</span>
+            </div>
           </div>
         </div>
 
-        <!-- Projects Grid View -->
+        <!-- Executive Toolbar: Brand Filters, Live Search & View Mode Switcher -->
+        <div class="projects-executive-toolbar">
+          <div class="filter-pills-row" id="brandFilterPills">
+            <button class="filter-pill active" data-filter="all">Todos los Sistemas (6)</button>
+            <button class="filter-pill" data-filter="Grupal">Desarrollo Grupal (1)</button>
+            <button class="filter-pill" data-filter="Manufactura">Manufactura (1)</button>
+            <button class="filter-pill" data-filter="Textil">Planta Textil (1)</button>
+            <button class="filter-pill" data-filter="Talleres">Talleres & GPS (1)</button>
+            <button class="filter-pill" data-filter="Calidad">Calidad (1)</button>
+          </div>
+
+          <div class="toolbar-right-actions">
+            <div class="project-search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="projectSearchInput" placeholder="Buscar por sistema, código o responsable..." oninput="handleProjectSearch(this.value)">
+              <button type="button" class="btn-clear-search" id="btnClearProjectSearch" onclick="clearProjectSearch()" style="display: none;" title="Limpiar búsqueda">✕</button>
+            </div>
+
+            <div class="view-switch-btns">
+              <button class="switch-btn active" id="btnViewGrid" title="Vista en Cuadrícula Ejecutiva">
+                <i data-lucide="layout-grid"></i>
+              </button>
+              <button class="switch-btn" id="btnViewTable" title="Vista en Matriz Operativa (Tabla)">
+                <i data-lucide="table"></i>
+              </button>
+              <button class="switch-btn" id="btnViewKanban" title="Vista en Tablero Kanban">
+                <i data-lucide="columns-3"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. Projects Grid View (Executive Cards) -->
         <div class="projects-cards-grid" id="projectsCardsGrid">
           <!-- Populated via JavaScript -->
         </div>
 
-        <!-- Projects Kanban View (Hidden by default) -->
+        <!-- 2. Projects Table View (Industrial Matrix - Hidden by default) -->
+        <div class="projects-table-container" id="projectsTableView" style="display: none;">
+          <div class="industrial-matrix-card">
+            <div class="table-responsive">
+              <table class="industrial-matrix-table" id="industrialMatrixTable">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Sistema & Planta</th>
+                    <th>Responsable</th>
+                    <th>Fase de Software</th>
+                    <th>Avance Real</th>
+                    <th>Entregables</th>
+                    <th>Calidad QA</th>
+                    <th>Cronograma</th>
+                    <th>Estado SLA</th>
+                    <th class="text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="industrialMatrixTableBody">
+                  <!-- Populated via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Projects Kanban View (Hidden by default) -->
         <div class="projects-kanban-board" id="projectsKanbanBoard" style="display: none;">
           <!-- 4 Kanban Columns: Requisitos, Backend/Core, Frontend/QA, Desplegado -->
         </div>

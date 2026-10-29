@@ -4422,21 +4422,10 @@ function initApp() {
     });
   });
 
-  // Switch between Projects Grid & Kanban
-  document.getElementById('btnViewGrid')?.addEventListener('click', () => {
-    document.getElementById('btnViewGrid').classList.add('active');
-    document.getElementById('btnViewKanban').classList.remove('active');
-    document.getElementById('projectsCardsGrid').style.display = 'grid';
-    document.getElementById('projectsKanbanBoard').style.display = 'none';
-  });
-
-  document.getElementById('btnViewKanban')?.addEventListener('click', () => {
-    document.getElementById('btnViewKanban').classList.add('active');
-    document.getElementById('btnViewGrid').classList.remove('active');
-    document.getElementById('projectsCardsGrid').style.display = 'none';
-    document.getElementById('projectsKanbanBoard').style.display = 'grid';
-    renderKanbanBoard();
-  });
+  // Switch between Projects Grid, Table & Kanban
+  document.getElementById('btnViewGrid')?.addEventListener('click', () => setProjectsViewMode('grid'));
+  document.getElementById('btnViewTable')?.addEventListener('click', () => setProjectsViewMode('table'));
+  document.getElementById('btnViewKanban')?.addEventListener('click', () => setProjectsViewMode('kanban'));
 
   // Settings Actions
   document.getElementById('btnDownloadBackup')?.addEventListener('click', downloadFullBackupJSON);
@@ -4454,8 +4443,56 @@ if (document.readyState === 'loading') {
 // ==========================================================================
 
 let activeBrandFilter = 'all';
+let currentProjectsViewMode = 'grid';
+let currentProjectSearchTerm = '';
 let brandsChartInstance = null;
 let qaBugsChartInstance = null;
+
+// Contexto operacional e industrial de cada sistema en la cadena productiva de STF GROUP
+const STF_INDUSTRIAL_CONTEXT = {
+  app_torre: {
+    plantArea: 'Control Central TI',
+    plantRole: 'Supervisión Operativa & KPIs en Tiempo Real',
+    qaScore: '98.5% AQL',
+    qaStatus: 'Certificado en Planta',
+    qaColor: '#059669'
+  },
+  app_colchas: {
+    plantArea: 'Línea Hogar & Confección',
+    plantRole: 'Trazabilidad de Insumos & Órdenes de Planta',
+    qaScore: '100% SLA',
+    qaStatus: 'Desplegado en Producción',
+    qaColor: '#059669'
+  },
+  app_laboratorio: {
+    plantArea: 'Laboratorio Textil',
+    plantRole: 'Pruebas Físico-Químicas & Solidez de Color',
+    qaScore: '94.0% QA',
+    qaStatus: 'Validado en Ensayos',
+    qaColor: '#2563EB'
+  },
+  app_geo: {
+    plantArea: 'Talleres & Maquila Satélite',
+    plantRole: 'Georreferenciación & Rutas de Confección Externa',
+    qaScore: '82.0% QA',
+    qaStatus: 'Atención: Desfase GPS',
+    qaColor: '#D97706'
+  },
+  app_calidad: {
+    plantArea: 'Auditoría en Línea',
+    plantRole: 'Inspección AQL en Corte & Confección',
+    qaScore: '96.0% AQL',
+    qaStatus: 'Auditado en Producción',
+    qaColor: '#059669'
+  },
+  app_tintoreria: {
+    plantArea: 'Planta Tintorería',
+    plantRole: 'Control de Barcas de Teñido & Recetas Químicas',
+    qaScore: '93.5% QA',
+    qaStatus: 'Validado en Planta',
+    qaColor: '#2563EB'
+  }
+};
 
 function switchView(viewName) {
   // Update sidebar active state
@@ -4473,16 +4510,29 @@ function switchView(viewName) {
     targetPanel.classList.add('show', 'active');
   }
 
-  // Trigger view-specific renderers
+  // Actualizar banner superior con título y contexto acorde a la sección activa
+  const titleEl = document.getElementById('mainWelcomeTitle');
+  const subtitleEl = document.getElementById('mainWelcomeSubtitle');
+
   if (viewName === 'projects') {
+    if (titleEl) titleEl.innerHTML = 'Portafolio de Sistemas Industriales · <span class="text-gradient">STF GROUP</span>';
+    if (subtitleEl) subtitleEl.textContent = 'Supervisión operativa de software de planta, ciclo de vida de fases, entregables y efectividad de ingeniería.';
     renderProjectsView(activeBrandFilter);
   } else if (viewName === 'developers') {
+    if (titleEl) titleEl.innerHTML = 'Rendimiento de Ingeniería · <span class="text-gradient">STF GROUP</span>';
+    if (subtitleEl) subtitleEl.textContent = 'Scorecards técnicos, distribución de carga operativa y auditoría de desarrolladores.';
     renderDevelopersFullView();
   } else if (viewName === 'analytics') {
+    if (titleEl) titleEl.innerHTML = 'Métricas de Calidad & QA · <span class="text-gradient">STF GROUP</span>';
+    if (subtitleEl) subtitleEl.textContent = 'Control de defectos, estabilidad de despliegues y auditoría de software industrial.';
     renderAnalyticsView();
   } else if (viewName === 'settings') {
+    if (titleEl) titleEl.innerHTML = 'Configuración del Sistema · <span class="text-gradient">STF GROUP</span>';
+    if (subtitleEl) subtitleEl.textContent = 'Parámetros del entorno, copias de seguridad de datos y restablecimiento del sistema.';
     renderSettingsView();
   } else if (viewName === 'dashboard') {
+    if (titleEl) titleEl.innerHTML = 'Estado de Desarrollo · <span class="text-gradient">STF GROUP</span>';
+    if (subtitleEl) subtitleEl.textContent = 'Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.';
     renderStackedDeck();
     renderCapsuleProgressBar();
     renderSystemsTable();
@@ -4494,87 +4544,449 @@ function switchView(viewName) {
 }
 
 // ==========================================================================
-// VIEW 2: PROJECTS & KANBAN RENDERERS
+// VIEW 2: INDUSTRIAL PORTFOLIO CONTROLLER (GRID, OPERATIONAL MATRIX, KANBAN)
 // ==========================================================================
 
-function renderProjectsView(brand = 'all') {
-  activeBrandFilter = brand;
-  const gridContainer = document.getElementById('projectsCardsGrid');
-  if (!gridContainer) return;
+function setProjectsViewMode(mode) {
+  currentProjectsViewMode = mode;
 
-  let apps = appState.applications;
-  if (brand !== 'all') {
-    apps = apps.filter(a => a.category.toLowerCase().includes(brand.toLowerCase()));
+  const btnGrid = document.getElementById('btnViewGrid');
+  const btnTable = document.getElementById('btnViewTable');
+  const btnKanban = document.getElementById('btnViewKanban');
+
+  if (btnGrid) btnGrid.classList.toggle('active', mode === 'grid');
+  if (btnTable) btnTable.classList.toggle('active', mode === 'table');
+  if (btnKanban) btnKanban.classList.toggle('active', mode === 'kanban');
+
+  const gridContainer = document.getElementById('projectsCardsGrid');
+  const tableContainer = document.getElementById('projectsTableView');
+  const kanbanContainer = document.getElementById('projectsKanbanBoard');
+
+  if (gridContainer) gridContainer.style.display = mode === 'grid' ? 'grid' : 'none';
+  if (tableContainer) tableContainer.style.display = mode === 'table' ? 'block' : 'none';
+  if (kanbanContainer) kanbanContainer.style.display = mode === 'kanban' ? 'grid' : 'none';
+
+  if (mode === 'kanban') {
+    renderKanbanBoard();
+  } else {
+    renderProjectsView(activeBrandFilter);
+  }
+}
+
+function handleProjectSearch(val) {
+  currentProjectSearchTerm = (val || '').trim().toLowerCase();
+  const btnClear = document.getElementById('btnClearProjectSearch');
+  if (btnClear) {
+    btnClear.style.display = currentProjectSearchTerm ? 'flex' : 'none';
+  }
+  renderProjectsView(activeBrandFilter);
+}
+
+function clearProjectSearch() {
+  currentProjectSearchTerm = '';
+  const searchInput = document.getElementById('projectSearchInput');
+  const btnClear = document.getElementById('btnClearProjectSearch');
+  if (searchInput) searchInput.value = '';
+  if (btnClear) btnClear.style.display = 'none';
+  renderProjectsView(activeBrandFilter);
+}
+
+function updateProjectsKpiBar() {
+  const allApps = appState.applications || [];
+  const totalApps = allApps.length;
+  const prodApps = allApps.filter(a => calculateAppProgress(a) >= 100).length;
+  const riskApps = allApps.filter(a => a.status === 'risk').length;
+  const onTimeApps = Math.max(0, totalApps - riskApps);
+  const onTimeRate = totalApps > 0 ? Math.round((onTimeApps / totalApps) * 100) : 100;
+
+  const elActive = document.getElementById('kpiActiveSystemsCount');
+  const elProd = document.getElementById('kpiProdSystemsCount');
+  const elOnTime = document.getElementById('kpiOnTimeRate');
+  const elRisk = document.getElementById('kpiRiskSystemsCount');
+
+  if (elActive) elActive.textContent = `${totalApps} Macro-Sistemas`;
+  if (elProd) elProd.textContent = `${prodApps} en Producción`;
+  if (elOnTime) elOnTime.textContent = `${onTimeRate}.0% En Tiempo`;
+  if (elRisk) elRisk.textContent = `${riskApps} En Riesgo`;
+
+  // Actualizar también los chips de la cabecera principal si están presentes
+  const chipActive = document.getElementById('chipActiveApps');
+  const chipRisk = document.getElementById('chipRiskApps');
+  if (chipActive) chipActive.textContent = `${totalApps} Aplicativos Activos`;
+  if (chipRisk) chipRisk.textContent = `${riskApps} En Riesgo`;
+}
+
+function getFilteredApplications(brandFilter = activeBrandFilter) {
+  let apps = appState.applications || [];
+
+  // 1. Filtro por categoría / marca
+  if (brandFilter && brandFilter !== 'all') {
+    apps = apps.filter(a => (a.category || '').toLowerCase().includes(brandFilter.toLowerCase()));
   }
 
-  gridContainer.innerHTML = apps.map(app => {
-    const dev = getDeveloperById(app.devId);
-    const progress = calculateAppProgress(app);
-    const activePhase = app.phases.find(p => !p.completed) || { name: 'Desplegado en Producción' };
+  // 2. Filtro por término de búsqueda en tiempo real
+  if (currentProjectSearchTerm) {
+    apps = apps.filter(a => {
+      const dev = getDeveloperById(a.devId);
+      const devName = dev ? dev.name.toLowerCase() : '';
+      return (
+        (a.name || '').toLowerCase().includes(currentProjectSearchTerm) ||
+        (a.code || '').toLowerCase().includes(currentProjectSearchTerm) ||
+        (a.category || '').toLowerCase().includes(currentProjectSearchTerm) ||
+        (a.description || '').toLowerCase().includes(currentProjectSearchTerm) ||
+        devName.includes(currentProjectSearchTerm)
+      );
+    });
+  }
 
-    return `
-      <div class="project-card">
-        <div>
-          <div class="project-card-header">
-            <span class="project-brand-badge">${app.category}</span>
-            <span class="status-pill ${app.status === 'risk' ? 'status-risk' : (progress === 100 ? 'status-done' : 'status-ontime')}">
-              ${app.status === 'risk' ? 'En Riesgo' : (progress === 100 ? 'Finalizado' : 'En Tiempo')}
-            </span>
-          </div>
+  return apps;
+}
 
-          <h3 class="project-card-title">${app.name}</h3>
-          <p class="project-card-desc">${app.description || 'Sin descripción.'}</p>
+function renderProjectsView(brand = activeBrandFilter) {
+  activeBrandFilter = brand;
+  updateProjectsKpiBar();
 
-          <div class="project-card-phases">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
-              <span>Fase: <strong style="color: #4E65FF;">${activePhase.name}</strong></span>
-              <span>${progress}%</span>
-            </div>
-            
-            <div class="phases-micro-list" title="6 Fases del Ciclo de Software">
-              ${app.phases.map(p => `<div class="phase-micro-dot ${p.completed ? 'done' : ''}"></div>`).join('')}
-            </div>
-          </div>
-        </div>
+  // Actualizar pastillas de filtro y sus contadores
+  const pills = document.querySelectorAll('#brandFilterPills .filter-pill');
+  pills.forEach(pill => {
+    const f = pill.dataset.filter;
+    pill.classList.toggle('active', f === brand);
+  });
 
-        <div class="project-card-footer">
-          ${app.isGroupProject ? `
-            <div class="dev-lead-pill" style="cursor: pointer;" onclick="openSystemDetailModal('${app.id}')">
-              <span class="status-pill status-ontime" style="font-size: 11px;">👥 Equipo Grupal (4 Devs)</span>
-            </div>
-          ` : `
-            <div class="dev-lead-pill" style="cursor: pointer;" onclick="openDevScorecardModal('${dev.id}')" title="Ver rendimiento de ${dev.name}">
-              <img src="${dev.avatar}" alt="${dev.name}">
-              <span>${dev.name}</span>
-            </div>
-          `}
-          <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')">
-            Auditar Fases
-          </button>
-        </div>
+  const apps = getFilteredApplications(brand);
+  const gridContainer = document.getElementById('projectsCardsGrid');
+  const tableBody = document.getElementById('industrialMatrixTableBody');
+  const refDate = getSystemReferenceDate();
+
+  // Estado vacío si no hay coincidencias
+  if (apps.length === 0) {
+    const emptyHtml = `
+      <div style="grid-column: 1 / -1; padding: 48px 24px; text-align: center; background: #FFFFFF; border-radius: 24px; border: 1px dashed #CBD5E1;">
+        <i data-lucide="search-x" style="width: 44px; height: 44px; color: #94A3B8; margin-bottom: 12px;"></i>
+        <h3 style="font-size: 16px; font-weight: 800; color: #1E293B; margin-bottom: 6px;">No se encontraron aplicativos</h3>
+        <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">No hay sistemas que coincidan con "${currentProjectSearchTerm}" o con el filtro seleccionado.</p>
+        <button class="pill-btn secondary-btn" onclick="clearProjectSearch(); renderProjectsView('all');">Restablecer Filtros</button>
       </div>
     `;
-  }).join('');
+    if (gridContainer) gridContainer.innerHTML = emptyHtml;
+    if (tableBody) tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 36px; color: #64748B;">No se encontraron aplicativos coincidentes.</td></tr>`;
+    renderKanbanBoard();
+    lucide.createIcons();
+    return;
+  }
+
+  // RENDERIZADO DE LA CUADRÍCULA EJECUTIVA DE TARJETAS
+  if (gridContainer) {
+    gridContainer.innerHTML = apps.map(app => {
+      const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
+      const progress = calculateAppProgress(app);
+      const activePhaseIndex = app.phases.findIndex(p => !p.completed);
+      const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : { name: 'Desplegado en Producción', weight: 5 };
+      const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : 6;
+      
+      const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
+        plantArea: app.category,
+        plantRole: 'Operación Industrial en Planta',
+        qaScore: '95.0% QA',
+        qaStatus: 'Auditado',
+        qaColor: '#2563EB'
+      };
+
+      // Tareas e integraciones asignadas en tiempo real
+      const appTasks = (appState.integrations || []).filter(i => i.appId === app.id);
+      const evaluatedTasks = appTasks.filter(i => i.status === 'evaluated' || i.status === 'done');
+      let totalTasksCount = appTasks.length;
+      let completedTasksCount = evaluatedTasks.length;
+
+      // Colchas al estar 100% en producción refleja su ciclo completo
+      if (app.id === 'app_colchas' && progress === 100) {
+        totalTasksCount = Math.max(totalTasksCount, 1);
+        completedTasksCount = totalTasksCount;
+      }
+
+      const taskRatioPct = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : (progress === 100 ? 100 : 0);
+
+      // Cálculo de fecha límite y cuenta regresiva
+      const deadlineDate = new Date((app.deadline || '2026-11-30') + 'T23:59:59');
+      const diffDays = Math.ceil((deadlineDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let deadlineDisplay, deadlineCountdown, isOverdue = false;
+      if (progress === 100) {
+        deadlineDisplay = '✅ Desplegado';
+        deadlineCountdown = 'Producción Activa';
+      } else if (diffDays < 0 || app.status === 'risk') {
+        isOverdue = true;
+        const daysOver = Math.abs(diffDays);
+        deadlineDisplay = formatShortDate(app.deadline);
+        deadlineCountdown = `⚠️ ${daysOver > 0 ? daysOver + 'd retraso' : 'En Atención'}`;
+      } else {
+        deadlineDisplay = formatShortDate(app.deadline);
+        deadlineCountdown = `En ${diffDays} días`;
+      }
+
+      // Track segmentado de las 6 fases de desarrollo
+      const segmentsHtml = app.phases.map((p, idx) => {
+        let segClass = 'pending';
+        if (p.completed) {
+          segClass = 'done';
+        } else if (idx === activePhaseIndex) {
+          segClass = 'active';
+        }
+        const stateText = p.completed ? 'Completada ✅' : (idx === activePhaseIndex ? 'En Curso ⏳' : 'Pendiente');
+        const tooltip = `Fase ${idx + 1}: ${p.name} (${p.weight}%) - ${stateText}`;
+        return `<div class="phase-segment-item ${segClass}" title="${tooltip}"></div>`;
+      }).join('');
+
+      return `
+        <div class="project-card ${app.status === 'risk' ? 'is-risk' : ''}" style="--app-accent: ${app.iconColor};">
+          <!-- Borde ambiental de acento de marca -->
+          <div class="card-accent-bar" style="background: linear-gradient(90deg, ${app.iconColor}, ${app.iconColor}33);"></div>
+
+          <div>
+            <!-- Cabecera de Identidad del Sistema -->
+            <div class="project-card-header">
+              <div class="project-identity-group">
+                <div class="project-app-avatar" style="background: ${app.iconColor}18; color: ${app.iconColor}; border: 1.5px solid ${app.iconColor}38;" title="${app.name}">
+                  ${app.iconInitial}
+                </div>
+                <div class="project-title-meta">
+                  <div class="project-code-row">
+                    <span class="project-code-tag">${app.code}</span>
+                    <span class="project-brand-badge">${app.category}</span>
+                  </div>
+                  <h3 class="project-card-title">${app.name}</h3>
+                </div>
+              </div>
+
+              <div class="project-status-group">
+                <span class="status-pill ${app.status === 'risk' ? 'status-risk' : (progress === 100 ? 'status-done' : 'status-ontime')}">
+                  <span class="status-pulse-dot"></span>
+                  ${app.status === 'risk' ? 'En Riesgo' : (progress === 100 ? 'En Producción' : 'En Tiempo')}
+                </span>
+                <span class="priority-pill ${app.priority === 'Alta' ? 'priority-high' : 'priority-med'}">
+                  ${app.priority === 'Alta' ? '⚡ Alta Prioridad' : 'Media Prioridad'}
+                </span>
+              </div>
+            </div>
+
+            <!-- Descripción funcional -->
+            <p class="project-card-desc" title="${app.description || ''}">${app.description || 'Sin descripción técnica.'}</p>
+
+            <!-- Visualizador de Fases de Ciclo de Software (6 Segmentos) -->
+            <div class="project-phase-lifecycle">
+              <div class="phase-lifecycle-header">
+                <div class="current-phase-name">
+                  <span class="phase-step-tag">Fase ${displayPhaseNum} de 6</span>
+                  <strong class="phase-active-title">${activePhase.name}</strong>
+                </div>
+                <div class="phase-progress-number">
+                  <span class="progress-val">${progress}%</span>
+                  <span class="progress-lbl">Avance</span>
+                </div>
+              </div>
+
+              <div class="phase-segments-track" title="Pasa el cursor por cada segmento para ver detalles de la fase">
+                ${segmentsHtml}
+              </div>
+            </div>
+
+            <!-- Matriz de Indicadores Industriales (4 Cuadrantes de Precisión) -->
+            <div class="industrial-metrics-grid">
+              <!-- 1. Tareas / Entregables -->
+              <div class="ind-metric-cell" title="Entregables e integraciones de software asignadas en tiempo real">
+                <span class="ind-cell-label"><i data-lucide="check-square"></i> Entregables</span>
+                <strong class="ind-cell-value">${completedTasksCount}/${totalTasksCount} Listos</strong>
+                <span class="ind-cell-sub">${taskRatioPct}% Completado</span>
+              </div>
+
+              <!-- 2. Calidad QA & Auditoría -->
+              <div class="ind-metric-cell" title="Calidad técnica auditada en planta">
+                <span class="ind-cell-label"><i data-lucide="shield-check"></i> Calidad & QA</span>
+                <strong class="ind-cell-value" style="color: ${ind.qaColor};">${ind.qaScore}</strong>
+                <span class="ind-cell-sub">${ind.qaStatus}</span>
+              </div>
+
+              <!-- 3. Cronograma / Deadline -->
+              <div class="ind-metric-cell" title="Fecha límite de entrega y tiempo de sprint">
+                <span class="ind-cell-label"><i data-lucide="calendar"></i> Cronograma</span>
+                <strong class="ind-cell-value">${deadlineDisplay}</strong>
+                <span class="ind-cell-sub ${isOverdue ? 'sub-danger' : ''}">${deadlineCountdown}</span>
+              </div>
+
+              <!-- 4. Planta & Rol Operativo -->
+              <div class="ind-metric-cell" title="${ind.plantRole}">
+                <span class="ind-cell-label"><i data-lucide="cpu"></i> Área Planta</span>
+                <strong class="ind-cell-value">${ind.plantArea}</strong>
+                <span class="ind-cell-sub">${ind.plantRole.substring(0, 24)}...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer: Asignación de Ingeniería & Acciones Directas -->
+          <div class="project-card-footer">
+            <div class="footer-lead-col">
+              ${app.isGroupProject ? `
+                <div class="dev-lead-pill" onclick="openSystemDetailModal('${app.id}')" title="Desarrollo colaborativo grupal (4 desarrolladores)">
+                  <div class="stacked-team-avatars">
+                    ${(app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']).map(dId => {
+                      const d = getDeveloperById(dId);
+                      return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
+                    }).join('')}
+                  </div>
+                  <div class="dev-lead-text">
+                    <strong>Equipo Grupal</strong>
+                    <span>4 Ingenieros STF</span>
+                  </div>
+                </div>
+              ` : `
+                <div class="dev-lead-pill" onclick="openDevScorecardModal('${dev.id}')" title="Ver rendimiento y métricas de ${dev.name}">
+                  <div class="dev-avatar-box">
+                    <img src="${dev.avatar}" alt="${dev.name}" class="dev-card-avatar">
+                    <span class="dev-online-dot"></span>
+                  </div>
+                  <div class="dev-lead-text">
+                    <strong>${dev.name}</strong>
+                    <span>${dev.role || 'Desarrollador'}</span>
+                  </div>
+                </div>
+              `}
+            </div>
+
+            <div class="footer-actions-col">
+              <button class="card-sec-btn" onclick="openAppTasksDrawer('${app.id}')" title="Ver tareas e integraciones de ${app.name}">
+                <i data-lucide="layers"></i>
+                <span>Tareas (${totalTasksCount})</span>
+              </button>
+              <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las 6 fases de desarrollo de ${app.name}">
+                <i data-lucide="clipboard-check"></i>
+                <span>Auditar Fases</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // RENDERIZADO DE LA MATRIZ OPERATIVA (TABLA DENSE INDUSTRIAL)
+  if (tableBody) {
+    tableBody.innerHTML = apps.map(app => {
+      const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
+      const progress = calculateAppProgress(app);
+      const activePhase = app.phases.find(p => !p.completed) || { name: 'Desplegado en Producción' };
+      const ind = STF_INDUSTRIAL_CONTEXT[app.id] || { plantArea: app.category, qaScore: '95.0% QA', qaColor: '#2563EB' };
+
+      const appTasks = (appState.integrations || []).filter(i => i.appId === app.id);
+      const evaluatedTasks = appTasks.filter(i => i.status === 'evaluated' || i.status === 'done');
+      let totalTasksCount = appTasks.length;
+      let completedTasksCount = evaluatedTasks.length;
+      if (app.id === 'app_colchas' && progress === 100) {
+        totalTasksCount = Math.max(totalTasksCount, 1);
+        completedTasksCount = totalTasksCount;
+      }
+
+      const statusBadge = app.status === 'risk'
+        ? `<span class="status-pill status-risk"><span class="status-pulse-dot"></span> En Riesgo</span>`
+        : (progress === 100
+          ? `<span class="status-pill status-done"><span class="status-pulse-dot"></span> En Producción</span>`
+          : `<span class="status-pill status-ontime"><span class="status-pulse-dot"></span> En Tiempo</span>`);
+
+      return `
+        <tr onclick="openSystemDetailModal('${app.id}')" style="cursor: pointer;">
+          <td><span class="matrix-code-chip">${app.code}</span></td>
+          <td>
+            <div class="matrix-sys-cell">
+              <div class="matrix-sys-avatar" style="background: ${app.iconColor}18; color: ${app.iconColor}; border: 1.5px solid ${app.iconColor}35;">
+                ${app.iconInitial}
+              </div>
+              <div class="matrix-sys-info">
+                <strong>${app.name}</strong>
+                <span>${ind.plantArea}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            ${app.isGroupProject ? `
+              <div class="dev-cell">
+                <span class="status-pill status-ontime" style="font-size: 11px;">👥 Equipo Grupal (4 Devs)</span>
+              </div>
+            ` : `
+              <div class="dev-cell">
+                <img src="${dev.avatar}" alt="${dev.name}" class="mini-dev-av" style="width: 24px; height: 24px; border-radius: 50%;">
+                <span>${dev.name}</span>
+              </div>
+            `}
+          </td>
+          <td>
+            <span style="font-weight: 700; color: #334155;">${activePhase.name}</span>
+          </td>
+          <td class="progress-cell" style="min-width: 130px;">
+            <div class="progress-header-text">
+              <span>${progress}%</span>
+            </div>
+            <div class="mini-bar-track">
+              <div class="mini-bar-fill" style="width: ${progress}%; background: ${app.iconColor};"></div>
+            </div>
+          </td>
+          <td>
+            <span style="font-weight: 700; color: #1E293B;">${completedTasksCount}/${totalTasksCount} Listos</span>
+          </td>
+          <td>
+            <strong style="color: ${ind.qaColor};">${ind.qaScore}</strong>
+          </td>
+          <td>
+            <span style="font-size: 12px; color: #475569;">${formatShortDate(app.deadline)}</span>
+          </td>
+          <td>${statusBadge}</td>
+          <td class="text-right" onclick="event.stopPropagation();">
+            <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar Fases">
+              Auditar
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
 
   renderKanbanBoard();
   lucide.createIcons();
+}
+
+function openAppTasksDrawer(appId) {
+  const app = getApplicationById(appId);
+  if (!app) return;
+
+  // Cambiar a la vista del dashboard y expandir las tareas del desarrollador asignado
+  switchView('dashboard');
+  setTimeout(() => {
+    if (app.devId) openedDevFolders.add(app.devId);
+    if (app.devIds) app.devIds.forEach(id => openedDevFolders.add(id));
+    renderIntegrationsCards();
+
+    const targetElement = document.getElementById('integrationsCardsList');
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    showToast(`Mostrando entregables y tareas operativas de ${app.name}`);
+  }, 160);
 }
 
 function renderKanbanBoard() {
   const kanban = document.getElementById('projectsKanbanBoard');
   if (!kanban) return;
 
-  // 4 Kanban Columns
+  // 4 Columnas de Kanban para Flujo Industrial de Software
   const columns = [
-    { title: "1. Requisitos & Diseño", checkIdx: 1 },
-    { title: "2. Desarrollo Backend / Core", checkIdx: 2 },
-    { title: "3. Frontend & Pruebas QA", checkIdx: 4 },
-    { title: "4. Desplegado / Producción", checkIdx: 5 }
+    { title: "1. Requisitos & Arquitectura", checkIdx: 1 },
+    { title: "2. Desarrollo Backend & Lógica Core", checkIdx: 2 },
+    { title: "3. Frontend & Pruebas QA en Planta", checkIdx: 4 },
+    { title: "4. Desplegado en Producción STF", checkIdx: 5 }
   ];
 
+  const apps = getFilteredApplications(activeBrandFilter);
+
   kanban.innerHTML = columns.map(col => {
-    // Clasificar aplicativo en su columna según la última fase completada
-    const appsInCol = appState.applications.filter(app => {
+    const appsInCol = apps.filter(app => {
       const completedCount = app.phases.filter(p => p.completed).length;
       if (col.checkIdx === 1) return completedCount <= 2;
       if (col.checkIdx === 2) return completedCount === 3;
@@ -4591,19 +5003,20 @@ function renderKanbanBoard() {
         </div>
 
         <div class="kanban-items-list">
-          ${appsInCol.length === 0 ? '<p style="color: #A0ABC0; font-size: 12px; text-align: center; margin-top: 20px;">Sin aplicativos en esta etapa</p>' : ''}
+          ${appsInCol.length === 0 ? '<p style="color: #A0ABC0; font-size: 12px; text-align: center; margin-top: 24px;">Sin aplicativos en esta etapa</p>' : ''}
           ${appsInCol.map(app => {
-            const dev = getDeveloperById(app.devId);
+            const dev = getDeveloperById(app.devId) || { name: 'Equipo STF' };
             const prog = calculateAppProgress(app);
             return `
-              <div class="kanban-item-card" onclick="openSystemDetailModal('${app.id}')">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                  <span style="font-size: 11px; font-weight: 700; color: #8E96A6;">${app.code}</span>
-                  <span style="font-size: 11px; font-weight: 800; color: #4E65FF;">${prog}%</span>
+              <div class="kanban-item-card" onclick="openSystemDetailModal('${app.id}')" title="Clic para auditar fases de ${app.name}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span class="matrix-code-chip">${app.code}</span>
+                  <span style="font-size: 11px; font-weight: 800; color: ${app.iconColor};">${prog}%</span>
                 </div>
-                <strong style="font-size: 13.5px; display: block; margin-bottom: 8px; color: #1E232E;">${app.name}</strong>
+                <strong style="font-size: 14px; display: block; margin-bottom: 6px; color: #1E232E;">${app.name}</strong>
+                <span style="font-size: 11px; color: #64748B; display: block; margin-bottom: 10px;">${app.category}</span>
                 <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #F1F4F9; padding-top: 8px;">
-                  <span style="font-size: 11.5px; color: #64748B;">${dev.name}</span>
+                  <span style="font-size: 11.5px; color: #64748B; font-weight: 600;">${app.isGroupProject ? '👥 Equipo Grupal' : dev.name}</span>
                   <span style="font-size: 11px; color: #94A3B8;">${formatShortDate(app.deadline)}</span>
                 </div>
               </div>
@@ -4861,5 +5274,10 @@ window.switchView = switchView;
 window.showToast = showToast;
 window.renderStackedDeck = renderStackedDeck;
 window.getDeveloperById = getDeveloperById;
+window.setProjectsViewMode = setProjectsViewMode;
+window.handleProjectSearch = handleProjectSearch;
+window.clearProjectSearch = clearProjectSearch;
+window.openAppTasksDrawer = openAppTasksDrawer;
+window.renderProjectsView = renderProjectsView;
 
 
