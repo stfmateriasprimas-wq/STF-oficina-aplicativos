@@ -3297,6 +3297,55 @@ function calculateIntegrationTimeProgress(integration) {
   };
 }
 
+// State for open/closed developer folders (all open by default)
+let openedDevFolders = new Set(['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']);
+
+function toggleDevFolder(devId) {
+  const folderEl = document.getElementById(`folder_dev_${devId}`);
+  if (!folderEl) return;
+  const isCurrentlyOpen = folderEl.classList.contains('is-open');
+  if (isCurrentlyOpen) {
+    folderEl.classList.remove('is-open');
+    openedDevFolders.delete(devId);
+  } else {
+    folderEl.classList.add('is-open');
+    openedDevFolders.add(devId);
+  }
+  const toggleText = folderEl.querySelector('.dev-folder-toggle-text');
+  if (toggleText) {
+    const count = folderEl.getAttribute('data-task-count') || '';
+    toggleText.textContent = folderEl.classList.contains('is-open') ? 'Ocultar Tareas' : `Ver Tareas (${count})`;
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function expandAllDevFolders() {
+  document.querySelectorAll('.dev-folder-card').forEach(folder => {
+    folder.classList.add('is-open');
+    const devId = folder.dataset.devId;
+    if (devId) openedDevFolders.add(devId);
+    const toggleText = folder.querySelector('.dev-folder-toggle-text');
+    if (toggleText) toggleText.textContent = 'Ocultar Tareas';
+  });
+  if (window.lucide) lucide.createIcons();
+}
+
+function collapseAllDevFolders() {
+  document.querySelectorAll('.dev-folder-card').forEach(folder => {
+    folder.classList.remove('is-open');
+    const devId = folder.dataset.devId;
+    if (devId) openedDevFolders.delete(devId);
+    const count = folder.getAttribute('data-task-count') || '';
+    const toggleText = folder.querySelector('.dev-folder-toggle-text');
+    if (toggleText) toggleText.textContent = `Ver Tareas (${count})`;
+  });
+  if (window.lucide) lucide.createIcons();
+}
+
+window.toggleDevFolder = toggleDevFolder;
+window.expandAllDevFolders = expandAllDevFolders;
+window.collapseAllDevFolders = collapseAllDevFolders;
+
 function renderIntegrationsList(filter = activeIntFilter) {
   const container = document.getElementById('integrationsCardsList');
   if (!container) return;
@@ -3340,7 +3389,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 42px 24px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: 20px; border: 1.5px dashed #CBD5E1;">
+      <div style="width: 100%; padding: 42px 24px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: 20px; border: 1.5px dashed #CBD5E1;">
         <i data-lucide="inbox" style="width: 42px; height: 42px; margin-bottom: 10px; color: #94A3B8;"></i>
         <p style="font-weight: 750; font-size: 15px; color: #1E293B; margin-bottom: 4px;">No hay integraciones en esta categoría.</p>
         <span style="font-size: 13px; color: #64748B;">Usa el botón "+ Asignar Integración" para asignar nuevas tareas operativas al equipo.</span>
@@ -3350,146 +3399,322 @@ function renderIntegrationsList(filter = activeIntFilter) {
     return;
   }
 
-  container.innerHTML = filtered.map(item => {
-    const app = appState.applications.find(a => a.id === item.appId) || { name: 'Sistema General', iconColor: '#4E65FF' };
-    const dev = getDeveloperById(item.devId);
-    const diag = calculateIntegrationTimeProgress(item);
+  // Calculate fixed consecutive numbering per developer across ALL assigned tasks
+  // Ordered chronologically by startDate (earliest assignment is #1, second #2, etc.)
+  const devConsecutiveMap = new Map();
+  const allDevIds = new Set(integrations.map(i => i.devId));
 
-    const isEvaluated = item.status === 'evaluated';
-    const appColor = app.iconColor || '#4E65FF';
+  allDevIds.forEach(dId => {
+    const allTasksForDev = integrations
+      .filter(i => i.devId === dId)
+      .sort((a, b) => {
+        const da = new Date(a.startDate || '2026-01-01').getTime();
+        const db = new Date(b.startDate || '2026-01-01').getTime();
+        if (da !== db) return da - db;
+        return (a.id || '').localeCompare(b.id || '');
+      });
 
-    // Countdown Badge on Timeline
-    let countdownBadgeHtml = '';
-    if (isEvaluated) {
-      countdownBadgeHtml = `
-        <span class="friendly-deadline-pill evaluated">
-          <i data-lucide="check-check" style="width: 12px; height: 12px;"></i>
-          <span>Completada</span>
-        </span>
-      `;
-    } else if (diag.isOverdue) {
-      const overdueDays = Math.abs(diag.daysRemaining);
-      countdownBadgeHtml = `
-        <span class="friendly-deadline-pill overdue">
-          <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i>
-          <span>Vencida hace ${overdueDays} d</span>
-        </span>
-      `;
-    } else if (diag.badgeClass === 'risk') {
-      countdownBadgeHtml = `
-        <span class="friendly-deadline-pill risk">
-          <i data-lucide="hourglass" style="width: 12px; height: 12px;"></i>
-          <span>Quedan ${diag.daysRemaining} días</span>
-        </span>
-      `;
-    } else {
-      countdownBadgeHtml = `
-        <span class="friendly-deadline-pill ontime">
-          <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
-          <span>Quedan ${diag.daysRemaining} días</span>
-        </span>
-      `;
+    allTasksForDev.forEach((task, index) => {
+      devConsecutiveMap.set(task.id, index + 1);
+    });
+  });
+
+  // Group filtered items by developer
+  const devGroups = [];
+  appState.developers.forEach(dev => {
+    const devTasks = filtered.filter(i => i.devId === dev.id);
+    if (devTasks.length > 0) {
+      devTasks.sort((a, b) => (devConsecutiveMap.get(a.id) || 0) - (devConsecutiveMap.get(b.id) || 0));
+      devGroups.push({ dev, tasks: devTasks });
     }
+  });
 
-    // Action button or evaluated pill
-    let actionHtml = '';
-    if (isEvaluated) {
-      actionHtml = `
-        <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
-          <div class="eval-action-badge">
-            <i data-lucide="check" style="width: 13px; height: 13px;"></i>
-          </div>
-          <div class="eval-action-details">
-            <span class="eval-action-title">+${item.evaluation?.pointsAdded || item.weight}% Sumado (${item.evaluation?.qualityScore || 95}%)</span>
-            <span class="eval-action-sub">Auditada & Aprobada · Ver Dictamen</span>
-          </div>
-          <i data-lucide="chevron-right" class="eval-action-arrow"></i>
+  // Check for any developer not in appState.developers
+  filtered.forEach(item => {
+    if (!appState.developers.some(d => d.id === item.devId)) {
+      let group = devGroups.find(g => g.dev.id === item.devId);
+      if (!group) {
+        group = { dev: getDeveloperById(item.devId), tasks: [] };
+        devGroups.push(group);
+      }
+      if (!group.tasks.some(t => t.id === item.id)) {
+        group.tasks.push(item);
+        group.tasks.sort((a, b) => (devConsecutiveMap.get(a.id) || 0) - (devConsecutiveMap.get(b.id) || 0));
+      }
+    }
+  });
+
+  // Toolbar HTML
+  const toolbarHtml = `
+    <div class="dev-folders-toolbar">
+      <div class="dev-folders-toolbar-info">
+        <div class="dev-folders-toolbar-badge">
+          <i data-lucide="folder-git-2" style="width: 15px; height: 15px;"></i>
+          <span>${devGroups.length} Carpeta${devGroups.length !== 1 ? 's' : ''} de Desarrollador${devGroups.length !== 1 ? 'es' : ''}</span>
         </div>
-      `;
-    } else {
-      actionHtml = `
-        <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas">
-          <i data-lucide="award" style="width: 15px; height: 15px;"></i>
-          <span>Calificar Efectividad</span>
+        <span class="dev-folders-toolbar-hint">Haz clic en cada carpeta para desplegar o plegar sus tareas asignadas</span>
+      </div>
+      <div class="dev-folders-toolbar-actions">
+        <button type="button" class="btn-folder-action" onclick="expandAllDevFolders()" title="Desplegar todas las carpetas">
+          <i data-lucide="chevrons-down" style="width: 14px; height: 14px;"></i>
+          <span>Expandir Todo</span>
         </button>
-      `;
-    }
+        <button type="button" class="btn-folder-action" onclick="collapseAllDevFolders()" title="Plegar todas las carpetas">
+          <i data-lucide="chevrons-up" style="width: 14px; height: 14px;"></i>
+          <span>Colapsar Todo</span>
+        </button>
+      </div>
+    </div>
+  `;
 
-    return `
-      <div class="integration-item-card" style="--int-accent: ${appColor};">
-        <div class="int-card-accent-strip"></div>
-        <div class="int-card-content">
-          <!-- Top Row: App Badge & Status Pill -->
-          <div class="int-card-header">
-            <div class="int-app-badge" style="background-color: ${appColor}12; color: ${appColor}; border: 1px solid ${appColor}2E;">
-              <span class="int-app-dot" style="background-color: ${appColor};"></span>
-              <span class="int-app-name">${app.name}</span>
+  // Folders HTML
+  const foldersHtml = devGroups.map(group => {
+    const { dev, tasks } = group;
+    const isOpen = openedDevFolders.has(dev.id);
+
+    // Summary counts for this developer
+    let pCount = 0; // en proceso (amarillo)
+    let dCount = 0; // cumplida (verde)
+    let oCount = 0; // vencida (rojo)
+
+    tasks.forEach(item => {
+      const isEval = item.status === 'evaluated';
+      const diag = calculateIntegrationTimeProgress(item);
+      const isOver = !isEval && (diag.isOverdue || diag.daysRemaining < 0);
+      if (isEval) dCount++;
+      else if (isOver) oCount++;
+      else pCount++;
+    });
+
+    const totalAllDevTasks = integrations.filter(i => i.devId === dev.id).length;
+    const completedAllDevTasks = integrations.filter(i => i.devId === dev.id && i.status === 'evaluated').length;
+    const devRate = totalAllDevTasks > 0 ? Math.round((completedAllDevTasks / totalAllDevTasks) * 100) : 0;
+    const hasRisk = oCount > 0;
+
+    const cardsHtml = tasks.map(item => {
+      const app = appState.applications.find(a => a.id === item.appId) || { name: 'Sistema General', iconColor: '#4E65FF' };
+      const diag = calculateIntegrationTimeProgress(item);
+      const isEvaluated = item.status === 'evaluated';
+      const isOverdue = !isEvaluated && (diag.isOverdue || diag.daysRemaining < 0);
+      const appColor = app.iconColor || '#4E65FF';
+      const consecutiveNum = devConsecutiveMap.get(item.id) || 1;
+
+      // Determinación de Badge Superior según especificación:
+      // 1. Amarillo con número consecutivo cuando esté en proceso
+      // 2. Verde con chulito (✓) cuando la tarea esté cumplida
+      // 3. Rojo con X (✕) cuando la tarea sobrepase los días estipulados de entrega
+      let cornerBadgeClass = '';
+      let cornerBadgeContent = '';
+      let cornerBadgeTitle = '';
+
+      if (isEvaluated) {
+        cornerBadgeClass = 'badge-completed';
+        cornerBadgeContent = '<i data-lucide="check" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Cumplida (Auditada & Calificada)`;
+      } else if (isOverdue) {
+        cornerBadgeClass = 'badge-overdue';
+        cornerBadgeContent = '<i data-lucide="x" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Vencida (Sobrepasó entrega con desfase)`;
+      } else {
+        cornerBadgeClass = 'badge-process';
+        cornerBadgeContent = `<span>${consecutiveNum}</span>`;
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · En Proceso (Ritmo de Desarrollo)`;
+      }
+
+      // Countdown Badge on Timeline
+      let countdownBadgeHtml = '';
+      if (isEvaluated) {
+        countdownBadgeHtml = `
+          <span class="friendly-deadline-pill evaluated">
+            <i data-lucide="check-check" style="width: 12px; height: 12px;"></i>
+            <span>Completada</span>
+          </span>
+        `;
+      } else if (diag.isOverdue) {
+        const overdueDays = Math.abs(diag.daysRemaining);
+        countdownBadgeHtml = `
+          <span class="friendly-deadline-pill overdue">
+            <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i>
+            <span>Vencida hace ${overdueDays} d</span>
+          </span>
+        `;
+      } else if (diag.badgeClass === 'risk') {
+        countdownBadgeHtml = `
+          <span class="friendly-deadline-pill risk">
+            <i data-lucide="hourglass" style="width: 12px; height: 12px;"></i>
+            <span>Quedan ${diag.daysRemaining} días</span>
+          </span>
+        `;
+      } else {
+        countdownBadgeHtml = `
+          <span class="friendly-deadline-pill ontime">
+            <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+            <span>Quedan ${diag.daysRemaining} días</span>
+          </span>
+        `;
+      }
+
+      // Action button or evaluated pill
+      let actionHtml = '';
+      if (isEvaluated) {
+        actionHtml = `
+          <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
+            <div class="eval-action-badge">
+              <i data-lucide="check" style="width: 13px; height: 13px;"></i>
             </div>
-            <div class="int-status-badge ${diag.badgeClass}">
-              <span class="int-pulse-dot"></span>
-              <span>${diag.friendlyStatusText || diag.statusText}</span>
+            <div class="eval-action-details">
+              <span class="eval-action-title">+${item.evaluation?.pointsAdded || item.weight}% Sumado (${item.evaluation?.qualityScore || 95}%)</span>
+              <span class="eval-action-sub">Auditada & Aprobada · Ver Dictamen</span>
             </div>
+            <i data-lucide="chevron-right" class="eval-action-arrow"></i>
+          </div>
+        `;
+      } else {
+        actionHtml = `
+          <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas">
+            <i data-lucide="award" style="width: 15px; height: 15px;"></i>
+            <span>Calificar Efectividad</span>
+          </button>
+        `;
+      }
+
+      return `
+        <div class="integration-item-card" style="--int-accent: ${appColor};">
+          <div class="int-card-accent-strip"></div>
+
+          <!-- Prominent Superior Corner Badge -->
+          <div class="int-corner-consecutive-badge ${cornerBadgeClass}" title="${cornerBadgeTitle}">
+            ${cornerBadgeContent}
           </div>
 
-          <!-- Card Body: Title & Description -->
-          <div class="int-card-body">
-            <h3 class="int-card-title">${item.name}</h3>
-            <p class="int-card-desc" title="${item.description || ''}">${item.description || 'Integración técnica operativa en planta de confección.'}</p>
-          </div>
-
-          <!-- Developer Assigned Row -->
-          <div class="int-dev-row">
-            <div class="int-dev-avatar-wrapper">
-              <img src="${dev.avatar}" class="int-dev-avatar" alt="${dev.name}">
-              <span class="int-dev-status-indicator"></span>
-            </div>
-            <div class="int-dev-info-text">
-              <span class="int-dev-name">${dev.name}</span>
-              <span class="int-dev-role">${dev.role}</span>
-            </div>
-            <div class="int-weight-badge" title="Ponderación que aporta al módulo">
-              <i data-lucide="sparkles" style="width: 11px; height: 11px;"></i>
-              <span>Peso ${item.weight}%</span>
-            </div>
-          </div>
-
-          <!-- Friendly Time & Delivery Tracker Capsule -->
-          <div class="int-time-meter">
-            <div class="int-time-header">
-              <div class="int-time-dates">
-                <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
-                <span>${formatShortDate(item.startDate)} → ${formatShortDate(item.deadline)}</span>
+          <div class="int-card-content">
+            <!-- Top Row: App Badge, Consecutivo Tag & Status Pill -->
+            <div class="int-card-header">
+              <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                <div class="int-app-badge" style="background-color: ${appColor}12; color: ${appColor}; border: 1px solid ${appColor}2E;">
+                  <span class="int-app-dot" style="background-color: ${appColor};"></span>
+                  <span class="int-app-name">${app.name}</span>
+                </div>
+                <span class="int-task-order-pill" title="Asignación #${consecutiveNum} de este desarrollador">#${consecutiveNum}</span>
               </div>
-              ${countdownBadgeHtml}
+              <div class="int-status-badge ${diag.badgeClass}">
+                <span class="int-pulse-dot"></span>
+                <span>${diag.friendlyStatusText || diag.statusText}</span>
+              </div>
             </div>
 
-            <div class="int-progress-dual-bar">
-              <div class="int-bar-track">
-                <div class="int-bar-fill ${diag.badgeClass}" style="width: ${diag.timeBurnRate}%;">
-                  <span class="int-bar-shimmer"></span>
+            <!-- Card Body: Title & Description -->
+            <div class="int-card-body">
+              <h3 class="int-card-title">${item.name}</h3>
+              <p class="int-card-desc" title="${item.description || ''}">${item.description || 'Integración técnica operativa en planta de confección.'}</p>
+            </div>
+
+            <!-- Developer Assigned Row -->
+            <div class="int-dev-row">
+              <div class="int-dev-avatar-wrapper">
+                <img src="${dev.avatar}" class="int-dev-avatar" alt="${dev.name}">
+                <span class="int-dev-status-indicator"></span>
+              </div>
+              <div class="int-dev-info-text">
+                <span class="int-dev-name">${dev.name}</span>
+                <span class="int-dev-role">${dev.role}</span>
+              </div>
+              <div class="int-weight-badge" title="Ponderación que aporta al módulo">
+                <i data-lucide="sparkles" style="width: 11px; height: 11px;"></i>
+                <span>Peso ${item.weight}%</span>
+              </div>
+            </div>
+
+            <!-- Friendly Time & Delivery Tracker Capsule -->
+            <div class="int-time-meter">
+              <div class="int-time-header">
+                <div class="int-time-dates">
+                  <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                  <span>${formatShortDate(item.startDate)} → ${formatShortDate(item.deadline)}</span>
+                </div>
+                ${countdownBadgeHtml}
+              </div>
+
+              <div class="int-progress-dual-bar">
+                <div class="int-bar-track">
+                  <div class="int-bar-fill ${diag.badgeClass}" style="width: ${diag.timeBurnRate}%;">
+                    <span class="int-bar-shimmer"></span>
+                  </div>
+                </div>
+                <div class="int-bar-labels">
+                  <span class="int-label-spent">
+                    <i data-lucide="clock" style="width: 11px; height: 11px; margin-right: 3px;"></i>
+                    Día ${diag.elapsedDays} de ${diag.totalDays} (${diag.timeBurnRate}%)
+                  </span>
+                  <span class="int-label-expected">
+                    Avance esperado: <strong>${diag.expectedProgress}%</strong>
+                  </span>
                 </div>
               </div>
-              <div class="int-bar-labels">
-                <span class="int-label-spent">
-                  <i data-lucide="clock" style="width: 11px; height: 11px; margin-right: 3px;"></i>
-                  Día ${diag.elapsedDays} de ${diag.totalDays} (${diag.timeBurnRate}%)
-                </span>
-                <span class="int-label-expected">
-                  Avance esperado: <strong>${diag.expectedProgress}%</strong>
-                </span>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="int-card-footer">
+              ${actionHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="dev-folder-card ${isOpen ? 'is-open' : ''}" id="folder_dev_${dev.id}" data-dev-id="${dev.id}" data-task-count="${tasks.length}">
+        <!-- Folder Header -->
+        <div class="dev-folder-header" onclick="toggleDevFolder('${dev.id}')" title="Clic para desplegar o plegar las tareas de ${dev.name}">
+          <div class="dev-folder-identity">
+            <div class="dev-folder-tab-badge">
+              <i data-lucide="folder" class="folder-closed-icon" style="width: 20px; height: 20px;"></i>
+              <i data-lucide="folder-open" class="folder-opened-icon" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div class="dev-folder-avatar-box">
+              <img src="${dev.avatar}" class="dev-folder-avatar" alt="${dev.name}">
+              <span class="dev-folder-status-dot ${hasRisk ? 'risk' : ''}"></span>
+            </div>
+            <div class="dev-folder-meta">
+              <div class="dev-folder-name-row">
+                <h3 class="dev-folder-name">${dev.name}</h3>
+                <span class="dev-folder-role-badge">${dev.role}</span>
+              </div>
+              <div class="dev-folder-subinfo">
+                <span><strong>${tasks.length}</strong> Tarea${tasks.length !== 1 ? 's' : ''} asignada${tasks.length !== 1 ? 's' : ''}</span>
+                <span class="dev-folder-dot-sep">·</span>
+                <span class="dev-folder-rate">${completedAllDevTasks}/${totalAllDevTasks} Cumplidas (${devRate}%)</span>
               </div>
             </div>
           </div>
 
-          <!-- Action Footer -->
-          <div class="int-card-footer">
-            ${actionHtml}
+          <div class="dev-folder-right">
+            <div class="dev-folder-stats-pills">
+              ${pCount > 0 ? `<span class="dev-folder-pill pill-process" title="${pCount} tarea(s) en proceso"><span class="pill-dot yellow"></span> ${pCount} En Proceso</span>` : ''}
+              ${dCount > 0 ? `<span class="dev-folder-pill pill-done" title="${dCount} tarea(s) cumplida(s)"><span class="pill-dot green"></span> ${dCount} Cumplida${dCount !== 1 ? 's' : ''}</span>` : ''}
+              ${oCount > 0 ? `<span class="dev-folder-pill pill-overdue" title="${oCount} tarea(s) con desfase"><span class="pill-dot red"></span> ${oCount} Vencida${oCount !== 1 ? 's' : ''}</span>` : ''}
+            </div>
+
+            <button type="button" class="dev-folder-toggle-btn" aria-label="Desplegar tareas">
+              <span class="dev-folder-toggle-text">${isOpen ? 'Ocultar Tareas' : `Ver Tareas (${tasks.length})`}</span>
+              <i data-lucide="chevron-down" class="dev-folder-chevron"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Folder Body: Dropdown Grid of Tasks -->
+        <div class="dev-folder-body">
+          <div class="dev-folder-body-inner">
+            <div class="integrations-list-grid">
+              ${cardsHtml}
+            </div>
           </div>
         </div>
       </div>
     `;
   }).join('');
 
+  container.innerHTML = toolbarHtml + foldersHtml;
   lucide.createIcons();
 }
 

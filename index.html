@@ -531,14 +531,20 @@
               </div>
 
               <div class="int-legend-hints">
-                <span class="friendly-legend-chip ontime"><span class="legend-dot ontime"></span> Ritmo óptimo</span>
-                <span class="friendly-legend-chip risk"><span class="legend-dot risk"></span> En riesgo / retraso</span>
-                <span class="friendly-legend-chip done"><span class="legend-dot done"></span> Auditada con impacto</span>
+                <span class="friendly-legend-chip badge-hint-process" title="Número consecutivo amarillo: Tarea en proceso de desarrollo">
+                  <span class="mini-corner-badge yellow">#</span> En proceso (Consecutivo)
+                </span>
+                <span class="friendly-legend-chip badge-hint-done" title="Chulito verde: Tarea cumplida y auditada">
+                  <span class="mini-corner-badge green"><i data-lucide="check" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Cumplida
+                </span>
+                <span class="friendly-legend-chip badge-hint-overdue" title="X roja: Tarea que sobrepasó los días estipulados de entrega">
+                  <span class="mini-corner-badge red"><i data-lucide="x" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Vencida (Sobrepasó entrega)
+                </span>
               </div>
             </div>
 
-            <!-- Container for the dynamic integration cards -->
-            <div class="integrations-list-grid" id="integrationsCardsList">
+            <!-- Container for the dynamic integration cards grouped by developer folders -->
+            <div class="integrations-folders-container" id="integrationsCardsList">
               <!-- Dynamically populated via JavaScript -->
             </div>
           </div>
