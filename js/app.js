@@ -168,12 +168,34 @@ function renderStackedDeck(devId = activeSelectedDevId) {
   renderDeckFromList(activeDeckApps);
 }
 
+let currentFocusedAppId = null;
+
 function cycleStackedDeckByAppId(appId) {
   const idx = activeDeckApps.findIndex(a => a.id === appId);
   if (idx !== -1) {
     const moved = activeDeckApps.splice(idx, 1)[0];
     activeDeckApps.unshift(moved);
     renderDeckFromList(activeDeckApps);
+  }
+  // Sincronizar y enfocar en tiempo real el sistema en la Curva de Avance vs Estimado
+  currentFocusedAppId = appId;
+  if (typeof updateOverviewChart === 'function') {
+    updateOverviewChart();
+  }
+}
+
+function selectDeckAppForOverview(appId) {
+  currentFocusedAppId = appId;
+  if (typeof updateOverviewChart === 'function') {
+    updateOverviewChart();
+  }
+}
+
+function clearOverviewAppFocus(e) {
+  if (e) e.stopPropagation();
+  currentFocusedAppId = null;
+  if (typeof updateOverviewChart === 'function') {
+    updateOverviewChart();
   }
 }
 
@@ -183,6 +205,10 @@ function cycleStackedDeckNext(e) {
   const first = activeDeckApps.shift();
   activeDeckApps.push(first);
   renderDeckFromList(activeDeckApps);
+  currentFocusedAppId = activeDeckApps[0]?.id || null;
+  if (typeof updateOverviewChart === 'function') {
+    updateOverviewChart();
+  }
 }
 
 function cycleStackedDeckPrev(e) {
@@ -191,7 +217,14 @@ function cycleStackedDeckPrev(e) {
   const last = activeDeckApps.pop();
   activeDeckApps.unshift(last);
   renderDeckFromList(activeDeckApps);
+  currentFocusedAppId = activeDeckApps[0]?.id || null;
+  if (typeof updateOverviewChart === 'function') {
+    updateOverviewChart();
+  }
 }
+
+window.selectDeckAppForOverview = selectDeckAppForOverview;
+window.clearOverviewAppFocus = clearOverviewAppFocus;
 
 function renderDeckFromList(appsList) {
   const deckContainer = document.getElementById('stackedDeck');
@@ -245,7 +278,7 @@ function renderDeckFromList(appsList) {
   const activeZ = bgCount + 10;
 
   html += `
-    <div class="deck-tab deck-tab-active" style="top: ${activeTop}px; z-index: ${activeZ};" data-app-id="${app0.id}">
+    <div class="deck-tab deck-tab-active" style="top: ${activeTop}px; z-index: ${activeZ}; cursor: pointer;" data-app-id="${app0.id}" onclick="selectDeckAppForOverview('${app0.id}')" title="Clic para enfocar en la curva de avance: ${app0.name}">
       <div class="deck-tab-header" style="background: ${activePal.bg};">
         <span class="deck-tab-name">${app0.name}</span>
         <span class="deck-tab-metric">${prog0}%</span>
@@ -263,7 +296,7 @@ function renderDeckFromList(appsList) {
                 <button type="button" class="deck-mini-arrow" onclick="cycleStackedDeckNext(event)" title="Siguiente proyecto" style="border:none; background:transparent; cursor:pointer; color:#64748B; padding:0 3px; font-size:13px; font-weight:700; line-height:1;">▶</button>
               </div>
             ` : ''}
-            <button class="deck-add-btn" onclick="openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
+            <button class="deck-add-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
               <i data-lucide="edit-3"></i>
             </button>
           </div>
@@ -658,6 +691,7 @@ function selectDeveloper(devId) {
 
   // 2. Update Stacked Cards ("Las Etiquetas" en el cuadrante superior izquierdo) con los proyectos del programador
   renderStackedDeck(devId);
+  currentFocusedAppId = (activeDeckApps && activeDeckApps[0]) ? activeDeckApps[0].id : null;
 
   // 3. Update the Quick Dev Strip and project tags
   updateQuickDevStrip();
@@ -791,7 +825,7 @@ function renderSystemsTable(filterQuery = '') {
     const currentPhase = app.phases.find(p => !p.completed) || { name: 'Completado' };
 
     return `
-      <tr>
+      <tr onclick="cycleStackedDeckByAppId('${app.id}')" style="cursor: pointer;" title="Clic para enfocar ${app.name} en la curva de avance y en las tarjetas">
         <td>
           <div class="system-title-cell">
             <div class="system-icon-box" style="background: ${app.iconColor}">
@@ -831,7 +865,7 @@ function renderSystemsTable(filterQuery = '') {
           <span class="status-pill ${statusClass}">${statusText}</span>
         </td>
         <td class="text-right">
-          <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')">
+          <button class="action-row-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app.id}')">
             Auditar Fases
           </button>
         </td>
@@ -841,12 +875,76 @@ function renderSystemsTable(filterQuery = '') {
 }
 
 // ==========================================================================
+// ==========================================================================
 // CHARTS CONTROLLER (Overview Splines & Velocity Bars)
 // ==========================================================================
 
 let currentOverviewPeriod = '30';
 
-function getOverviewChartData(period = currentOverviewPeriod, devId = activeSelectedDevId) {
+function calculateSystemRealMetrics(app) {
+  if (!app) return null;
+
+  // 1. Base ponderada por fases de desarrollo completadas (0 a 100%)
+  const phasesWeight = (app.phases || []).reduce((sum, p) => p.completed ? sum + (Number(p.weight) || 0) : sum, 0);
+
+  // 2. Tareas e integraciones asignadas a este aplicativo en tiempo real
+  const allTasks = (appState.integrations || []).filter(i => i.appId === app.id);
+  const evaluatedTasks = allTasks.filter(i => i.status === 'evaluated');
+  const inProgressTasks = allTasks.filter(i => i.status === 'in_progress');
+
+  // Puntos positivos oficiales ganados por auditorías técnicas aprobadas
+  let auditPointsBonus = 0;
+  evaluatedTasks.forEach(task => {
+    if (task.evaluation) {
+      const q = (Number(task.evaluation.qualityScore) || 95) / 100;
+      auditPointsBonus += (Number(task.evaluation.pointsAdded) || (Number(task.weight || 15) * q));
+    } else {
+      auditPointsBonus += Number(task.weight) || 15;
+    }
+  });
+
+  // Tareas con desfase / vencidas (penalizan o restan por mora operativa en planta)
+  let overdueDaysTotal = 0;
+  let overduePenalty = 0;
+  inProgressTasks.forEach(task => {
+    const diag = calculateIntegrationTimeProgress(task);
+    if (diag.isOverdue || diag.daysRemaining < 0) {
+      const daysOver = Math.abs(diag.daysRemaining);
+      overdueDaysTotal += daysOver;
+      // Penalización acumulada: 1.2% por día de atraso (máximo 18%)
+      overduePenalty += Math.min(18, daysOver * 1.2);
+    }
+  });
+
+  // 3. Avance Real Actual Neto (sumando positivos y restando penalizaciones)
+  let netRealProgress = phasesWeight >= 100
+    ? 100
+    : Math.min(100, Math.max(10, Math.round(phasesWeight + (auditPointsBonus * 0.25) - overduePenalty)));
+
+  // 4. Meta proyectada hacia el deadline del aplicativo
+  const refDate = getSystemReferenceDate();
+  const startDate = new Date('2026-09-15T00:00:00').getTime();
+  const deadlineDate = new Date((app.deadline || '2026-11-30') + 'T23:59:59').getTime();
+  const nowDate = refDate.getTime();
+
+  const totalDuration = Math.max(1, deadlineDate - startDate);
+  const elapsedDuration = Math.max(0, nowDate - startDate);
+  const expectedTargetProgress = Math.min(100, Math.max(20, Math.round((elapsedDuration / totalDuration) * 100)));
+
+  return {
+    app,
+    phasesWeight,
+    evaluatedTasksCount: evaluatedTasks.length,
+    auditPointsBonus: Math.round(auditPointsBonus * 10) / 10,
+    overdueDaysTotal,
+    overduePenalty: Math.round(overduePenalty * 10) / 10,
+    netRealProgress,
+    expectedTargetProgress,
+    hasOverdue: overdueDaysTotal > 0
+  };
+}
+
+function getOverviewChartData(period = currentOverviewPeriod, devId = activeSelectedDevId, focusedAppId = currentFocusedAppId) {
   const isAll = !devId || devId === 'all';
   const dev = isAll ? null : getDeveloperById(devId);
   const assigned = dev ? appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id))) : [];
@@ -854,14 +952,75 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
     ? Math.round(assigned.reduce((acc, a) => acc + calculateAppProgress(a), 0) / assigned.length)
     : 76;
 
+  // Si hay un aplicativo enfocado en la baraja de tarjetas
+  const targetApp = focusedAppId ? getApplicationById(focusedAppId) : null;
+  const sysMetrics = targetApp ? calculateSystemRealMetrics(targetApp) : null;
+
   if (period === '30') {
     // Últimos 30 días: curva diaria/semanal de los últimos 30 días de sprint
     const labels = ['20 Sep', '26 Sep', '02 Oct', '08 Oct', '14 Oct', '19 Oct'];
-    let realData, targetData, currentMetric, targetMetric;
+    let realData, targetData, currentMetric, targetMetric, realLabel, targetLabel;
 
-    if (!isAll && dev) {
+    if (sysMetrics && targetApp) {
+      currentMetric = `${sysMetrics.netRealProgress}%`;
+      targetMetric = `${sysMetrics.expectedTargetProgress}.0%`;
+      realLabel = `Avance Real (${targetApp.name})`;
+      targetLabel = `Meta Estimada (${targetApp.name})`;
+
+      const P = sysMetrics.netRealProgress;
+      const T = sysMetrics.expectedTargetProgress;
+
+      // Meta Proyectada del aplicativo: trayectoria lineal hacia la meta calculada
+      targetData = [
+        Math.max(15, Math.round(T - 13)),
+        Math.max(20, Math.round(T - 10)),
+        Math.max(25, Math.round(T - 7.5)),
+        Math.max(30, Math.round(T - 5)),
+        Math.max(35, Math.round(T - 2.5)),
+        T
+      ];
+
+      // Curva Real según estado, auditorías y penalizaciones reales:
+      if (sysMetrics.netRealProgress >= 100) {
+        realData = [60, 72, 82, 91, 97, 100];
+      } else if (sysMetrics.hasOverdue) {
+        // Con penalización de mora (retrasos en planta)
+        const startP = Math.max(20, Math.round(P - 8));
+        realData = [
+          startP,
+          Math.round(startP + 5),
+          Math.round(startP + 9),
+          Math.round(startP + 11),
+          Math.max(15, Math.round(P - 3)),
+          P
+        ];
+      } else if (sysMetrics.evaluatedTasksCount > 0) {
+        // Con impulso positivo de auditorías técnicas
+        const startP = Math.max(25, Math.round(P - 28));
+        realData = [
+          startP,
+          Math.round(startP + 6),
+          Math.round(startP + 13),
+          Math.round(startP + 21),
+          Math.round(P - 4),
+          P
+        ];
+      } else {
+        const startP = Math.max(20, Math.round(P - 15));
+        realData = [
+          startP,
+          Math.round(startP + 3),
+          Math.round(startP + 6),
+          Math.round(startP + 9),
+          Math.round(startP + 12),
+          P
+        ];
+      }
+    } else if (!isAll && dev) {
       currentMetric = `${devAvgProgress}%`;
       targetMetric = '70.0%';
+      realLabel = `Avance Real (${dev.name})`;
+      targetLabel = `Meta Proyectada (${dev.name})`;
       const startP = Math.max(25, devAvgProgress - 14);
       realData = [
         startP,
@@ -875,6 +1034,8 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
     } else {
       currentMetric = '76.4%';
       targetMetric = '70.0%';
+      realLabel = 'Avance Real STF';
+      targetLabel = 'Meta Proyectada';
       realData = [64.0, 66.8, 69.5, 71.8, 74.2, 76.4];
       targetData = [61.5, 63.2, 64.9, 66.6, 68.3, 70.0];
     }
@@ -883,21 +1044,51 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
       period,
       periodTitle: 'Últimos 30 días',
       labels,
-      realLabel: isAll ? 'Avance Real STF' : `Avance Real (${dev.name})`,
-      targetLabel: isAll ? 'Meta Proyectada' : `Meta Proyectada (${dev.name})`,
+      realLabel,
+      targetLabel,
       realData,
       targetData,
       currentMetric,
-      targetMetric
+      targetMetric,
+      targetApp
     };
   } else if (period === '90') {
-    // Último trimestre: 6 checkpoints quincenales cubriendo Agosto, Septiembre y Octubre
+    // Último trimestre: 6 checkpoints quincenales (Agosto a Octubre)
     const labels = ['01 Ago', '16 Ago', '01 Sep', '16 Sep', '01 Oct', '19 Oct'];
-    let realData, targetData, currentMetric, targetMetric;
+    let realData, targetData, currentMetric, targetMetric, realLabel, targetLabel;
 
-    if (!isAll && dev) {
+    if (sysMetrics && targetApp) {
+      currentMetric = `${sysMetrics.netRealProgress}%`;
+      targetMetric = `${sysMetrics.expectedTargetProgress}.0%`;
+      realLabel = `Avance Real (${targetApp.name})`;
+      targetLabel = `Meta Estimada (${targetApp.name})`;
+
+      const P = sysMetrics.netRealProgress;
+      const T = sysMetrics.expectedTargetProgress;
+
+      targetData = [
+        Math.max(10, Math.round(T * 0.35)),
+        Math.max(15, Math.round(T * 0.5)),
+        Math.max(25, Math.round(T * 0.65)),
+        Math.max(35, Math.round(T * 0.8)),
+        Math.max(45, Math.round(T * 0.92)),
+        T
+      ];
+
+      const startP = Math.max(10, Math.round(P * 0.25));
+      realData = [
+        startP,
+        Math.round(startP + (P - startP) * 0.2),
+        Math.round(startP + (P - startP) * 0.45),
+        Math.round(startP + (P - startP) * 0.65),
+        Math.round(startP + (P - startP) * 0.85),
+        P
+      ];
+    } else if (!isAll && dev) {
       currentMetric = `${devAvgProgress}%`;
       targetMetric = '70.0%';
+      realLabel = `Avance Real (${dev.name})`;
+      targetLabel = `Meta Proyectada (${dev.name})`;
       const startP = Math.max(15, devAvgProgress - 35);
       realData = [
         startP,
@@ -911,6 +1102,8 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
     } else {
       currentMetric = '76.4%';
       targetMetric = '70.0%';
+      realLabel = 'Avance Real STF';
+      targetLabel = 'Meta Proyectada';
       realData = [42.0, 48.5, 56.0, 63.5, 70.2, 76.4];
       targetData = [38.0, 44.4, 50.8, 57.2, 63.6, 70.0];
     }
@@ -919,26 +1112,39 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
       period,
       periodTitle: 'Último trimestre',
       labels,
-      realLabel: isAll ? 'Avance Real STF' : `Avance Real (${dev.name})`,
-      targetLabel: isAll ? 'Meta Proyectada' : `Meta Proyectada (${dev.name})`,
+      realLabel,
+      targetLabel,
       realData,
       targetData,
       currentMetric,
-      targetMetric
+      targetMetric,
+      targetApp
     };
   } else {
     // Año en curso: 12 meses (Enero a Diciembre de 2026)
     const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    let realData, targetData, currentMetric, targetMetric;
+    let realData, targetData, currentMetric, targetMetric, realLabel, targetLabel;
 
-    if (!isAll && dev) {
+    if (sysMetrics && targetApp) {
+      currentMetric = `${sysMetrics.netRealProgress}%`;
+      targetMetric = '85.0%';
+      realLabel = `Avance Real (${targetApp.name})`;
+      targetLabel = `Meta Estimada (${targetApp.name})`;
+      const P = sysMetrics.netRealProgress;
+      realData = [10, 18, 25, 34, 42, 50, 58, 65, 72, P, Math.min(100, Math.round(P + (100 - P) * 0.5)), 100];
+      targetData = [10, 18, 26, 35, 43, 52, 60, 68, 76, 84, 92, 100];
+    } else if (!isAll && dev) {
       currentMetric = `${devAvgProgress}%`;
       targetMetric = '80.0%';
+      realLabel = `Avance Real (${dev.name})`;
+      targetLabel = `Meta Proyectada (${dev.name})`;
       realData = [15, 25, 38, 44, 56, 60, 68, 72, 75, devAvgProgress, 88, 96];
       targetData = [12, 20, 28, 36, 44, 52, 60, 68, 74, 80, 86, 92];
     } else {
       currentMetric = '76.4%';
       targetMetric = '80.0%';
+      realLabel = 'Avance Real STF';
+      targetLabel = 'Meta Proyectada';
       realData = [20, 32, 45, 50, 68, 62, 74, 76.4, 78, 84, 89, 96];
       targetData = [15, 25, 38, 48, 55, 60, 65, 70, 75, 80, 85, 90];
     }
@@ -947,12 +1153,13 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
       period,
       periodTitle: 'Año en curso',
       labels,
-      realLabel: isAll ? 'Avance Real STF' : `Avance Real (${dev.name})`,
-      targetLabel: isAll ? 'Meta Proyectada' : `Meta Proyectada (${dev.name})`,
+      realLabel,
+      targetLabel,
       realData,
       targetData,
       currentMetric,
-      targetMetric
+      targetMetric,
+      targetApp
     };
   }
 }
@@ -962,7 +1169,7 @@ function updateOverviewChart(period = currentOverviewPeriod) {
   const ctx = document.getElementById('overviewSplineChart');
   if (!ctx) return;
 
-  const chartData = getOverviewChartData(currentOverviewPeriod, activeSelectedDevId);
+  const chartData = getOverviewChartData(currentOverviewPeriod, activeSelectedDevId, currentFocusedAppId);
 
   // Sync select element if needed
   const select = document.getElementById('overviewTimeRange');
@@ -970,9 +1177,34 @@ function updateOverviewChart(period = currentOverviewPeriod) {
     select.value = currentOverviewPeriod;
   }
 
-  // Animate metrics change in header
+  // Update header badges and dynamic title/pill
   const elCurrent = document.getElementById('chartCurrentMetric');
   const elTarget = document.getElementById('chartTargetMetric');
+  const elRealBadgeLabel = document.getElementById('overviewRealBadgeLabel');
+  const elTargetBadgeLabel = document.getElementById('overviewTargetBadgeLabel');
+  const focusContainer = document.getElementById('overviewAppFocusContainer');
+
+  if (chartData.targetApp && focusContainer) {
+    const app = chartData.targetApp;
+    const appColor = app.iconColor || '#4E65FF';
+    focusContainer.innerHTML = `
+      <span class="chart-app-focus-pill" style="background: ${appColor}18; color: ${appColor}; border: 1px solid ${appColor}38;" title="Curva enfocada en ${app.name}. Clic en ✕ para ver el promedio general.">
+        <span class="focus-dot" style="background: ${appColor};"></span>
+        <span>${app.name}</span>
+        <button type="button" class="btn-clear-focus" onclick="clearOverviewAppFocus(event)" title="Volver al promedio general">✕</button>
+      </span>
+    `;
+  } else if (focusContainer) {
+    focusContainer.innerHTML = '';
+  }
+
+  if (elRealBadgeLabel) {
+    elRealBadgeLabel.textContent = chartData.targetApp ? `Avance Real (${chartData.targetApp.name}):` : chartData.realLabel + ':';
+  }
+  if (elTargetBadgeLabel) {
+    elTargetBadgeLabel.textContent = chartData.targetApp ? `Meta Estimada (${chartData.targetApp.name}):` : chartData.targetLabel + ':';
+  }
+
   if (elCurrent) {
     elCurrent.textContent = chartData.currentMetric;
     elCurrent.style.transform = 'scale(1.15)';
@@ -984,11 +1216,16 @@ function updateOverviewChart(period = currentOverviewPeriod) {
     setTimeout(() => { if (elTarget) elTarget.style.transform = 'scale(1)'; }, 220);
   }
 
+  const appColor = chartData.targetApp?.iconColor || '#4E65FF';
+
   // If chart exists, smoothly animate to the new data
   if (overviewChartInstance) {
     overviewChartInstance.data.labels = chartData.labels;
     overviewChartInstance.data.datasets[0].label = chartData.realLabel;
     overviewChartInstance.data.datasets[0].data = chartData.realData;
+    overviewChartInstance.data.datasets[0].borderColor = appColor;
+    overviewChartInstance.data.datasets[0].pointBackgroundColor = appColor;
+    overviewChartInstance.data.datasets[0].backgroundColor = `${appColor}12`;
     overviewChartInstance.data.datasets[1].label = chartData.targetLabel;
     overviewChartInstance.data.datasets[1].data = chartData.targetData;
     overviewChartInstance.update();
@@ -1004,12 +1241,12 @@ function updateOverviewChart(period = currentOverviewPeriod) {
         {
           label: chartData.realLabel,
           data: chartData.realData,
-          borderColor: '#4E65FF',
-          backgroundColor: 'rgba(78, 101, 255, 0.05)',
+          borderColor: appColor,
+          backgroundColor: `${appColor}12`,
           fill: true,
           borderWidth: 3.5,
           tension: 0.42,
-          pointBackgroundColor: '#4E65FF',
+          pointBackgroundColor: appColor,
           pointBorderColor: '#FFFFFF',
           pointBorderWidth: 2,
           pointRadius: 4,

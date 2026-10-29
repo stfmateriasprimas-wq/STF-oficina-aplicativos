@@ -224,13 +224,16 @@
           <div class="grid-card overview-chart-card">
             <div class="card-header">
               <div class="header-left">
-                <h2 class="card-title">Curva de Avance vs. Estimado</h2>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <h2 class="card-title" id="overviewChartTitle">Curva de Avance vs. Estimado</h2>
+                  <div id="overviewAppFocusContainer" style="display: inline-flex;"></div>
+                </div>
                 <div class="chart-badges">
                   <span class="chart-badge-item">
-                    <span class="dot-indicator dot-purple"></span> Avance Real STF: <strong id="chartCurrentMetric">76.4%</strong>
+                    <span class="dot-indicator dot-purple"></span> <span id="overviewRealBadgeLabel">Avance Real STF:</span> <strong id="chartCurrentMetric">76.4%</strong>
                   </span>
                   <span class="chart-badge-item">
-                    <span class="dot-indicator dot-orange"></span> Meta Proyectada: <strong id="chartTargetMetric">70.0%</strong>
+                    <span class="dot-indicator dot-orange"></span> <span id="overviewTargetBadgeLabel">Meta Proyectada:</span> <strong id="chartTargetMetric">70.0%</strong>
                   </span>
                 </div>
               </div>
