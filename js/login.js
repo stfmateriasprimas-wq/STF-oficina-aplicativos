@@ -221,10 +221,137 @@ const STF_USERS_CREDENTIALS = [
   }
 ];
 
-const DEVELOPERS_PRESETS = STF_USERS_CREDENTIALS;
+// Obtener lista dinámica de todos los usuarios registrados (Base + LocalStorage + Google Sheets)
+function getActiveUsersCredentials() {
+  const map = new Map();
+
+  // 1. Usuarios base oficiales
+  STF_USERS_CREDENTIALS.forEach(u => {
+    map.set(u.username.toLowerCase(), { ...u });
+  });
+
+  // 2. Usuarios registrados en el sistema (STF_GROUP_REAL_DATA_V6)
+  try {
+    const raw = localStorage.getItem('STF_GROUP_REAL_DATA_V6');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.developers)) {
+        data.developers.forEach(d => {
+          if (!d.username) return;
+          const uLower = d.username.toLowerCase();
+          const existing = map.get(uLower) || {};
+          map.set(uLower, {
+            id: d.id,
+            idPassword: d.idPassword || existing.idPassword || '123456',
+            username: d.username,
+            role: d.roleType || d.role || existing.role || 'desarrollador',
+            name: d.name || existing.name || d.username,
+            email: d.email || existing.email || '',
+            avatar: d.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+          });
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading STF_GROUP_REAL_DATA_V6 in login:', e);
+  }
+
+  // 3. Usuarios de respaldo de credenciales (STF_USERS_CREDENTIALS_STORE)
+  try {
+    const rawStore = localStorage.getItem('STF_USERS_CREDENTIALS_STORE');
+    if (rawStore) {
+      const stored = JSON.parse(rawStore);
+      if (Array.isArray(stored)) {
+        stored.forEach(su => {
+          if (!su.username) return;
+          const uLower = su.username.toLowerCase();
+          const existing = map.get(uLower) || {};
+          map.set(uLower, {
+            id: su.id || existing.id || `dev_${uLower.replace(/[^a-z0-9]/g, '_')}`,
+            idPassword: su.idPassword || existing.idPassword || '123456',
+            username: su.username,
+            role: su.role || existing.role || 'desarrollador',
+            name: su.name || existing.name || su.username,
+            email: su.email || existing.email || '',
+            avatar: su.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+          });
+        });
+      }
+    }
+  } catch (e) {}
+
+  return Array.from(map.values());
+}
+
+// Renderizar dinámicamente las fichas de acceso rápido (chips)
+function renderDevChips() {
+  const container = document.getElementById('devsChipsRow');
+  if (!container) return;
+
+  const users = getActiveUsersCredentials();
+  container.innerHTML = users.map(user => {
+    const isAdmin = String(user.role).toLowerCase() === 'admin' || user.id === 'dev_ediaz';
+    const cleanPass = user.idPassword || '***';
+    return `
+      <button type="button" class="dev-chip glass-dev-chip ${isAdmin ? 'admin-chip' : ''}" onclick="selectDevPreset('${user.id}')" title="${user.name} · Columna 2: ${user.username} · Columna 1: ${cleanPass} · Rol: ${user.role}">
+        ${isAdmin ? '<span class="admin-badge-icon">🛡️</span>' : `<img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" alt="${user.name}">`}
+        <span>${user.name}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+// Consulta silenciosa en segundo plano a Google Sheets (pestaña Usuarios)
+async function autoPullUsersFromSheets() {
+  try {
+    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+    const res = await fetch(`${GOOGLE_SHEETS_URL}?action=get_users&_t=${Date.now()}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'success' && Array.isArray(data.users) && data.users.length > 0) {
+        let credsStore = [];
+        try {
+          credsStore = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
+        } catch(e) {}
+
+        data.users.forEach(u => {
+          const uName = String(u.username || '').trim();
+          const uPass = String(u.idPassword || '').trim();
+          const uRole = String(u.role || 'desarrollador').trim();
+          const uEmail = String(u.email || '').trim();
+          if (!uName) return;
+
+          const match = credsStore.find(c => c.username && c.username.toLowerCase() === uName.toLowerCase());
+          if (match) {
+            match.idPassword = uPass || match.idPassword;
+            match.role = uRole || match.role;
+            match.email = uEmail || match.email;
+          } else {
+            const cleanName = uName.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            credsStore.push({
+              id: `dev_${uName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
+              idPassword: uPass,
+              username: uName,
+              role: uRole,
+              name: cleanName,
+              email: uEmail,
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            });
+          }
+        });
+
+        localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(credsStore));
+        renderDevChips();
+      }
+    }
+  } catch (err) {
+    console.warn('[login.js] Verificación silenciosa con Sheets:', err);
+  }
+}
 
 function selectDevPreset(devId) {
-  const user = STF_USERS_CREDENTIALS.find(u => u.id === devId);
+  const users = getActiveUsersCredentials();
+  const user = users.find(u => u.id === devId || u.username.toLowerCase() === String(devId).toLowerCase());
   if (!user) return;
 
   const userInput = document.getElementById('loginEmail');
@@ -253,10 +380,11 @@ function handleLoginSubmit(e) {
 
   // 1. Validar Usuario (Columna 2 de Google Sheets o Correo en Columna 4)
   const normalizedUser = enteredUser.toLowerCase();
-  const matchedUser = STF_USERS_CREDENTIALS.find(u => 
-    u.username.toLowerCase() === normalizedUser || 
+  const allUsers = getActiveUsersCredentials();
+  const matchedUser = allUsers.find(u => 
+    (u.username && u.username.toLowerCase() === normalizedUser) || 
     (u.email && u.email.toLowerCase() === normalizedUser) ||
-    u.id.toLowerCase() === normalizedUser
+    (u.id && u.id.toLowerCase() === normalizedUser)
   );
 
   if (!matchedUser) {
@@ -562,20 +690,43 @@ function initLiveDeveloperCoder() {
   }
 }
 
+// Expose functions globally
+if (typeof window !== 'undefined') {
+  window.getActiveUsersCredentials = getActiveUsersCredentials;
+  window.selectDevPreset = selectDevPreset;
+  window.handleLoginSubmit = handleLoginSubmit;
+  window.renderDevChips = renderDevChips;
+}
+
 // Bootstrap
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.lucide) lucide.createIcons();
-  initPullString();
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      initPullString();
 
-  const form = document.getElementById('loginForm');
-  if (form) form.addEventListener('submit', handleLoginSubmit);
+      const form = document.getElementById('loginForm');
+      if (form) form.addEventListener('submit', handleLoginSubmit);
 
-  // Keyboard shortcut to toggle lamp
-  document.addEventListener('keydown', (e) => {
-    if (e.key === ' ' || e.key === 'Enter') {
-      if (document.activeElement.tagName !== 'INPUT') {
-        toggleLampState();
-      }
-    }
-  });
-});
+      renderDevChips();
+      autoPullUsersFromSheets();
+
+      // Keyboard shortcut to toggle lamp
+      document.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          if (document.activeElement.tagName !== 'INPUT') {
+            toggleLampState();
+          }
+        }
+      });
+    });
+  } else {
+    if (window.lucide) lucide.createIcons();
+    initPullString();
+    const form = document.getElementById('loginForm');
+    if (form) form.addEventListener('submit', handleLoginSubmit);
+    renderDevChips();
+    autoPullUsersFromSheets();
+  }
+}
+

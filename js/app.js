@@ -4279,11 +4279,7 @@ function initApp() {
 
   // Inicializar exclusivamente los datos del usuario autenticado en la cabecera
   renderHeaderSessionUser();
-
-  appState.developers.forEach(dev => {
-    const dropImg = document.getElementById(`dropImg_${dev.id}`);
-    if (dropImg) dropImg.src = dev.avatar;
-  });
+  renderHeaderDevDropdown();
 
   // Header developer dropdown toggle
   const btnHeaderUser = document.getElementById('btnHeaderUserSelect');
@@ -4396,6 +4392,16 @@ function initApp() {
 
   document.getElementById('modalCreateDeveloper')?.addEventListener('click', (e) => {
     if (e.target.id === 'modalCreateDeveloper') closeNewDeveloperModal();
+  });
+
+  // Botones de Gestión de Desarrolladores & Sincronización en Tiempo Real
+  document.getElementById('btnOpenNewDevModal')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openNewDeveloperModal();
+  });
+  document.getElementById('btnSyncUsersSheets')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    manualSyncUsersWithSheets();
   });
 
   // Auto-sincronización bidireccional cuando el usuario regresa a la pestaña del navegador
@@ -5183,6 +5189,29 @@ function renderDevelopersFullView() {
 // GESTIÓN DE USUARIOS DE DESARROLLADORES (CREAR & ELIMINAR ANCLADO A SHEETS)
 // ==========================================================================
 
+function renderHeaderDevDropdown() {
+  const container = document.getElementById('headerDevOptionsList');
+  if (!container) return;
+
+  container.innerHTML = appState.developers.map(dev => {
+    const isAdmin = dev.roleType === 'Admin' || String(dev.role || '').toLowerCase().includes('admin') || dev.id === 'dev_ediaz';
+    const assignedApps = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
+    const appsSummary = assignedApps.length > 0 
+      ? assignedApps.map(a => a.shortName || a.name.split(' ')[0]).slice(0, 3).join(', ')
+      : 'Sin asignaciones';
+
+    return `
+      <div class="dev-drop-item" onclick="selectDeveloper('${dev.id}')">
+        <img src="${dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}" id="dropImg_${dev.id}" class="mini-drop-avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'">
+        <div>
+          <strong style="${isAdmin ? 'color: #F5C542;' : ''}">${isAdmin ? '🛡️ ' : ''}${dev.name} · ${isAdmin ? 'Admin' : 'Dev'}</strong>
+          <span>${dev.username || dev.id} · ${appsSummary}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function openNewDeveloperModal() {
   const modal = document.getElementById('modalCreateDeveloper');
   if (!modal) return;
@@ -5197,14 +5226,23 @@ function openNewDeveloperModal() {
   const avatarInput = document.getElementById('newDevAvatarUrl');
   if (avatarInput) avatarInput.value = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
 
+  // Mostrar modal con transición CSS
+  modal.classList.add('show');
   modal.style.display = 'flex';
-  document.getElementById('newDevName')?.focus();
-  lucide.createIcons();
+  setTimeout(() => {
+    document.getElementById('newDevName')?.focus();
+  }, 120);
+  if (window.lucide) lucide.createIcons();
 }
 
 function closeNewDeveloperModal() {
   const modal = document.getElementById('modalCreateDeveloper');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.classList.remove('show');
+    setTimeout(() => {
+      if (!modal.classList.contains('show')) modal.style.display = 'none';
+    }, 250);
+  }
 }
 
 function selectNewDevAvatar(imgEl, src) {
@@ -5224,6 +5262,7 @@ async function handleCreateDeveloperSubmit(e) {
   const emailInput = document.getElementById('newDevEmail');
   const roleTitleInput = document.getElementById('newDevRoleTitle');
   const avatarInput = document.getElementById('newDevAvatarUrl');
+  const submitBtn = document.getElementById('btnSubmitNewDev');
 
   const name = nameInput?.value.trim();
   const username = usernameInput?.value.trim().toLowerCase();
@@ -5267,22 +5306,44 @@ async function handleCreateDeveloperSubmit(e) {
     activeProjects: []
   };
 
+  // 1. Guardar en el estado de la aplicación
   appState.developers.push(newDev);
   window.appState = appState;
   saveData(appState);
 
-  closeNewDeveloperModal();
-  renderDevelopersFullView();
-
-  if (typeof showToast === 'function') {
-    showToast(`✅ Desarrollador "${name}" creado exitosamente.`);
+  // 2. Guardar credenciales de acceso para que login.html lo reconozca de inmediato
+  try {
+    let creds = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
+    creds = creds.filter(c => c.username.toLowerCase() !== username.toLowerCase() && c.id !== devId);
+    creds.push({
+      id: devId,
+      idPassword: idPassword,
+      username: username,
+      role: role,
+      roleType: role,
+      name: name,
+      email: email,
+      avatar: avatar
+    });
+    localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(creds));
+  } catch (err) {
+    console.warn('Error storing credentials in STF_USERS_CREDENTIALS_STORE:', err);
   }
 
-  // Sincronizar bidireccionalmente con Google Sheets (Pestaña 'Usuarios')
+  // 3. Cerrar modal y refrescar interfaces
+  closeNewDeveloperModal();
+  renderDevelopersFullView();
+  renderHeaderDevDropdown();
+
+  if (typeof showToast === 'function') {
+    showToast(`✅ Desarrollador "${name}" registrado. ¡Logueo activo con usuario "${username}"!`);
+  }
+
+  // 4. Sincronizar bidireccionalmente con Google Sheets (Pestaña 'Usuarios')
   const iconSpin = document.getElementById('iconSyncUsersSpin');
   if (iconSpin) iconSpin.style.animation = 'spin 0.8s linear infinite';
   const statusPill = document.getElementById('sheetsUsersSyncStatus');
-  if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse" style="background:#F59E0B;box-shadow:0 0 6px #F59E0B;"></span><span>Guardando en Google Sheets...</span>';
+  if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse" style="background:#F59E0B;box-shadow:0 0 6px #F59E0B;"></span><span>Guardando en Google Sheets (Hoja Usuarios)...</span>';
 
   try {
     if (window.SheetsSync && typeof window.SheetsSync.pushUsersToSheets === 'function') {
@@ -5309,7 +5370,7 @@ async function deleteDeveloperUser(devId, event) {
 
   const confirmed = confirm(
     `¿Estás seguro de eliminar al desarrollador "${devName}"?\n\n` +
-    `Esta acción lo removerá inmediatamente del aplicativo y se actualizará en tiempo real en la pestaña 'Usuarios' de tu hoja Google Sheets.`
+    `Esta acción removerá sus credenciales de logueo inmediatamente y se actualizará en tiempo real en la pestaña 'Usuarios' de tu hoja Google Sheets.`
   );
 
   if (!confirmed) return;
@@ -5318,7 +5379,15 @@ async function deleteDeveloperUser(devId, event) {
   window.appState = appState;
   saveData(appState);
 
+  // Remover también del almacén de credenciales de logueo
+  try {
+    let creds = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
+    creds = creds.filter(c => c.id !== devId);
+    localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(creds));
+  } catch (err) {}
+
   renderDevelopersFullView();
+  renderHeaderDevDropdown();
 
   if (typeof showToast === 'function') {
     showToast(`🗑️ Desarrollador "${devName}" eliminado.`);
@@ -5554,3 +5623,4 @@ window.handleCreateDeveloperSubmit = handleCreateDeveloperSubmit;
 window.deleteDeveloperUser = deleteDeveloperUser;
 window.manualSyncUsersWithSheets = manualSyncUsersWithSheets;
 window.renderDevelopersFullView = renderDevelopersFullView;
+window.renderHeaderDevDropdown = renderHeaderDevDropdown;

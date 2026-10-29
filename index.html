@@ -130,39 +130,41 @@
 
               <div class="dev-drop-divider"></div>
               <div class="dropdown-title-label">Filtrar Dashboard por Desarrollador:</div>
-              <div class="dev-drop-item" onclick="selectDeveloper('dev_ediaz')">
-                <img src="" id="dropImg_dev_ediaz" class="mini-drop-avatar">
-                <div>
-                  <strong style="color: #F5C542;">🛡️ Edwin Diaz · Admin</strong>
-                  <span>ediaz · Supervisión Global</span>
+              <div id="headerDevOptionsList">
+                <div class="dev-drop-item" onclick="selectDeveloper('dev_ediaz')">
+                  <img src="" id="dropImg_dev_ediaz" class="mini-drop-avatar">
+                  <div>
+                    <strong style="color: #F5C542;">🛡️ Edwin Diaz · Admin</strong>
+                    <span>ediaz · Supervisión Global</span>
+                  </div>
                 </div>
-              </div>
-              <div class="dev-drop-item" onclick="selectDeveloper('dev_jg')">
-                <img src="" id="dropImg_dev_jg" class="mini-drop-avatar">
-                <div>
-                  <strong>Jose Guzman</strong>
-                  <span>jose@guzman · Colchas, Lab, Geo, Torre</span>
+                <div class="dev-drop-item" onclick="selectDeveloper('dev_jg')">
+                  <img src="" id="dropImg_dev_jg" class="mini-drop-avatar">
+                  <div>
+                    <strong>Jose Guzman</strong>
+                    <span>jose@guzman · Colchas, Lab, Geo, Torre</span>
+                  </div>
                 </div>
-              </div>
-              <div class="dev-drop-item" onclick="selectDeveloper('dev_jd')">
-                <img src="" id="dropImg_dev_jd" class="mini-drop-avatar">
-                <div>
-                  <strong>Juan David</strong>
-                  <span>juan@david · Calidad, Torre</span>
+                <div class="dev-drop-item" onclick="selectDeveloper('dev_jd')">
+                  <img src="" id="dropImg_dev_jd" class="mini-drop-avatar">
+                  <div>
+                    <strong>Juan David</strong>
+                    <span>juan@david · Calidad, Torre</span>
+                  </div>
                 </div>
-              </div>
-              <div class="dev-drop-item" onclick="selectDeveloper('dev_ee')">
-                <img src="" id="dropImg_dev_ee" class="mini-drop-avatar">
-                <div>
-                  <strong>Esteban Escobar</strong>
-                  <span>esteban@escobar · Torre de Control</span>
+                <div class="dev-drop-item" onclick="selectDeveloper('dev_ee')">
+                  <img src="" id="dropImg_dev_ee" class="mini-drop-avatar">
+                  <div>
+                    <strong>Esteban Escobar</strong>
+                    <span>esteban@escobar · Torre de Control</span>
+                  </div>
                 </div>
-              </div>
-              <div class="dev-drop-item" onclick="selectDeveloper('dev_mocho')">
-                <img src="" id="dropImg_dev_mocho" class="mini-drop-avatar">
-                <div>
-                  <strong>Jhon Eyder (Mocho)</strong>
-                  <span>jhon@eyder · Tintorería, Torre</span>
+                <div class="dev-drop-item" onclick="selectDeveloper('dev_mocho')">
+                  <img src="" id="dropImg_dev_mocho" class="mini-drop-avatar">
+                  <div>
+                    <strong>Jhon Eyder (Mocho)</strong>
+                    <span>jhon@eyder · Tintorería, Torre</span>
+                  </div>
                 </div>
               </div>
               <div class="dev-drop-divider"></div>
@@ -1020,7 +1022,7 @@
   </div>
 
   <!-- MODAL: Crear Nuevo Desarrollador / Usuario (Anclado a Google Sheets) -->
-  <div class="modal-backdrop" id="modalCreateDeveloper" style="display: none;">
+  <div class="modal-backdrop" id="modalCreateDeveloper">
     <div class="modal-card modal-card-medium" style="max-width: 540px;">
       <div class="modal-header">
         <div class="modal-title-group">
