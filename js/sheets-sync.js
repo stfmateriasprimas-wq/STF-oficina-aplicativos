@@ -291,6 +291,139 @@
     },
 
     /**
+     * Enviar todos los usuarios locales de la aplicación a la pestaña 'Usuarios' de Google Sheets
+     */
+    async pushUsersToSheets() {
+      if (!window.appState || !Array.isArray(window.appState.developers)) return { status: 'error' };
+
+      const usersList = window.appState.developers.map(dev => {
+        return {
+          id: dev.idPassword || dev.id.replace('dev_', ''),
+          idPassword: dev.idPassword || dev.id.replace('dev_', ''),
+          username: dev.username || dev.id,
+          role: dev.role || 'desarrollador',
+          email: dev.email || '',
+          name: dev.name
+        };
+      });
+
+      const res = await this.syncUsers(usersList);
+      return res;
+    },
+
+    /**
+     * Traer y sincronizar usuarios desde la pestaña 'Usuarios' de Google Sheets hacia la aplicación
+     */
+    async pullUsersFromSheets(silent = false) {
+      if (!this.isConnected()) {
+        if (!silent && typeof window.showToast === 'function') {
+          window.showToast('ℹ️ Conecta tu Google Sheet para sincronizar usuarios.');
+        }
+        return { success: false };
+      }
+
+      const iconSpin = document.getElementById('iconSyncUsersSpin');
+      if (iconSpin) iconSpin.style.animation = 'spin 0.8s linear infinite';
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(`${this.url}?action=get_users&_t=${Date.now()}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.status === 'success' && Array.isArray(json.users) && json.users.length > 0) {
+            this.mergeCloudUsers(json.users);
+            if (!silent && typeof window.showToast === 'function') {
+              window.showToast(`☁️ ¡Sincronizado! Se cargaron ${json.users.length} usuarios desde la hoja 'Usuarios' de Google Sheets.`);
+            }
+            return { success: true, count: json.users.length };
+          }
+        }
+      } catch (err) {
+        console.warn('[SheetsSync] Error en pullUsersFromSheets:', err);
+      } finally {
+        if (iconSpin) iconSpin.style.animation = '';
+      }
+      return { success: false };
+    },
+
+    /**
+     * Fusionar usuarios descargados de Google Sheets con el estado local
+     */
+    mergeCloudUsers(cloudUsers) {
+      if (!Array.isArray(cloudUsers) || !window.appState) return;
+      if (!Array.isArray(window.appState.developers)) window.appState.developers = [];
+
+      const stateDevs = window.appState.developers;
+      const validCloudUsernames = new Set();
+
+      cloudUsers.forEach(u => {
+        const username = String(u.username || '').trim();
+        const idPassword = String(u.idPassword || u.id || '').trim();
+        const role = String(u.role || 'desarrollador').trim();
+        const email = String(u.email || '').trim();
+        const nameFromSheet = String(u.name || '').trim();
+
+        if (!username && !idPassword) return;
+        validCloudUsernames.add(username.toLowerCase());
+
+        // Buscar coincidencia en developers existentes
+        let match = stateDevs.find(d => 
+          (d.username && d.username.toLowerCase() === username.toLowerCase()) ||
+          d.id.toLowerCase() === `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}` ||
+          (d.idPassword && String(d.idPassword).trim() === idPassword)
+        );
+
+        if (match) {
+          // Actualizar datos desde Google Sheets
+          match.username = username || match.username;
+          match.role = role || match.role;
+          match.email = email || match.email;
+          match.idPassword = idPassword || match.idPassword;
+          if (nameFromSheet) match.name = nameFromSheet;
+        } else {
+          // Crear nuevo desarrollador importado desde la hoja de Sheets
+          const cleanName = nameFromSheet || username.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          const newDev = {
+            id: `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
+            name: cleanName,
+            username: username,
+            idPassword: idPassword,
+            role: role,
+            email: email,
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+            onTimeDelivery: 94,
+            codeQuality: 95,
+            sprintsCompleted: 4,
+            score: '9.4 / 10',
+            activeProjects: ['app_torre']
+          };
+          stateDevs.push(newDev);
+        }
+      });
+
+      // Eliminar usuarios locales que fueron borrados directamente en Google Sheets (excepto el admin principal dev_ediaz)
+      if (cloudUsers.length > 0) {
+        window.appState.developers = stateDevs.filter(d => 
+          d.id === 'dev_ediaz' || 
+          (d.username && validCloudUsernames.has(d.username.toLowerCase()))
+        );
+      }
+
+      // Guardar cambios en localStorage
+      if (typeof window.saveStoredData === 'function') {
+        window.saveStoredData();
+      }
+
+      // Actualizar vista de desarrolladores si está activa
+      if (typeof window.renderDevelopersFullView === 'function') {
+        window.renderDevelopersFullView();
+      }
+    },
+
+    /**
      * Búsqueda flexible de Aplicativo por ID, Nombre o Código
      */
     findApp(nameOrId) {
@@ -889,9 +1022,11 @@
   window.SheetsSync = SheetsSync;
 
   // Auto-init on load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => SheetsSync.init());
-  } else {
-    SheetsSync.init();
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => SheetsSync.init());
+    } else {
+      SheetsSync.init();
+    }
   }
 })();

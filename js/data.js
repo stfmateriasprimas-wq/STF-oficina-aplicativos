@@ -412,3 +412,9 @@ function saveData(data) {
   }
 }
 
+if (typeof window !== 'undefined') {
+  window.saveData = saveData;
+  window.getStoredData = getStoredData;
+}
+
+

@@ -724,7 +724,32 @@
           </div>
         </div>
 
-        <!-- Dev Cards Grid -->
+        <!-- Management Toolbar: Crear/Eliminar Usuarios & Anclaje en Tiempo Real con Sheets -->
+        <div class="devs-management-toolbar">
+          <div class="devs-toolbar-left">
+            <div class="devs-section-badge">
+              <i data-lucide="users"></i>
+              <span>Gestión de Usuarios & Desarrolladores (<strong id="devsCountLabel">5</strong>)</span>
+            </div>
+            <div class="sheets-live-pill" id="sheetsUsersSyncStatus" title="Anclado en tiempo real con la pestaña 'Usuarios' de Google Sheets">
+              <span class="live-dot-pulse"></span>
+              <span>Hoja Sheets: <strong>Usuarios</strong> (Sincronizado)</span>
+            </div>
+          </div>
+
+          <div class="devs-toolbar-actions">
+            <button class="pill-btn secondary-btn" id="btnSyncUsersSheets" onclick="manualSyncUsersWithSheets()" title="Traer y sincronizar usuarios desde la hoja de Google Sheets">
+              <i data-lucide="refresh-cw" id="iconSyncUsersSpin"></i>
+              <span>Sincronizar con Sheets</span>
+            </button>
+            <button class="pill-btn primary-btn" id="btnOpenNewDevModal" onclick="openNewDeveloperModal()" title="Crear un nuevo usuario de desarrollador">
+              <i data-lucide="user-plus"></i>
+              <span>+ Nuevo Desarrollador</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dev Cards Grid (Compact Badges / Etiquetas Pequeñas) -->
         <div class="devs-full-grid" id="devsFullGrid">
           <!-- Populated via JavaScript -->
         </div>
@@ -991,6 +1016,94 @@
       <div class="modal-footer">
         <button class="pill-btn primary-glow-btn" id="btnCloseDevScorecardBtn">Aceptar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Crear Nuevo Desarrollador / Usuario (Anclado a Google Sheets) -->
+  <div class="modal-backdrop" id="modalCreateDeveloper" style="display: none;">
+    <div class="modal-card modal-card-medium" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="m-icon-pill icon-blue" style="width: 38px; height: 38px;">
+              <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+            </div>
+            <div>
+              <h2 class="modal-title">Registrar Nuevo Desarrollador</h2>
+              <p class="modal-subtitle">Se anclará en tiempo real con la pestaña <strong>'Usuarios'</strong> de Google Sheets.</p>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeNewDeveloperModal()" aria-label="Cerrar modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="formCreateDeveloper" onsubmit="handleCreateDeveloperSubmit(event)">
+        <div class="modal-body-content" style="display: flex; flex-direction: column; gap: 14px; max-height: 480px; overflow-y: auto; padding-right: 4px;">
+          <div class="form-group">
+            <label for="newDevName" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">Nombre Completo del Desarrollador *</label>
+            <input type="text" id="newDevName" class="form-input" placeholder="Ej: Carlos Méndez" required style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13px;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="newDevUsername" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">Usuario de Logueo *</label>
+              <input type="text" id="newDevUsername" class="form-input" placeholder="Ej: carlos@mendez" required style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13px;">
+            </div>
+            <div class="form-group">
+              <label for="newDevPassword" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">ID / Contraseña (Sheets) *</label>
+              <input type="text" id="newDevPassword" class="form-input" placeholder="Ej: 1085293812" required style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13px;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="newDevRole" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">Rol de Permisos *</label>
+              <select id="newDevRole" class="form-select" required style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13px; background: #FFF;">
+                <option value="desarrollador">Desarrollador (Ingeniero)</option>
+                <option value="Admin">Administrador (Líder TI)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="newDevEmail" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">Correo Corporativo</label>
+              <input type="email" id="newDevEmail" class="form-input" placeholder="carlos.mendez@studiof.com.co" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13px;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newDevRoleTitle" style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">Cargo / Especialidad Técnica</label>
+            <input type="text" id="newDevRoleTitle" class="form-input" placeholder="Ej: Desarrollador Backend & Integraciones" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13px;">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Seleccionar Avatar del Desarrollador</label>
+            <div class="avatar-picker-row" id="avatarPickerRow" style="display: flex; gap: 10px; align-items: center;">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120" class="avatar-option selected" onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
+            </div>
+            <input type="hidden" id="newDevAvatarUrl" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120">
+          </div>
+
+          <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; margin-top: 4px;">
+            <i data-lucide="cloud" style="width: 18px; height: 18px; color: #16A34A; flex-shrink: 0; margin-top: 2px;"></i>
+            <span style="font-size: 11.5px; color: #15803D; line-height: 1.45;">
+              <strong>Sincronización Bidireccional:</strong> Al crear este usuario, se guardará en el sistema y se transmitirá inmediatamente a la hoja <strong>'Usuarios'</strong> de tu documento en Google Sheets.
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #F1F4F9;">
+          <button type="button" class="pill-btn secondary-btn" onclick="closeNewDeveloperModal()">Cancelar</button>
+          <button type="submit" class="pill-btn primary-btn" id="btnSubmitNewDev">
+            <i data-lucide="check"></i>
+            <span>Crear y Sincronizar en Sheets</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

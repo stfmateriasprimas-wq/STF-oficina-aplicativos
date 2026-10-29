@@ -5,6 +5,9 @@
  */
 
 let appState = getStoredData();
+if (typeof window !== 'undefined') {
+  window.appState = appState;
+}
 
 // Sesión autenticada y anclaje de Columna 2 (Usuario) y Columna 3 (Rol)
 const savedLoggedUserJson = localStorage.getItem('STF_LOGGED_USER');
@@ -4391,10 +4394,25 @@ function initApp() {
     if (e.target.id === 'modalQuarterlyGoal') closeQuarterlyGoalModal();
   });
 
+  document.getElementById('modalCreateDeveloper')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modalCreateDeveloper') closeNewDeveloperModal();
+  });
+
+  // Auto-sincronización bidireccional cuando el usuario regresa a la pestaña del navegador
+  window.addEventListener('focus', () => {
+    const devsView = document.getElementById('view-developers');
+    if (devsView && devsView.classList.contains('active')) {
+      if (window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
+        window.SheetsSync.pullUsersFromSheets(true);
+      }
+    }
+  });
+
   document.getElementById('btnRefreshTable')?.addEventListener('click', () => {
     renderSystemsTable();
     showToast('Listado de aplicativos actualizado.');
   });
+
 
   // Keyboard shortcut ⌘K / Ctrl+K
   document.addEventListener('keydown', (e) => {
@@ -4519,9 +4537,13 @@ function switchView(viewName) {
     if (subtitleEl) subtitleEl.textContent = 'Supervisión operativa de software de planta, ciclo de vida de fases, entregables y efectividad de ingeniería.';
     renderProjectsView(activeBrandFilter);
   } else if (viewName === 'developers') {
-    if (titleEl) titleEl.innerHTML = 'Rendimiento de Ingeniería · <span class="text-gradient">STF GROUP</span>';
-    if (subtitleEl) subtitleEl.textContent = 'Scorecards técnicos, distribución de carga operativa y auditoría de desarrolladores.';
+    if (titleEl) titleEl.innerHTML = 'Rendimiento de Ingeniería & Gestión de Usuarios · <span class="text-gradient">STF GROUP</span>';
+    if (subtitleEl) subtitleEl.textContent = 'Gestión integral de desarrolladores: creación, eliminación y anclaje bidireccional en tiempo real con Google Sheets.';
     renderDevelopersFullView();
+    // Auto-sincronizar silenciosamente desde Google Sheets (hoja Usuarios)
+    if (window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
+      window.SheetsSync.pullUsersFromSheets(true);
+    }
   } else if (viewName === 'analytics') {
     if (titleEl) titleEl.innerHTML = 'Métricas de Calidad & QA · <span class="text-gradient">STF GROUP</span>';
     if (subtitleEl) subtitleEl.textContent = 'Control de defectos, estabilidad de despliegues y auditoría de software industrial.';
@@ -5036,69 +5058,313 @@ function renderDevelopersFullView() {
   const container = document.getElementById('devsFullGrid');
   if (!container) return;
 
+  // Actualizar contador en la barra de herramientas y métrica macro
+  const countLabel = document.getElementById('devsCountLabel');
+  if (countLabel) countLabel.textContent = appState.developers.length;
+
+  const macroDevCount = document.querySelector('#view-developers .metric-summary-card h3.m-value');
+  if (macroDevCount) macroDevCount.textContent = `${appState.developers.length} Ingenieros`;
+
+  if (!appState.developers || appState.developers.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: #FFFFFF; border-radius: 20px; border: 1px dashed #CBD5E1;">
+        <i data-lucide="users" style="width: 44px; height: 44px; color: #94A3B8; margin-bottom: 12px;"></i>
+        <h3 style="font-size: 16px; font-weight: 700; color: #1E232E; margin-bottom: 6px;">No hay desarrolladores registrados</h3>
+        <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">Crea el primer desarrollador o sincroniza en tiempo real con la pestaña 'Usuarios' de Google Sheets.</p>
+        <button class="pill-btn primary-btn" onclick="openNewDeveloperModal()">
+          <i data-lucide="user-plus"></i>
+          <span>+ Nuevo Desarrollador</span>
+        </button>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
   container.innerHTML = appState.developers.map(dev => {
     const assignedApps = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
-    
+    const isAdmin = dev.roleType === 'Admin' || String(dev.role || '').toLowerCase().includes('admin') || dev.id === 'dev_ediaz';
+    const isProtectedAdmin = dev.id === 'dev_ediaz';
+    const cleanUsername = dev.username ? (dev.username.startsWith('@') ? dev.username : `@${dev.username}`) : `@${dev.id.replace('dev_', '')}`;
+    const avatarUrl = dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
+    const scoreVal = dev.score || '9.4/10';
+    const onTimeVal = dev.onTimeDelivery || 92;
+    const qualityVal = dev.codeQuality || 94;
+
     return `
-      <div class="dev-full-card">
-        <div>
-          <div class="dev-header-profile">
-            <img src="${dev.avatar}" alt="${dev.name}" class="dev-card-avatar">
-            <div>
-              <strong style="font-size: 16px; color: #1E232E; display: block;">${dev.name}</strong>
-              <span style="font-size: 12.5px; color: #8E96A6;">${dev.role}</span>
-              <div class="dev-score-pill" style="margin-top: 6px;">
-                <i data-lucide="award" style="width: 12px; height: 12px;"></i>
-                <span>Score: ${dev.score}</span>
+      <div class="dev-compact-card" data-dev-id="${dev.id}">
+        <!-- Compact Header -->
+        <div class="dev-compact-header">
+          <div class="dev-compact-profile">
+            <div class="dev-avatar-wrap">
+              <img src="${avatarUrl}" alt="${dev.name}" class="dev-compact-avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'">
+              <span class="dev-online-status" title="Activo en STF Systems"></span>
+            </div>
+            <div class="dev-name-meta">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <strong class="dev-compact-name">${dev.name}</strong>
+                <span class="dev-role-badge ${isAdmin ? 'badge-admin' : 'badge-dev'}">${isAdmin ? '🛡️ Admin' : '💻 Dev'}</span>
               </div>
+              <span class="dev-compact-user">${cleanUsername}</span>
+              ${dev.email ? `<span style="font-size: 10.5px; color: #94A3B8; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 175px;" title="${dev.email}">${dev.email}</span>` : ''}
             </div>
           </div>
+          ${isProtectedAdmin ? '' : `
+            <button class="btn-delete-compact-dev" onclick="deleteDeveloperUser('${dev.id}', event)" title="Eliminar usuario del sistema y de Google Sheets">
+              <i data-lucide="trash-2"></i>
+            </button>
+          `}
+        </div>
 
-          <div class="dev-kpi-bars">
-            <div>
-              <div class="kpi-row-line">
+        <!-- Compact KPIs -->
+        <div class="dev-compact-kpi-block">
+          <div class="compact-score-row">
+            <span class="compact-score-label">Rendimiento Operativo</span>
+            <span class="compact-score-value">★ Score ${scoreVal}</span>
+          </div>
+          <div class="compact-bars-stack">
+            <div class="compact-bar-item">
+              <div class="compact-bar-label">
                 <span>Cumplimiento a Tiempo</span>
-                <span style="color: #4E65FF;">${dev.onTimeDelivery}%</span>
+                <span style="color: #4E65FF;">${onTimeVal}%</span>
               </div>
-              <div class="mini-bar-track">
-                <div class="mini-bar-fill" style="width: ${dev.onTimeDelivery}%;"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="kpi-row-line">
-                <span>Calidad Técnica (Bug-free)</span>
-                <span style="color: #10B981;">${dev.codeQuality}%</span>
-              </div>
-              <div class="mini-bar-track">
-                <div class="mini-bar-fill" style="width: ${dev.codeQuality}%; background: linear-gradient(135deg, #22C55E, #10B981);"></div>
+              <div class="compact-track">
+                <div class="compact-fill" style="width: ${onTimeVal}%; background: linear-gradient(90deg, #4E65FF, #7B8CFF);"></div>
               </div>
             </div>
-          </div>
-
-          <div style="margin-bottom: 16px;">
-            <span style="font-size: 12px; font-weight: 700; color: #8E96A6; text-transform: uppercase;">Sistemas a su Cargo (${assignedApps.length}):</span>
-            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
-              ${assignedApps.map(a => `
-                <div style="display: flex; justify-content: space-between; font-size: 12.5px; background: #F8FAFD; padding: 6px 10px; border-radius: 8px;">
-                  <span style="color: #1E232E; font-weight: 600;">${a.name}</span>
-                  <span style="color: #4E65FF; font-weight: 700;">${calculateAppProgress(a)}%</span>
-                </div>
-              `).join('')}
+            <div class="compact-bar-item">
+              <div class="compact-bar-label">
+                <span>Calidad Técnica QA</span>
+                <span style="color: #10B981;">${qualityVal}%</span>
+              </div>
+              <div class="compact-track">
+                <div class="compact-fill" style="width: ${qualityVal}%; background: linear-gradient(90deg, #22C55E, #10B981);"></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <button class="pill-btn secondary-btn" style="width: 100%; justify-content: center;" onclick="openDevScorecardModal('${dev.id}')">
-          <i data-lucide="file-text"></i>
-          <span>Ver Historial de Rendimiento</span>
-        </button>
+        <!-- Sistemas a su Cargo -->
+        <div class="dev-compact-systems-section">
+          <span class="compact-systems-title">Sistemas a su Cargo (${assignedApps.length}):</span>
+          <div class="compact-systems-tags">
+            ${assignedApps.length > 0 ? assignedApps.map(a => `
+              <div class="sys-micro-tag" title="${a.name} (${calculateAppProgress(a)}%)">
+                <strong>${a.shortName || a.name.split(' ')[0]}</strong>
+                <span>${calculateAppProgress(a)}%</span>
+              </div>
+            `).join('') : '<span class="tag-empty">Sin aplicativos asignados</span>'}
+          </div>
+        </div>
+
+        <!-- Compact Card Actions -->
+        <div class="dev-compact-actions">
+          <button class="compact-btn-sec" onclick="openDevScorecardModal('${dev.id}')" title="Ver historial y métricas detalladas">
+            <i data-lucide="file-text"></i>
+            <span>Historial</span>
+          </button>
+          ${isProtectedAdmin ? `
+            <span style="font-size: 11px; color: #94A3B8; font-style: italic;">🛡️ Administrador Base</span>
+          ` : `
+            <button class="compact-btn-del" onclick="deleteDeveloperUser('${dev.id}', event)" title="Eliminar de Google Sheets y Sistema">
+              <i data-lucide="trash-2"></i>
+              <span>Eliminar</span>
+            </button>
+          `}
+        </div>
       </div>
     `;
   }).join('');
 
   lucide.createIcons();
 }
+
+// ==========================================================================
+// GESTIÓN DE USUARIOS DE DESARROLLADORES (CREAR & ELIMINAR ANCLADO A SHEETS)
+// ==========================================================================
+
+function openNewDeveloperModal() {
+  const modal = document.getElementById('modalCreateDeveloper');
+  if (!modal) return;
+
+  const form = document.getElementById('formCreateDeveloper');
+  if (form) form.reset();
+
+  document.querySelectorAll('#avatarPickerRow .avatar-option').forEach((img, idx) => {
+    img.classList.toggle('selected', idx === 0);
+  });
+
+  const avatarInput = document.getElementById('newDevAvatarUrl');
+  if (avatarInput) avatarInput.value = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
+
+  modal.style.display = 'flex';
+  document.getElementById('newDevName')?.focus();
+  lucide.createIcons();
+}
+
+function closeNewDeveloperModal() {
+  const modal = document.getElementById('modalCreateDeveloper');
+  if (modal) modal.style.display = 'none';
+}
+
+function selectNewDevAvatar(imgEl, src) {
+  document.querySelectorAll('#avatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+  if (imgEl) imgEl.classList.add('selected');
+  const avatarInput = document.getElementById('newDevAvatarUrl');
+  if (avatarInput) avatarInput.value = src;
+}
+
+async function handleCreateDeveloperSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const nameInput = document.getElementById('newDevName');
+  const usernameInput = document.getElementById('newDevUsername');
+  const passwordInput = document.getElementById('newDevPassword');
+  const roleSelect = document.getElementById('newDevRole');
+  const emailInput = document.getElementById('newDevEmail');
+  const roleTitleInput = document.getElementById('newDevRoleTitle');
+  const avatarInput = document.getElementById('newDevAvatarUrl');
+
+  const name = nameInput?.value.trim();
+  const username = usernameInput?.value.trim().toLowerCase();
+  const idPassword = passwordInput?.value.trim();
+  const role = roleSelect?.value || 'desarrollador';
+  const email = emailInput?.value.trim() || '';
+  const roleTitle = roleTitleInput?.value.trim() || (role === 'Admin' ? 'Líder TI & Admin' : 'Desarrollador de Software');
+  const avatar = avatarInput?.value || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
+
+  if (!name || !username || !idPassword) {
+    alert('Por favor completa todos los campos obligatorios (*).');
+    return;
+  }
+
+  // Validar si el usuario o ID ya existen
+  const exists = appState.developers.some(d => 
+    (d.username && d.username.toLowerCase() === username) || 
+    (d.idPassword && String(d.idPassword).trim() === idPassword)
+  );
+
+  if (exists) {
+    alert(`El usuario de logueo "${username}" o el ID/contraseña ya se encuentra registrado. Utiliza credenciales distintas.`);
+    return;
+  }
+
+  const devId = `dev_${username.replace(/[^a-z0-9]/g, '_')}`;
+
+  const newDev = {
+    id: devId,
+    name: name,
+    username: username,
+    idPassword: idPassword,
+    role: roleTitle,
+    roleType: role,
+    email: email,
+    avatar: avatar,
+    onTimeDelivery: 95,
+    codeQuality: 96,
+    sprintsCompleted: 3,
+    score: '9.5 / 10',
+    activeProjects: []
+  };
+
+  appState.developers.push(newDev);
+  window.appState = appState;
+  saveData(appState);
+
+  closeNewDeveloperModal();
+  renderDevelopersFullView();
+
+  if (typeof showToast === 'function') {
+    showToast(`✅ Desarrollador "${name}" creado exitosamente.`);
+  }
+
+  // Sincronizar bidireccionalmente con Google Sheets (Pestaña 'Usuarios')
+  const iconSpin = document.getElementById('iconSyncUsersSpin');
+  if (iconSpin) iconSpin.style.animation = 'spin 0.8s linear infinite';
+  const statusPill = document.getElementById('sheetsUsersSyncStatus');
+  if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse" style="background:#F59E0B;box-shadow:0 0 6px #F59E0B;"></span><span>Guardando en Google Sheets...</span>';
+
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.pushUsersToSheets === 'function') {
+      await window.SheetsSync.pushUsersToSheets();
+    }
+  } catch (err) {
+    console.warn('[handleCreateDeveloperSubmit] Error al sincronizar con Sheets:', err);
+  } finally {
+    if (iconSpin) iconSpin.style.animation = '';
+    if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse"></span><span>Hoja Sheets: <strong>Usuarios</strong> (Sincronizado)</span>';
+  }
+}
+
+async function deleteDeveloperUser(devId, event) {
+  if (event) event.stopPropagation();
+
+  if (devId === 'dev_ediaz') {
+    alert('El usuario Administrador Principal (Edwin Diaz) está protegido por seguridad y no puede ser eliminado.');
+    return;
+  }
+
+  const dev = appState.developers.find(d => d.id === devId);
+  const devName = dev ? dev.name : devId;
+
+  const confirmed = confirm(
+    `¿Estás seguro de eliminar al desarrollador "${devName}"?\n\n` +
+    `Esta acción lo removerá inmediatamente del aplicativo y se actualizará en tiempo real en la pestaña 'Usuarios' de tu hoja Google Sheets.`
+  );
+
+  if (!confirmed) return;
+
+  appState.developers = appState.developers.filter(d => d.id !== devId);
+  window.appState = appState;
+  saveData(appState);
+
+  renderDevelopersFullView();
+
+  if (typeof showToast === 'function') {
+    showToast(`🗑️ Desarrollador "${devName}" eliminado.`);
+  }
+
+  // Sincronizar inmediatamente en Google Sheets (Hoja Usuarios)
+  const iconSpin = document.getElementById('iconSyncUsersSpin');
+  if (iconSpin) iconSpin.style.animation = 'spin 0.8s linear infinite';
+  const statusPill = document.getElementById('sheetsUsersSyncStatus');
+  if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse" style="background:#EF4444;box-shadow:0 0 6px #EF4444;"></span><span>Actualizando en Google Sheets...</span>';
+
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.pushUsersToSheets === 'function') {
+      await window.SheetsSync.pushUsersToSheets();
+    }
+  } catch (err) {
+    console.warn('[deleteDeveloperUser] Error al sincronizar con Sheets:', err);
+  } finally {
+    if (iconSpin) iconSpin.style.animation = '';
+    if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse"></span><span>Hoja Sheets: <strong>Usuarios</strong> (Sincronizado)</span>';
+  }
+}
+
+async function manualSyncUsersWithSheets() {
+  const iconSpin = document.getElementById('iconSyncUsersSpin');
+  if (iconSpin) iconSpin.style.animation = 'spin 0.8s linear infinite';
+  const statusPill = document.getElementById('sheetsUsersSyncStatus');
+  if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse" style="background:#3B82F6;box-shadow:0 0 6px #3B82F6;"></span><span>Descargando usuarios desde Sheets...</span>';
+
+  if (typeof showToast === 'function') {
+    showToast('🔄 Sincronizando con la hoja "Usuarios" de Google Sheets...');
+  }
+
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
+      await window.SheetsSync.pullUsersFromSheets(false);
+    }
+  } catch (err) {
+    console.warn('[manualSyncUsersWithSheets] Error al sincronizar:', err);
+  } finally {
+    if (iconSpin) iconSpin.style.animation = '';
+    if (statusPill) statusPill.innerHTML = '<span class="live-dot-pulse"></span><span>Hoja Sheets: <strong>Usuarios</strong> (Sincronizado)</span>';
+    renderDevelopersFullView();
+  }
+}
+
 
 // ==========================================================================
 // VIEW 4: ANALYTICS CHARTS (Brands & QA)
@@ -5280,4 +5546,11 @@ window.clearProjectSearch = clearProjectSearch;
 window.openAppTasksDrawer = openAppTasksDrawer;
 window.renderProjectsView = renderProjectsView;
 
-
+// Developer Management & Sheets Real-Time Sync Exports
+window.openNewDeveloperModal = openNewDeveloperModal;
+window.closeNewDeveloperModal = closeNewDeveloperModal;
+window.selectNewDevAvatar = selectNewDevAvatar;
+window.handleCreateDeveloperSubmit = handleCreateDeveloperSubmit;
+window.deleteDeveloperUser = deleteDeveloperUser;
+window.manualSyncUsersWithSheets = manualSyncUsersWithSheets;
+window.renderDevelopersFullView = renderDevelopersFullView;
