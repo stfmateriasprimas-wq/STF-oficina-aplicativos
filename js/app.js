@@ -3297,8 +3297,8 @@ function calculateIntegrationTimeProgress(integration) {
   };
 }
 
-// State for open/closed developer folders (all open by default)
-let openedDevFolders = new Set(['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']);
+// State for open/closed developer folders (closed by default per user requirement)
+let openedDevFolders = new Set();
 
 function toggleDevFolder(devId) {
   const folderEl = document.getElementById(`folder_dev_${devId}`);
