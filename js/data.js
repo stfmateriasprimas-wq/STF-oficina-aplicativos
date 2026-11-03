@@ -366,7 +366,7 @@ if (typeof window !== 'undefined') {
 function getStoredData() {
   const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V6';
   const local = (typeof localStorage !== 'undefined') ? localStorage.getItem(STORAGE_KEY) : null;
-  
+
   if (local) {
     try {
       const parsed = JSON.parse(local);

@@ -571,6 +571,7 @@ function refreshAllViews() {
   if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
   if (typeof renderProjectsView === 'function') renderProjectsView(activeBrandFilter);
   if (typeof updateOverviewChart === 'function') updateOverviewChart();
+  if (typeof updateVelocitySection === 'function') updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
   if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 }
 window.refreshAllViews = refreshAllViews;
@@ -1481,12 +1482,18 @@ function calculateSystemRealMetrics(app) {
 }
 
 function getOverviewChartData(period = currentOverviewPeriod, devId = activeSelectedDevId, focusedAppId = currentFocusedAppId) {
-  const isAll = !devId || devId === 'all';
-  const dev = isAll ? null : getDeveloperById(devId);
-  const assigned = dev ? appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id))) : [];
+  const isAdmin = isCurrentSessionAdmin();
+  // Si no es admin, forzar siempre su propio ID canónico
+  const effectiveDevId = !isAdmin ? getLoggedDevId() : devId;
+  const isAll = !effectiveDevId || effectiveDevId === 'all';
+  const dev = isAll ? null : getDeveloperById(effectiveDevId);
+  const assigned = dev 
+    ? appState.applications.filter(a => isAppAssignedToDev(a, dev.id)) 
+    : (isAdmin ? appState.applications : getScopedApplications());
+
   const devAvgProgress = assigned.length > 0 
     ? Math.round(assigned.reduce((acc, a) => acc + calculateAppProgress(a), 0) / assigned.length)
-    : 76;
+    : (isAdmin ? 76 : 0);
 
   // Si hay un aplicativo enfocado en la baraja de tarjetas
   const targetApp = focusedAppId ? getApplicationById(focusedAppId) : null;
@@ -1879,7 +1886,123 @@ let vcalViewingMonth = 9; // 0-indexed: 9 = Octubre
 let vcalSelectedStart = '2026-10-01';
 let vcalSelectedEnd = '2026-10-28';
 
-// Base de datos oficial de métricas de velocidad por desarrollador y períodos
+// ==========================================================================
+// MOTOR ESTADÍSTICO DINÁMICO & AUTOMATIZADO (VELOCIDAD, CURVA, METAS)
+// ==========================================================================
+
+function getDynamicDeliveriesList() {
+  const baseDeliveries = Array.isArray(STF_VELOCITY_DATA.dailyDeliveries) ? [...STF_VELOCITY_DATA.dailyDeliveries] : [];
+  const integrations = (appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
+  
+  // Agregar tareas evaluadas o completadas en tiempo real al historial de entregas
+  integrations.forEach(t => {
+    if (t.status === 'evaluated' || t.status === 'done') {
+      const evalDate = (t.evaluation && t.evaluation.evalDate) ? t.evaluation.evalDate : (t.deadline || '2026-10-20');
+      const devId = resolveCanonicalDevId(t.devId) || 'dev_jg';
+      const weight = Number(t.weight) || 15;
+      const hours = Math.round(weight * 0.8) || 8;
+      
+      const alreadyPresent = baseDeliveries.some(d => d.appId === t.appId && d.date === evalDate && d.devId === devId);
+      if (!alreadyPresent) {
+        baseDeliveries.push({
+          date: evalDate,
+          devId: devId,
+          modules: 1,
+          hours: hours,
+          appId: t.appId
+        });
+      }
+    }
+  });
+
+  return baseDeliveries;
+}
+
+function computeDynamicVelocityData(period = 'months', devId = 'all') {
+  const isAll = !devId || devId === 'all';
+  const canonicalDevId = isAll ? 'all' : resolveCanonicalDevId(devId);
+  const allDeliveries = getDynamicDeliveriesList();
+  
+  // Filtrar por desarrollador
+  const filteredDeliveries = isAll
+    ? allDeliveries
+    : allDeliveries.filter(d => resolveCanonicalDevId(d.devId) === canonicalDevId);
+
+  // Benchmarks dinámicos
+  const benchmarks = STF_VELOCITY_DATA.benchmarks[canonicalDevId] || (isAll ? STF_VELOCITY_DATA.benchmarks.all : { monthly: 8, weekly: 2.5, daily: 0.5, label: '8 Mods / Mes' });
+
+  let labels = [];
+  let values = [];
+  let actualHours = [];
+  let targetBenchmark = 25;
+  let benchmarkUnitText = 'Mes';
+  let periodSubtext = '';
+  let periodTypeName = 'Mes';
+
+  if (period === 'weeks') {
+    labels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'];
+    targetBenchmark = benchmarks.weekly || 8;
+    benchmarkUnitText = 'Sem';
+    periodSubtext = 'acumuladas en 8 sprints';
+    periodTypeName = 'Sprint';
+
+    // Computar semanas dinámicamente sumando entregas base y agregadas
+    const wData = STF_VELOCITY_DATA.weeks[canonicalDevId] || STF_VELOCITY_DATA.weeks.all;
+    values = [...wData.mods];
+    actualHours = [...wData.hours];
+
+    // Ajustar con entregas reales recientes
+    filteredDeliveries.forEach(d => {
+      if (d.date >= '2026-10-15') {
+        values[7] = (values[7] || 0) + 1;
+        actualHours[7] = (actualHours[7] || 0) + (d.hours || 6);
+      }
+    });
+
+  } else if (period.startsWith('month_') && STF_VELOCITY_DATA.singleMonths[period]) {
+    const sData = STF_VELOCITY_DATA.singleMonths[period];
+    labels = [...sData.labels];
+    const devSData = sData[canonicalDevId] || sData.all;
+    values = [...devSData.mods];
+    actualHours = [...devSData.hours];
+    targetBenchmark = benchmarks.weekly || 8;
+    benchmarkUnitText = 'Sem';
+    periodSubtext = `en ${sData.name}`;
+    periodTypeName = 'Semana';
+  } else if (period === 'custom') {
+    return calculateCustomDateVelocity(velocityCustomDateStart, velocityCustomDateEnd, canonicalDevId);
+  } else {
+    // Por mes (últimos 6 meses: Mayo a Octubre)
+    labels = ['Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre'];
+    targetBenchmark = benchmarks.monthly || 25;
+    benchmarkUnitText = 'Mes';
+    periodSubtext = 'entregados en últimos 6 meses';
+    periodTypeName = 'Mes';
+
+    const mData = STF_VELOCITY_DATA.months[canonicalDevId] || STF_VELOCITY_DATA.months.all;
+    values = [...mData.mods];
+    actualHours = [...mData.hours];
+
+    // Integrar entregas de octubre dinámicamente
+    const octDeliveries = filteredDeliveries.filter(d => d.date && d.date.startsWith('2026-10'));
+    if (octDeliveries.length > 0) {
+      const extraMods = Math.max(0, octDeliveries.length - 2);
+      values[5] = (mData.mods[5] || 10) + extraMods;
+      actualHours[5] = (mData.hours[5] || 60) + (extraMods * 6);
+    }
+  }
+
+  return {
+    labels,
+    values,
+    actualHours,
+    targetBenchmark,
+    benchmarkUnitText,
+    periodSubtext,
+    periodTypeName
+  };
+}
+
 const STF_VELOCITY_DATA = {
   benchmarks: {
     all: { monthly: 25, weekly: 8, daily: 1.5, label: '25 Mods / Mes' },
@@ -2109,57 +2232,15 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
   const devKey = isAll ? 'all' : devId;
   const devObj = isAll ? null : (getDeveloperById(devId) || { name: 'Desarrollador', onTimeDelivery: 95 });
 
-  // 1. Obtener etiquetas, valores de módulos y horas según el período
-  let labels = [];
-  let values = [];
-  let actualHours = [];
-  let targetBenchmark = 25;
-  let benchmarkUnitText = 'Mes';
-  let periodSubtext = '';
-  let periodTypeName = 'Mes';
-
-  if (period === 'weeks') {
-    const wData = STF_VELOCITY_DATA.weeks;
-    labels = [...wData.labels];
-    const devWData = wData[devKey] || wData.all;
-    values = [...devWData.mods];
-    actualHours = [...devWData.hours];
-    targetBenchmark = STF_VELOCITY_DATA.benchmarks[devKey]?.weekly || 8;
-    benchmarkUnitText = 'Sem';
-    periodSubtext = 'acumuladas en 8 sprints';
-    periodTypeName = 'Sprint';
-  } else if (period.startsWith('month_') && STF_VELOCITY_DATA.singleMonths[period]) {
-    const sData = STF_VELOCITY_DATA.singleMonths[period];
-    labels = [...sData.labels];
-    const devSData = sData[devKey] || sData.all;
-    values = [...devSData.mods];
-    actualHours = [...devSData.hours];
-    targetBenchmark = STF_VELOCITY_DATA.benchmarks[devKey]?.weekly || 8;
-    benchmarkUnitText = 'Sem';
-    periodSubtext = `en ${sData.name}`;
-    periodTypeName = 'Semana';
-  } else if (period === 'custom') {
-    // Cálculo dinámico para rango de fechas personalizado
-    const customData = calculateCustomDateVelocity(velocityCustomDateStart, velocityCustomDateEnd, devKey);
-    labels = customData.labels;
-    values = customData.values;
-    actualHours = customData.actualHours;
-    targetBenchmark = customData.targetBenchmark;
-    benchmarkUnitText = customData.benchmarkUnitText;
-    periodSubtext = customData.periodSubtext;
-    periodTypeName = customData.periodTypeName;
-  } else {
-    // Por mes (últimos 6 meses)
-    const mData = STF_VELOCITY_DATA.months;
-    labels = [...mData.labels];
-    const devMData = mData[devKey] || mData.all;
-    values = [...devMData.mods];
-    actualHours = [...devMData.hours];
-    targetBenchmark = STF_VELOCITY_DATA.benchmarks[devKey]?.monthly || 25;
-    benchmarkUnitText = 'Mes';
-    periodSubtext = 'entregados en últimos 6 meses';
-    periodTypeName = 'Mes';
-  }
+  // 1. Obtener etiquetas, valores de módulos y horas dinámicamente según el período y desarrollador
+  const dynVelocity = computeDynamicVelocityData(period, devKey);
+  const labels = dynVelocity.labels;
+  const values = dynVelocity.values;
+  const actualHours = dynVelocity.actualHours;
+  const targetBenchmark = dynVelocity.targetBenchmark;
+  const benchmarkUnitText = dynVelocity.benchmarkUnitText;
+  const periodSubtext = dynVelocity.periodSubtext;
+  const periodTypeName = dynVelocity.periodTypeName;
 
   // Prevenir divisiones por cero
   if (values.length === 0) {
@@ -4841,6 +4922,9 @@ function handleConfirmEvaluation() {
   renderDevelopersSection();
   renderCapsuleProgressBar();
   updateQuickDevStrip();
+  updateOverviewChart();
+  updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
+  updateHeaderStatChips();
 
   showToast(`¡Auditoría oficializada! +${pointsAdded}% sumado a ${targetApp?.name} y efectividad recalculada.`);
 }
@@ -6144,8 +6228,20 @@ function renderAnalyticsView() {
       app_calidad: 11,
       app_tintoreria: 9
     };
-    const bugsReported = scopedApps.map(a => defaultReportedByApp[a.id] !== undefined ? defaultReportedByApp[a.id] : 10);
-    const bugsResolved = scopedApps.map(a => defaultResolvedByApp[a.id] !== undefined ? defaultResolvedByApp[a.id] : 9);
+    // Cálculo dinámico de defectos QA según estado de fases y auditorías reales
+    const bugsReported = scopedApps.map(a => {
+      const pendingPhases = (a.phases || []).filter(p => !p.completed).length;
+      const hasRisk = a.status === 'risk';
+      const base = defaultReportedByApp[a.id] || (pendingPhases * 3 + 4);
+      return hasRisk ? base + 3 : base;
+    });
+    const bugsResolved = scopedApps.map((a, i) => {
+      const completedPhases = (a.phases || []).filter(p => p.completed).length;
+      const reported = bugsReported[i];
+      if (completedPhases === 6) return reported;
+      const ratio = completedPhases / 6;
+      return Math.min(reported, Math.max(2, Math.round(reported * (0.6 + ratio * 0.38))));
+    });
 
     qaBugsChartInstance = new Chart(qaCtx, {
       type: 'bar',
