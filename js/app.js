@@ -314,6 +314,20 @@ function syncDynamicSelects() {
       repAppSel.value = prevVal;
     }
   }
+
+  // 4. Selector de Desarrollador en Analítica QA (#analyticsDevFilter)
+  const analyticsDevSel = document.getElementById('analyticsDevFilter');
+  if (analyticsDevSel && isCurrentSessionAdmin()) {
+    const prevVal = analyticsDevSel.value || 'all';
+    analyticsDevSel.innerHTML = `<option value="all">👥 Todo el Equipo (Consolidado STF)</option>` +
+      devs.map(d => {
+        const isAdm = d.roleType === 'Admin' || d.id === 'dev_ediaz';
+        return `<option value="${d.id}">👤 ${d.name} (${isAdm ? 'Admin' : 'Dev'})</option>`;
+      }).join('');
+    if ([...analyticsDevSel.options].some(o => o.value === prevVal)) {
+      analyticsDevSel.value = prevVal;
+    }
+  }
 }
 
 function renderNotificationsDropdown() {
@@ -6160,19 +6174,92 @@ async function manualSyncUsersWithSheets() {
 // VIEW 4: ANALYTICS CHARTS (Brands & QA)
 // ==========================================================================
 
+let activeAnalyticsDevFilter = 'all';
+
 function renderAnalyticsView() {
   const brandsCtx = document.getElementById('brandsProgressChart');
   const qaCtx = document.getElementById('qaBugsChart');
-  const scopedApps = getScopedApplications();
+  const isAdmin = isCurrentSessionAdmin();
+  const sessionUser = getLoggedSessionUser();
+
+  // Si no es admin, forzar siempre su propio perfil
+  if (!isAdmin) {
+    activeAnalyticsDevFilter = getLoggedDevId();
+  }
+
+  // Configurar barra de filtros superior de analítica
+  const devSelect = document.getElementById('analyticsDevFilter');
+  const devSelectWrap = document.getElementById('analyticsDevFilterWrap');
+  const activeBadge = document.getElementById('analyticsActiveDevBadge');
+  const scopeTitle = document.getElementById('analyticsScopeTitle');
+  const scopeSubtitle = document.getElementById('analyticsScopeSubtitle');
+
+  if (devSelectWrap) devSelectWrap.style.display = isAdmin ? '' : 'none';
+  if (activeBadge) {
+    if (!isAdmin) {
+      activeBadge.style.display = 'inline-flex';
+      activeBadge.innerHTML = `<span>👤 Desarrollador: <strong>${sessionUser.name}</strong></span>`;
+    } else {
+      activeBadge.style.display = activeAnalyticsDevFilter !== 'all' ? 'inline-flex' : 'none';
+      if (activeAnalyticsDevFilter !== 'all') {
+        const dObj = getDeveloperById(activeAnalyticsDevFilter);
+        activeBadge.innerHTML = `<span>Filtrando por: <strong>${dObj ? dObj.name : activeAnalyticsDevFilter}</strong></span>`;
+      }
+    }
+  }
+
+  if (devSelect) {
+    devSelect.value = activeAnalyticsDevFilter;
+    devSelect.onchange = (e) => {
+      activeAnalyticsDevFilter = e.target.value;
+      renderAnalyticsView();
+    };
+  }
+
+  if (scopeTitle) {
+    if (!isAdmin) {
+      scopeTitle.textContent = `Métricas Personales de QA & Avance · ${sessionUser.name}`;
+      if (scopeSubtitle) scopeSubtitle.textContent = 'Indicadores de calidad técnica, defectos resueltos y avance de fases de tus sistemas';
+    } else {
+      if (activeAnalyticsDevFilter === 'all') {
+        scopeTitle.textContent = 'Métricas Globales de QA & Portafolio · Consolidado STF';
+        if (scopeSubtitle) scopeSubtitle.textContent = 'Supervisión de calidad en los 6 sistemas industriales de toda la compañía';
+      } else {
+        const dObj = getDeveloperById(activeAnalyticsDevFilter);
+        const dName = dObj ? dObj.name : 'Desarrollador';
+        scopeTitle.textContent = `Métricas de QA & Rendimiento · ${dName}`;
+        if (scopeSubtitle) scopeSubtitle.textContent = `Sistemas e incidencias a cargo de ${dName}`;
+      }
+    }
+  }
+
+  // Determinar aplicativos a graficar según el filtro activo
+  let scopedApps = [];
+  if (!isAdmin) {
+    scopedApps = getScopedApplications();
+  } else {
+    if (activeAnalyticsDevFilter === 'all') {
+      scopedApps = appState.applications || [];
+    } else {
+      scopedApps = (appState.applications || []).filter(a => isAppAssignedToDev(a, activeAnalyticsDevFilter));
+    }
+  }
 
   if (brandsChartInstance) brandsChartInstance.destroy();
   if (qaBugsChartInstance) qaBugsChartInstance.destroy();
 
   // 1. Brands / Systems Progress Doughnut
   if (brandsCtx) {
-    const labels = scopedApps.map(a => a.name);
-    const progressValues = scopedApps.map(a => calculateAppProgress(a));
-    const colors = scopedApps.map(a => a.iconColor || '#4E65FF');
+    // Si no hay aplicativos
+    const labels = scopedApps.length > 0 
+      ? scopedApps.map(a => {
+          const dev = getDeveloperById(a.devId);
+          const devName = a.isGroupProject ? 'Grupal' : (dev ? dev.name.split(' ')[0] : 'STF');
+          return `${a.name} (${devName})`;
+        })
+      : ['Sin Aplicativos'];
+    const progressValues = scopedApps.length > 0 ? scopedApps.map(a => calculateAppProgress(a)) : [0];
+    const colors = scopedApps.length > 0 ? scopedApps.map(a => a.iconColor || '#4E65FF') : ['#E2E8F0'];
 
     brandsChartInstance = new Chart(brandsCtx, {
       type: 'doughnut',
@@ -6211,7 +6298,12 @@ function renderAnalyticsView() {
 
   // 2. QA Defects Grouped Bar Chart
   if (qaCtx) {
-    const appNames = scopedApps.map(a => a.name.length > 14 ? a.name.substring(0, 14) + '...' : a.name);
+    const appNames = scopedApps.map(a => {
+      const dev = getDeveloperById(a.devId);
+      const devInit = a.isGroupProject ? '👥' : (dev ? `[${dev.name.split(' ')[0]}]` : '');
+      const shortTitle = a.name.length > 12 ? a.name.substring(0, 12) + '..' : a.name;
+      return `${shortTitle} ${devInit}`;
+    });
     const defaultReportedByApp = {
       app_torre: 18,
       app_colchas: 14,
