@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=2">
+  <link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 <body>
 
@@ -71,17 +71,17 @@
         </div>
 
         <div class="header-actions">
-          <button class="pill-btn primary-glow-btn" id="btnNewProject" onclick="openNewProjectModal()">
+          <button class="pill-btn primary-glow-btn" id="btnNewProject">
             <i data-lucide="plus"></i>
             <span>Nuevo Aplicativo</span>
           </button>
           
-          <button class="pill-btn secondary-btn" id="btnAssignTask" onclick="openAssignIntegrationModal()">
+          <button class="pill-btn secondary-btn" id="btnAssignTask">
             <i data-lucide="check-square"></i>
             <span>Asignar Tarea</span>
           </button>
 
-          <button class="pill-btn secondary-btn" id="btnExportReport" onclick="exportExecutiveReport()">
+          <button class="pill-btn secondary-btn" id="btnExportReport">
             <i data-lucide="file-spreadsheet"></i>
             <span>Reporte Ejecutivo</span>
           </button>
@@ -98,10 +98,24 @@
             <i data-lucide="chevron-down"></i>
           </div>
 
-          <button class="icon-circle-btn notification-btn" title="Notificaciones de Alertas">
-            <i data-lucide="bell"></i>
-            <span class="notification-badge">3</span>
-          </button>
+          <div class="header-notifications-wrapper" style="position: relative;">
+            <button class="icon-circle-btn notification-btn" id="btnNotifications" title="Notificaciones de Alertas en Planta">
+              <i data-lucide="bell"></i>
+              <span class="notification-badge" id="notificationBadgeCount">2</span>
+            </button>
+            <div class="header-dev-dropdown" id="notificationsDropdown" style="width: 340px; right: 0;">
+              <div class="dropdown-session-header" style="padding-bottom: 8px;">
+                <div class="dsh-label" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>🔔 Alertas Operativas en Tiempo Real</span>
+                  <span id="notifDropdownTag" style="font-size: 10.5px; color: #F59E0B; font-weight: 700;">Activas</span>
+                </div>
+              </div>
+              <div class="dev-drop-divider"></div>
+              <div id="notificationsListContainer" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px 0;">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+          </div>
 
           <!-- Interactive Developer Profile Selector (Header) -->
           <div class="header-dev-selector-wrapper" id="headerDevSelectorWrapper">
@@ -740,11 +754,11 @@
           </div>
 
           <div class="devs-toolbar-actions">
-            <button class="pill-btn secondary-btn" id="btnSyncUsersSheets" onclick="manualSyncUsersWithSheets()" title="Traer y sincronizar usuarios desde la hoja de Google Sheets">
+            <button class="pill-btn secondary-btn" id="btnSyncUsersSheets" title="Traer y sincronizar usuarios desde la hoja de Google Sheets">
               <i data-lucide="refresh-cw" id="iconSyncUsersSpin"></i>
               <span>Sincronizar con Sheets</span>
             </button>
-            <button class="pill-btn primary-btn" id="btnOpenNewDevModal" onclick="openNewDeveloperModal()" title="Crear un nuevo usuario de desarrollador">
+            <button class="pill-btn primary-btn" id="btnOpenNewDevModal" title="Crear un nuevo usuario de desarrollador">
               <i data-lucide="user-plus"></i>
               <span>+ Nuevo Desarrollador</span>
             </button>
@@ -806,44 +820,44 @@
                   <th>Riesgo de Desviación</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="analyticsBottleneckTableBody">
                 <tr>
                   <td><strong>1. Levantamiento & Requisitos</strong></td>
                   <td>10%</td>
-                  <td>0 Aplicativos (Completada en todos)</td>
+                  <td>0 Aplicativos (Completada en los 6 sistemas)</td>
                   <td>6 días</td>
                   <td><span class="status-pill status-ontime">Controlado</span></td>
                 </tr>
                 <tr>
                   <td><strong>2. Arquitectura & Diseño UI/UX</strong></td>
                   <td>15%</td>
-                  <td>0 Aplicativos (Aprobada)</td>
+                  <td>0 Aplicativos (Aprobada en los 6 sistemas)</td>
                   <td>10 días</td>
                   <td><span class="status-pill status-ontime">Controlado</span></td>
                 </tr>
                 <tr>
                   <td><strong>3. Desarrollo Backend & Lógica Core</strong></td>
                   <td>30%</td>
-                  <td>2 Aplicativos (Checkout & App Móvil)</td>
+                  <td>0 Aplicativos (Completada en los 6 sistemas)</td>
                   <td>22 días</td>
                   <td><span class="status-pill status-ontime">En tiempo</span></td>
                 </tr>
                 <tr>
-                  <td><strong>4. Frontend & Integración</strong></td>
+                  <td><strong>4. Frontend & Integración de Interfaces</strong></td>
                   <td>25%</td>
-                  <td>2 Aplicativos (WMS Logística & Portal B2B)</td>
+                  <td>3 Aplicativos (LABORATORIO, GEO UBICACION TALLERES, TINTORERIA)</td>
                   <td>18 días</td>
                   <td><span class="status-pill status-risk">Atención Requerida</span></td>
                 </tr>
                 <tr>
-                  <td><strong>5. Pruebas QA & UAT</strong></td>
+                  <td><strong>5. Pruebas QA, Seguridad & UAT</strong></td>
                   <td>15%</td>
-                  <td>2 Aplicativos (POS Studio F & Integrador SAP)</td>
+                  <td>3 Aplicativos (TORRE DE CONTROL, COLCHAS, CALIDAD)</td>
                   <td>14 días</td>
                   <td><span class="status-pill status-ontime">En tiempo</span></td>
                 </tr>
                 <tr>
-                  <td><strong>6. Despliegue en Producción</strong></td>
+                  <td><strong>6. Despliegue & Salida a Producción</strong></td>
                   <td>5%</td>
                   <td>0 Aplicativos en fase final</td>
                   <td>3 días</td>
@@ -1131,13 +1145,14 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="newSysCategory">Categoría / Marca</label>
+              <label for="newSysCategory">Categoría / Planta Industrial</label>
               <select id="newSysCategory" class="form-input">
-                <option value="Studio F">Studio F</option>
-                <option value="ELA">ELA</option>
-                <option value="CEDI & Logística">CEDI & Logística</option>
-                <option value="Finanzas & ERP">Finanzas & ERP</option>
-                <option value="Omnicanalidad">Omnicanalidad</option>
+                <option value="Desarrollo Grupal">Desarrollo Grupal (Corporativo)</option>
+                <option value="Manufactura & Producción">Manufactura & Producción</option>
+                <option value="Control Textil">Control Textil (Laboratorio)</option>
+                <option value="Logística & Talleres">Logística & Talleres (GPS)</option>
+                <option value="Aseguramiento de Calidad">Aseguramiento de Calidad (AQL)</option>
+                <option value="Planta Textil">Planta Textil (Tintorería)</option>
               </select>
             </div>
             <div class="form-group">
@@ -1866,8 +1881,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=2"></script>
-  <script src="js/sheets-sync.js?v=2"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="js/data.js?v=3"></script>
+  <script src="js/sheets-sync.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>

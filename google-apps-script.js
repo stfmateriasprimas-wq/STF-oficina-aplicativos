@@ -135,14 +135,15 @@ function initializeSheets() {
       "ID",
       "Usuario_Logueo",
       "Rol",
-      "Correo"
+      "Correo",
+      "Nombre"
     ]);
     formatHeaderRow(sUsuarios, "#0F172A"); // Slate dark
-    sUsuarios.appendRow(["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com"]);
-    sUsuarios.appendRow(["1107047649", "juan@david", "desarrollador", ""]);
-    sUsuarios.appendRow(["1111", "esteban@escobar", "desarrollador", ""]);
-    sUsuarios.appendRow(["1010159672", "jhon@eyder", "desarrollador", ""]);
-    sUsuarios.appendRow(["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co"]);
+    sUsuarios.appendRow(["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman"]);
+    sUsuarios.appendRow(["1107047649", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David"]);
+    sUsuarios.appendRow(["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar"]);
+    sUsuarios.appendRow(["1010159672", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)"]);
+    sUsuarios.appendRow(["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz"]);
   }
 }
 
@@ -206,14 +207,59 @@ function doGet(e) {
     if (uRows.length > 1) {
       for (var r = 1; r < uRows.length; r++) {
         usersList.push({
-          idPassword: String(uRows[r][0]).trim(),
-          username: String(uRows[r][1]).trim(),
-          role: String(uRows[r][2]).trim(),
-          email: String(uRows[r][3]).trim()
+          idPassword: String(uRows[r][0] || "").trim(),
+          username: String(uRows[r][1] || "").trim(),
+          role: String(uRows[r][2] || "").trim(),
+          email: String(uRows[r][3] || "").trim(),
+          name: uRows[r].length > 4 ? String(uRows[r][4] || "").trim() : ""
         });
       }
     }
     return createJsonResponse({ status: "success", users: usersList });
+  }
+
+  if (action === "get_all_data") {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
+    var tRows = sTareas.getDataRange().getValues();
+    var tasks = [];
+    if (tRows.length > 1) {
+      for (var t = 1; t < tRows.length; t++) {
+        tasks.push({
+          id: String(tRows[t][0] || "").trim(),
+          name: String(tRows[t][1] || "").trim(),
+          appName: String(tRows[t][2] || "").trim(),
+          devName: String(tRows[t][3] || "").trim(),
+          weight: Number(tRows[t][4]) || 15,
+          deadline: String(tRows[t][5] || "").trim(),
+          status: String(tRows[t][6] || "").trim(),
+          evaluation: String(tRows[t][7] || "").trim(),
+          createdDate: String(tRows[t][8] || "").trim()
+        });
+      }
+    }
+
+    var sSistemas = getOrCreateSheet(ss, TABS.SISTEMAS);
+    var sysRows = sSistemas.getDataRange().getValues();
+    var systems = [];
+    if (sysRows.length > 1) {
+      for (var s = 1; s < sysRows.length; s++) {
+        systems.push({
+          id: String(sysRows[s][0] || "").trim(),
+          name: String(sysRows[s][1] || "").trim(),
+          devName: String(sysRows[s][2] || "").trim(),
+          currentPhase: String(sysRows[s][3] || "").trim(),
+          progress: Number(sysRows[s][4]) || 0,
+          slaStatus: String(sysRows[s][5] || "").trim()
+        });
+      }
+    }
+
+    return createJsonResponse({
+      status: "success",
+      tasks: tasks,
+      systems: systems
+    });
   }
 
   return createJsonResponse({ status: "error", message: "Acción no reconocida" });
@@ -469,7 +515,8 @@ function doPost(e) {
           userItem.id || userItem.idPassword || "",
           userItem.username || "",
           userItem.role || "desarrollador",
-          userItem.email || ""
+          userItem.email || "",
+          userItem.name || ""
         ]);
       }
 

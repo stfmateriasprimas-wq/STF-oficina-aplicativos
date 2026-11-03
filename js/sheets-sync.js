@@ -25,7 +25,7 @@
       this.updateUiStatus();
 
       const btnOpen = document.getElementById('btnOpenSheetsModal');
-      if (btnOpen) {
+      if (btnOpen && !btnOpen.getAttribute('onclick')) {
         btnOpen.addEventListener('click', (e) => {
           e.preventDefault();
           window.openSheetsModal();
@@ -230,7 +230,7 @@
       const appList = appState.applications.map(app => {
         const dev = appState.developers ? appState.developers.find(d => d.id === app.devId) : null;
         const currentPhase = app.phases ? (app.phases.find(p => !p.completed) || app.phases[app.phases.length - 1]) : null;
-        
+
         let progress = 0;
         if (typeof window.calculateAppProgress === 'function') {
           progress = window.calculateAppProgress(app);
@@ -370,7 +370,7 @@
         validCloudUsernames.add(username.toLowerCase());
 
         // Buscar coincidencia en developers existentes
-        let match = stateDevs.find(d => 
+        let match = stateDevs.find(d =>
           (d.username && d.username.toLowerCase() === username.toLowerCase()) ||
           d.id.toLowerCase() === `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}` ||
           (d.idPassword && String(d.idPassword).trim() === idPassword)
@@ -406,20 +406,45 @@
 
       // Eliminar usuarios locales que fueron borrados directamente en Google Sheets (excepto el admin principal dev_ediaz)
       if (cloudUsers.length > 0) {
-        window.appState.developers = stateDevs.filter(d => 
-          d.id === 'dev_ediaz' || 
+        window.appState.developers = stateDevs.filter(d =>
+          d.id === 'dev_ediaz' ||
           (d.username && validCloudUsernames.has(d.username.toLowerCase()))
         );
       }
 
       // Guardar cambios en localStorage
-      if (typeof window.saveStoredData === 'function') {
+      if (typeof window.saveData === 'function') {
+        window.saveData(window.appState);
+      } else if (typeof window.saveStoredData === 'function') {
         window.saveStoredData();
       }
 
-      // Actualizar vista de desarrolladores si está activa
+      // Sincronizar almacén de credenciales para login.html
+      try {
+        const creds = window.appState.developers.map(d => ({
+          id: d.id,
+          idPassword: d.idPassword || (d.id === 'dev_ediaz' ? 'Admin' : '123456'),
+          username: d.username || d.id,
+          role: d.roleType || d.role || 'desarrollador',
+          name: d.name,
+          email: d.email || '',
+          avatar: d.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'
+        }));
+        localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(creds));
+      } catch (e) { }
+
+      // Actualizar vistas y selectores de desarrolladores
       if (typeof window.renderDevelopersFullView === 'function') {
         window.renderDevelopersFullView();
+      }
+      if (typeof window.renderDevelopersSection === 'function') {
+        window.renderDevelopersSection();
+      }
+      if (typeof window.renderHeaderDevDropdown === 'function') {
+        window.renderHeaderDevDropdown();
+      }
+      if (typeof window.syncDynamicSelects === 'function') {
+        window.syncDynamicSelects();
       }
     },
 
@@ -429,7 +454,7 @@
     findApp(nameOrId) {
       if (!nameOrId || !window.appState || !Array.isArray(window.appState.applications)) return null;
       const t = String(nameOrId).toLowerCase().trim();
-      return window.appState.applications.find(a => 
+      return window.appState.applications.find(a =>
         a.id.toLowerCase() === t ||
         a.name.toLowerCase() === t ||
         t.includes(a.name.toLowerCase()) ||
@@ -444,7 +469,7 @@
     findDev(nameOrId) {
       if (!nameOrId || !window.appState || !Array.isArray(window.appState.developers)) return null;
       const t = String(nameOrId).toLowerCase().trim();
-      return window.appState.developers.find(d => 
+      return window.appState.developers.find(d =>
         d.id.toLowerCase() === t ||
         d.name.toLowerCase() === t ||
         t.includes(d.name.toLowerCase()) ||
@@ -557,13 +582,13 @@
         const devObj = this.findDev(task.devName || task.developer || task.Desarrollador);
         const tId = String(task.id || task.ID_Tarea || `int_${Date.now()}`);
 
-        const existing = state.integrations.find(i => 
-          i.id === tId || 
+        const existing = state.integrations.find(i =>
+          i.id === tId ||
           i.name.trim().toLowerCase() === tName.toLowerCase()
         );
 
-        const isEval = String(task.status || task.Estado || '').toLowerCase().includes('audit') || 
-                       String(task.status || task.Estado || '').toLowerCase().includes('aprob');
+        const isEval = String(task.status || task.Estado || '').toLowerCase().includes('audit') ||
+          String(task.status || task.Estado || '').toLowerCase().includes('aprob');
 
         if (existing) {
           if (isEval && existing.status !== 'evaluated') {
@@ -654,7 +679,7 @@
             const appObj = this.findApp(appName);
             const devObj = this.findDev(devName);
 
-            const existing = state.integrations.find(i => 
+            const existing = state.integrations.find(i =>
               i.name.trim().toLowerCase() === taskName.toLowerCase() ||
               (item.Timestamp && i.id === `int_${item.Timestamp}`)
             );
@@ -687,8 +712,8 @@
 
             const appObj = this.findApp(appName);
             if (appObj && Array.isArray(appObj.phases)) {
-              const targetPhase = appObj.phases.find(p => 
-                p.name.toLowerCase().includes(phaseName.toLowerCase()) || 
+              const targetPhase = appObj.phases.find(p =>
+                p.name.toLowerCase().includes(phaseName.toLowerCase()) ||
                 phaseName.toLowerCase().includes(p.name.toLowerCase())
               );
               if (targetPhase && completed && !targetPhase.completed) {
@@ -816,6 +841,10 @@
   };
 
   function getDevNameById(id) {
+    if (window.appState && Array.isArray(window.appState.developers)) {
+      const found = window.appState.developers.find(d => d.id === id);
+      if (found && found.name) return found.name;
+    }
     if (id === 'dev_jg') return 'Jose Guzman';
     if (id === 'dev_jd') return 'Juan David';
     if (id === 'dev_mocho') return 'Mocho';
@@ -945,7 +974,7 @@
       try {
         const res = await fetch('google-apps-script.js');
         if (res.ok) code = await res.text();
-      } catch (e) {}
+      } catch (e) { }
 
       if (!code) {
         code = `// Abre el archivo google-apps-script.js en tu carpeta del proyecto para copiar el código.`;

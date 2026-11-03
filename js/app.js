@@ -64,14 +64,22 @@ function getDominantPhase() {
   return maxPhase;
 }
 
+function getTodayIsoDate() {
+  const ref = (typeof getSystemReferenceDate === 'function') ? getSystemReferenceDate() : new Date();
+  const yyyy = ref.getFullYear();
+  const mm = String(ref.getMonth() + 1).padStart(2, '0');
+  const dd = String(ref.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function updateHeaderStatChips() {
   if (!appState || !Array.isArray(appState.applications)) return;
-  const chipApps = document.getElementById('chipActiveAppsCount');
+  const chipApps = document.getElementById('chipActiveApps') || document.getElementById('chipActiveAppsCount');
   if (chipApps) {
     chipApps.textContent = `${appState.applications.length} Aplicativos Activos`;
   }
   const riskCount = appState.applications.filter(a => a.status === 'risk' || a.status === 'delayed').length;
-  const chipRisk = document.getElementById('chipRiskAppsCount');
+  const chipRisk = document.getElementById('chipRiskApps') || document.getElementById('chipRiskAppsCount');
   if (chipRisk) {
     chipRisk.textContent = `${riskCount} En Riesgo`;
   }
@@ -80,9 +88,139 @@ function updateHeaderStatChips() {
   if (globalAvgBadge) {
     globalAvgBadge.textContent = `${globalProg}%`;
   }
+  if (typeof renderNotificationsDropdown === 'function') {
+    renderNotificationsDropdown();
+  }
+}
+
+function syncDynamicSelects() {
+  if (!appState) return;
+  const devs = appState.developers || [];
+  const apps = appState.applications || [];
+
+  // 1. Selectores de Velocidad de Entrega (#velocityDevFilter y #vcalDevSelect)
+  ['velocityDevFilter', 'vcalDevSelect'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const prevVal = sel.value || 'all';
+    const nonAdminDevs = devs.filter(d => d.id !== 'dev_ediaz');
+    sel.innerHTML = `<option value="all">👥 Todo el Equipo (Consolidado)</option>` +
+      nonAdminDevs.map(d => `<option value="${d.id}">👤 ${d.name}</option>`).join('');
+    if ([...sel.options].some(o => o.value === prevVal)) {
+      sel.value = prevVal;
+    } else {
+      sel.value = 'all';
+    }
+  });
+
+  // 2. Selector de Desarrollador en Reporte Ejecutivo (#repFilterDev)
+  const repDevSel = document.getElementById('repFilterDev');
+  if (repDevSel) {
+    const prevVal = repDevSel.value || 'all';
+    repDevSel.innerHTML = `<option value="all">🌐 Todos los Desarrolladores (Informe Global de Portafolio)</option>` +
+      devs.map(d => {
+        const isAdm = d.role === 'Admin' || d.roleType === 'Admin' || d.id === 'dev_ediaz';
+        return `<option value="${d.id}">${d.name} (${isAdm ? 'Director TI / Admin' : (d.role || 'Desarrollador')})</option>`;
+      }).join('');
+    if ([...repDevSel.options].some(o => o.value === prevVal)) {
+      repDevSel.value = prevVal;
+    }
+  }
+
+  // 3. Selector de Aplicativos en Reporte Ejecutivo (#repFilterApp)
+  const repAppSel = document.getElementById('repFilterApp');
+  if (repAppSel) {
+    const prevVal = repAppSel.value || 'all';
+    repAppSel.innerHTML = `<option value="all">📁 Todos los Aplicativos (Portafolio Completo)</option>` +
+      apps.map(a => `<option value="${a.id}">${a.name} (${a.code})</option>`).join('');
+    if ([...repAppSel.options].some(o => o.value === prevVal)) {
+      repAppSel.value = prevVal;
+    }
+  }
+}
+
+function renderNotificationsDropdown() {
+  const badgeEl = document.getElementById('notificationBadgeCount');
+  const listEl = document.getElementById('notificationsListContainer');
+  if (!listEl && !badgeEl) return;
+
+  const alerts = [];
+  // 1. Aplicativos en riesgo
+  (appState.applications || []).forEach(app => {
+    if (app.status === 'risk' || app.status === 'delayed') {
+      alerts.push({
+        type: 'risk',
+        title: `Sistema en Riesgo: ${app.name}`,
+        sub: `Código ${app.code} · Fecha límite: ${formatShortDate(app.deadline)}`,
+        action: () => openSystemDetailModal(app.id)
+      });
+    }
+  });
+
+  // 2. Tareas e integraciones vencidas o próximas a vencer
+  (appState.integrations || []).forEach(task => {
+    if (task.status === 'evaluated') return;
+    const diag = calculateIntegrationTimeProgress(task);
+    const app = getApplicationById(task.appId);
+    const dev = getDeveloperById(task.devId);
+    if (diag.isOverdue) {
+      alerts.push({
+        type: 'overdue',
+        title: `Tarea Vencida: ${task.name}`,
+        sub: `${dev ? dev.name : 'Dev'} · ${app ? app.name : 'Sistema'} (${diag.countdownText})`,
+        action: () => openEvaluateIntegrationModal(task.id)
+      });
+    } else if (diag.timeBurnRate >= 75) {
+      alerts.push({
+        type: 'warning',
+        title: `Entrega Próxima: ${task.name}`,
+        sub: `${dev ? dev.name : 'Dev'} · ${diag.countdownText}`,
+        action: () => openEvaluateIntegrationModal(task.id)
+      });
+    }
+  });
+
+  if (badgeEl) {
+    badgeEl.textContent = alerts.length;
+    badgeEl.style.display = alerts.length > 0 ? 'flex' : 'none';
+  }
+
+  if (listEl) {
+    if (alerts.length === 0) {
+      listEl.innerHTML = `
+        <div style="padding: 16px; text-align: center; color: #64748B; font-size: 12px;">
+          ✅ Todos los sistemas y entregas están en tiempo sin alertas críticas.
+        </div>
+      `;
+    } else {
+      listEl.innerHTML = alerts.map((al, idx) => {
+        const dotColor = al.type === 'overdue' ? '#EF4444' : (al.type === 'risk' ? '#F59E0B' : '#3B82F6');
+        return `
+          <div class="dev-drop-item" data-alert-idx="${idx}" style="align-items: flex-start; gap: 10px; padding: 10px 12px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${dotColor}; margin-top: 5px; flex-shrink: 0;"></span>
+            <div style="flex: 1;">
+              <strong style="font-size: 12px; display: block; color: #F8FAFC;">${al.title}</strong>
+              <span style="font-size: 11px; color: #94A3B8;">${al.sub}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listEl.querySelectorAll('.dev-drop-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const i = parseInt(item.getAttribute('data-alert-idx'));
+          document.getElementById('notificationsDropdown')?.classList.remove('show');
+          if (alerts[i] && typeof alerts[i].action === 'function') {
+            alerts[i].action();
+          }
+        });
+      });
+    }
+  }
 }
 
 function refreshAllViews() {
+  if (typeof syncDynamicSelects === 'function') syncDynamicSelects();
   if (typeof renderStackedDeck === 'function') renderStackedDeck();
   if (typeof renderCapsuleProgressBar === 'function') renderCapsuleProgressBar();
   if (typeof renderSystemsTable === 'function') renderSystemsTable();
@@ -96,6 +234,8 @@ function refreshAllViews() {
 }
 window.refreshAllViews = refreshAllViews;
 window.updateHeaderStatChips = updateHeaderStatChips;
+window.syncDynamicSelects = syncDynamicSelects;
+window.renderNotificationsDropdown = renderNotificationsDropdown;
 
 // ==========================================================================
 // RENDERERS
@@ -771,18 +911,14 @@ function updateQuickDevStrip() {
   const btnDetail = document.getElementById('btnOpenDevDetail');
   if (btnDetail) {
     btnDetail.onclick = () => {
-      if (typeof switchView === 'function') {
-        switchView('developers');
-      } else {
-        showToast(`Ficha de ${dev.name}: ${assigned.length} sistemas activos.`);
-      }
+      openDevScorecardModal(activeSelectedDevId);
     };
   }
 
   const btnAddDev = document.getElementById('btnAddDeveloper');
   if (btnAddDev) {
     btnAddDev.onclick = () => {
-      showToast('Formulario de registro de programador STF habilitado.');
+      openNewDeveloperModal();
     };
   }
 
@@ -2186,7 +2322,7 @@ function renderVelocityCalendarGrid() {
   }
 
   // 2. Días del mes actual
-  const todayStr = '2026-10-28'; // Fecha actual del sistema
+  const todayStr = getTodayIsoDate(); // Fecha actual del sistema
   for (let d = 1; d <= daysInMonth; d++) {
     const mm = String(vcalViewingMonth + 1).padStart(2, '0');
     const dd = String(d).padStart(2, '0');
@@ -3979,7 +4115,7 @@ function openAssignIntegrationModal() {
   }
 
   // Set default dates
-  const todayStr = '2026-10-19';
+  const todayStr = getTodayIsoDate();
   const startInput = document.getElementById('assignIntStartDate');
   const deadInput = document.getElementById('assignIntDeadline');
   const weightInput = document.getElementById('assignIntWeight');
@@ -4204,7 +4340,7 @@ function handleConfirmEvaluation() {
   // 1. Guardar evaluación oficial
   item.status = 'evaluated';
   item.evaluation = {
-    evalDate: '2026-10-19',
+    evalDate: getTodayIsoDate(),
     onTime: !diag.isOverdue,
     daysDifference: diag.daysRemaining,
     stabilityScore: vStab,
@@ -4280,22 +4416,39 @@ function initApp() {
   // Inicializar exclusivamente los datos del usuario autenticado en la cabecera
   renderHeaderSessionUser();
   renderHeaderDevDropdown();
+  syncDynamicSelects();
 
   // Header developer dropdown toggle
   const btnHeaderUser = document.getElementById('btnHeaderUserSelect');
   const headerDropdown = document.getElementById('headerDevDropdown');
+  const btnNotifications = document.getElementById('btnNotifications');
+  const notificationsDropdown = document.getElementById('notificationsDropdown');
+
   if (btnHeaderUser && headerDropdown) {
     btnHeaderUser.addEventListener('click', (e) => {
       e.stopPropagation();
+      notificationsDropdown?.classList.remove('show');
       headerDropdown.classList.toggle('show');
     });
+  }
 
-    document.addEventListener('click', (e) => {
-      if (!headerDropdown.contains(e.target) && !btnHeaderUser.contains(e.target)) {
-        headerDropdown.classList.remove('show');
-      }
+  if (btnNotifications && notificationsDropdown) {
+    btnNotifications.addEventListener('click', (e) => {
+      e.stopPropagation();
+      headerDropdown?.classList.remove('show');
+      renderNotificationsDropdown();
+      notificationsDropdown.classList.toggle('show');
     });
   }
+
+  document.addEventListener('click', (e) => {
+    if (headerDropdown && btnHeaderUser && !headerDropdown.contains(e.target) && !btnHeaderUser.contains(e.target)) {
+      headerDropdown.classList.remove('show');
+    }
+    if (notificationsDropdown && btnNotifications && !notificationsDropdown.contains(e.target) && !btnNotifications.contains(e.target)) {
+      notificationsDropdown.classList.remove('show');
+    }
+  });
 
   // Initial renders
   renderStackedDeck();
@@ -4366,15 +4519,8 @@ function initApp() {
 
   document.getElementById('btnCloseDevModal')?.addEventListener('click', closeDevScorecardModal);
   document.getElementById('btnCloseDevScorecardBtn')?.addEventListener('click', closeDevScorecardModal);
-  document.getElementById('btnOpenDevDetail')?.addEventListener('click', () => {
-    openDevScorecardModal(activeSelectedDevId);
-  });
   document.getElementById('btnSeeAllDevs')?.addEventListener('click', () => {
     openDevScorecardModal(activeSelectedDevId);
-  });
-
-  document.getElementById('btnAddDeveloper')?.addEventListener('click', () => {
-    showToast('Registro de nuevo programador disponible en la vista de configuración.');
   });
 
   document.getElementById('btnScrollDevsRight')?.addEventListener('click', () => {
@@ -4989,7 +5135,7 @@ function openAppTasksDrawer(appId) {
   setTimeout(() => {
     if (app.devId) openedDevFolders.add(app.devId);
     if (app.devIds) app.devIds.forEach(id => openedDevFolders.add(id));
-    renderIntegrationsCards();
+    renderIntegrationsList('all');
 
     const targetElement = document.getElementById('integrationsCardsList');
     if (targetElement) {
@@ -5333,7 +5479,9 @@ async function handleCreateDeveloperSubmit(e) {
   // 3. Cerrar modal y refrescar interfaces
   closeNewDeveloperModal();
   renderDevelopersFullView();
+  renderDevelopersSection();
   renderHeaderDevDropdown();
+  syncDynamicSelects();
 
   if (typeof showToast === 'function') {
     showToast(`✅ Desarrollador "${name}" registrado. ¡Logueo activo con usuario "${username}"!`);
@@ -5387,7 +5535,9 @@ async function deleteDeveloperUser(devId, event) {
   } catch (err) {}
 
   renderDevelopersFullView();
+  renderDevelopersSection();
   renderHeaderDevDropdown();
+  syncDynamicSelects();
 
   if (typeof showToast === 'function') {
     showToast(`🗑️ Desarrollador "${devName}" eliminado.`);
@@ -5494,8 +5644,10 @@ function renderAnalyticsView() {
   // 2. QA Defects Grouped Bar Chart
   if (qaCtx) {
     const appNames = appState.applications.map(a => a.name.length > 14 ? a.name.substring(0, 14) + '...' : a.name);
-    const bugsReported = [18, 14, 10, 16, 12, 11];
-    const bugsResolved = [15, 13, 10, 12, 11, 9];
+    const defaultReported = [18, 14, 10, 16, 12, 11];
+    const defaultResolved = [15, 13, 10, 12, 11, 9];
+    const bugsReported = appState.applications.map((_, i) => defaultReported[i] !== undefined ? defaultReported[i] : 10);
+    const bugsResolved = appState.applications.map((_, i) => defaultResolved[i] !== undefined ? defaultResolved[i] : 9);
 
     qaBugsChartInstance = new Chart(qaCtx, {
       type: 'bar',
@@ -5533,6 +5685,47 @@ function renderAnalyticsView() {
         }
       }
     });
+  }
+
+  // 3. Renderizar dinámicamente la Matriz de Cuellos de Botella con los sistemas reales de STF GROUP
+  const bottleneckBody = document.getElementById('analyticsBottleneckTableBody');
+  if (bottleneckBody) {
+    const standardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases)
+      ? STF_DATA.standardPhases
+      : [
+          { name: '1. Levantamiento & Requisitos', weight: 10 },
+          { name: '2. Arquitectura & Diseño UI/UX', weight: 15 },
+          { name: '3. Desarrollo Backend & Lógica Core', weight: 30 },
+          { name: '4. Frontend & Integración de Interfaces', weight: 25 },
+          { name: '5. Pruebas QA, Seguridad & UAT', weight: 15 },
+          { name: '6. Despliegue & Salida a Producción', weight: 5 }
+        ];
+    const avgDaysByPhase = [6, 10, 22, 18, 14, 3];
+
+    bottleneckBody.innerHTML = standardPhases.map((phase, idx) => {
+      const appsInThisPhase = (appState.applications || []).filter(app => {
+        const activeIdx = (app.phases || []).findIndex(p => !p.completed);
+        return activeIdx === idx;
+      });
+      const count = appsInThisPhase.length;
+      const namesList = count > 0
+        ? `${count} Aplicativo${count !== 1 ? 's' : ''} (${appsInThisPhase.map(a => a.name).join(', ')})`
+        : (idx < 3 ? `0 Aplicativos (Completada en los sistemas activos)` : `0 Aplicativos en esta etapa`);
+      const hasRiskApp = appsInThisPhase.some(a => a.status === 'risk');
+      const statusHtml = hasRiskApp
+        ? `<span class="status-pill status-risk">Atención Requerida</span>`
+        : (count > 0 ? `<span class="status-pill status-ontime">En tiempo</span>` : `<span class="status-pill status-ontime">Controlado</span>`);
+
+      return `
+        <tr>
+          <td><strong>${phase.name}</strong></td>
+          <td>${phase.weight}%</td>
+          <td>${namesList}</td>
+          <td>${avgDaysByPhase[idx] || 10} días</td>
+          <td>${statusHtml}</td>
+        </tr>
+      `;
+    }).join('');
   }
 }
 
@@ -5575,9 +5768,13 @@ function downloadFullBackupJSON() {
 function resetFactoryData() {
   if (confirm("¿Estás seguro de restablecer los datos de demostración de STF GROUP? Se sobreescribirán los cambios locales.")) {
     localStorage.removeItem('STF_GROUP_DASHBOARD_DATA');
+    localStorage.removeItem('STF_GROUP_REAL_DATA_V6');
+    localStorage.removeItem('STF_USERS_CREDENTIALS_STORE');
     appState = getStoredData();
+    window.appState = appState;
+    refreshAllViews();
     switchView('dashboard');
-    showToast("Datos restaurados a valores de demostración.");
+    showToast("Datos restaurados a valores oficiales de STF GROUP.");
   }
 }
 
