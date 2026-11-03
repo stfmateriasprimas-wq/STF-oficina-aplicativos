@@ -9,6 +9,83 @@ if (typeof window !== 'undefined') {
   window.appState = appState;
 }
 
+// Mapa de alias oficiales para garantizar que cualquier ID derivado de Sheets/login resuelva al ID canónico del sistema
+const CANONICAL_DEV_MAP = {
+  'dev_jg': 'dev_jg',
+  'dev_jose_guzman': 'dev_jg',
+  'jose@guzman': 'dev_jg',
+  'joseoneiber711@gmail.com': 'dev_jg',
+  'jose': 'dev_jg',
+  'jose guzman': 'dev_jg',
+  'dev_jd': 'dev_jd',
+  'dev_juan_david': 'dev_jd',
+  'juan@david': 'dev_jd',
+  'juan': 'dev_jd',
+  'juan david': 'dev_jd',
+  'dev_ee': 'dev_ee',
+  'dev_esteban_escobar': 'dev_ee',
+  'esteban@escobar': 'dev_ee',
+  'esteban': 'dev_ee',
+  'esteban escobar': 'dev_ee',
+  'dev_mocho': 'dev_mocho',
+  'dev_jhon_eyder': 'dev_mocho',
+  'jhon@eyder': 'dev_mocho',
+  'jhon': 'dev_mocho',
+  'jhon eyder': 'dev_mocho',
+  'jhon eyder (mocho)': 'dev_mocho',
+  'dev_ediaz': 'dev_ediaz',
+  'dev_edwin_diaz': 'dev_ediaz',
+  'ediaz': 'dev_ediaz',
+  'edwin.diaz@studiof.com.co': 'dev_ediaz',
+  'edwin': 'dev_ediaz',
+  'edwin diaz': 'dev_ediaz'
+};
+
+function resolveCanonicalDevId(input) {
+  if (!input) return null;
+  if (typeof input === 'string') {
+    const clean = input.trim().toLowerCase();
+    if (CANONICAL_DEV_MAP[clean]) return CANONICAL_DEV_MAP[clean];
+    const devs = (appState && Array.isArray(appState.developers)) ? appState.developers : [];
+    const found = devs.find(d =>
+      (d.id && d.id.toLowerCase() === clean) ||
+      (d.username && d.username.toLowerCase() === clean) ||
+      (d.email && d.email.toLowerCase() === clean) ||
+      (d.name && d.name.toLowerCase() === clean)
+    );
+    return found ? found.id : input;
+  }
+  if (typeof input === 'object') {
+    const candidates = [
+      input.username,
+      input.id,
+      input.email,
+      input.name,
+      localStorage.getItem('STF_LOGGED_USERNAME'),
+      localStorage.getItem('STF_ACTIVE_DEV_ID')
+    ];
+    for (const c of candidates) {
+      if (!c) continue;
+      const clean = String(c).trim().toLowerCase();
+      if (CANONICAL_DEV_MAP[clean]) return CANONICAL_DEV_MAP[clean];
+    }
+    const devs = (appState && Array.isArray(appState.developers)) ? appState.developers : [];
+    for (const c of candidates) {
+      if (!c) continue;
+      const clean = String(c).trim().toLowerCase();
+      const found = devs.find(d =>
+        (d.id && d.id.toLowerCase() === clean) ||
+        (d.username && d.username.toLowerCase() === clean) ||
+        (d.email && d.email.toLowerCase() === clean) ||
+        (d.name && d.name.toLowerCase() === clean)
+      );
+      if (found) return found.id;
+    }
+    return input.id || 'dev_jg';
+  }
+  return 'dev_jg';
+}
+
 // Sesión autenticada y anclaje de Columna 2 (Usuario) y Columna 3 (Rol)
 const savedLoggedUserJson = localStorage.getItem('STF_LOGGED_USER');
 let loggedUser = null;
@@ -23,7 +100,34 @@ function getLoggedSessionUser() {
       try { loggedUser = JSON.parse(saved); } catch(e) {}
     }
   }
-  return loggedUser || {
+  if (loggedUser) {
+    const canonicalId = resolveCanonicalDevId(loggedUser);
+    const devs = (appState && Array.isArray(appState.developers)) ? appState.developers : [];
+    const canonicalDev = devs.find(d => d.id === canonicalId);
+    if (canonicalDev) {
+      let needsRepair = false;
+      if (loggedUser.id !== canonicalDev.id) {
+        loggedUser.id = canonicalDev.id;
+        needsRepair = true;
+      }
+      if (!loggedUser.name || loggedUser.name.trim().split(' ').length < 2) {
+        loggedUser.name = canonicalDev.name;
+        needsRepair = true;
+      }
+      if (!loggedUser.avatar && canonicalDev.avatar) {
+        loggedUser.avatar = canonicalDev.avatar;
+        needsRepair = true;
+      }
+      if (needsRepair) {
+        try {
+          localStorage.setItem('STF_LOGGED_USER', JSON.stringify(loggedUser));
+          localStorage.setItem('STF_ACTIVE_DEV_ID', canonicalDev.id);
+        } catch (e) {}
+      }
+    }
+    return loggedUser;
+  }
+  return {
     id: 'dev_ediaz',
     name: 'Edwin Diaz',
     username: 'ediaz',
@@ -43,12 +147,20 @@ function isCurrentSessionAdmin() {
 
 function getLoggedDevId() {
   const session = getLoggedSessionUser();
-  return session.id || localStorage.getItem('STF_ACTIVE_DEV_ID') || 'dev_jg';
+  return resolveCanonicalDevId(session) || 'dev_jg';
 }
 
 function isAppAssignedToDev(app, devId) {
   if (!app || !devId) return false;
-  return app.devId === devId || (Array.isArray(app.devIds) && app.devIds.includes(devId));
+  const canonicalDevId = resolveCanonicalDevId(devId);
+  const appDevId = resolveCanonicalDevId(app.devId);
+  if (appDevId === canonicalDevId) return true;
+  if (Array.isArray(app.devIds) && app.devIds.some(id => resolveCanonicalDevId(id) === canonicalDevId)) return true;
+  const devObj = (appState && Array.isArray(appState.developers))
+    ? appState.developers.find(d => resolveCanonicalDevId(d.id) === canonicalDevId)
+    : null;
+  if (devObj && Array.isArray(devObj.activeProjects) && devObj.activeProjects.includes(app.id)) return true;
+  return false;
 }
 
 function getScopedApplications() {
@@ -62,16 +174,17 @@ function getScopedIntegrations() {
   const allInts = (appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
   if (isCurrentSessionAdmin()) return allInts;
   const devId = getLoggedDevId();
-  return allInts.filter(t => t.devId === devId);
+  return allInts.filter(t => resolveCanonicalDevId(t.devId) === devId);
 }
 
 window.isCurrentSessionAdmin = isCurrentSessionAdmin;
 window.getScopedApplications = getScopedApplications;
 window.getScopedIntegrations = getScopedIntegrations;
+window.resolveCanonicalDevId = resolveCanonicalDevId;
 
 let activeSelectedDevId = !isCurrentSessionAdmin()
   ? getLoggedDevId()
-  : ((loggedUser && loggedUser.id) || localStorage.getItem('STF_ACTIVE_DEV_ID') || (appState.developers[0] && appState.developers[0].id) || 'dev_jg');
+  : (resolveCanonicalDevId(loggedUser) || resolveCanonicalDevId(localStorage.getItem('STF_ACTIVE_DEV_ID')) || (appState.developers[0] && appState.developers[0].id) || 'dev_jg');
 let currentEditingSysId = null;
 
 // Chart Instances
@@ -95,7 +208,8 @@ function calculateGlobalProgress() {
 }
 
 function getDeveloperById(devId) {
-  return appState.developers.find(d => d.id === devId) || appState.developers[0];
+  const canonical = resolveCanonicalDevId(devId);
+  return appState.developers.find(d => d.id === canonical || d.id === devId) || appState.developers[0];
 }
 
 function getApplicationById(appId) {

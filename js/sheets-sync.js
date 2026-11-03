@@ -369,25 +369,28 @@
         if (!username && !idPassword) return;
         validCloudUsernames.add(username.toLowerCase());
 
-        // Buscar coincidencia en developers existentes
+        // Buscar coincidencia en developers existentes (incluyendo resolución canónica por usuario o ID)
+        const canonicalId = typeof window.resolveCanonicalDevId === 'function' ? window.resolveCanonicalDevId(username) : null;
         let match = stateDevs.find(d =>
+          (canonicalId && d.id === canonicalId) ||
           (d.username && d.username.toLowerCase() === username.toLowerCase()) ||
           d.id.toLowerCase() === `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}` ||
           (d.idPassword && String(d.idPassword).trim() === idPassword)
         );
 
         if (match) {
-          // Actualizar datos desde Google Sheets
+          // Actualizar datos desde Google Sheets preservando el ID canónico y nombre completo
+          if (canonicalId && canonicalId.startsWith('dev_')) match.id = canonicalId;
           match.username = username || match.username;
           match.role = role || match.role;
           match.email = email || match.email;
           match.idPassword = idPassword || match.idPassword;
-          if (nameFromSheet) match.name = nameFromSheet;
+          if (nameFromSheet && nameFromSheet.split(' ').length >= 2) match.name = nameFromSheet;
         } else {
           // Crear nuevo desarrollador importado desde la hoja de Sheets
-          const cleanName = nameFromSheet || username.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          const cleanName = nameFromSheet || username.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           const newDev = {
-            id: `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
+            id: canonicalId || `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
             name: cleanName,
             username: username,
             idPassword: idPassword,

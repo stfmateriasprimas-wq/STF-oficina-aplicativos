@@ -376,14 +376,23 @@ function getStoredData() {
           const ediazDev = STF_REAL_DATA.developers.find(d => d.id === 'dev_ediaz');
           if (ediazDev) parsed.developers.push(ediazDev);
         }
-        // Asegurar usernames, roles oficiales y array de proyectos activos
+        // Asegurar usernames, IDs canónicos, nombres completos, roles oficiales y array de proyectos activos
         STF_REAL_DATA.developers.forEach(officialDev => {
-          const target = parsed.developers.find(d => d.id === officialDev.id);
+          const target = parsed.developers.find(d =>
+            d.id === officialDev.id ||
+            (d.username && d.username.toLowerCase() === officialDev.username.toLowerCase())
+          );
           if (target) {
+            target.id = officialDev.id;
+            target.name = officialDev.name;
             target.username = officialDev.username;
             target.role = officialDev.role;
             if (officialDev.email) target.email = officialDev.email;
-            if (!Array.isArray(target.activeProjects)) target.activeProjects = [...(officialDev.activeProjects || [])];
+            if (!Array.isArray(target.activeProjects) || target.activeProjects.length === 0) {
+              target.activeProjects = [...(officialDev.activeProjects || [])];
+            }
+          } else {
+            parsed.developers.push(JSON.parse(JSON.stringify(officialDev)));
           }
         });
         // Asegurar que applications e integrations sean arrays válidos

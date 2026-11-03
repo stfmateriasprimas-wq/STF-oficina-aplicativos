@@ -240,14 +240,15 @@ function getActiveUsersCredentials() {
           if (!d.username) return;
           const uLower = d.username.toLowerCase();
           const existing = map.get(uLower) || {};
+          const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uLower);
           map.set(uLower, {
-            id: d.id,
+            id: (baseUser && baseUser.id) || existing.id || d.id,
             idPassword: d.idPassword || existing.idPassword || '123456',
             username: d.username,
             role: d.roleType || d.role || existing.role || 'desarrollador',
-            name: d.name || existing.name || d.username,
+            name: (baseUser && baseUser.name) || d.name || existing.name || d.username,
             email: d.email || existing.email || '',
-            avatar: d.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar: (baseUser && baseUser.avatar) || d.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
           });
         });
       }
@@ -266,14 +267,15 @@ function getActiveUsersCredentials() {
           if (!su.username) return;
           const uLower = su.username.toLowerCase();
           const existing = map.get(uLower) || {};
+          const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uLower);
           map.set(uLower, {
-            id: su.id || existing.id || `dev_${uLower.replace(/[^a-z0-9]/g, '_')}`,
+            id: (baseUser && baseUser.id) || existing.id || su.id || `dev_${uLower.replace(/[^a-z0-9]/g, '_')}`,
             idPassword: su.idPassword || existing.idPassword || '123456',
             username: su.username,
             role: su.role || existing.role || 'desarrollador',
-            name: su.name || existing.name || su.username,
+            name: (baseUser && baseUser.name) || existing.name || su.name || su.username,
             email: su.email || existing.email || '',
-            avatar: su.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar: (baseUser && baseUser.avatar) || existing.avatar || su.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
           });
         });
       }
@@ -321,21 +323,27 @@ async function autoPullUsersFromSheets() {
           const uEmail = String(u.email || '').trim();
           if (!uName) return;
 
+          const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uName.toLowerCase());
           const match = credsStore.find(c => c.username && c.username.toLowerCase() === uName.toLowerCase());
           if (match) {
+            if (baseUser) {
+              match.id = baseUser.id;
+              match.name = baseUser.name;
+              match.avatar = baseUser.avatar;
+            }
             match.idPassword = uPass || match.idPassword;
             match.role = uRole || match.role;
             match.email = uEmail || match.email;
           } else {
-            const cleanName = uName.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const cleanName = (baseUser && baseUser.name) || uName.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             credsStore.push({
-              id: `dev_${uName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
-              idPassword: uPass,
+              id: (baseUser && baseUser.id) || `dev_${uName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
+              idPassword: uPass || (baseUser && baseUser.idPassword) || '123456',
               username: uName,
               role: uRole,
               name: cleanName,
-              email: uEmail,
-              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+              email: uEmail || (baseUser && baseUser.email) || '',
+              avatar: (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
             });
           }
         });
