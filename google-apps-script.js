@@ -395,7 +395,8 @@ function doPost(e) {
 
             if (rowName.indexOf(searchTarget) !== -1 || searchTarget.indexOf(rowName) !== -1 ||
                 rowUser.indexOf(searchTarget) !== -1 || searchTarget.indexOf(rowUser) !== -1 ||
-                rowDevId === searchTarget) {
+                rowDevId === searchTarget ||
+                searchTarget.indexOf("jose") !== -1 && rowUser.indexOf("jose") !== -1) {
               if (rowEmail && rowEmail.indexOf("@") !== -1) {
                 targetEmail = rowEmail;
                 break;
@@ -405,7 +406,24 @@ function doPost(e) {
         }
       }
 
+      // Fallback directo por ID/nombre conocido si la hoja no devolvió correo
+      if (!targetEmail) {
+        var devLower = String(devName).toLowerCase();
+        if (devLower.indexOf("jose") !== -1 || devLower.indexOf("guzman") !== -1) {
+          targetEmail = "joseoneiber711@gmail.com";
+        } else if (devLower.indexOf("juan") !== -1) {
+          targetEmail = "juan.david@studiof.com.co";
+        } else if (devLower.indexOf("esteban") !== -1) {
+          targetEmail = "esteban.escobar@studiof.com.co";
+        } else if (devLower.indexOf("jhon") !== -1 || devLower.indexOf("mocho") !== -1) {
+          targetEmail = "jhon.eyder@studiof.com.co";
+        } else if (devLower.indexOf("edwin") !== -1 || devLower.indexOf("ediaz") !== -1) {
+          targetEmail = "edwin.diaz@studiof.com.co";
+        }
+      }
+
       // Si encontramos correo válido, enviar notificación HTML con diseño corporativo STF GROUP
+      var mailErrorDetails = "";
       if (targetEmail && targetEmail.indexOf("@") !== -1) {
         try {
           var emailSubject = "⚡ Nueva Tarea Asignada: " + (payload.taskName || "Integración") + " · STF GROUP";
@@ -443,15 +461,16 @@ function doPost(e) {
           });
           emailSent = true;
         } catch (mailErr) {
-          // Si ocurre error enviando correo, registrar sin bloquear la respuesta
+          mailErrorDetails = mailErr.toString();
         }
       }
 
       return createJsonResponse({
         status: "success",
-        message: "Tarea registrada en Tareas_Integraciones exitosamente" + (emailSent ? " y correo enviado a " + targetEmail : ""),
+        message: "Tarea registrada en Tareas_Integraciones exitosamente" + (emailSent ? " y correo enviado a " + targetEmail : (mailErrorDetails ? " (Error correo: " + mailErrorDetails + ")" : "")),
         emailSent: emailSent,
         recipient: targetEmail,
+        mailError: mailErrorDetails,
         date: dateStr
       });
     }
