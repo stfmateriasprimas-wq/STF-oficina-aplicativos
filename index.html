@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
 
@@ -777,11 +777,11 @@
         <!-- Filter Toolbar for Analytics (Visible to Admin, Contextual for Devs) -->
         <div class="analytics-filter-toolbar" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; background: #FFFFFF; padding: 14px 20px; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 36px; height: 36px; border-radius: 10px; background: #4E65FF18; color: #4E65FF; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #4E65FF18, #4E65FF28); color: #4E65FF; display: flex; align-items: center; justify-content: center;">
               <i data-lucide="bar-chart-3"></i>
             </div>
             <div>
-              <strong style="font-size: 14px; color: #0F172A; display: block;" id="analyticsScopeTitle">Filtrar Analítica por Desarrollador</strong>
+              <strong style="font-size: 14.5px; color: #0F172A; display: block;" id="analyticsScopeTitle">Dashboard Analítico de Calidad & QA</strong>
               <span style="font-size: 12px; color: #64748B;" id="analyticsScopeSubtitle">Visualiza la efectividad, avance y calidad por programador o de toda la compañía</span>
             </div>
           </div>
@@ -801,6 +801,53 @@
             
             <div class="status-pill status-ontime" id="analyticsActiveDevBadge" style="display: none; padding: 6px 14px; font-size: 12px; font-weight: 700;">
               <span>👤 Jose Guzman (4 Sistemas)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Macro KPI Summary Cards for Executive Analytics -->
+        <div class="analytics-kpi-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #4E65FF15; color: #4E65FF; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              <i data-lucide="layers"></i>
+            </div>
+            <div>
+              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Sistemas Auditados</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiTotalApps">6 Macro-Sistemas</h3>
+              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiScopeHint">Consolidado General</span>
+            </div>
+          </div>
+
+          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #10B98115; color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              <i data-lucide="trending-up"></i>
+            </div>
+            <div>
+              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Avance Ponderado</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiAvgProgress">60.0%</h3>
+              <span style="font-size: 11.5px; color: #4E65FF; font-weight: 600;" id="analyticsKpiProdCount">1 en Producción</span>
+            </div>
+          </div>
+
+          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFA04315; color: #FFA043; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              <i data-lucide="shield-alert"></i>
+            </div>
+            <div>
+              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Incidencias QA</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiTotalBugs">81 Detectadas</h3>
+              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiResolvedBugs">68 Subsanadas (84%)</span>
+            </div>
+          </div>
+
+          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #8B5CF615; color: #8B5CF6; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              <i data-lucide="award"></i>
+            </div>
+            <div>
+              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Índice de Eficiencia</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiEfficiencyScore">93.5% SLA</h3>
+              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiOnTimeRate">100% en tiempo</span>
             </div>
           </div>
         </div>
@@ -1913,8 +1960,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=7"></script>
-  <script src="js/sheets-sync.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/data.js?v=8"></script>
+  <script src="js/sheets-sync.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>

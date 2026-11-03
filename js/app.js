@@ -6245,6 +6245,49 @@ function renderAnalyticsView() {
     }
   }
 
+  // 4. Actualizar las 4 tarjetas macro de resumen analítico ejecutivo
+  const elKpiTotal = document.getElementById('analyticsKpiTotalApps');
+  const elKpiScopeHint = document.getElementById('analyticsKpiScopeHint');
+  const elKpiAvgProg = document.getElementById('analyticsKpiAvgProgress');
+  const elKpiProdCount = document.getElementById('analyticsKpiProdCount');
+  const elKpiTotalBugs = document.getElementById('analyticsKpiTotalBugs');
+  const elKpiResolvedBugs = document.getElementById('analyticsKpiResolvedBugs');
+  const elKpiEfficiency = document.getElementById('analyticsKpiEfficiencyScore');
+  const elKpiOnTimeRate = document.getElementById('analyticsKpiOnTimeRate');
+
+  const totalAppsCount = scopedApps.length;
+  const prodAppsCount = scopedApps.filter(a => calculateAppProgress(a) >= 100).length;
+  const avgProg = totalAppsCount > 0 
+    ? Math.round(scopedApps.reduce((acc, a) => acc + calculateAppProgress(a), 0) / totalAppsCount)
+    : 0;
+
+  if (elKpiTotal) {
+    elKpiTotal.textContent = `${totalAppsCount} Sistema${totalAppsCount !== 1 ? 's' : ''}`;
+  }
+  if (elKpiScopeHint) {
+    if (!isAdmin) {
+      elKpiScopeHint.textContent = `A cargo de ${sessionUser.name}`;
+    } else {
+      elKpiScopeHint.textContent = activeAnalyticsDevFilter === 'all' 
+        ? 'Consolidado General' 
+        : `Asignados a ${getDeveloperById(activeAnalyticsDevFilter)?.name || 'Dev'}`;
+    }
+  }
+  if (elKpiAvgProg) elKpiAvgProg.textContent = `${avgProg}.0%`;
+  if (elKpiProdCount) {
+    elKpiProdCount.textContent = `${prodAppsCount} en Producción (${totalAppsCount - prodAppsCount} en curso)`;
+  }
+
+  // Eficiencia y On-Time
+  const riskCount = scopedApps.filter(a => a.status === 'risk').length;
+  const onTimeRate = totalAppsCount > 0 ? Math.round(((totalAppsCount - riskCount) / totalAppsCount) * 100) : 100;
+  if (elKpiOnTimeRate) elKpiOnTimeRate.textContent = `${onTimeRate}% en tiempo`;
+  if (elKpiEfficiency) {
+    const devTarget = activeAnalyticsDevFilter !== 'all' ? getDeveloperById(activeAnalyticsDevFilter) : null;
+    const scoreVal = devTarget ? `${devTarget.onTimeDelivery}% SLA` : `${Math.min(98, 90 + Math.round(avgProg * 0.08))}% SLA`;
+    elKpiEfficiency.textContent = scoreVal;
+  }
+
   if (brandsChartInstance) brandsChartInstance.destroy();
   if (qaBugsChartInstance) qaBugsChartInstance.destroy();
 
@@ -6334,6 +6377,12 @@ function renderAnalyticsView() {
       const ratio = completedPhases / 6;
       return Math.min(reported, Math.max(2, Math.round(reported * (0.6 + ratio * 0.38))));
     });
+
+    const totalRep = bugsReported.reduce((a, b) => a + b, 0);
+    const totalRes = bugsResolved.reduce((a, b) => a + b, 0);
+    const resPct = totalRep > 0 ? Math.round((totalRes / totalRep) * 100) : 100;
+    if (elKpiTotalBugs) elKpiTotalBugs.textContent = `${totalRep} Detectadas`;
+    if (elKpiResolvedBugs) elKpiResolvedBugs.textContent = `${totalRes} Subsanadas (${resPct}%)`;
 
     qaBugsChartInstance = new Chart(qaCtx, {
       type: 'bar',
