@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=11">
 </head>
 <body>
 
@@ -550,14 +550,14 @@
               </div>
 
               <div class="int-legend-hints">
-                <span class="friendly-legend-chip badge-hint-process" title="Número consecutivo amarillo: Tarea en proceso de desarrollo">
-                  <span class="mini-corner-badge yellow">#</span> En proceso (Consecutivo)
+                <span class="friendly-legend-chip badge-hint-done" title="Verde: Tarea más reciente en tiempo óptimo o cumplida/solucionada">
+                  <span class="mini-corner-badge green"><i data-lucide="check" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Verde: Reciente / Cumplida
                 </span>
-                <span class="friendly-legend-chip badge-hint-done" title="Chulito verde: Tarea cumplida y auditada">
-                  <span class="mini-corner-badge green"><i data-lucide="check" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Cumplida
+                <span class="friendly-legend-chip badge-hint-process" title="Naranja: Plazo medio en desarrollo sin solucionar">
+                  <span class="mini-corner-badge yellow">#</span> Naranja: Plazo Medio
                 </span>
-                <span class="friendly-legend-chip badge-hint-overdue" title="X roja: Tarea que sobrepasó los días estipulados de entrega">
-                  <span class="mini-corner-badge red"><i data-lucide="x" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Vencida (Sobrepasó entrega)
+                <span class="friendly-legend-chip badge-hint-overdue" title="Rojo: Tarea antigua sin solucionar o vencida">
+                  <span class="mini-corner-badge red"><i data-lucide="x" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Rojo: Antigua / Sin solucionar
                 </span>
               </div>
             </div>
@@ -1960,8 +1960,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=9"></script>
-  <script src="js/sheets-sync.js?v=9"></script>
-  <script src="js/app.js?v=9"></script>
+  <script src="js/data.js?v=11"></script>
+  <script src="js/sheets-sync.js?v=11"></script>
+  <script src="js/app.js?v=11"></script>
 </body>
 </html>

@@ -4312,12 +4312,17 @@ function renderIntegrationsList(filter = activeIntFilter) {
     });
   });
 
-  // Group filtered items by developer
+  // Group filtered items by developer (sorted descending: most recent assignment at the top, oldest at the bottom)
   const devGroups = [];
   appState.developers.forEach(dev => {
     const devTasks = filtered.filter(i => i.devId === dev.id);
     if (devTasks.length > 0) {
-      devTasks.sort((a, b) => (devConsecutiveMap.get(a.id) || 0) - (devConsecutiveMap.get(b.id) || 0));
+      devTasks.sort((a, b) => {
+        const da = new Date(a.startDate || a.deadline || '2026-01-01').getTime();
+        const db = new Date(b.startDate || b.deadline || '2026-01-01').getTime();
+        if (db !== da) return db - da; // Más reciente en la parte de arriba
+        return (devConsecutiveMap.get(b.id) || 0) - (devConsecutiveMap.get(a.id) || 0);
+      });
       devGroups.push({ dev, tasks: devTasks });
     }
   });
@@ -4332,7 +4337,12 @@ function renderIntegrationsList(filter = activeIntFilter) {
       }
       if (!group.tasks.some(t => t.id === item.id)) {
         group.tasks.push(item);
-        group.tasks.sort((a, b) => (devConsecutiveMap.get(a.id) || 0) - (devConsecutiveMap.get(b.id) || 0));
+        group.tasks.sort((a, b) => {
+          const da = new Date(a.startDate || a.deadline || '2026-01-01').getTime();
+          const db = new Date(b.startDate || b.deadline || '2026-01-01').getTime();
+          if (db !== da) return db - da; // Más reciente en la parte de arriba
+          return (devConsecutiveMap.get(b.id) || 0) - (devConsecutiveMap.get(a.id) || 0);
+        });
       }
     }
   });
@@ -4392,22 +4402,36 @@ function renderIntegrationsList(filter = activeIntFilter) {
       const appColor = app.iconColor || '#4E65FF';
       const consecutiveNum = devConsecutiveMap.get(item.id) || 1;
 
+      // Dynamic Level (Verde -> Naranja -> Rojo):
+      // Verde: Tarea más reciente / óptima o ya solucionada (auditada)
+      // Naranja medio: Tarea en proceso con tiempo medio transcurrido (consumo >= 60% o <= 2 días restantes)
+      // Rojo antiguo: Tarea sin solucionar antigua, vencida o desfasada
+      let cardLevel = 'green';
       let cornerBadgeClass = '';
       let cornerBadgeContent = '';
       let cornerBadgeTitle = '';
 
       if (isEvaluated) {
+        cardLevel = 'green';
         cornerBadgeClass = 'badge-completed';
         cornerBadgeContent = '<i data-lucide="check" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · Cumplida (Auditada & Calificada)`;
-      } else if (isOverdue) {
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Solucionada & Auditada`;
+      } else if (isOverdue || diag.daysRemaining < 0) {
+        cardLevel = 'red';
         cornerBadgeClass = 'badge-overdue';
         cornerBadgeContent = '<i data-lucide="x" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · Vencida (Sobrepasó entrega con desfase)`;
-      } else {
+        const overdueDays = Math.abs(diag.daysRemaining);
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Antigua Sin Solucionar (Desfase de ${overdueDays} d)`;
+      } else if (diag.daysRemaining <= 2 || diag.timeBurnRate >= 60) {
+        cardLevel = 'orange';
         cornerBadgeClass = 'badge-process';
         cornerBadgeContent = `<span>${consecutiveNum}</span>`;
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · En Proceso (Ritmo de Desarrollo)`;
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · En Desarrollo (Plazo Medio)`;
+      } else {
+        cardLevel = 'green';
+        cornerBadgeClass = 'badge-recent';
+        cornerBadgeContent = `<span>${consecutiveNum}</span>`;
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Reciente / En Tiempo Óptimo`;
       }
 
       // Countdown Badge on Timeline
@@ -4466,16 +4490,12 @@ function renderIntegrationsList(filter = activeIntFilter) {
           </button>
         `;
       } else {
-        actionHtml = `
-          <button class="btn-friendly-eval" onclick="openSystemDetailModal('${item.appId}')" title="Actualizar las 6 fases de desarrollo de ${app.name}">
-            <i data-lucide="edit-3" style="width: 15px; height: 15px;"></i>
-            <span>Actualizar Fases del Aplicativo</span>
-          </button>
-        `;
+        // En perfil de desarrollador se elimina este botón según solicitud
+        actionHtml = '';
       }
 
       return `
-        <div class="integration-item-card" style="--int-accent: ${appColor};">
+        <div class="integration-item-card level-${cardLevel}" style="--int-accent: ${appColor};">
           <div class="int-card-accent-strip"></div>
 
           <!-- Prominent Superior Corner Badge -->
@@ -4549,10 +4569,12 @@ function renderIntegrationsList(filter = activeIntFilter) {
               </div>
             </div>
 
+            ${actionHtml ? `
             <!-- Action Footer -->
             <div class="int-card-footer">
               ${actionHtml}
             </div>
+            ` : ''}
           </div>
         </div>
       `;
@@ -4754,9 +4776,8 @@ function openEvaluateIntegrationModal(intId) {
   const item = (appState.integrations || []).find(i => i.id === intId);
   if (!item) return;
 
-  // Si es desarrollador y la tarea aún no ha sido evaluada, redirigir al modal de fases del aplicativo
+  // Si es desarrollador y la tarea aún no ha sido evaluada, solo el Admin puede evaluar o actualizar fases
   if (!isCurrentSessionAdmin() && item.status !== 'evaluated') {
-    openSystemDetailModal(item.appId);
     return;
   }
 
