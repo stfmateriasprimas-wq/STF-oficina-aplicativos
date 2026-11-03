@@ -3595,6 +3595,23 @@ body {
   color: #1E232E;
 }
 
+.card-sec-btn.card-view-only-btn {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #475569;
+}
+
+.card-sec-btn.card-view-only-btn:hover {
+  background: #EEF2F6;
+  color: #1E293B;
+  border-color: #94A3B8;
+}
+
+.readonly-checkbox {
+  opacity: 0.85;
+  cursor: default !important;
+}
+
 .card-sec-btn i, .card-sec-btn svg {
   width: 12px;
   height: 12px;

@@ -544,7 +544,7 @@ function applyRoleBasedUI() {
   if (sysTableSub) {
     sysTableSub.textContent = isAdmin
       ? 'Avance por fases auditadas de STF GROUP en formato horizontal completo'
-      : 'Haz clic en "Actualizar Fases" para marcar tu progreso real en las 6 etapas de desarrollo';
+      : 'Supervisión visual de tus aplicativos asignados y estado de fases (Modo Solo Lectura)';
   }
   if (btnRefreshTbl) {
     btnRefreshTbl.textContent = isAdmin ? `Ver Todos (${scopedAppsCount})` : `Mis Sistemas (${scopedAppsCount})`;
@@ -803,8 +803,8 @@ function renderDeckFromList(appsList) {
                 <button type="button" class="deck-mini-arrow" onclick="cycleStackedDeckNext(event)" title="Siguiente proyecto" style="border:none; background:transparent; cursor:pointer; color:#64748B; padding:0 3px; font-size:13px; font-weight:700; line-height:1;">▶</button>
               </div>
             ` : ''}
-            <button class="deck-add-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app0.id}')" title="Actualizar fases del aplicativo">
-              <i data-lucide="edit-3"></i>
+            <button class="deck-add-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app0.id}')" title="${isAdmin ? 'Auditar fases del aplicativo' : 'Ver fases del aplicativo (solo lectura)'}">
+              <i data-lucide="${isAdmin ? 'edit-3' : 'eye'}"></i>
             </button>
           </div>
         </div>
@@ -1099,7 +1099,7 @@ function renderDevelopersSection() {
               <div class="dci-progress-fill" style="width: ${prog}%; background: ${barColor};"></div>
             </div>
             <div class="dci-bottom-status" style="margin-top: 6px;">
-              <span class="dci-avg-text" style="font-size: 11px; color: #4E65FF; font-weight: 700;">✏️ Actualizar Fases</span>
+              <span class="dci-avg-text" style="font-size: 11px; color: #64748B; font-weight: 700;">👁️ Ver Fases</span>
               <span class="dci-active-badge">${formatShortDate(app.deadline)}</span>
             </div>
           </div>
@@ -1307,7 +1307,7 @@ function updateQuickDevStrip() {
         const prog = calculateAppProgress(app);
         const isGroup = app.isGroupProject ? '<span class="tag-group-badge">Grupal</span>' : '';
         return `
-          <div class="dev-project-tag-pill" onclick="openSystemDetailModal('${app.id}')" title="Clic para actualizar fases de ${app.name}">
+          <div class="dev-project-tag-pill" onclick="openSystemDetailModal('${app.id}')" title="Clic para ver fases de ${app.name} (Modo solo lectura)">
             <span class="tag-mini-dot" style="background-color: ${app.iconColor || 'var(--primary-blue)'};"></span>
             <span>${app.name}</span>
             ${isGroup}
@@ -1417,7 +1417,7 @@ function renderSystemsTable(filterQuery = '') {
         </td>
         <td class="text-right">
           <button class="action-row-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app.id}')">
-            ${isAdmin ? 'Auditar Fases' : 'Actualizar Fases'}
+            ${isAdmin ? 'Auditar Fases' : 'Ver Fases'}
           </button>
         </td>
       </tr>
@@ -3033,8 +3033,9 @@ function openSystemDetailModal(appId) {
   const app = appState.applications.find(a => a.id === appId);
   if (!app) return;
 
-  if (!isCurrentSessionAdmin() && !isAppAssignedToDev(app, getLoggedDevId())) {
-    showToast('⚠️ Solo puedes actualizar las fases de tus aplicativos asignados.');
+  const isAdmin = isCurrentSessionAdmin();
+  if (!isAdmin && !isAppAssignedToDev(app, getLoggedDevId())) {
+    showToast('⚠️ Solo puedes visualizar las fases de tus aplicativos asignados.');
     return;
   }
 
@@ -3062,24 +3063,74 @@ function openSystemDetailModal(appId) {
   // Big progress
   updateModalProgressDisplay(progress);
 
+  // Read-only indicator notice banner
+  let noticeEl = document.getElementById('modalSysReadOnlyNotice');
+  if (!noticeEl) {
+    noticeEl = document.createElement('div');
+    noticeEl.id = 'modalSysReadOnlyNotice';
+    const modalBody = document.querySelector('#modalSystemDetail .modal-body');
+    if (modalBody) {
+      modalBody.insertBefore(noticeEl, modalBody.firstChild);
+    }
+  }
+  if (noticeEl) {
+    if (!isAdmin) {
+      noticeEl.style.display = 'flex';
+      noticeEl.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; width:100%; background:#F8FAFC; border:1px solid #CBD5E1; padding:9px 13px; border-radius:12px; margin-bottom:14px; color:#334155; font-size:12px; font-weight:600;">
+          <i data-lucide="eye" style="width:16px; height:16px; color:#3B82F6; flex-shrink:0;"></i>
+          <span><strong>Modo Visual (Solo Lectura):</strong> Visualización del ciclo de desarrollo. Los avances y fases son auditados y aprobados exclusivamente por la Dirección TI.</span>
+        </div>
+      `;
+    } else {
+      noticeEl.style.display = 'none';
+      noticeEl.innerHTML = '';
+    }
+  }
+
+  // Heading text
+  const headingEl = document.querySelector('#modalSystemDetail .phases-accordion-section .section-heading');
+  if (headingEl) {
+    headingEl.innerHTML = isAdmin
+      ? '<i data-lucide="clipboard-check" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Fases de Desarrollo (Marca para recalcular el % en tiempo real):'
+      : '<i data-lucide="eye" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Fases de Desarrollo (Modo Visual · Solo Lectura):';
+  }
+
   // Render 6 Phases with real weight
   const phasesListEl = document.getElementById('modalPhasesList');
   phasesListEl.innerHTML = app.phases.map((phase, idx) => {
+    const statusTag = phase.completed
+      ? '<span style="background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 750; padding: 2px 8px; border-radius: 6px; border: 1px solid #A7F3D0;">✓ Completada</span>'
+      : '<span style="background: #F8FAFC; color: #94A3B8; font-size: 11px; font-weight: 650; padding: 2px 8px; border-radius: 6px; border: 1px solid #E2E8F0;">Pendiente</span>';
+
     return `
-      <div class="phase-card-item">
+      <div class="phase-card-item ${phase.completed ? 'phase-completed' : ''}">
         <div class="phase-header-line">
-          <label class="phase-check-label">
-            <input type="checkbox" class="phase-check-input" data-phase-idx="${idx}" ${phase.completed ? 'checked' : ''} onchange="onPhaseCheckboxToggle()">
-            <div class="custom-checkbox">
+          <label class="phase-check-label" style="${isAdmin ? '' : 'cursor: default;'}">
+            <input type="checkbox" class="phase-check-input" data-phase-idx="${idx}" ${phase.completed ? 'checked' : ''} ${isAdmin ? 'onchange="onPhaseCheckboxToggle()"' : 'disabled style="cursor: not-allowed; opacity: 0.8;"'}>
+            <div class="custom-checkbox ${isAdmin ? '' : 'readonly-checkbox'}">
               <i data-lucide="check" style="width: 14px; height: 14px;"></i>
             </div>
             <span class="phase-name">${phase.name}</span>
           </label>
-          <span class="phase-weight-badge">Peso: ${phase.weight}%</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${!isAdmin ? statusTag : ''}
+            <span class="phase-weight-badge">Peso: ${phase.weight}%</span>
+          </div>
         </div>
       </div>
     `;
   }).join('');
+
+  // Modal Footer: Hide save button for developers
+  const btnSave = document.getElementById('btnSaveSysChanges');
+  if (btnSave) {
+    btnSave.style.display = isAdmin ? 'inline-flex' : 'none';
+  }
+  const btnCancel = document.getElementById('btnCancelSysModal');
+  if (btnCancel) {
+    btnCancel.textContent = isAdmin ? 'Cerrar' : 'Cerrar Vista';
+  }
 
   lucide.createIcons();
 
@@ -3087,6 +3138,7 @@ function openSystemDetailModal(appId) {
 }
 
 function onPhaseCheckboxToggle() {
+  if (!isCurrentSessionAdmin()) return;
   const checkboxes = document.querySelectorAll('.phase-check-input');
   const app = appState.applications.find(a => a.id === currentEditingSysId);
   if (!app) return;
@@ -3110,6 +3162,10 @@ function updateModalProgressDisplay(progressVal) {
 }
 
 function saveSystemChanges() {
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Modo Solo Lectura: Solo el Administrador puede modificar y certificar fases.');
+    return;
+  }
   const app = appState.applications.find(a => a.id === currentEditingSysId);
   if (!app) return;
 
@@ -5264,7 +5320,7 @@ function switchView(viewName) {
     if (subtitleEl) {
       subtitleEl.textContent = isAdmin
         ? 'Supervisión operativa de software de planta, ciclo de vida de fases, entregables y efectividad de ingeniería.'
-        : 'Gestión técnica de tus sistemas a cargo, actualización de fases de desarrollo y estado de entregables.';
+        : 'Supervisión visual de tus sistemas a cargo, estado de fases y entregables técnicos (Modo Solo Lectura).';
     }
     renderProjectsView(activeBrandFilter);
   } else if (viewName === 'developers') {
@@ -5640,10 +5696,17 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <i data-lucide="layers"></i>
                 <span>Tareas (${totalTasksCount})</span>
               </button>
-              <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Actualizar'} las 6 fases de desarrollo de ${app.name}">
-                <i data-lucide="clipboard-check"></i>
-                <span>${isAdmin ? 'Auditar Fases' : 'Actualizar Fases'}</span>
-              </button>
+              ${isAdmin ? `
+                <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las 6 fases de desarrollo de ${app.name}">
+                  <i data-lucide="clipboard-check"></i>
+                  <span>Auditar Fases</span>
+                </button>
+              ` : `
+                <button class="card-sec-btn card-view-only-btn" onclick="openSystemDetailModal('${app.id}')" title="Visualizar las 6 fases de desarrollo de ${app.name} (Modo solo lectura)">
+                  <i data-lucide="eye"></i>
+                  <span>Ver Fases</span>
+                </button>
+              `}
             </div>
           </div>
         </div>
@@ -5722,8 +5785,8 @@ function renderProjectsView(brand = activeBrandFilter) {
           </td>
           <td>${statusBadge}</td>
           <td class="text-right" onclick="event.stopPropagation();">
-            <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Actualizar'} Fases">
-              ${isAdmin ? 'Auditar' : 'Actualizar'}
+            <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Ver'} Fases">
+              ${isAdmin ? 'Auditar' : 'Ver Fases'}
             </button>
           </td>
         </tr>
