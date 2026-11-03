@@ -16,7 +16,62 @@ if (savedLoggedUserJson) {
   try { loggedUser = JSON.parse(savedLoggedUserJson); } catch(e) {}
 }
 
-let activeSelectedDevId = (loggedUser && loggedUser.id) || localStorage.getItem('STF_ACTIVE_DEV_ID') || (appState.developers[0] && appState.developers[0].id) || 'dev_jg';
+function getLoggedSessionUser() {
+  if (!loggedUser) {
+    const saved = localStorage.getItem('STF_LOGGED_USER');
+    if (saved) {
+      try { loggedUser = JSON.parse(saved); } catch(e) {}
+    }
+  }
+  return loggedUser || {
+    id: 'dev_ediaz',
+    name: 'Edwin Diaz',
+    username: 'ediaz',
+    role: 'Admin',
+    roleType: 'Admin',
+    email: 'edwin.diaz@studiof.com.co',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face'
+  };
+}
+
+function isCurrentSessionAdmin() {
+  const session = getLoggedSessionUser();
+  const storedRole = localStorage.getItem('STF_USER_ROLE') || '';
+  const roleStr = String(session.roleType || session.role || storedRole || '').trim().toLowerCase();
+  return roleStr === 'admin' || roleStr.includes('admin') || session.id === 'dev_ediaz' || session.username === 'ediaz';
+}
+
+function getLoggedDevId() {
+  const session = getLoggedSessionUser();
+  return session.id || localStorage.getItem('STF_ACTIVE_DEV_ID') || 'dev_jg';
+}
+
+function isAppAssignedToDev(app, devId) {
+  if (!app || !devId) return false;
+  return app.devId === devId || (Array.isArray(app.devIds) && app.devIds.includes(devId));
+}
+
+function getScopedApplications() {
+  const allApps = (appState && Array.isArray(appState.applications)) ? appState.applications : [];
+  if (isCurrentSessionAdmin()) return allApps;
+  const devId = getLoggedDevId();
+  return allApps.filter(a => isAppAssignedToDev(a, devId));
+}
+
+function getScopedIntegrations() {
+  const allInts = (appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
+  if (isCurrentSessionAdmin()) return allInts;
+  const devId = getLoggedDevId();
+  return allInts.filter(t => t.devId === devId);
+}
+
+window.isCurrentSessionAdmin = isCurrentSessionAdmin;
+window.getScopedApplications = getScopedApplications;
+window.getScopedIntegrations = getScopedIntegrations;
+
+let activeSelectedDevId = !isCurrentSessionAdmin()
+  ? getLoggedDevId()
+  : ((loggedUser && loggedUser.id) || localStorage.getItem('STF_ACTIVE_DEV_ID') || (appState.developers[0] && appState.developers[0].id) || 'dev_jg');
 let currentEditingSysId = null;
 
 // Chart Instances
@@ -33,9 +88,10 @@ function calculateAppProgress(app) {
 }
 
 function calculateGlobalProgress() {
-  if (appState.applications.length === 0) return 0;
-  const total = appState.applications.reduce((acc, app) => acc + calculateAppProgress(app), 0);
-  return (total / appState.applications.length).toFixed(1);
+  const scopedApps = getScopedApplications();
+  if (scopedApps.length === 0) return 0;
+  const total = scopedApps.reduce((acc, app) => acc + calculateAppProgress(app), 0);
+  return (total / scopedApps.length).toFixed(1);
 }
 
 function getDeveloperById(devId) {
@@ -47,11 +103,14 @@ function getApplicationById(appId) {
 }
 
 function getDominantPhase() {
-  // Encuentra la fase activa más común entre los aplicativos en desarrollo
+  // Encuentra la fase activa más común entre los aplicativos en el alcance actual
+  const scopedApps = getScopedApplications();
   const phaseCount = {};
-  appState.applications.forEach(app => {
+  scopedApps.forEach(app => {
     const activePhase = app.phases.find(p => !p.completed) || app.phases[app.phases.length - 1];
-    phaseCount[activePhase.name] = (phaseCount[activePhase.name] || 0) + 1;
+    if (activePhase) {
+      phaseCount[activePhase.name] = (phaseCount[activePhase.name] || 0) + 1;
+    }
   });
   let maxPhase = "Frontend e Integración";
   let maxCount = 0;
@@ -74,11 +133,15 @@ function getTodayIsoDate() {
 
 function updateHeaderStatChips() {
   if (!appState || !Array.isArray(appState.applications)) return;
+  const isAdmin = isCurrentSessionAdmin();
+  const scopedApps = getScopedApplications();
   const chipApps = document.getElementById('chipActiveApps') || document.getElementById('chipActiveAppsCount');
   if (chipApps) {
-    chipApps.textContent = `${appState.applications.length} Aplicativos Activos`;
+    chipApps.textContent = isAdmin
+      ? `${scopedApps.length} Aplicativos Activos`
+      : `${scopedApps.length} Mis Aplicativos`;
   }
-  const riskCount = appState.applications.filter(a => a.status === 'risk' || a.status === 'delayed').length;
+  const riskCount = scopedApps.filter(a => a.status === 'risk' || a.status === 'delayed').length;
   const chipRisk = document.getElementById('chipRiskApps') || document.getElementById('chipRiskAppsCount');
   if (chipRisk) {
     chipRisk.textContent = `${riskCount} En Riesgo`;
@@ -144,9 +207,13 @@ function renderNotificationsDropdown() {
   const listEl = document.getElementById('notificationsListContainer');
   if (!listEl && !badgeEl) return;
 
+  const isAdmin = isCurrentSessionAdmin();
+  const scopedApps = getScopedApplications();
+  const scopedInts = getScopedIntegrations();
+
   const alerts = [];
   // 1. Aplicativos en riesgo
-  (appState.applications || []).forEach(app => {
+  scopedApps.forEach(app => {
     if (app.status === 'risk' || app.status === 'delayed') {
       alerts.push({
         type: 'risk',
@@ -158,24 +225,31 @@ function renderNotificationsDropdown() {
   });
 
   // 2. Tareas e integraciones vencidas o próximas a vencer
-  (appState.integrations || []).forEach(task => {
+  scopedInts.forEach(task => {
     if (task.status === 'evaluated') return;
     const diag = calculateIntegrationTimeProgress(task);
     const app = getApplicationById(task.appId);
     const dev = getDeveloperById(task.devId);
+    const taskAction = () => {
+      if (isAdmin) {
+        openEvaluateIntegrationModal(task.id);
+      } else {
+        openSystemDetailModal(task.appId);
+      }
+    };
     if (diag.isOverdue) {
       alerts.push({
         type: 'overdue',
         title: `Tarea Vencida: ${task.name}`,
         sub: `${dev ? dev.name : 'Dev'} · ${app ? app.name : 'Sistema'} (${diag.countdownText})`,
-        action: () => openEvaluateIntegrationModal(task.id)
+        action: taskAction
       });
     } else if (diag.timeBurnRate >= 75) {
       alerts.push({
         type: 'warning',
         title: `Entrega Próxima: ${task.name}`,
         sub: `${dev ? dev.name : 'Dev'} · ${diag.countdownText}`,
-        action: () => openEvaluateIntegrationModal(task.id)
+        action: taskAction
       });
     }
   });
@@ -189,7 +263,7 @@ function renderNotificationsDropdown() {
     if (alerts.length === 0) {
       listEl.innerHTML = `
         <div style="padding: 16px; text-align: center; color: #64748B; font-size: 12px;">
-          ✅ Todos los sistemas y entregas están en tiempo sin alertas críticas.
+          ✅ Todos tus sistemas y entregas están en tiempo sin alertas críticas.
         </div>
       `;
     } else {
@@ -219,7 +293,160 @@ function renderNotificationsDropdown() {
   }
 }
 
+function applyRoleBasedUI() {
+  const isAdmin = isCurrentSessionAdmin();
+  const session = getLoggedSessionUser();
+  const devId = getLoggedDevId();
+
+  // 1. Si es Desarrollador, anclar su ID como desarrollador activo
+  if (!isAdmin) {
+    activeSelectedDevId = devId;
+    currentVelocityDev = devId;
+    if (typeof openedDevFolders !== 'undefined' && openedDevFolders instanceof Set) {
+      openedDevFolders.add(devId);
+    }
+  }
+
+  // 2. Navegación lateral (Sidebar)
+  const navDevBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="developers"]');
+  const navSettingsBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="settings"]');
+  const navDashBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="dashboard"]');
+  const navProjBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="projects"]');
+  const navAnalyticsBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="analytics"]');
+
+  if (navDevBtn) navDevBtn.style.display = isAdmin ? '' : 'none';
+  if (navSettingsBtn) navSettingsBtn.style.display = isAdmin ? '' : 'none';
+  if (navDashBtn) navDashBtn.title = isAdmin ? 'Dashboard General' : 'Mi Panel de Desarrollo';
+  if (navProjBtn) navProjBtn.title = isAdmin ? 'Aplicativos y Módulos' : 'Mis Aplicativos Asignados';
+  if (navAnalyticsBtn) navAnalyticsBtn.title = isAdmin ? 'Métricas y QA' : 'Mis Métricas y Fases';
+
+  // 3. Acciones de Cabecera Superior (Top Header)
+  const btnNewProj = document.getElementById('btnNewProject');
+  const btnAssignTask = document.getElementById('btnAssignTask');
+  const btnExportRep = document.getElementById('btnExportReport');
+  const globalSearch = document.getElementById('globalSearch');
+
+  if (btnNewProj) btnNewProj.style.display = isAdmin ? '' : 'none';
+  if (btnAssignTask) btnAssignTask.style.display = isAdmin ? '' : 'none';
+  if (btnExportRep) btnExportRep.style.display = isAdmin ? '' : 'none';
+  if (globalSearch) {
+    globalSearch.placeholder = isAdmin
+      ? 'Buscar aplicativo, módulo o programador...'
+      : 'Buscar en mis aplicativos y módulos asignados...';
+  }
+
+  // 4. Dropdown de Sesión en la Cabecera
+  const headerDropdown = document.getElementById('headerDevDropdown');
+  if (headerDropdown) {
+    const dropTitleLabel = headerDropdown.querySelector('.dropdown-title-label');
+    const dropOptionsList = document.getElementById('headerDevOptionsList');
+    const allDevsItem = headerDropdown.querySelector('.all-devs-item');
+    const dividers = headerDropdown.querySelectorAll('.dev-drop-divider');
+
+    if (dropTitleLabel) dropTitleLabel.style.display = isAdmin ? '' : 'none';
+    if (dropOptionsList) dropOptionsList.style.display = isAdmin ? '' : 'none';
+    if (allDevsItem) allDevsItem.style.display = isAdmin ? '' : 'none';
+    dividers.forEach((div, idx) => {
+      if (!isAdmin && idx > 0) div.style.display = 'none';
+      else div.style.display = '';
+    });
+  }
+
+  // 5. Banner Principal de Bienvenida
+  const titleEl = document.getElementById('mainWelcomeTitle');
+  const subtitleEl = document.getElementById('mainWelcomeSubtitle');
+  if (titleEl && subtitleEl) {
+    if (isAdmin) {
+      titleEl.innerHTML = 'Estado de Desarrollo · <span class="text-gradient">STF GROUP</span>';
+      subtitleEl.textContent = 'Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.';
+    } else {
+      titleEl.innerHTML = `Panel de Ingeniería · <span class="text-gradient">${session.name}</span>`;
+      subtitleEl.textContent = 'Gestiona y actualiza en tiempo real las 6 fases de desarrollo de tus aplicativos asignados y tus entregas en planta.';
+    }
+  }
+
+  // 6. Tarjeta de Objetivo Trimestral (Cápsula)
+  const btnQGoal = document.getElementById('btnQuarterlyGoal');
+  const capsuleEyebrow = document.querySelector('.progress-capsules-card .card-eyebrow');
+  if (btnQGoal) btnQGoal.style.display = isAdmin ? '' : 'none';
+  if (capsuleEyebrow) {
+    capsuleEyebrow.textContent = isAdmin ? 'Objetivo de Entrega Trimestral' : 'Mi Avance Trimestral en Sistemas';
+  }
+
+  // 7. Tarjeta de Equipo / Ficha Técnica Personal
+  const btnAddDev = document.getElementById('btnAddDeveloper');
+  const teamPretitle = document.querySelector('.quick-team-card .sub-badge-pill span');
+  const teamTitle = document.querySelector('.quick-team-card .card-title');
+  const teamSubtext = document.querySelector('.quick-team-card .card-subtext');
+  if (btnAddDev) btnAddDev.style.display = isAdmin ? '' : 'none';
+  if (teamPretitle) {
+    teamPretitle.textContent = isAdmin ? 'Talento TI & Capacidad Operativa' : 'Mi Perfil Técnico & Carga Operativa';
+  }
+  if (teamTitle) {
+    teamTitle.textContent = isAdmin ? 'Equipo de Desarrollo' : 'Mi Ficha Técnica & Sistemas a Cargo';
+  }
+  if (teamSubtext) {
+    teamSubtext.textContent = isAdmin
+      ? 'Haz clic en un programador para filtrar métricas, baraja y sistemas auditados'
+      : 'Resumen de tu efectividad en planta y acceso rápido para actualizar las 6 fases de tus aplicativos';
+  }
+
+  // 8. Tarjeta de Velocidad de Entrega (Sprints)
+  const velDevWrap = document.querySelector('.velocity-dev-select-wrap');
+  const vcalDevStrip = document.querySelector('.vcal-dev-strip');
+  const velTitle = document.querySelector('.velocity-chart-card .card-title');
+  const velSub = document.querySelector('.velocity-chart-card .card-subtext');
+  if (velDevWrap) velDevWrap.style.display = isAdmin ? '' : 'none';
+  if (vcalDevStrip) vcalDevStrip.style.display = isAdmin ? '' : 'none';
+  if (velTitle) velTitle.textContent = isAdmin ? 'Velocidad de Entrega (Sprints)' : 'Mi Velocidad de Entrega (Sprints)';
+  if (velSub) {
+    velSub.textContent = isAdmin
+      ? 'Historias y módulos culminados por semana con seguimiento a la meta comprometida'
+      : `Módulos y horas de ingeniería entregadas por ${session.name} frente a tu meta asignada`;
+  }
+
+  // 9. Tabla de Sistemas en Desarrollo
+  const sysTableTitle = document.querySelector('.systems-table-card .card-title');
+  const sysTableSub = document.querySelector('.systems-table-card .card-subtext');
+  const btnRefreshTbl = document.getElementById('btnRefreshTable');
+  const scopedAppsCount = getScopedApplications().length;
+  if (sysTableTitle) {
+    sysTableTitle.textContent = isAdmin ? 'Sistemas en Desarrollo' : `Mis Aplicativos Asignados (${scopedAppsCount})`;
+  }
+  if (sysTableSub) {
+    sysTableSub.textContent = isAdmin
+      ? 'Avance por fases auditadas de STF GROUP en formato horizontal completo'
+      : 'Haz clic en "Actualizar Fases" para marcar tu progreso real en las 6 etapas de desarrollo';
+  }
+  if (btnRefreshTbl) {
+    btnRefreshTbl.textContent = isAdmin ? `Ver Todos (${scopedAppsCount})` : `Mis Sistemas (${scopedAppsCount})`;
+  }
+
+  // 10. Controlador de Integraciones & Tareas
+  const btnNewInt = document.getElementById('btnOpenNewIntegrationModal');
+  const intShieldPill = document.querySelector('.integrations-control-card .super-admin-shield-pill');
+  const intTitle = document.querySelector('.integrations-control-card .card-title');
+  const intSub = document.querySelector('.integrations-control-card .card-subtext');
+  if (btnNewInt) btnNewInt.style.display = isAdmin ? '' : 'none';
+  if (intShieldPill) {
+    intShieldPill.innerHTML = isAdmin
+      ? `<i data-lucide="shield-check"></i><span>Control de Supervisión · Super Admin (Jefe TI)</span>`
+      : `<i data-lucide="code-2"></i><span>Mis Entregas Operativas · Desarrollador (${session.name})</span>`;
+  }
+  if (intTitle) {
+    intTitle.textContent = isAdmin
+      ? 'Integraciones Operativas & Tiempos en Vivo'
+      : 'Mis Tareas, Integraciones & Entregas en Planta';
+  }
+  if (intSub) {
+    intSub.textContent = isAdmin
+      ? 'Cálculo dinámico de días transcurridos vs deadline y proyección del avance esperado por desarrollador'
+      : 'Monitoreo en tiempo real de tus entregas asignadas, plazos comprometidos y dictámenes de calidad';
+  }
+}
+
 function refreshAllViews() {
+  if (typeof applyRoleBasedUI === 'function') applyRoleBasedUI();
   if (typeof syncDynamicSelects === 'function') syncDynamicSelects();
   if (typeof renderStackedDeck === 'function') renderStackedDeck();
   if (typeof renderCapsuleProgressBar === 'function') renderCapsuleProgressBar();
@@ -233,6 +460,7 @@ function refreshAllViews() {
   if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 }
 window.refreshAllViews = refreshAllViews;
+window.applyRoleBasedUI = applyRoleBasedUI;
 window.updateHeaderStatChips = updateHeaderStatChips;
 window.syncDynamicSelects = syncDynamicSelects;
 window.renderNotificationsDropdown = renderNotificationsDropdown;
@@ -290,11 +518,18 @@ function renderStackedDeck(devId = activeSelectedDevId) {
   const deckContainer = document.getElementById('stackedDeck');
   if (!deckContainer) return;
 
+  if (!isCurrentSessionAdmin()) {
+    devId = getLoggedDevId();
+    activeSelectedDevId = devId;
+  }
+
   const currentDev = getDeveloperById(devId);
-  const isDevAdmin = (currentDev && currentDev.role === 'Admin') || devId === 'dev_ediaz' || devId === 'all' || (loggedUser && loggedUser.role === 'Admin' && (!devId || devId === 'dev_ediaz' || devId === 'all'));
+  const isDevAdmin = isCurrentSessionAdmin() && ((currentDev && currentDev.role === 'Admin') || devId === 'dev_ediaz' || devId === 'all');
 
   let devApps = [];
-  if (isDevAdmin) {
+  if (!isCurrentSessionAdmin()) {
+    devApps = getScopedApplications();
+  } else if (isDevAdmin) {
     // Para el ADMIN o Vista Global: Mostrar TODOS los 6 aplicativos de STF GROUP
     devApps = [...appState.applications];
   } else if (devId) {
@@ -303,7 +538,7 @@ function renderStackedDeck(devId = activeSelectedDevId) {
     devApps = [...appState.applications];
   }
 
-  if (devApps.length === 0) {
+  if (devApps.length === 0 && isCurrentSessionAdmin()) {
     devApps = [...appState.applications];
   }
 
@@ -439,7 +674,7 @@ function renderDeckFromList(appsList) {
                 <button type="button" class="deck-mini-arrow" onclick="cycleStackedDeckNext(event)" title="Siguiente proyecto" style="border:none; background:transparent; cursor:pointer; color:#64748B; padding:0 3px; font-size:13px; font-weight:700; line-height:1;">▶</button>
               </div>
             ` : ''}
-            <button class="deck-add-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app0.id}')" title="Auditar fases del aplicativo">
+            <button class="deck-add-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app0.id}')" title="Actualizar fases del aplicativo">
               <i data-lucide="edit-3"></i>
             </button>
           </div>
@@ -505,10 +740,11 @@ function renderCapsuleProgressBar() {
   if (globalAvgBadge) globalAvgBadge.textContent = `${globalProg}%`;
   if (dominantPhaseEl) dominantPhaseEl.textContent = getDominantPhase();
 
-  // Contar módulos totales y completados
+  // Contar módulos totales y completados dentro del alcance (Admin o Desarrollador)
+  const scopedApps = getScopedApplications();
   let totalModules = 0;
   let completedModules = 0;
-  appState.applications.forEach(app => {
+  scopedApps.forEach(app => {
     totalModules += app.phases.length;
     completedModules += app.phases.filter(p => p.completed).length;
   });
@@ -537,6 +773,7 @@ function renderCapsuleProgressBar() {
 
 // Quarterly Goal Modal Handlers
 function openQuarterlyGoalModal() {
+  if (!isCurrentSessionAdmin()) return;
   const modal = document.getElementById('modalQuarterlyGoal');
   if (!modal) return;
 
@@ -641,6 +878,7 @@ function toggleCustomPeriodInput(val) {
 }
 
 function saveQuarterlyGoal() {
+  if (!isCurrentSessionAdmin()) return;
   const periodSel = document.getElementById('inputQuarterPeriod');
   const customInput = document.getElementById('inputCustomPeriod');
   const targetInput = document.getElementById('inputTargetPercentage');
@@ -686,11 +924,66 @@ function saveQuarterlyGoal() {
   showToast('Objetivo trimestral actualizado exitosamente');
 }
 
-// 3. Render Devs Interactive Team Cards Grid
+// 3. Render Devs Interactive Team Cards Grid (o Panel Personal de Desarrollador)
 function renderDevelopersSection() {
   const gridEl = document.getElementById('teamCardsGrid') || document.getElementById('devsAvatarList');
   if (!gridEl) return;
 
+  // MODO DESARROLLADOR: Renderizar Ficha Técnica Personal y Acceso Rápido a sus Aplicativos
+  if (!isCurrentSessionAdmin()) {
+    const devId = getLoggedDevId();
+    const dev = getDeveloperById(devId) || getLoggedSessionUser();
+    const myApps = getScopedApplications();
+
+    gridEl.innerHTML = myApps.map(app => {
+      const prog = calculateAppProgress(app);
+      const completedPhases = (app.phases || []).filter(p => p.completed).length;
+      const totalPhases = (app.phases || []).length || 6;
+      const activePhase = (app.phases || []).find(p => !p.completed) || { name: 'Completado al 100%' };
+      let barColor = 'var(--primary-blue-gradient)';
+      if (prog === 100) barColor = 'var(--accent-green-gradient)';
+      else if (app.status === 'risk') barColor = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
+
+      return `
+        <div class="dev-card-interactive active" onclick="openSystemDetailModal('${app.id}')" title="Clic para actualizar las 6 fases de ${app.name}">
+          <div class="dci-top">
+            <div class="system-icon-box" style="background: ${app.iconColor || '#4E65FF'}; width: 38px; height: 38px; border-radius: 12px; font-size: 12px; font-weight: 800; color: #FFF; display: flex; align-items: center; justify-content: center;">
+              ${app.iconInitial || app.name.substring(0, 3).toUpperCase()}
+            </div>
+            <span class="dci-score-pill" style="${prog === 100 ? 'background:#ECFDF5; color:#059669;' : ''}">
+              <i data-lucide="layers"></i>
+              <span>${completedPhases}/${totalPhases} Fases</span>
+            </span>
+          </div>
+
+          <div class="dci-info">
+            <strong class="dci-name">${app.name}</strong>
+            <span class="dci-role">${app.isGroupProject ? '👥 Proyecto Grupal · ' : ''}${activePhase.name}</span>
+          </div>
+
+          <div class="dci-workload">
+            <div class="dci-workload-meta">
+              <span class="dci-meta-label">Avance Ponderado</span>
+              <span class="dci-meta-val">${prog}%</span>
+            </div>
+            <div class="dci-progress-track">
+              <div class="dci-progress-fill" style="width: ${prog}%; background: ${barColor};"></div>
+            </div>
+            <div class="dci-bottom-status" style="margin-top: 6px;">
+              <span class="dci-avg-text" style="font-size: 11px; color: #4E65FF; font-weight: 700;">✏️ Actualizar Fases</span>
+              <span class="dci-active-badge">${formatShortDate(app.deadline)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    updateQuickDevStrip();
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  // MODO ADMIN: Renderizar los 5 desarrolladores del equipo
   gridEl.innerHTML = appState.developers.map(dev => {
     const isSelected = dev.id === activeSelectedDevId;
     const isDevAdmin = dev.role === 'Admin' || dev.id === 'dev_ediaz';
@@ -756,24 +1049,8 @@ function renderHeaderSessionUser() {
   const headerName = document.getElementById('headerUserName');
   const headerRoleBadge = document.getElementById('headerUserRoleBadge');
 
-  if (!loggedUser) {
-    const saved = localStorage.getItem('STF_LOGGED_USER');
-    if (saved) {
-      try { loggedUser = JSON.parse(saved); } catch(e) {}
-    }
-  }
-
-  // Si no hay sesión previa en localStorage, usar Edwin Díaz (Admin) por defecto
-  const session = loggedUser || {
-    id: 'dev_ediaz',
-    name: 'Edwin Diaz',
-    username: 'ediaz',
-    role: 'Admin',
-    email: 'edwin.diaz@studiof.com.co',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face'
-  };
-
-  const isAdmin = (session.role && session.role.toLowerCase() === 'admin');
+  const session = getLoggedSessionUser();
+  const isAdmin = isCurrentSessionAdmin();
 
   if (headerName) {
     headerName.textContent = session.name || 'Edwin Diaz';
@@ -818,6 +1095,10 @@ window.renderHeaderSessionUser = renderHeaderSessionUser;
 window.logoutApp = logoutApp;
 
 function selectDeveloper(devId) {
+  // Si el usuario logueado es un Desarrollador, solo puede ver su propio perfil
+  if (!isCurrentSessionAdmin()) {
+    devId = getLoggedDevId();
+  }
   activeSelectedDevId = devId;
 
   // Cerrar el dropdown del header si estaba abierto
@@ -865,14 +1146,15 @@ function selectDeveloper(devId) {
 }
 
 function updateQuickDevStrip() {
-  const dev = getDeveloperById(activeSelectedDevId);
+  const effectiveDevId = !isCurrentSessionAdmin() ? getLoggedDevId() : activeSelectedDevId;
+  const dev = getDeveloperById(effectiveDevId);
   const nameEl = document.getElementById('activeDevName');
   const roleEl = document.getElementById('activeDevRole');
   const scoreEl = document.getElementById('activeDevScore');
   const tagsContainer = document.getElementById('selectedDevProjectsTags');
 
   // Find all projects assigned to this developer (or all if Admin)
-  const isDevAdmin = (dev && dev.role === 'Admin') || activeSelectedDevId === 'dev_ediaz' || activeSelectedDevId === 'all';
+  const isDevAdmin = isCurrentSessionAdmin() && ((dev && dev.role === 'Admin') || effectiveDevId === 'dev_ediaz' || effectiveDevId === 'all');
   const assigned = isDevAdmin
     ? appState.applications
     : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
@@ -896,7 +1178,7 @@ function updateQuickDevStrip() {
         const prog = calculateAppProgress(app);
         const isGroup = app.isGroupProject ? '<span class="tag-group-badge">Grupal</span>' : '';
         return `
-          <div class="dev-project-tag-pill" onclick="openSystemDetailModal('${app.id}')" title="Clic para auditar fases de ${app.name}">
+          <div class="dev-project-tag-pill" onclick="openSystemDetailModal('${app.id}')" title="Clic para actualizar fases de ${app.name}">
             <span class="tag-mini-dot" style="background-color: ${app.iconColor || 'var(--primary-blue)'};"></span>
             <span>${app.name}</span>
             ${isGroup}
@@ -911,7 +1193,7 @@ function updateQuickDevStrip() {
   const btnDetail = document.getElementById('btnOpenDevDetail');
   if (btnDetail) {
     btnDetail.onclick = () => {
-      openDevScorecardModal(activeSelectedDevId);
+      openDevScorecardModal(effectiveDevId);
     };
   }
 
@@ -930,7 +1212,8 @@ function renderSystemsTable(filterQuery = '') {
   const tbody = document.getElementById('systemsTableBody');
   if (!tbody) return;
 
-  let filtered = appState.applications;
+  const isAdmin = isCurrentSessionAdmin();
+  let filtered = getScopedApplications();
   if (filterQuery.trim()) {
     const q = filterQuery.toLowerCase();
     filtered = filtered.filter(app => {
@@ -1005,7 +1288,7 @@ function renderSystemsTable(filterQuery = '') {
         </td>
         <td class="text-right">
           <button class="action-row-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app.id}')">
-            Auditar Fases
+            ${isAdmin ? 'Auditar Fases' : 'Actualizar Fases'}
           </button>
         </td>
       </tr>
@@ -1612,6 +1895,9 @@ const STF_VELOCITY_DATA = {
 };
 
 function initVelocityBarChart() {
+  if (!isCurrentSessionAdmin()) {
+    currentVelocityDev = getLoggedDevId();
+  }
   const filterSelect = document.getElementById('velocityFilter');
   if (filterSelect) {
     filterSelect.value = currentVelocityPeriod;
@@ -1631,7 +1917,7 @@ function initVelocityBarChart() {
   if (devSelect) {
     devSelect.value = currentVelocityDev;
     devSelect.onchange = (e) => {
-      currentVelocityDev = e.target.value;
+      currentVelocityDev = !isCurrentSessionAdmin() ? getLoggedDevId() : e.target.value;
       const vcalDevSelect = document.getElementById('vcalDevSelect');
       if (vcalDevSelect) vcalDevSelect.value = currentVelocityDev;
       updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
@@ -1693,6 +1979,10 @@ function initVelocityBarChart() {
 }
 
 function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
+  if (!isCurrentSessionAdmin()) {
+    devId = getLoggedDevId();
+    currentVelocityDev = devId;
+  }
   const canvas = document.getElementById('velocityBarChart');
   if (!canvas) return;
 
@@ -2534,6 +2824,11 @@ function openSystemDetailModal(appId) {
   const app = appState.applications.find(a => a.id === appId);
   if (!app) return;
 
+  if (!isCurrentSessionAdmin() && !isAppAssignedToDev(app, getLoggedDevId())) {
+    showToast('⚠️ Solo puedes actualizar las fases de tus aplicativos asignados.');
+    return;
+  }
+
   currentEditingSysId = appId;
   const dev = getDeveloperById(app.devId);
   const progress = calculateAppProgress(app);
@@ -2615,14 +2910,22 @@ function saveSystemChanges() {
     app.phases[idx].completed = cb.checked;
   });
 
+  const currentWeight = calculateAppProgress(app);
+  if (currentWeight === 100 && app.status === 'risk') {
+    app.status = 'ontime';
+  }
+
   saveData(appState);
   closeSystemDetailModal();
 
   // Sincronizar avance de fase en Google Sheets
   if (window.SheetsSync) {
-    const currentWeight = calculateAppProgress(app);
     const activePhase = app.phases.find(p => !p.completed) || app.phases[app.phases.length - 1];
     const dev = getDeveloperById(app.devId);
+    const sessionUser = getLoggedSessionUser();
+    const authorName = !isCurrentSessionAdmin()
+      ? (sessionUser.name || (dev ? dev.name : 'Desarrollador'))
+      : (dev ? dev.name : 'Equipo STF');
     const completedPhases = app.phases.filter(p => p.completed).map(p => p.name).join(', ');
 
     window.SheetsSync.logPhaseUpdate({
@@ -2631,7 +2934,7 @@ function saveSystemChanges() {
       phaseName: activePhase ? activePhase.name : 'Todas Completadas',
       progress: currentWeight,
       completed: currentWeight === 100,
-      developer: dev ? dev.name : 'Equipo STF',
+      developer: authorName,
       notes: `Fases completas: ${completedPhases || 'Ninguna'}`
     });
     // Sincronizar snapshot completo en Google Sheets
@@ -2641,7 +2944,7 @@ function saveSystemChanges() {
   // Refrescar todas las vistas en vivo del sistema
   refreshAllViews();
 
-  showToast(`¡Avance de "${app.name}" actualizado exitosamente!`);
+  showToast(`¡Avance de "${app.name}" (${currentWeight}%) actualizado y sincronizado!`);
 }
 
 function closeSystemDetailModal() {
@@ -3727,7 +4030,12 @@ function renderIntegrationsList(filter = activeIntFilter) {
   if (!container) return;
 
   activeIntFilter = filter;
-  const integrations = appState.integrations || [];
+  const isAdmin = isCurrentSessionAdmin();
+  const integrations = getScopedIntegrations();
+
+  if (!isAdmin) {
+    openedDevFolders.add(getLoggedDevId());
+  }
 
   // Update counter badges
   const cAll = integrations.length;
@@ -3768,7 +4076,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
       <div style="width: 100%; padding: 42px 24px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: 20px; border: 1.5px dashed #CBD5E1;">
         <i data-lucide="inbox" style="width: 42px; height: 42px; margin-bottom: 10px; color: #94A3B8;"></i>
         <p style="font-weight: 750; font-size: 15px; color: #1E293B; margin-bottom: 4px;">No hay integraciones en esta categoría.</p>
-        <span style="font-size: 13px; color: #64748B;">Usa el botón "+ Asignar Integración" para asignar nuevas tareas operativas al equipo.</span>
+        <span style="font-size: 13px; color: #64748B;">${isAdmin ? 'Usa el botón "+ Asignar Integración" para asignar nuevas tareas operativas al equipo.' : 'No tienes tareas operativas pendientes en este filtro.'}</span>
       </div>
     `;
     lucide.createIcons();
@@ -3821,7 +4129,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
   });
 
   // Toolbar HTML
-  const toolbarHtml = `
+  const toolbarHtml = isAdmin ? `
     <div class="dev-folders-toolbar">
       <div class="dev-folders-toolbar-info">
         <div class="dev-folders-toolbar-badge">
@@ -3841,7 +4149,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
         </button>
       </div>
     </div>
-  `;
+  ` : '';
 
   // Folders HTML
   const foldersHtml = devGroups.map(group => {
@@ -3875,10 +4183,6 @@ function renderIntegrationsList(filter = activeIntFilter) {
       const appColor = app.iconColor || '#4E65FF';
       const consecutiveNum = devConsecutiveMap.get(item.id) || 1;
 
-      // Determinación de Badge Superior según especificación:
-      // 1. Amarillo con número consecutivo cuando esté en proceso
-      // 2. Verde con chulito (✓) cuando la tarea esté cumplida
-      // 3. Rojo con X (✕) cuando la tarea sobrepase los días estipulados de entrega
       let cornerBadgeClass = '';
       let cornerBadgeContent = '';
       let cornerBadgeTitle = '';
@@ -3945,11 +4249,18 @@ function renderIntegrationsList(filter = activeIntFilter) {
             <i data-lucide="chevron-right" class="eval-action-arrow"></i>
           </div>
         `;
-      } else {
+      } else if (isAdmin) {
         actionHtml = `
           <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas">
             <i data-lucide="award" style="width: 15px; height: 15px;"></i>
             <span>Calificar Efectividad</span>
+          </button>
+        `;
+      } else {
+        actionHtml = `
+          <button class="btn-friendly-eval" onclick="openSystemDetailModal('${item.appId}')" title="Actualizar las 6 fases de desarrollo de ${app.name}">
+            <i data-lucide="edit-3" style="width: 15px; height: 15px;"></i>
+            <span>Actualizar Fases del Aplicativo</span>
           </button>
         `;
       }
@@ -4231,6 +4542,12 @@ function openEvaluateIntegrationModal(intId) {
   const item = (appState.integrations || []).find(i => i.id === intId);
   if (!item) return;
 
+  // Si es desarrollador y la tarea aún no ha sido evaluada, redirigir al modal de fases del aplicativo
+  if (!isCurrentSessionAdmin() && item.status !== 'evaluated') {
+    openSystemDetailModal(item.appId);
+    return;
+  }
+
   currentEvaluatingIntId = intId;
   const app = appState.applications.find(a => a.id === item.appId) || { name: 'Sistema', iconColor: '#4E65FF' };
   const dev = getDeveloperById(item.devId);
@@ -4268,6 +4585,14 @@ function openEvaluateIntegrationModal(intId) {
   const sStab = document.getElementById('sliderStability');
   const sUsab = document.getElementById('sliderUsability');
   const sQA = document.getElementById('sliderQA');
+  const btnConfirmEval = document.getElementById('btnConfirmEvaluation');
+  const isReadOnly = !isCurrentSessionAdmin();
+
+  if (sStab) sStab.disabled = isReadOnly;
+  if (sUsab) sUsab.disabled = isReadOnly;
+  if (sQA) sQA.disabled = isReadOnly;
+  if (notesEl) notesEl.readOnly = isReadOnly;
+  if (btnConfirmEval) btnConfirmEval.style.display = isReadOnly ? 'none' : '';
 
   if (item.evaluation) {
     if (sStab) sStab.value = item.evaluation.stabilityScore || 95;
@@ -4325,6 +4650,7 @@ function updateEvaluationMath() {
 }
 
 function handleConfirmEvaluation() {
+  if (!isCurrentSessionAdmin()) return;
   const item = (appState.integrations || []).find(i => i.id === currentEvaluatingIntId);
   if (!item) return;
 
@@ -4417,6 +4743,7 @@ function initApp() {
   renderHeaderSessionUser();
   renderHeaderDevDropdown();
   syncDynamicSelects();
+  applyRoleBasedUI();
 
   // Header developer dropdown toggle
   const btnHeaderUser = document.getElementById('btnHeaderUserSelect');
@@ -4665,6 +4992,14 @@ const STF_INDUSTRIAL_CONTEXT = {
 };
 
 function switchView(viewName) {
+  const isAdmin = isCurrentSessionAdmin();
+  const session = getLoggedSessionUser();
+
+  // Bloquear acceso a vistas exclusivas de Super Admin para desarrolladores
+  if (!isAdmin && (viewName === 'developers' || viewName === 'settings')) {
+    viewName = 'dashboard';
+  }
+
   // Update sidebar active state
   document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === viewName);
@@ -4680,13 +5015,21 @@ function switchView(viewName) {
     targetPanel.classList.add('show', 'active');
   }
 
-  // Actualizar banner superior con título y contexto acorde a la sección activa
+  // Actualizar banner superior con título y contexto acorde a la sección activa y al rol
   const titleEl = document.getElementById('mainWelcomeTitle');
   const subtitleEl = document.getElementById('mainWelcomeSubtitle');
 
   if (viewName === 'projects') {
-    if (titleEl) titleEl.innerHTML = 'Portafolio de Sistemas Industriales · <span class="text-gradient">STF GROUP</span>';
-    if (subtitleEl) subtitleEl.textContent = 'Supervisión operativa de software de planta, ciclo de vida de fases, entregables y efectividad de ingeniería.';
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Portafolio de Sistemas Industriales · <span class="text-gradient">STF GROUP</span>'
+        : `Mis Aplicativos Asignados · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Supervisión operativa de software de planta, ciclo de vida de fases, entregables y efectividad de ingeniería.'
+        : 'Gestión técnica de tus sistemas a cargo, actualización de fases de desarrollo y estado de entregables.';
+    }
     renderProjectsView(activeBrandFilter);
   } else if (viewName === 'developers') {
     if (titleEl) titleEl.innerHTML = 'Rendimiento de Ingeniería & Gestión de Usuarios · <span class="text-gradient">STF GROUP</span>';
@@ -4697,16 +5040,32 @@ function switchView(viewName) {
       window.SheetsSync.pullUsersFromSheets(true);
     }
   } else if (viewName === 'analytics') {
-    if (titleEl) titleEl.innerHTML = 'Métricas de Calidad & QA · <span class="text-gradient">STF GROUP</span>';
-    if (subtitleEl) subtitleEl.textContent = 'Control de defectos, estabilidad de despliegues y auditoría de software industrial.';
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Métricas de Calidad & QA · <span class="text-gradient">STF GROUP</span>'
+        : `Mis Métricas de Calidad & Fases · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Control de defectos, estabilidad de despliegues y auditoría de software industrial.'
+        : 'Indicadores de calidad técnica, avance de fases y estado QA de tus aplicativos asignados.';
+    }
     renderAnalyticsView();
   } else if (viewName === 'settings') {
     if (titleEl) titleEl.innerHTML = 'Configuración del Sistema · <span class="text-gradient">STF GROUP</span>';
     if (subtitleEl) subtitleEl.textContent = 'Parámetros del entorno, copias de seguridad de datos y restablecimiento del sistema.';
     renderSettingsView();
   } else if (viewName === 'dashboard') {
-    if (titleEl) titleEl.innerHTML = 'Estado de Desarrollo · <span class="text-gradient">STF GROUP</span>';
-    if (subtitleEl) subtitleEl.textContent = 'Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.';
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Estado de Desarrollo · <span class="text-gradient">STF GROUP</span>'
+        : `Panel de Ingeniería · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.'
+        : 'Tus aplicativos asignados, entregables activos, progreso de fases y métricas personales de efectividad.';
+    }
     renderStackedDeck();
     renderCapsuleProgressBar();
     renderSystemsTable();
@@ -4766,7 +5125,8 @@ function clearProjectSearch() {
 }
 
 function updateProjectsKpiBar() {
-  const allApps = appState.applications || [];
+  const allApps = getScopedApplications();
+  const isAdmin = isCurrentSessionAdmin();
   const totalApps = allApps.length;
   const prodApps = allApps.filter(a => calculateAppProgress(a) >= 100).length;
   const riskApps = allApps.filter(a => a.status === 'risk').length;
@@ -4778,20 +5138,17 @@ function updateProjectsKpiBar() {
   const elOnTime = document.getElementById('kpiOnTimeRate');
   const elRisk = document.getElementById('kpiRiskSystemsCount');
 
-  if (elActive) elActive.textContent = `${totalApps} Macro-Sistemas`;
+  if (elActive) elActive.textContent = isAdmin ? `${totalApps} Macro-Sistemas` : `${totalApps} Mis Sistemas`;
   if (elProd) elProd.textContent = `${prodApps} en Producción`;
   if (elOnTime) elOnTime.textContent = `${onTimeRate}.0% En Tiempo`;
   if (elRisk) elRisk.textContent = `${riskApps} En Riesgo`;
 
   // Actualizar también los chips de la cabecera principal si están presentes
-  const chipActive = document.getElementById('chipActiveApps');
-  const chipRisk = document.getElementById('chipRiskApps');
-  if (chipActive) chipActive.textContent = `${totalApps} Aplicativos Activos`;
-  if (chipRisk) chipRisk.textContent = `${riskApps} En Riesgo`;
+  updateHeaderStatChips();
 }
 
 function getFilteredApplications(brandFilter = activeBrandFilter) {
-  let apps = appState.applications || [];
+  let apps = getScopedApplications();
 
   // 1. Filtro por categoría / marca
   if (brandFilter && brandFilter !== 'all') {
@@ -4819,12 +5176,28 @@ function getFilteredApplications(brandFilter = activeBrandFilter) {
 function renderProjectsView(brand = activeBrandFilter) {
   activeBrandFilter = brand;
   updateProjectsKpiBar();
+  const isAdmin = isCurrentSessionAdmin();
+  const scopedApps = getScopedApplications();
 
   // Actualizar pastillas de filtro y sus contadores
   const pills = document.querySelectorAll('#brandFilterPills .filter-pill');
+  const pillBaseLabels = {
+    'all': 'Todos',
+    'Desarrollo Grupal': 'Grupal',
+    'Manufactura': 'Manufactura',
+    'Control Textil': 'Control Textil',
+    'Logística': 'Logística',
+    'Aseguramiento': 'Calidad QA',
+    'Planta Textil': 'Tintorería'
+  };
   pills.forEach(pill => {
     const f = pill.dataset.filter;
     pill.classList.toggle('active', f === brand);
+    const count = f === 'all'
+      ? scopedApps.length
+      : scopedApps.filter(a => (a.category || '').toLowerCase().includes(f.toLowerCase())).length;
+    const baseLbl = pillBaseLabels[f] || f;
+    pill.textContent = `${baseLbl} (${count})`;
   });
 
   const apps = getFilteredApplications(brand);
@@ -5031,9 +5404,9 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <i data-lucide="layers"></i>
                 <span>Tareas (${totalTasksCount})</span>
               </button>
-              <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las 6 fases de desarrollo de ${app.name}">
+              <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Actualizar'} las 6 fases de desarrollo de ${app.name}">
                 <i data-lucide="clipboard-check"></i>
-                <span>Auditar Fases</span>
+                <span>${isAdmin ? 'Auditar Fases' : 'Actualizar Fases'}</span>
               </button>
             </div>
           </div>
@@ -5113,8 +5486,8 @@ function renderProjectsView(brand = activeBrandFilter) {
           </td>
           <td>${statusBadge}</td>
           <td class="text-right" onclick="event.stopPropagation();">
-            <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar Fases">
-              Auditar
+            <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Actualizar'} Fases">
+              ${isAdmin ? 'Auditar' : 'Actualizar'}
             </button>
           </td>
         </tr>
@@ -5592,27 +5965,24 @@ async function manualSyncUsersWithSheets() {
 function renderAnalyticsView() {
   const brandsCtx = document.getElementById('brandsProgressChart');
   const qaCtx = document.getElementById('qaBugsChart');
+  const scopedApps = getScopedApplications();
 
   if (brandsChartInstance) brandsChartInstance.destroy();
   if (qaBugsChartInstance) qaBugsChartInstance.destroy();
 
-  // 1. Brands Progress Doughnut
+  // 1. Brands / Systems Progress Doughnut
   if (brandsCtx) {
-    const categories = ['Desarrollo Grupal', 'Manufactura & Producción', 'Control Textil', 'Logística & Talleres', 'Aseguramiento de Calidad', 'Planta Textil'];
-    const brandAverages = categories.map(cat => {
-      const match = appState.applications.filter(a => a.category.toLowerCase().includes(cat.toLowerCase().split(' ')[0]));
-      if (match.length === 0) return 70;
-      const total = match.reduce((sum, a) => sum + calculateAppProgress(a), 0);
-      return Math.round(total / match.length);
-    });
+    const labels = scopedApps.map(a => a.name);
+    const progressValues = scopedApps.map(a => calculateAppProgress(a));
+    const colors = scopedApps.map(a => a.iconColor || '#4E65FF');
 
     brandsChartInstance = new Chart(brandsCtx, {
       type: 'doughnut',
       data: {
-        labels: categories,
+        labels: labels,
         datasets: [{
-          data: brandAverages,
-          backgroundColor: ['#4E65FF', '#FFA043', '#D88BF8', '#10B981', '#3B82F6', '#8B5CF6'],
+          data: progressValues,
+          backgroundColor: colors,
           borderWidth: 4,
           borderColor: '#FFFFFF',
           hoverOffset: 8
@@ -5632,7 +6002,7 @@ function renderAnalyticsView() {
           },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.label}: ${ctx.raw}% Avance Promedio`
+              label: ctx => ` ${ctx.label}: ${ctx.raw}% Avance`
             }
           }
         },
@@ -5643,11 +6013,25 @@ function renderAnalyticsView() {
 
   // 2. QA Defects Grouped Bar Chart
   if (qaCtx) {
-    const appNames = appState.applications.map(a => a.name.length > 14 ? a.name.substring(0, 14) + '...' : a.name);
-    const defaultReported = [18, 14, 10, 16, 12, 11];
-    const defaultResolved = [15, 13, 10, 12, 11, 9];
-    const bugsReported = appState.applications.map((_, i) => defaultReported[i] !== undefined ? defaultReported[i] : 10);
-    const bugsResolved = appState.applications.map((_, i) => defaultResolved[i] !== undefined ? defaultResolved[i] : 9);
+    const appNames = scopedApps.map(a => a.name.length > 14 ? a.name.substring(0, 14) + '...' : a.name);
+    const defaultReportedByApp = {
+      app_torre: 18,
+      app_colchas: 14,
+      app_laboratorio: 10,
+      app_geo: 16,
+      app_calidad: 12,
+      app_tintoreria: 11
+    };
+    const defaultResolvedByApp = {
+      app_torre: 15,
+      app_colchas: 14,
+      app_laboratorio: 10,
+      app_geo: 12,
+      app_calidad: 11,
+      app_tintoreria: 9
+    };
+    const bugsReported = scopedApps.map(a => defaultReportedByApp[a.id] !== undefined ? defaultReportedByApp[a.id] : 10);
+    const bugsResolved = scopedApps.map(a => defaultResolvedByApp[a.id] !== undefined ? defaultResolvedByApp[a.id] : 9);
 
     qaBugsChartInstance = new Chart(qaCtx, {
       type: 'bar',
@@ -5687,7 +6071,7 @@ function renderAnalyticsView() {
     });
   }
 
-  // 3. Renderizar dinámicamente la Matriz de Cuellos de Botella con los sistemas reales de STF GROUP
+  // 3. Renderizar dinámicamente la Matriz de Cuellos de Botella con los sistemas activos según alcance
   const bottleneckBody = document.getElementById('analyticsBottleneckTableBody');
   if (bottleneckBody) {
     const standardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases)
@@ -5703,14 +6087,14 @@ function renderAnalyticsView() {
     const avgDaysByPhase = [6, 10, 22, 18, 14, 3];
 
     bottleneckBody.innerHTML = standardPhases.map((phase, idx) => {
-      const appsInThisPhase = (appState.applications || []).filter(app => {
+      const appsInThisPhase = scopedApps.filter(app => {
         const activeIdx = (app.phases || []).findIndex(p => !p.completed);
         return activeIdx === idx;
       });
       const count = appsInThisPhase.length;
       const namesList = count > 0
         ? `${count} Aplicativo${count !== 1 ? 's' : ''} (${appsInThisPhase.map(a => a.name).join(', ')})`
-        : (idx < 3 ? `0 Aplicativos (Completada en los sistemas activos)` : `0 Aplicativos en esta etapa`);
+        : (idx < 3 ? `0 Aplicativos (Completada en tus sistemas activos)` : `0 Aplicativos en esta etapa`);
       const hasRiskApp = appsInThisPhase.some(a => a.status === 'risk');
       const statusHtml = hasRiskApp
         ? `<span class="status-pill status-risk">Atención Requerida</span>`
