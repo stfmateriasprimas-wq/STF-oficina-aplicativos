@@ -347,7 +347,7 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 3: Registrar Asignación de Tarea / Integración
+    // ACCIÓN 3: Registrar Asignación de Tarea / Integración & Enviar Correo Automático
     // =========================================================================
     if (action === "log_task") {
       var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
@@ -375,9 +375,83 @@ function doPost(e) {
         ""
       ]);
 
+      // Enviar correo electrónico automático al desarrollador asignado
+      var emailSent = false;
+      var targetEmail = (payload.email || "").trim();
+      var devName = payload.developer || "Desarrollador";
+
+      // Si no viene en el payload, buscar en la Columna D de la hoja 'Usuarios' o 'USUARIOS'
+      if (!targetEmail) {
+        var sUserSheet = ss.getSheetByName(TABS.USUARIOS) || ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios");
+        if (sUserSheet) {
+          var userValues = sUserSheet.getDataRange().getValues();
+          // Fila 0 es encabezado: [ID, Usuario_Logueo, Rol, Correo, Nombre]
+          for (var u = 1; u < userValues.length; u++) {
+            var rowDevId = String(userValues[u][0] || "").toLowerCase().trim();
+            var rowUser = String(userValues[u][1] || "").toLowerCase().trim();
+            var rowEmail = String(userValues[u][3] || "").trim(); // Columna D
+            var rowName = String(userValues[u][4] || userValues[u][1] || "").toLowerCase().trim();
+            var searchTarget = String(devName).toLowerCase().trim();
+
+            if (rowName.indexOf(searchTarget) !== -1 || searchTarget.indexOf(rowName) !== -1 ||
+                rowUser.indexOf(searchTarget) !== -1 || searchTarget.indexOf(rowUser) !== -1 ||
+                rowDevId === searchTarget) {
+              if (rowEmail && rowEmail.indexOf("@") !== -1) {
+                targetEmail = rowEmail;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // Si encontramos correo válido, enviar notificación HTML con diseño corporativo STF GROUP
+      if (targetEmail && targetEmail.indexOf("@") !== -1) {
+        try {
+          var emailSubject = "⚡ Nueva Tarea Asignada: " + (payload.taskName || "Integración") + " · STF GROUP";
+          var htmlBody = "" +
+            "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);\">" +
+              "<div style=\"background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 24px; color: #FFFFFF; text-align: left;\">" +
+                "<div style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; margin-bottom: 8px;\">STF GROUP · CONTROL TI</div>" +
+                "<h2 style=\"margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF;\">Nueva Tarea / Integración Asignada</h2>" +
+                "<p style=\"margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;\">El Administrador te ha cargado una nueva responsabilidad en planta.</p>" +
+              "</div>" +
+              "<div style=\"padding: 24px;\">" +
+                "<p style=\"font-size: 15px; color: #1E293B; margin-top: 0;\">Hola <strong>" + devName + "</strong>,</p>" +
+                "<p style=\"font-size: 13.5px; color: #475569; line-height: 1.5;\">Se te ha asignado un nuevo módulo operativo en el <strong>Sistema de Control de Desarrollo de STF GROUP</strong>:</p>" +
+                "<div style=\"background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; margin: 20px 0;\">" +
+                  "<div style=\"font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;\">Nombre de la Tarea</div>" +
+                  "<div style=\"font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 14px;\">" + (payload.taskName || "Módulo") + "</div>" +
+                  "<table style=\"width: 100%; border-collapse: collapse; font-size: 13px;\">" +
+                    "<tr><td style=\"padding: 6px 0; color: #64748B;\">📁 <strong>Aplicativo:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #1E293B;\">" + (payload.appName || "Sistema") + "</td></tr>" +
+                    "<tr><td style=\"padding: 6px 0; color: #64748B;\">⚖️ <strong>Ponderación:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #4E65FF;\">+" + (payload.weight || 15) + "% al avance del sistema</td></tr>" +
+                    "<tr><td style=\"padding: 6px 0; color: #64748B;\">📅 <strong>Fecha Límite:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #EF4444;\">" + (payload.deadline || "Próximamente") + "</td></tr>" +
+                    (payload.description ? "<tr><td style=\"padding: 6px 0; color: #64748B; vertical-align: top;\">📝 <strong>Instrucciones:</strong></td><td style=\"padding: 6px 0; color: #334155;\">" + payload.description + "</td></tr>" : "") +
+                  "</table>" +
+                "</div>" +
+                "<div style=\"text-align: center; margin: 24px 0;\">" +
+                  "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35);\">Ingresar a la Plataforma STF</a>" +
+                "</div>" +
+                "<p style=\"font-size: 12px; color: #94A3B8; text-align: center; margin: 0;\">Este es un correo automático generado por el Sistema de Supervisión de Software STF GROUP.</p>" +
+              "</div>" +
+            "</div>";
+
+          MailApp.sendEmail({
+            to: targetEmail,
+            subject: emailSubject,
+            htmlBody: htmlBody
+          });
+          emailSent = true;
+        } catch (mailErr) {
+          // Si ocurre error enviando correo, registrar sin bloquear la respuesta
+        }
+      }
+
       return createJsonResponse({
         status: "success",
-        message: "Tarea registrada en Tareas_Integraciones exitosamente",
+        message: "Tarea registrada en Tareas_Integraciones exitosamente" + (emailSent ? " y correo enviado a " + targetEmail : ""),
+        emailSent: emailSent,
+        recipient: targetEmail,
         date: dateStr
       });
     }

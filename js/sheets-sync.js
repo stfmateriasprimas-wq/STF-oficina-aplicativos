@@ -190,10 +190,12 @@
     logTaskAssignment(data) {
       const payload = {
         action: 'log_task',
-        taskId: data.taskId || ('task_' + Date.now()),
+        taskId: data.taskId || ('int_' + Date.now()),
         taskName: data.taskName || 'Nueva Integración',
         appName: data.appName || 'Sistema General',
         developer: data.developer || 'Desarrollador Asignado',
+        email: data.email || '',
+        description: data.description || '',
         weight: data.weight || 0,
         deadline: data.deadline || '',
         status: data.status || 'En Progreso',

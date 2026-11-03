@@ -4729,11 +4729,14 @@ function handleAssignIntegrationSubmit(e) {
 
   // Sincronizar asignación de tarea en Google Sheets (Hoja: Tareas_Integraciones y Bitácora)
   if (window.SheetsSync) {
+    const devEmail = (dev && dev.email) ? dev.email : '';
     window.SheetsSync.logTaskAssignment({
       taskId: newIntegration.id,
       taskName: name,
       appName: app ? app.name : 'Sistema',
       developer: dev ? dev.name : 'Desarrollador',
+      email: devEmail,
+      description: desc,
       weight: weight,
       deadline: deadline,
       status: 'En Progreso'
