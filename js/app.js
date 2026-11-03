@@ -737,6 +737,7 @@ function renderDeckFromList(appsList) {
   const deckContainer = document.getElementById('stackedDeck');
   if (!deckContainer || !appsList || appsList.length === 0) return;
 
+  const isAdmin = isCurrentSessionAdmin();
   const total = appsList.length;
   const app0 = appsList[0];
   const dev0 = getDeveloperById(app0.devId);
