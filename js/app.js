@@ -3061,6 +3061,16 @@ function openSystemDetailModal(appId) {
   document.getElementById('modalSysCode').textContent = app.code;
   document.getElementById('modalSysTitle').textContent = app.name;
   document.getElementById('modalSysDesc').textContent = app.description || 'Sin descripción adicional.';
+
+  const webLinkEl = document.getElementById('modalSysWebLink');
+  if (webLinkEl) {
+    if (app.webUrl) {
+      webLinkEl.href = app.webUrl;
+      webLinkEl.style.display = 'inline-flex';
+    } else {
+      webLinkEl.style.display = 'none';
+    }
+  }
   if (app.isGroupProject) {
     document.getElementById('modalSysDevName').textContent = 'Jose Guzman, Juan David, Mocho, Esteban Escobar (Equipo Grupal)';
     document.getElementById('modalSysDevImg').src = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&h=100&fit=crop';
@@ -3509,6 +3519,7 @@ function handleCreateNewProject(e) {
   const deadline = document.getElementById('newSysDeadline').value;
   const priority = document.getElementById('newSysPriority').value;
   const desc = document.getElementById('newSysDesc').value.trim();
+  const webUrl = document.getElementById('newSysWebUrl')?.value.trim() || '';
 
   if (!name) return;
 
@@ -3567,6 +3578,7 @@ function handleCreateNewProject(e) {
     name: name,
     category: category,
     description: desc,
+    webUrl: webUrl || `https://stf-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`,
     devId: devId,
     deadline: deadline,
     priority: priority,
@@ -4772,6 +4784,9 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
       // Action button or evaluated pill
       let actionHtml = '';
+      const appWebUrl = app.webUrl || (appState.applications.find(a => a.id === item.appId) || {}).webUrl || '';
+      const appShortName = app.shortName || app.name.split(' ')[0];
+
       if (isEvaluated) {
         actionHtml = `
           <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
@@ -4784,17 +4799,40 @@ function renderIntegrationsList(filter = activeIntFilter) {
             </div>
             <i data-lucide="chevron-right" class="eval-action-arrow"></i>
           </div>
+          ${appWebUrl ? `
+            <div style="margin-top: 8px; width: 100%;">
+              <a href="${appWebUrl}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="Abrir sistema web de ${app.name}" onclick="event.stopPropagation()">
+                <i data-lucide="globe" style="width: 13.5px; height: 13.5px;"></i>
+                <span>Ver Sistema Web (${appShortName})</span>
+                <i data-lucide="external-link" style="width: 12px; height: 12px; margin-left: auto;"></i>
+              </a>
+            </div>
+          ` : ''}
         `;
       } else if (isAdmin) {
         actionHtml = `
-          <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas">
-            <i data-lucide="award" style="width: 15px; height: 15px;"></i>
-            <span>Calificar Efectividad</span>
-          </button>
+          <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+            <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas" style="flex: 1;">
+              <i data-lucide="award" style="width: 15px; height: 15px;"></i>
+              <span>Calificar Efectividad</span>
+            </button>
+            ${appWebUrl ? `
+              <a href="${appWebUrl}" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" title="Abrir sistema web publicado de ${app.name}" onclick="event.stopPropagation()">
+                <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
+                <span>Web ↗</span>
+              </a>
+            ` : ''}
+          </div>
         `;
       } else {
-        // En perfil de desarrollador se elimina este botón según solicitud
-        actionHtml = '';
+        // En perfil de desarrollador: Botón directo para abrir el Sistema Publicado Web
+        actionHtml = `
+          <a href="${appWebUrl || '#'}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="Abrir sistema web publicado de ${app.name}" onclick="event.stopPropagation()">
+            <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
+            <span>Ir al Sistema Web Publicado (${appShortName})</span>
+            <i data-lucide="external-link" style="width: 13px; height: 13px; margin-left: auto;"></i>
+          </a>
+        `;
       }
 
       return `
@@ -5945,6 +5983,12 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <i data-lucide="layers"></i>
                 <span>Tareas (${totalTasksCount})</span>
               </button>
+              ${app.webUrl ? `
+                <a href="${app.webUrl}" target="_blank" rel="noopener noreferrer" class="card-sec-btn card-web-link-btn" title="Abrir sistema web de ${app.name}">
+                  <i data-lucide="globe"></i>
+                  <span>Web ↗</span>
+                </a>
+              ` : ''}
               ${isAdmin ? `
                 <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las fases de desarrollo de ${app.name}">
                   <i data-lucide="clipboard-check"></i>
@@ -6034,9 +6078,16 @@ function renderProjectsView(brand = activeBrandFilter) {
           </td>
           <td>${statusBadge}</td>
           <td class="text-right" onclick="event.stopPropagation();">
-            <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Ver'} Fases">
-              ${isAdmin ? 'Auditar' : 'Ver Fases'}
-            </button>
+            <div style="display: inline-flex; gap: 6px; align-items: center;">
+              ${app.webUrl ? `
+                <a href="${app.webUrl}" target="_blank" rel="noopener noreferrer" class="action-row-btn" style="text-decoration:none; color:#047857; background:#ECFDF5; border-color:#A7F3D0;" title="Abrir sistema web de ${app.name}">
+                  Web ↗
+                </a>
+              ` : ''}
+              <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Ver'} Fases">
+                ${isAdmin ? 'Auditar' : 'Ver Fases'}
+              </button>
+            </div>
           </td>
         </tr>
       `;

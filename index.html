@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=16">
+  <link rel="stylesheet" href="css/styles.css?v=17">
 </head>
 <body>
 
@@ -1004,7 +1004,13 @@
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title-group">
-          <span class="modal-tag" id="modalSysCode">STF-APP-01</span>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+            <span class="modal-tag" id="modalSysCode" style="margin-bottom: 0;">STF-APP-01</span>
+            <a id="modalSysWebLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" style="display: none;" title="Abrir sistema web en nueva pestaña">
+              <i data-lucide="globe" style="width: 12px; height: 12px;"></i>
+              <span>Abrir Sistema Web Publicado ↗</span>
+            </a>
+          </div>
           <h2 class="modal-title" id="modalSysTitle">POS Omnicanal Studio F</h2>
           <p class="modal-subtitle" id="modalSysDesc">Sistema integral de facturación rápida, inventario local y pasarela de pago para tiendas físicas.</p>
         </div>
@@ -1259,7 +1265,15 @@
 
           <div class="form-group">
             <label for="newSysDesc">Objetivo y Alcance del Sistema</label>
-            <textarea id="newSysDesc" rows="3" placeholder="Describe brevemente el propósito de este aplicativo..." class="form-input"></textarea>
+            <textarea id="newSysDesc" rows="2" placeholder="Describe brevemente el propósito de este aplicativo..." class="form-input"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="newSysWebUrl">URL del Sistema Web Publicado (Vercel, Dominio STF, etc.)</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <i data-lucide="globe" style="position: absolute; left: 12px; width: 15px; height: 15px; color: #64748B;"></i>
+              <input type="url" id="newSysWebUrl" placeholder="https://stf-mi-aplicativo.vercel.app" class="form-input" style="padding-left: 36px;">
+            </div>
           </div>
 
           <!-- Constructor Dinámico de Fases del Ciclo de Vida -->
@@ -2013,8 +2027,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=16"></script>
-  <script src="js/sheets-sync.js?v=16"></script>
-  <script src="js/app.js?v=16"></script>
+  <script src="js/data.js?v=17"></script>
+  <script src="js/sheets-sync.js?v=17"></script>
+  <script src="js/app.js?v=17"></script>
 </body>
 </html>

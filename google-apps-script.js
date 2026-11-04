@@ -13,10 +13,11 @@
  * ============================================================================
  */
 
-// Nombres canónicos de las 4 pestañas consolidadas
+// Nombres canónicos de las 5 pestañas consolidadas
 var TABS = {
   USUARIOS: "USUARIOS",
   SISTEMAS: "PORTAFOLIO_SISTEMAS",
+  SISTEMAS_WEB: "SISTEMAS_WEB",
   TAREAS: "CONTROL_TAREAS",
   BITACORA: "BITACORA_HISTORIAL"
 };
@@ -27,14 +28,22 @@ var TABS = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
-    .addItem('🚀 Reorganizar Base de Datos (Modo Ejecutivo 4 Hojas)', 'setupProfessionalDatabase')
+    .addItem('🚀 Reorganizar Base de Datos (Modo Ejecutivo 5 Hojas)', 'setupProfessionalDatabase')
+    .addItem('🌐 Inicializar / Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
 }
 
+function setupSistemasWebSheetDirect() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  setupSistemasWebSheet(ss);
+  cleanAndOrderSheets(ss);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña SISTEMAS_WEB creada y formateada con éxito.', 'STF GROUP TI', 6);
+}
+
 /**
  * REORGANIZADOR MAESTRO: Transforma la hoja en un modelo de base de datos
- * ejecutivo de 4 pestañas limpias, estéticas y con alto estándar corporativo.
+ * ejecutivo de 5 pestañas limpias, estéticas y con alto estándar corporativo.
  */
 function setupProfessionalDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -45,16 +54,19 @@ function setupProfessionalDatabase() {
   // 2. Pestaña PORTAFOLIO_SISTEMAS
   setupSistemasSheet(ss);
 
-  // 3. Pestaña CONTROL_TAREAS (Fusión Tareas + Auditorías de Calidad)
+  // 3. Pestaña SISTEMAS_WEB (URLs publicadas y asignación de desarrolladores)
+  setupSistemasWebSheet(ss);
+
+  // 4. Pestaña CONTROL_TAREAS (Fusión Tareas + Auditorías de Calidad)
   setupTareasSheet(ss);
 
-  // 4. Pestaña BITACORA_HISTORIAL
+  // 5. Pestaña BITACORA_HISTORIAL
   setupBitacoraSheet(ss);
 
-  // 5. Ordenar las 4 pestañas al frente y archivar hojas viejas redundantes
+  // 6. Ordenar las 5 pestañas al frente y archivar hojas viejas redundantes
   cleanAndOrderSheets(ss);
 
-  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos reorganizada con éxito en 4 pestañas ejecutivas.', 'STF GROUP TI', 6);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos reorganizada con éxito en 5 pestañas ejecutivas (incluye SISTEMAS_WEB).', 'STF GROUP TI', 6);
 }
 
 /**
@@ -99,6 +111,34 @@ function setupSistemasSheet(ss) {
     s.appendRow(["STF-TIN-06", "TINTORERIA INDUSTRIAL", "Planta Tintorería", "Esteban Escobar", "Fase 4: Integración de Recetas & PLC", 60, "En Tiempo", "2026-12-05", nowStr]);
   }
   formatCorporateSheet(s, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]); // Indigo Navy
+}
+
+/**
+ * 3. Configurar Hoja SISTEMAS_WEB
+ * Directorio oficial de URLs publicadas de cada aplicativo en desarrollo por cada programador
+ */
+function setupSistemasWebSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.SISTEMAS_WEB, ["SISTEMAS_WEB", "Sistemas_Web", "Urls_Web", "SISTEMAS_PUBLICADOS"]);
+  if (s.getLastRow() === 0) {
+    s.appendRow([
+      "Codigo_Sistema",
+      "Nombre_Aplicativo",
+      "Desarrollador_Asignado",
+      "Usuario_Dev",
+      "URL_Sistema_Web",
+      "Estado_Publicacion",
+      "Area_Planta",
+      "Ultima_Actualizacion"
+    ]);
+    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
+    s.appendRow(["STF-TC-01", "TORRE DE CONTROL", "Jose Guzman (Líder) / Equipo Grupal", "jose@guzman", "https://stf-torre-control.vercel.app", "EN DESARROLLO (STAGING)", "Control Central TI", nowStr]);
+    s.appendRow(["STF-COL-02", "COLCHAS", "Jose Guzman", "jose@guzman", "https://stf-colchas.vercel.app", "PRODUCCIÓN ACTIVA", "Manufactura & Producción", nowStr]);
+    s.appendRow(["STF-LAB-03", "LABORATORIO", "Jose Guzman", "jose@guzman", "https://stf-laboratorio.vercel.app", "EN DESARROLLO (STAGING)", "Control Textil", nowStr]);
+    s.appendRow(["STF-GEO-04", "GEO UBICACION TALLERES", "Jose Guzman", "jose@guzman", "https://stf-geo-talleres.vercel.app", "EN DESARROLLO (STAGING)", "Logística & Talleres", nowStr]);
+    s.appendRow(["STF-CAL-05", "ASEGURAMIENTO CALIDAD AQL", "Juan David", "juan@david", "https://stf-calidad-aql.vercel.app", "EN DESARROLLO (STAGING)", "Aseguramiento de Calidad", nowStr]);
+    s.appendRow(["STF-TIN-06", "PLANTA TINTORERIA & QUIMICOS", "Jhon Eyder (Mocho)", "jhon@eyder", "https://stf-tintoreria.vercel.app", "EN DESARROLLO (STAGING)", "Planta Textil", nowStr]);
+  }
+  formatCorporateSheet(s, "#1E3A8A", [115, 230, 240, 140, 300, 160, 165, 130]); // Royal Blue
 }
 
 /**
@@ -191,10 +231,10 @@ function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
 }
 
 /**
- * Organiza las pestañas colocando las 4 maestras de primero y ocultando las obsoletas
+ * Organiza las pestañas colocando las 5 maestras de primero y ocultando las obsoletas
  */
 function cleanAndOrderSheets(ss) {
-  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS, TABS.TAREAS, TABS.BITACORA];
+  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.BITACORA];
   for (var i = 0; i < orderedTabs.length; i++) {
     var tabSheet = ss.getSheetByName(orderedTabs[i]);
     if (tabSheet) {
@@ -216,7 +256,7 @@ function cleanAndOrderSheets(ss) {
   ];
   obsoleteSheets.forEach(function(name) {
     var obs = ss.getSheetByName(name);
-    // Solo ocultar si NO es una de las 4 maestras activas
+    // Solo ocultar si NO es una de las 5 maestras activas
     if (obs && orderedTabs.indexOf(name) === -1) {
       try {
         obs.hideSheet();
@@ -260,6 +300,8 @@ function getMasterSheet(ss, tabKey) {
     return ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios") || ss.insertSheet(TABS.USUARIOS);
   } else if (tabKey === "SISTEMAS") {
     return ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.insertSheet(TABS.SISTEMAS);
+  } else if (tabKey === "SISTEMAS_WEB") {
+    return ss.getSheetByName("SISTEMAS_WEB") || ss.getSheetByName("Sistemas_Web") || ss.getSheetByName("Urls_Web") || ss.insertSheet(TABS.SISTEMAS_WEB);
   } else if (tabKey === "TAREAS") {
     return ss.getSheetByName("CONTROL_TAREAS") || ss.getSheetByName("Tareas_Integraciones") || ss.insertSheet(TABS.TAREAS);
   } else if (tabKey === "BITACORA") {
@@ -366,11 +408,53 @@ function doGet(e) {
       }
     }
 
+    // C. Enlaces de Sistemas Web Publicados desde SISTEMAS_WEB
+    var sW = getMasterSheet(ss, "SISTEMAS_WEB");
+    var wRows = sW ? sW.getDataRange().getValues() : [];
+    var webSystems = [];
+    if (wRows.length > 1) {
+      for (var w = 1; w < wRows.length; w++) {
+        webSystems.push({
+          code: String(wRows[w][0] || "").trim(),
+          name: String(wRows[w][1] || "").trim(),
+          devName: String(wRows[w][2] || "").trim(),
+          devUser: String(wRows[w][3] || "").trim(),
+          webUrl: String(wRows[w][4] || "").trim(),
+          status: String(wRows[w][5] || "").trim(),
+          area: String(wRows[w][6] || "").trim(),
+          lastUpdate: String(wRows[w][7] || "").trim()
+        });
+      }
+    }
+
     return createJsonResponse({
       status: "success",
       tasks: tasks,
-      systems: systems
+      systems: systems,
+      webSystems: webSystems
     });
+  }
+
+  // 4. Obtener Enlaces de Sistemas Web Publicados
+  if (action === "get_sistemas_web") {
+    var sWebOnly = getMasterSheet(ss, "SISTEMAS_WEB");
+    var woRows = sWebOnly ? sWebOnly.getDataRange().getValues() : [];
+    var webList = [];
+    if (woRows.length > 1) {
+      for (var wo = 1; wo < woRows.length; wo++) {
+        webList.push({
+          code: String(woRows[wo][0] || "").trim(),
+          name: String(woRows[wo][1] || "").trim(),
+          devName: String(woRows[wo][2] || "").trim(),
+          devUser: String(woRows[wo][3] || "").trim(),
+          webUrl: String(woRows[wo][4] || "").trim(),
+          status: String(woRows[wo][5] || "").trim(),
+          area: String(woRows[wo][6] || "").trim(),
+          lastUpdate: String(woRows[wo][7] || "").trim()
+        });
+      }
+    }
+    return createJsonResponse({ status: "success", webSystems: webList });
   }
 
   return createJsonResponse({ status: "error", message: "Acción GET no reconocida" });
@@ -554,9 +638,32 @@ function doPost(e) {
         formatCorporateSheet(sSis, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]);
       }
 
+      // Sincronizar también SISTEMAS_WEB si hay datos
+      if (apps.length > 0) {
+        var sWeb = getMasterSheet(ss, "SISTEMAS_WEB");
+        if (sWeb) {
+          var lastW = sWeb.getLastRow();
+          if (lastW > 1) sWeb.deleteRows(2, lastW - 1);
+          for (var w = 0; w < apps.length; w++) {
+            var wp = apps[w];
+            sWeb.appendRow([
+              wp.code || ("STF-APP-" + (w + 1)),
+              wp.name || "",
+              wp.devName || "Equipo STF",
+              wp.devUser || "",
+              wp.webUrl || ("https://stf-" + String(wp.name || "").toLowerCase().replace(/[^a-z0-9]/g, "-") + ".vercel.app"),
+              wp.progress === 100 ? "PRODUCCIÓN ACTIVA" : "EN DESARROLLO (STAGING)",
+              wp.category || "General",
+              dateStr
+            ]);
+          }
+          formatCorporateSheet(sWeb, "#1E3A8A", [115, 230, 240, 140, 300, 160, 165, 130]);
+        }
+      }
+
       return createJsonResponse({
         status: "success",
-        message: "Portafolio sincronizado en PORTAFOLIO_SISTEMAS (" + apps.length + " sistemas)",
+        message: "Portafolio y URLs sincronizados en PORTAFOLIO_SISTEMAS y SISTEMAS_WEB (" + apps.length + " sistemas)",
         date: dateStr
       });
     }

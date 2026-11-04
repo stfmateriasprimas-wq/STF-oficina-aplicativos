@@ -139,6 +139,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#4E65FF",
       iconInitial: "TDC",
+      webUrl: "https://stf-torre-control.vercel.app",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
@@ -160,6 +161,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#FFA043",
       iconInitial: "COL",
+      webUrl: "https://stf-colchas.vercel.app",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
@@ -181,6 +183,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#D88BF8",
       iconInitial: "LAB",
+      webUrl: "https://stf-laboratorio.vercel.app",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
@@ -202,6 +205,7 @@ const STF_REAL_DATA = {
       status: "risk",
       iconColor: "#10B981",
       iconInitial: "GEO",
+      webUrl: "https://stf-geo-talleres.vercel.app",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Mapas Satelitales", weight: 15, completed: true },
@@ -223,6 +227,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#3B82F6",
       iconInitial: "CAL",
+      webUrl: "https://stf-calidad-aql.vercel.app",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Criterios AQL", weight: 15, completed: true },
@@ -244,6 +249,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#8B5CF6",
       iconInitial: "TIN",
+      webUrl: "https://stf-tintoreria.vercel.app",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Fórmulas Químicas", weight: 15, completed: true },
@@ -398,6 +404,15 @@ function getStoredData() {
         // Asegurar que applications e integrations sean arrays válidos
         if (!Array.isArray(parsed.applications) || parsed.applications.length === 0) {
           parsed.applications = JSON.parse(JSON.stringify(STF_REAL_DATA.applications));
+        } else {
+          parsed.applications.forEach(app => {
+            const official = STF_REAL_DATA.applications.find(a => a.id === app.id || a.code === app.code);
+            if (official && official.webUrl) {
+              if (!app.webUrl) app.webUrl = official.webUrl;
+            } else if (!app.webUrl) {
+              app.webUrl = `https://stf-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`;
+            }
+          });
         }
         if (!Array.isArray(parsed.integrations)) {
           parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations));

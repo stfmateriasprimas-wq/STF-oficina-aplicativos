@@ -242,11 +242,16 @@
 
         return {
           id: app.id,
+          code: app.code || '',
           name: app.name,
           devName: dev ? dev.name : 'Equipo STF',
+          devUser: dev ? (dev.username || dev.email || '') : '',
+          webUrl: app.webUrl || `https://stf-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`,
+          category: app.category || 'General',
           currentPhase: currentPhase ? currentPhase.name : 'En Producción',
           progress: progress,
-          slaStatus: app.slaStatus || 'En Tiempo'
+          slaStatus: app.slaStatus || 'En Tiempo',
+          deadline: app.deadline || ''
         };
       });
 
@@ -515,6 +520,9 @@
               if (Array.isArray(json.systems) && json.systems.length > 0) {
                 this.mergeCloudSystems(json.systems);
               }
+              if (Array.isArray(json.webSystems) && json.webSystems.length > 0) {
+                this.mergeCloudWebSystems(json.webSystems);
+              }
             }
           }
         } catch (err) {
@@ -652,6 +660,30 @@
           if (sys.slaStatus.toLowerCase().includes('riesgo')) appObj.status = 'risk';
         }
       });
+    },
+
+    /**
+     * Fusionar enlaces de Sistemas Web Publicados desde la hoja SISTEMAS_WEB
+     */
+    mergeCloudWebSystems(webSystems) {
+      if (!Array.isArray(webSystems) || webSystems.length === 0 || !window.appState || !Array.isArray(window.appState.applications)) return 0;
+      let count = 0;
+      webSystems.forEach(ws => {
+        const targetApp = window.appState.applications.find(a =>
+          (ws.code && a.code && a.code.toLowerCase() === String(ws.code).toLowerCase()) ||
+          (ws.name && a.name && (a.name.toLowerCase().includes(String(ws.name).toLowerCase()) || String(ws.name).toLowerCase().includes(a.name.toLowerCase())))
+        );
+        if (targetApp && ws.webUrl && ws.webUrl.startsWith('http')) {
+          if (targetApp.webUrl !== ws.webUrl) {
+            targetApp.webUrl = ws.webUrl;
+            count++;
+          }
+        }
+      });
+      if (count > 0 && typeof window.saveData === 'function') {
+        window.saveData(window.appState);
+      }
+      return count;
     },
 
     /**
