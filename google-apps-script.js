@@ -115,30 +115,30 @@ function setupSistemasSheet(ss) {
 
 /**
  * 3. Configurar Hoja SISTEMAS_WEB
- * Directorio oficial de URLs publicadas de cada aplicativo en desarrollo por cada programador
+ * Estructura solicitada: Nombre del desarrollador, sistemas que tiene a cargo y la URL de cada sistema.
  */
 function setupSistemasWebSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.SISTEMAS_WEB, ["SISTEMAS_WEB", "Sistemas_Web", "Urls_Web", "SISTEMAS_PUBLICADOS"]);
-  if (s.getLastRow() === 0) {
-    s.appendRow([
-      "Codigo_Sistema",
-      "Nombre_Aplicativo",
-      "Desarrollador_Asignado",
-      "Usuario_Dev",
-      "URL_Sistema_Web",
-      "Estado_Publicacion",
-      "Area_Planta",
-      "Ultima_Actualizacion"
-    ]);
-    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
-    s.appendRow(["STF-TC-01", "TORRE DE CONTROL", "Jose Guzman (Líder) / Equipo Grupal", "jose@guzman", "https://stf-torre-control.vercel.app", "EN DESARROLLO (STAGING)", "Control Central TI", nowStr]);
-    s.appendRow(["STF-COL-02", "COLCHAS", "Jose Guzman", "jose@guzman", "https://stf-colchas.vercel.app", "PRODUCCIÓN ACTIVA", "Manufactura & Producción", nowStr]);
-    s.appendRow(["STF-LAB-03", "LABORATORIO", "Jose Guzman", "jose@guzman", "https://stf-laboratorio.vercel.app", "EN DESARROLLO (STAGING)", "Control Textil", nowStr]);
-    s.appendRow(["STF-GEO-04", "GEO UBICACION TALLERES", "Jose Guzman", "jose@guzman", "https://stf-geo-talleres.vercel.app", "EN DESARROLLO (STAGING)", "Logística & Talleres", nowStr]);
-    s.appendRow(["STF-CAL-05", "ASEGURAMIENTO CALIDAD AQL", "Juan David", "juan@david", "https://stf-calidad-aql.vercel.app", "EN DESARROLLO (STAGING)", "Aseguramiento de Calidad", nowStr]);
-    s.appendRow(["STF-TIN-06", "PLANTA TINTORERIA & QUIMICOS", "Jhon Eyder (Mocho)", "jhon@eyder", "https://stf-tintoreria.vercel.app", "EN DESARROLLO (STAGING)", "Planta Textil", nowStr]);
-  }
-  formatCorporateSheet(s, "#1E3A8A", [115, 230, 240, 140, 300, 160, 165, 130]); // Royal Blue
+  
+  // Limpiar para asegurar las columnas exactas solicitadas
+  s.clear();
+
+  s.appendRow([
+    "Desarrollador",
+    "Sistema_a_Cargo",
+    "URL_Sistema_Web",
+    "Estado"
+  ]);
+
+  s.appendRow(["Jose Guzman", "TORRE DE CONTROL", "https://stf-torre-control.vercel.app", "En Desarrollo"]);
+  s.appendRow(["Jose Guzman", "COLCHAS", "https://stf-colchas.vercel.app", "En Producción"]);
+  s.appendRow(["Jose Guzman", "LABORATORIO", "https://stf-laboratorio.vercel.app", "En Desarrollo"]);
+  s.appendRow(["Jose Guzman", "GEO UBICACION TALLERES", "https://stf-geo-talleres.vercel.app", "En Desarrollo"]);
+  s.appendRow(["Juan David", "ASEGURAMIENTO CALIDAD AQL", "https://stf-calidad-aql.vercel.app", "En Desarrollo"]);
+  s.appendRow(["Jhon Eyder (Mocho)", "PLANTA TINTORERIA & QUIMICOS", "https://stf-tintoreria.vercel.app", "En Desarrollo"]);
+  s.appendRow(["Esteban Escobar", "MODULO LOGISTICA CENTRAL", "https://stf-logistica.vercel.app", "En Desarrollo"]);
+
+  formatCorporateSheet(s, "#1E3A8A", [220, 260, 340, 140]); // Royal Blue
 }
 
 /**
@@ -415,14 +415,10 @@ function doGet(e) {
     if (wRows.length > 1) {
       for (var w = 1; w < wRows.length; w++) {
         webSystems.push({
-          code: String(wRows[w][0] || "").trim(),
+          devName: String(wRows[w][0] || "").trim(),
           name: String(wRows[w][1] || "").trim(),
-          devName: String(wRows[w][2] || "").trim(),
-          devUser: String(wRows[w][3] || "").trim(),
-          webUrl: String(wRows[w][4] || "").trim(),
-          status: String(wRows[w][5] || "").trim(),
-          area: String(wRows[w][6] || "").trim(),
-          lastUpdate: String(wRows[w][7] || "").trim()
+          webUrl: String(wRows[w][2] || "").trim(),
+          status: String(wRows[w][3] || "").trim()
         });
       }
     }
@@ -443,14 +439,10 @@ function doGet(e) {
     if (woRows.length > 1) {
       for (var wo = 1; wo < woRows.length; wo++) {
         webList.push({
-          code: String(woRows[wo][0] || "").trim(),
+          devName: String(woRows[wo][0] || "").trim(),
           name: String(woRows[wo][1] || "").trim(),
-          devName: String(woRows[wo][2] || "").trim(),
-          devUser: String(woRows[wo][3] || "").trim(),
-          webUrl: String(woRows[wo][4] || "").trim(),
-          status: String(woRows[wo][5] || "").trim(),
-          area: String(woRows[wo][6] || "").trim(),
-          lastUpdate: String(woRows[wo][7] || "").trim()
+          webUrl: String(woRows[wo][2] || "").trim(),
+          status: String(woRows[wo][3] || "").trim()
         });
       }
     }
@@ -638,26 +630,22 @@ function doPost(e) {
         formatCorporateSheet(sSis, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]);
       }
 
-      // Sincronizar también SISTEMAS_WEB si hay datos
+      // Sincronizar también SISTEMAS_WEB según la estructura exacta: Desarrollador | Sistema_a_Cargo | URL_Sistema_Web | Estado
       if (apps.length > 0) {
         var sWeb = getMasterSheet(ss, "SISTEMAS_WEB");
         if (sWeb) {
-          var lastW = sWeb.getLastRow();
-          if (lastW > 1) sWeb.deleteRows(2, lastW - 1);
+          sWeb.clear();
+          sWeb.appendRow(["Desarrollador", "Sistema_a_Cargo", "URL_Sistema_Web", "Estado"]);
           for (var w = 0; w < apps.length; w++) {
             var wp = apps[w];
             sWeb.appendRow([
-              wp.code || ("STF-APP-" + (w + 1)),
-              wp.name || "",
               wp.devName || "Equipo STF",
-              wp.devUser || "",
+              wp.name || "",
               wp.webUrl || ("https://stf-" + String(wp.name || "").toLowerCase().replace(/[^a-z0-9]/g, "-") + ".vercel.app"),
-              wp.progress === 100 ? "PRODUCCIÓN ACTIVA" : "EN DESARROLLO (STAGING)",
-              wp.category || "General",
-              dateStr
+              wp.progress === 100 ? "En Producción" : "En Desarrollo"
             ]);
           }
-          formatCorporateSheet(sWeb, "#1E3A8A", [115, 230, 240, 140, 300, 160, 165, 130]);
+          formatCorporateSheet(sWeb, "#1E3A8A", [220, 260, 340, 140]);
         }
       }
 
