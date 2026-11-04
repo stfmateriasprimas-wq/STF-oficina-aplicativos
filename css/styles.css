@@ -4441,52 +4441,6 @@ body {
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN
-   ========================================================================== */
-@media (max-width: 1280px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  .stacked-deck {
-    height: 270px;
-  }
-  .projects-kanban-board {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  body {
-    padding: 12px;
-  }
-  .app-container {
-    flex-direction: column;
-  }
-  .floating-sidebar {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    position: relative;
-    top: 0;
-    padding: 12px 18px;
-    border-radius: var(--radius-pill);
-    justify-content: space-between;
-  }
-  .sidebar-logo {
-    margin-bottom: 0;
-  }
-  .sidebar-nav {
-    flex-direction: row;
-  }
-  .sidebar-footer {
-    margin-top: 0;
-  }
-  .projects-kanban-board {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==========================================================================
    SUPER ADMIN INTEGRATIONS CONTROLLER & LIVE METERS
    ========================================================================== */
 .integrations-control-card {
@@ -6034,9 +5988,11 @@ body {
 }
 
 /* ==========================================================================
-   RESPONSIVE MEDIA QUERIES (Optimized for 100% zoom on all PC screens)
+   RESPONSIVE DESIGN SYSTEM: ADAPTACIÓN TOTAL PARA TABLETS & MÓVILES
    ========================================================================== */
-@media (max-width: 1366px) {
+
+/* 1. Pantallas Medianas & Laptops Pequeñas (<= 1280px) */
+@media (max-width: 1280px) {
   .app-container {
     max-width: 100%;
     gap: 14px;
@@ -6052,11 +6008,22 @@ body {
     padding: 10px 8px 8px 8px;
   }
   .integrations-list-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+  }
+  .projects-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 1140px) {
+/* 2. Tablets (iPad, Galaxy Tabs, Dispositivos entre 769px y 1080px) */
+@media (max-width: 1080px) {
+  body {
+    padding: 12px 14px;
+  }
+  .app-container {
+    gap: 12px;
+  }
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -6065,63 +6032,508 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
+  .velocity-executive-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
   .integrations-list-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .projects-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .projects-kanban-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .devs-grid-view {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .modal-card {
+    max-width: 90vw;
   }
 }
 
+/* 3. Modo Tablet Vertical & Pantallas Medianas (<= 900px) */
 @media (max-width: 900px) {
-  body {
-    padding: 12px;
-  }
   .top-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
   .header-search {
+    width: 100%;
     max-width: 100%;
   }
   .header-actions {
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .header-actions::-webkit-scrollbar {
+    display: none;
+  }
+  .welcome-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .quick-stats-pills {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .quick-stats-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .velocity-executive-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  .projects-filter-bar, .tasks-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 }
 
+/* 4. Teléfonos Inteligentes & Móviles (<= 768px: iPhone, Galaxy, Pixel, etc.) */
 @media (max-width: 768px) {
   body {
-    padding: 10px;
+    padding: 8px 10px 84px 10px !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
   }
+
   .app-container {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 10px !important;
+    overflow-x: hidden !important;
   }
+
+  .main-viewport {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Barra de Navegación Flotante Inferior estilo App Móvil Nativa */
   .floating-sidebar {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    position: static;
-    border-radius: 20px;
-    padding: 10px 16px;
-    justify-content: space-between;
+    position: fixed !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: calc(100% - 20px) !important;
+    height: 56px !important;
+    z-index: 9999 !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 28px !important;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    padding: 4px 12px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0 !important;
   }
+
+  .sidebar-logo {
+    display: none !important;
+  }
+
   .sidebar-nav {
-    flex-direction: row;
-    justify-content: center;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    width: calc(100% - 44px) !important;
+    gap: 4px !important;
   }
-  .sidebar-logo, .sidebar-footer {
-    display: none;
+
+  .sidebar-footer {
+    display: flex !important;
+    margin: 0 !important;
   }
+
+  .nav-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    font-size: 15px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .sidebar-footer .nav-btn {
+    width: 36px !important;
+    height: 36px !important;
+    color: #EF4444 !important;
+  }
+
+  /* Encabezado Superior */
+  .top-header {
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .header-search {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .search-input-wrapper {
+    padding: 6px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .header-actions {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px !important;
+    gap: 6px !important;
+    scrollbar-width: none !important;
+  }
+
+  .header-actions .pill-btn {
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+    border-radius: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header-actions .dropdown-pill {
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .user-profile-pill {
+    padding: 3px 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Welcome Banner */
+  .welcome-section {
+    padding: 4px 0 8px 0 !important;
+  }
+
+  .welcome-title {
+    font-size: 19px !important;
+    line-height: 1.25 !important;
+  }
+
+  .welcome-subtitle {
+    font-size: 12px !important;
+  }
+
+  /* Grid Principal */
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .grid-card {
+    padding: 14px !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Gráficas Responsivas */
+  .overview-chart-card .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .chart-badges {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .overview-chart-card canvas,
+  .velocity-chart-card canvas {
+    max-height: 220px !important;
+    width: 100% !important;
+  }
+
+  /* Equipo de Desarrollo & Franja de Desarrollador */
   .team-cards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
-  .eval-math-impact-box {
-    flex-direction: column;
-    align-items: flex-start;
+
+  .dev-card-interactive {
+    padding: 12px 14px !important;
   }
-  .assign-preview-card {
-    grid-template-columns: 1fr;
+
+  .team-footer-strip {
+    padding: 12px !important;
+    border-radius: 14px !important;
+    gap: 10px !important;
   }
+
+  .tfs-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .tfs-right {
+    width: 100% !important;
+  }
+
+  .tfs-right .pill-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .dev-projects-tags-list {
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .dev-project-tag-pill {
+    padding: 5px 9px !important;
+    font-size: 11px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Métrica de Velocidad Ágil */
+  .velocity-executive-metrics {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .velocity-sprint-digest {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .vcal-presets-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  .vcal-presets-chips {
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+  }
+
+  /* Portafolio & Matriz Industrial */
+  .projects-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: block !important;
+    border-radius: 12px !important;
+  }
+
+  .industrial-matrix-table, .systems-table {
+    min-width: 660px !important;
+  }
+
+  .projects-kanban-board {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 12px !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 12px !important;
+    width: 100% !important;
+  }
+
+  .kanban-column {
+    min-width: 270px !important;
+    max-width: 85vw !important;
+    flex-shrink: 0 !important;
+    scroll-snap-align: start !important;
+  }
+
+  /* Tareas & Integraciones */
   .integrations-list-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .integration-item-card {
+    padding: 14px !important;
+  }
+
+  /* Desarrolladores Vista Completa */
+  .devs-grid-view {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Modales en Móviles (Ajuste Perfecto) */
+  .modal-backdrop {
+    padding: 8px !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+  }
+
+  .modal-card,
+  .modal-card-medium,
+  .modal-card-large,
+  .modal-card-report-xl,
+  .modal-card-velocity-cal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: 22px 22px 0 0 !important;
+    padding: 16px !important;
+    margin: 0 !important;
+  }
+
+  .modal-header {
+    padding: 12px 14px !important;
+  }
+
+  .modal-title {
+    font-size: 17px !important;
+  }
+
+  .modal-subtitle {
+    font-size: 12px !important;
+  }
+
+  .modal-body {
+    padding: 12px 14px !important;
+    max-height: calc(92vh - 120px) !important;
+    overflow-y: auto !important;
+  }
+
+  .modal-footer {
+    padding: 12px 14px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .modal-footer .pill-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .sys-summary-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .web-sys-item-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .web-sys-item-right {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .web-sys-item-right .pill-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .vcal-inputs-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .vcal-input-arrow {
+    display: none !important;
+  }
+
+  /* Menús Desplegables en Móvil */
+  .header-dev-dropdown {
+    right: 0 !important;
+    left: auto !important;
+    width: calc(100vw - 20px) !important;
+    max-width: 320px !important;
+  }
+
+  #notificationsDropdown {
+    right: -10px !important;
+    left: auto !important;
+    width: calc(100vw - 20px) !important;
+    max-width: 320px !important;
+  }
+}
+
+/* 5. Móviles Pequeños (<= 480px, ej. iPhone SE, Galaxy Compactos) */
+@media (max-width: 480px) {
+  body {
+    padding: 6px 6px 76px 6px !important;
+  }
+
+  .welcome-title {
+    font-size: 16px !important;
+  }
+
+  .welcome-subtitle {
+    font-size: 11px !important;
+  }
+
+  .grid-card {
+    padding: 12px 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .card-title {
+    font-size: 14px !important;
+  }
+
+  .floating-sidebar {
+    height: 52px !important;
+    bottom: 6px !important;
+    left: 6px !important;
+    right: 6px !important;
+    width: calc(100% - 12px) !important;
+    padding: 2px 8px !important;
+  }
+
+  .nav-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 13.5px !important;
+  }
+
+  .sys-summary-row {
+    grid-template-columns: 1fr !important;
   }
 }
 
