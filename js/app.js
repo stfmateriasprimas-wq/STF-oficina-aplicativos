@@ -184,7 +184,9 @@ window.resolveCanonicalDevId = resolveCanonicalDevId;
 
 let activeSelectedDevId = !isCurrentSessionAdmin()
   ? getLoggedDevId()
-  : (resolveCanonicalDevId(loggedUser) || resolveCanonicalDevId(localStorage.getItem('STF_ACTIVE_DEV_ID')) || (appState.developers[0] && appState.developers[0].id) || 'dev_jg');
+  : ((localStorage.getItem('STF_ACTIVE_DEV_ID') && localStorage.getItem('STF_ACTIVE_DEV_ID') !== 'dev_ediaz' && localStorage.getItem('STF_ACTIVE_DEV_ID') !== 'admin')
+      ? resolveCanonicalDevId(localStorage.getItem('STF_ACTIVE_DEV_ID'))
+      : ((appState.developers.find(d => d.role !== 'Admin' && d.id !== 'dev_ediaz') || {}).id || 'dev_jg'));
 let currentEditingSysId = null;
 
 // Chart Instances
@@ -1113,13 +1115,20 @@ function renderDevelopersSection() {
     return;
   }
 
-  // MODO ADMIN: Renderizar los 5 desarrolladores del equipo
-  gridEl.innerHTML = appState.developers.map(dev => {
+  // MODO ADMIN: Renderizar los desarrolladores operativos del equipo (excluyendo al Admin)
+  const teamDevs = appState.developers.filter(dev => {
+    const isDevAdmin = dev.role === 'Admin' || dev.id === 'dev_ediaz' || dev.isAdmin || dev.roleType === 'Admin' || String(dev.role || '').toLowerCase() === 'admin';
+    return !isDevAdmin;
+  });
+
+  // Si activeSelectedDevId está asignado al Admin o no existe en la lista operativa, pre-seleccionar el primer desarrollador
+  if (teamDevs.length > 0 && (!activeSelectedDevId || activeSelectedDevId === 'dev_ediaz' || !teamDevs.some(d => d.id === activeSelectedDevId))) {
+    activeSelectedDevId = teamDevs[0].id;
+  }
+
+  gridEl.innerHTML = teamDevs.map(dev => {
     const isSelected = dev.id === activeSelectedDevId;
-    const isDevAdmin = dev.role === 'Admin' || dev.id === 'dev_ediaz';
-    const assigned = isDevAdmin 
-      ? appState.applications 
-      : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
+    const assigned = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
     const assignedCount = assigned.length;
     
     // Average progress across their assigned projects
@@ -1147,13 +1156,13 @@ function renderDevelopersSection() {
 
         <div class="dci-info">
           <strong class="dci-name">${dev.name}</strong>
-          <span class="dci-role">${isDevAdmin ? '🛡️ Director TI / Admin' : dev.role}</span>
+          <span class="dci-role">${dev.role || 'Desarrollador'}</span>
         </div>
 
         <div class="dci-workload">
           <div class="dci-workload-meta">
             <span class="dci-meta-label">Capacidad Asignada</span>
-            <span class="dci-meta-val">${assignedCount} Sistema${assignedCount !== 1 ? 's' : ''}${isDevAdmin ? ' (Global)' : ''}</span>
+            <span class="dci-meta-val">${assignedCount} Sistema${assignedCount !== 1 ? 's' : ''}</span>
           </div>
           <div class="dci-progress-track">
             <div class="dci-progress-fill" style="width: ${avgProgress}%; background: ${barColor};"></div>
@@ -1228,8 +1237,13 @@ function selectDeveloper(devId) {
   // Si el usuario logueado es un Desarrollador, solo puede ver su propio perfil
   if (!isCurrentSessionAdmin()) {
     devId = getLoggedDevId();
+  } else if (devId === 'dev_ediaz' || devId === 'admin') {
+    // El Administrador supervisa globalmente y no tiene tareas asignadas individuales
+    const firstDev = appState.developers.find(d => d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin);
+    devId = firstDev ? firstDev.id : 'dev_jg';
   }
   activeSelectedDevId = devId;
+  localStorage.setItem('STF_ACTIVE_DEV_ID', devId);
 
   // Cerrar el dropdown del header si estaba abierto
   const dropdown = document.getElementById('headerDevDropdown');
@@ -3467,7 +3481,8 @@ function autoBalancePhaseWeights() {
 
 function openNewProjectModal() {
   const devSelect = document.getElementById('newSysDev');
-  devSelect.innerHTML = appState.developers.map(d => `<option value="${d.id}">${d.name} (${d.role})</option>`).join('');
+  const realDevs = appState.developers.filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin && d.roleType !== 'Admin');
+  devSelect.innerHTML = realDevs.map(d => `<option value="${d.id}">${d.name} (${d.role})</option>`).join('');
   
   // Set default deadline (1 month from now)
   const d = new Date();
@@ -4939,7 +4954,8 @@ function openAssignIntegrationModal() {
   }
 
   if (devSelect) {
-    devSelect.innerHTML = appState.developers.map(dev => `
+    const realDevs = appState.developers.filter(dev => dev.role !== 'Admin' && dev.id !== 'dev_ediaz' && !dev.isAdmin && dev.roleType !== 'Admin');
+    devSelect.innerHTML = realDevs.map(dev => `
       <option value="${dev.id}">${dev.name} (${dev.role})</option>
     `).join('');
   }
