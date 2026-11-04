@@ -150,6 +150,16 @@ function initializeSheets() {
 function getOrCreateSheet(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) {
+    // Compatibilidad y aliases automáticos con variantes de nombres
+    if (name === TABS.BITACORA) {
+      sheet = ss.getSheetByName("Ingresos_Cambios") || ss.getSheetByName("Bitacora_Cambios");
+    } else if (name === TABS.AUDITORIAS) {
+      sheet = ss.getSheetByName("Efectividad_Calidad") || ss.getSheetByName("Auditorias_Calidad");
+    } else if (name === TABS.USUARIOS) {
+      sheet = ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios");
+    }
+  }
+  if (!sheet) {
     sheet = ss.insertSheet(name);
   }
   return sheet;
@@ -183,7 +193,7 @@ function doGet(e) {
 
   if (action === "get_updates") {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(TABS.BITACORA);
+    var sheet = getOrCreateSheet(ss, TABS.BITACORA);
     var rows = sheet.getDataRange().getValues();
     var headers = rows[0];
     var data = [];
