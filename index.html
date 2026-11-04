@@ -333,26 +333,22 @@
 
             <!-- Sleek Footer Action Strip for the Active Developer -->
             <div class="team-footer-strip">
-              <div class="tfs-left">
+              <div class="tfs-header-row">
                 <div class="tfs-indicator">
                   <span class="pulse-online-dot"></span>
                   <span class="tfs-text">Programador Activo: <strong id="activeDevName">Jose Guzman</strong> (<span id="activeDevRole">Senior Fullstack</span>)</span>
                   <span class="tfs-score-pill" id="activeDevScore">⭐ 95% Eficiencia</span>
                 </div>
-                <div class="dev-projects-tags-list" id="selectedDevProjectsTags">
-                  <!-- Dynamically rendered project tag pills -->
+                <div class="tfs-right">
+                  <button class="pill-btn primary-glow-btn small-glow" id="btnOpenDevDetail" title="Ver ficha técnica, métricas de calidad y score de rendimiento">
+                    <i data-lucide="external-link"></i>
+                    <span>Ver Ficha Dev</span>
+                  </button>
                 </div>
               </div>
 
-              <div class="tfs-right">
-                <button class="pill-btn web-direct-btn small-glow" id="btnOpenDevWebSystems" title="Abrir sistemas web publicados de este desarrollador">
-                  <i data-lucide="globe"></i>
-                  <span id="btnDevWebLabel">Sistema Web ↗</span>
-                </button>
-                <button class="pill-btn primary-glow-btn small-glow" id="btnOpenDevDetail">
-                  <i data-lucide="external-link"></i>
-                  <span>Ver Ficha Dev</span>
-                </button>
+              <div class="dev-projects-tags-list" id="selectedDevProjectsTags">
+                <!-- Dynamically rendered project tag pills with individual web access -->
               </div>
             </div>
           </div>
@@ -2065,8 +2061,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=18"></script>
-  <script src="js/sheets-sync.js?v=18"></script>
-  <script src="js/app.js?v=18"></script>
+  <script src="js/data.js?v=19"></script>
+  <script src="js/sheets-sync.js?v=19"></script>
+  <script src="js/app.js?v=19"></script>
 </body>
 </html>

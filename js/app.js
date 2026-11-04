@@ -1491,19 +1491,6 @@ function updateQuickDevStrip() {
     }
   }
 
-  // Bind Web Systems button
-  const btnWeb = document.getElementById('btnOpenDevWebSystems');
-  const btnWebLabel = document.getElementById('btnDevWebLabel');
-  if (btnWeb) {
-    btnWeb.onclick = () => {
-      openDeveloperWebSystemsModal(effectiveDevId);
-    };
-    if (btnWebLabel) {
-      btnWebLabel.textContent = `🌐 Sistemas Web (${assigned.length}) ↗`;
-    }
-    btnWeb.title = `Abrir los sistemas web publicados de ${dev.name}`;
-  }
-
   // Bind buttons
   const btnDetail = document.getElementById('btnOpenDevDetail');
   if (btnDetail) {
