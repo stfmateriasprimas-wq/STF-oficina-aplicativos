@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=13">
+  <link rel="stylesheet" href="css/styles.css?v=15">
 </head>
 <body>
 
@@ -1204,7 +1204,7 @@
 
   <!-- MODAL: Create New Project -->
   <div class="modal-backdrop" id="modalNewProject">
-    <div class="modal-card modal-card-medium">
+    <div class="modal-card modal-card-large">
       <div class="modal-header">
         <div class="modal-title-group">
           <h2 class="modal-title">Registrar Nuevo Aplicativo</h2>
@@ -1260,6 +1260,59 @@
           <div class="form-group">
             <label for="newSysDesc">Objetivo y Alcance del Sistema</label>
             <textarea id="newSysDesc" rows="3" placeholder="Describe brevemente el propósito de este aplicativo..." class="form-input"></textarea>
+          </div>
+
+          <!-- Constructor Dinámico de Fases del Ciclo de Vida -->
+          <div class="form-group phase-builder-section" style="margin-top: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <label style="font-weight: 700; color: #1E293B; font-size: 13.5px; display: flex; align-items: center; gap: 6px; margin: 0;">
+                  <i data-lucide="layers" style="width: 16px; height: 16px; color: #4F46E5;"></i>
+                  Fases Personalizadas de Desarrollo del Aplicativo *
+                </label>
+                <p style="font-size: 12px; color: #64748B; margin: 2px 0 0 0;">
+                  Define las etapas específicas que compondrán el ciclo de este software y su peso ponderado.
+                </p>
+              </div>
+              <div id="newProjectPhasesWeightBadge" class="phase-weight-summary-badge badge-valid">
+                <span id="newProjectWeightBadgeIcon">✓</span>
+                <span id="newProjectPhasesWeightTotal">Total: 100%</span>
+              </div>
+            </div>
+
+            <!-- Plantillas / Presets rápidos -->
+            <div class="phase-presets-bar">
+              <span class="preset-label">Plantillas:</span>
+              <button type="button" class="btn-phase-preset active" id="btnPresetStd6" onclick="applyPhasePreset('standard6')">
+                <i data-lucide="factory" style="width: 12px; height: 12px;"></i> Estándar Industrial (6)
+              </button>
+              <button type="button" class="btn-phase-preset" id="btnPresetAgile4" onclick="applyPhasePreset('agile4')">
+                <i data-lucide="zap" style="width: 12px; height: 12px;"></i> Ágil Rápido (4)
+              </button>
+              <button type="button" class="btn-phase-preset" id="btnPresetLab5" onclick="applyPhasePreset('lab5')">
+                <i data-lucide="flask-conical" style="width: 12px; height: 12px;"></i> Calidad & Lab (5)
+              </button>
+              <button type="button" class="btn-phase-preset" id="btnPresetCustom" onclick="applyPhasePreset('custom')">
+                <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i> En Blanco
+              </button>
+            </div>
+
+            <!-- Contenedor interactivo de fases -->
+            <div id="newProjectPhasesContainer" class="new-project-phases-list">
+              <!-- Renderizado dinámicamente desde JS -->
+            </div>
+
+            <!-- Barra inferior de acciones del constructor -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+              <button type="button" class="btn-add-phase-row" onclick="addNewProjectPhaseRow()">
+                <i data-lucide="plus" style="width: 13px; height: 13px;"></i>
+                <span>Añadir Otra Fase</span>
+              </button>
+              <button type="button" class="btn-auto-balance" onclick="autoBalancePhaseWeights()" title="Distribuye el 100% equitativamente entre todas las fases">
+                <i data-lucide="scale" style="width: 13px; height: 13px;"></i>
+                <span>Auto-equilibrar a 100%</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1960,8 +2013,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=14"></script>
-  <script src="js/sheets-sync.js?v=14"></script>
-  <script src="js/app.js?v=14"></script>
+  <script src="js/data.js?v=15"></script>
+  <script src="js/sheets-sync.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
 </body>
 </html>

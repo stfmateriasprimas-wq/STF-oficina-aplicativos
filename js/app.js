@@ -489,7 +489,7 @@ function applyRoleBasedUI() {
       subtitleEl.textContent = 'Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.';
     } else {
       titleEl.innerHTML = `Panel de Ingeniería · <span class="text-gradient">${session.name}</span>`;
-      subtitleEl.textContent = 'Gestiona y actualiza en tiempo real las 6 fases de desarrollo de tus aplicativos asignados y tus entregas en planta.';
+      subtitleEl.textContent = 'Gestiona y supervisa en tiempo real las fases de desarrollo de tus aplicativos asignados y tus entregas en planta.';
     }
   }
 
@@ -516,7 +516,7 @@ function applyRoleBasedUI() {
   if (teamSubtext) {
     teamSubtext.textContent = isAdmin
       ? 'Haz clic en un programador para filtrar métricas, baraja y sistemas auditados'
-      : 'Resumen de tu efectividad en planta y acceso rápido para actualizar las 6 fases de tus aplicativos';
+      : 'Resumen de tu efectividad en planta y acceso rápido a las fases de tus aplicativos';
   }
 
   // 8. Tarjeta de Velocidad de Entrega (Sprints)
@@ -1075,7 +1075,7 @@ function renderDevelopersSection() {
       else if (app.status === 'risk') barColor = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
 
       return `
-        <div class="dev-card-interactive active" onclick="openSystemDetailModal('${app.id}')" title="Clic para actualizar las 6 fases de ${app.name}">
+        <div class="dev-card-interactive active" onclick="openSystemDetailModal('${app.id}')" title="Clic para ver las fases de desarrollo de ${app.name}">
           <div class="dci-top">
             <div class="system-icon-box" style="background: ${app.iconColor || '#4E65FF'}; width: 38px; height: 38px; border-radius: 12px; font-size: 12px; font-weight: 800; color: #FFF; display: flex; align-items: center; justify-content: center;">
               ${app.iconInitial || app.name.substring(0, 3).toUpperCase()}
@@ -3267,8 +3267,203 @@ function closeDevScorecardModal() {
 }
 
 // ==========================================================================
-// NEW PROJECT CREATION
+// NEW PROJECT CREATION & DYNAMIC PHASE BUILDER
 // ==========================================================================
+
+function escapeHtmlAttr(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+const PHASE_PRESETS = {
+  standard6: [
+    { name: '1. Levantamiento & Requisitos', weight: 10, completed: true },
+    { name: '2. Arquitectura & Diseño UI/UX', weight: 15, completed: false },
+    { name: '3. Desarrollo Backend & Lógica Core', weight: 30, completed: false },
+    { name: '4. Frontend & Integración de Interfaces', weight: 25, completed: false },
+    { name: '5. Pruebas QA, Seguridad & UAT', weight: 15, completed: false },
+    { name: '6. Despliegue & Salida a Producción', weight: 5, completed: false }
+  ],
+  agile4: [
+    { name: '1. Definición & Alcance Inicial', weight: 15, completed: true },
+    { name: '2. Sprint de Desarrollo Core', weight: 45, completed: false },
+    { name: '3. Pruebas Técnicas & QA Planta', weight: 25, completed: false },
+    { name: '4. Despliegue & Capacitación Final', weight: 15, completed: false }
+  ],
+  lab5: [
+    { name: '1. Levantamiento de Requerimientos de Ensayos', weight: 15, completed: true },
+    { name: '2. Conexión a Equipos & Registro de Datos', weight: 25, completed: false },
+    { name: '3. Lógica de Ensayos & Fórmulas Técnicas', weight: 30, completed: false },
+    { name: '4. Pruebas de Precisión en Laboratorio', weight: 20, completed: false },
+    { name: '5. Certificación Técnica & Puesta en Marcha', weight: 10, completed: false }
+  ],
+  custom: [
+    { name: '1. Planificación & Análisis Técnico', weight: 50, completed: true },
+    { name: '2. Implementación & Puesta en Vivo', weight: 50, completed: false }
+  ]
+};
+
+function renderNewProjectPhases(phasesList) {
+  const container = document.getElementById('newProjectPhasesContainer');
+  if (!container) return;
+
+  container.innerHTML = phasesList.map((p, idx) => {
+    return `
+      <div class="phase-builder-row" data-phase-idx="${idx}">
+        <div class="phase-num-badge">${idx + 1}</div>
+        <div class="phase-name-col">
+          <input type="text" class="phase-name-input form-input" value="${escapeHtmlAttr(p.name)}" placeholder="Nombre de la fase (ej: Arquitectura & UI)" oninput="onPhaseBuilderChange()" required>
+        </div>
+        <div class="phase-weight-col">
+          <div class="weight-input-wrapper">
+            <input type="number" class="phase-weight-input form-input" value="${p.weight}" min="1" max="100" step="1" oninput="onPhaseBuilderChange()" required>
+            <span class="weight-unit">%</span>
+          </div>
+        </div>
+        <div class="phase-init-col">
+          <label class="phase-init-label" title="Marcar si esta fase ya está completada al iniciar el proyecto">
+            <input type="checkbox" class="phase-init-done" ${p.completed ? 'checked' : ''} onchange="onPhaseBuilderChange()">
+            <span>Listo</span>
+          </label>
+        </div>
+        <div class="phase-actions-col">
+          <button type="button" class="btn-remove-phase" onclick="removeNewProjectPhaseRow(${idx})" title="Eliminar esta fase">
+            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+
+  onPhaseBuilderChange();
+}
+
+function onPhaseBuilderChange() {
+  const rows = document.querySelectorAll('#newProjectPhasesContainer .phase-builder-row');
+  let total = 0;
+  rows.forEach(row => {
+    const weightInput = row.querySelector('.phase-weight-input');
+    if (weightInput) {
+      total += parseInt(weightInput.value, 10) || 0;
+    }
+  });
+
+  const badge = document.getElementById('newProjectPhasesWeightBadge');
+  const totalEl = document.getElementById('newProjectPhasesWeightTotal');
+  const iconEl = document.getElementById('newProjectWeightBadgeIcon');
+
+  if (!badge || !totalEl) return;
+
+  badge.className = 'phase-weight-summary-badge';
+
+  if (total === 100) {
+    badge.classList.add('badge-valid');
+    if (iconEl) iconEl.textContent = '✓';
+    totalEl.textContent = 'Total: 100% (Equilibrado)';
+  } else if (total < 100) {
+    badge.classList.add('badge-warning');
+    if (iconEl) iconEl.textContent = '⚠️';
+    totalEl.textContent = `Total: ${total}% (Faltan ${100 - total}%)`;
+  } else {
+    badge.classList.add('badge-error');
+    if (iconEl) iconEl.textContent = '✕';
+    totalEl.textContent = `Total: ${total}% (Excede por ${total - 100}%)`;
+  }
+}
+
+function addNewProjectPhaseRow() {
+  const rows = document.querySelectorAll('#newProjectPhasesContainer .phase-builder-row');
+  const currentPhases = [];
+  rows.forEach((row, idx) => {
+    const name = row.querySelector('.phase-name-input')?.value.trim() || `Fase ${idx + 1}`;
+    const weight = parseInt(row.querySelector('.phase-weight-input')?.value, 10) || 10;
+    const completed = row.querySelector('.phase-init-done')?.checked || false;
+    currentPhases.push({ name, weight, completed });
+  });
+
+  const nextNum = currentPhases.length + 1;
+  currentPhases.push({
+    name: `${nextNum}. Nueva Fase de Desarrollo`,
+    weight: 10,
+    completed: false
+  });
+
+  renderNewProjectPhases(currentPhases);
+
+  // Focus the newly added input
+  setTimeout(() => {
+    const updatedRows = document.querySelectorAll('#newProjectPhasesContainer .phase-builder-row');
+    const lastRow = updatedRows[updatedRows.length - 1];
+    const input = lastRow?.querySelector('.phase-name-input');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 50);
+}
+
+function removeNewProjectPhaseRow(idxToRemove) {
+  const rows = document.querySelectorAll('#newProjectPhasesContainer .phase-builder-row');
+  if (rows.length <= 1) {
+    showToast('⚠️ El aplicativo debe tener al menos una fase de desarrollo.');
+    return;
+  }
+  
+  const currentPhases = [];
+  rows.forEach((row, idx) => {
+    if (idx !== idxToRemove) {
+      const name = row.querySelector('.phase-name-input')?.value.trim() || `Fase ${idx + 1}`;
+      const weight = parseInt(row.querySelector('.phase-weight-input')?.value, 10) || 10;
+      const completed = row.querySelector('.phase-init-done')?.checked || false;
+      currentPhases.push({ name, weight, completed });
+    }
+  });
+
+  renderNewProjectPhases(currentPhases);
+}
+
+function applyPhasePreset(presetKey) {
+  const preset = PHASE_PRESETS[presetKey] || PHASE_PRESETS.standard6;
+  
+  // Update active preset button styling
+  document.querySelectorAll('#modalNewProject .btn-phase-preset').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = {
+    standard6: document.getElementById('btnPresetStd6'),
+    agile4: document.getElementById('btnPresetAgile4'),
+    lab5: document.getElementById('btnPresetLab5'),
+    custom: document.getElementById('btnPresetCustom')
+  }[presetKey];
+  if (activeBtn) activeBtn.classList.add('active');
+
+  renderNewProjectPhases(preset);
+}
+
+function autoBalancePhaseWeights() {
+  const rows = document.querySelectorAll('#newProjectPhasesContainer .phase-builder-row');
+  if (rows.length === 0) return;
+  const count = rows.length;
+  const baseWeight = Math.floor(100 / count);
+  const remainder = 100 - (baseWeight * count);
+
+  rows.forEach((row, idx) => {
+    const weightInput = row.querySelector('.phase-weight-input');
+    if (weightInput) {
+      const val = idx === count - 1 ? baseWeight + remainder : baseWeight;
+      weightInput.value = val;
+    }
+  });
+
+  onPhaseBuilderChange();
+  showToast(`⚖️ Pesos equilibrados: ${count} fases suman exactamente 100%`);
+}
 
 function openNewProjectModal() {
   const devSelect = document.getElementById('newSysDev');
@@ -3278,6 +3473,9 @@ function openNewProjectModal() {
   const d = new Date();
   d.setMonth(d.getMonth() + 1);
   document.getElementById('newSysDeadline').value = d.toISOString().split('T')[0];
+
+  // Initialize phase builder with default Standard 6 preset
+  applyPhasePreset('standard6');
 
   document.getElementById('modalNewProject').classList.add('show');
 }
@@ -3299,21 +3497,54 @@ function handleCreateNewProject(e) {
 
   if (!name) return;
 
+  // Extract dynamic phases configured by Admin
+  const phaseRows = document.querySelectorAll('#newProjectPhasesContainer .phase-builder-row');
+  if (phaseRows.length === 0) {
+    showToast('⚠️ Debes estipular al menos una fase para este desarrollo.');
+    return;
+  }
+
+  const collectedPhases = [];
+  let totalWeight = 0;
+
+  for (let i = 0; i < phaseRows.length; i++) {
+    const row = phaseRows[i];
+    const nameInput = row.querySelector('.phase-name-input');
+    const weightInput = row.querySelector('.phase-weight-input');
+    const initDone = row.querySelector('.phase-init-done')?.checked || false;
+
+    const pName = nameInput ? nameInput.value.trim() : '';
+    const pWeight = weightInput ? parseInt(weightInput.value, 10) : 0;
+
+    if (!pName) {
+      showToast(`⚠️ Por favor escribe el nombre de la fase #${i + 1}.`);
+      if (nameInput) nameInput.focus();
+      return;
+    }
+
+    if (isNaN(pWeight) || pWeight <= 0) {
+      showToast(`⚠️ El peso de la fase "${pName}" debe ser un número mayor a 0%.`);
+      if (weightInput) weightInput.focus();
+      return;
+    }
+
+    totalWeight += pWeight;
+    collectedPhases.push({
+      id: `phase_${Date.now()}_${i + 1}`,
+      name: pName,
+      weight: pWeight,
+      completed: initDone
+    });
+  }
+
+  if (totalWeight !== 100) {
+    showToast(`⚠️ Las fases deben sumar exactamente 100%. Actualmente suman ${totalWeight}%. Usa el botón 'Auto-equilibrar' para nivelarlas.`);
+    return;
+  }
+
   const nextCodeNum = appState.applications.length + 1;
   const code = `STF-APP-0${nextCodeNum}`;
   const iconInitial = name.substring(0, 3).toUpperCase();
-
-  // Create clean 6 phases clone con resolución segura de standardPhases
-  const baseStandardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases) 
-    ? STF_DATA.standardPhases 
-    : ((typeof STF_REAL_DATA !== 'undefined' && STF_REAL_DATA.standardPhases) 
-        ? STF_REAL_DATA.standardPhases 
-        : (window.STF_DATA ? window.STF_DATA.standardPhases : []));
-
-  const newPhases = JSON.parse(JSON.stringify(baseStandardPhases)).map(p => ({
-    ...p,
-    completed: p.id === 'phase_req' // start with requirements done
-  }));
 
   const newApp = {
     id: `app_${Date.now()}`,
@@ -3327,7 +3558,7 @@ function handleCreateNewProject(e) {
     status: 'ontime',
     iconColor: '#4E65FF',
     iconInitial: iconInitial,
-    phases: newPhases
+    phases: collectedPhases
   };
 
   appState.applications.unshift(newApp);
@@ -3349,7 +3580,7 @@ function handleCreateNewProject(e) {
     window.SheetsSync.logSystemUpdate({
       eventType: 'NUEVO_APLICATIVO',
       appName: name,
-      description: `Aplicativo creado con código ${code}, asignado a ${dev ? dev.name : 'Equipo STF'}. Prioridad: ${priority}.`,
+      description: `Aplicativo creado con código ${code} y ${collectedPhases.length} fases personalizadas (${collectedPhases.map(p => p.name).join(', ')}), asignado a ${dev ? dev.name : 'Equipo STF'}. Prioridad: ${priority}.`,
       developer: dev ? dev.name : 'Super Admin'
     });
     // Disparar sincronización del portafolio completo a Google Sheets
@@ -3359,7 +3590,7 @@ function handleCreateNewProject(e) {
   // Refrescar todas las vistas dinámicamente
   refreshAllViews();
 
-  showToast(`¡Sistema "${name}" registrado exitosamente en STF GROUP!`);
+  showToast(`¡Sistema "${name}" con ${collectedPhases.length} fases registrado exitosamente en STF GROUP!`);
 }
 
 // ==========================================================================
@@ -5520,9 +5751,10 @@ function renderProjectsView(brand = activeBrandFilter) {
     gridContainer.innerHTML = apps.map(app => {
       const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
       const progress = calculateAppProgress(app);
-      const activePhaseIndex = app.phases.findIndex(p => !p.completed);
-      const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : { name: 'Desplegado en Producción', weight: 5 };
-      const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : 6;
+      const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
+      const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
+      const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 });
+      const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount;
       
       const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
         plantArea: app.category,
@@ -5612,11 +5844,11 @@ function renderProjectsView(brand = activeBrandFilter) {
             <!-- Descripción funcional -->
             <p class="project-card-desc" title="${app.description || ''}">${app.description || 'Sin descripción técnica.'}</p>
 
-            <!-- Visualizador de Fases de Ciclo de Software (6 Segmentos) -->
+            <!-- Visualizador de Fases de Ciclo de Software (Segmentos Dinámicos) -->
             <div class="project-phase-lifecycle">
               <div class="phase-lifecycle-header">
                 <div class="current-phase-name">
-                  <span class="phase-step-tag">Fase ${displayPhaseNum} de 6</span>
+                  <span class="phase-step-tag">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
                   <strong class="phase-active-title">${activePhase.name}</strong>
                 </div>
                 <div class="phase-progress-number">
@@ -5698,12 +5930,12 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <span>Tareas (${totalTasksCount})</span>
               </button>
               ${isAdmin ? `
-                <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las 6 fases de desarrollo de ${app.name}">
+                <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las fases de desarrollo de ${app.name}">
                   <i data-lucide="clipboard-check"></i>
                   <span>Auditar Fases</span>
                 </button>
               ` : `
-                <button class="card-sec-btn card-view-only-btn" onclick="openSystemDetailModal('${app.id}')" title="Visualizar las 6 fases de desarrollo de ${app.name} (Modo solo lectura)">
+                <button class="card-sec-btn card-view-only-btn" onclick="openSystemDetailModal('${app.id}')" title="Visualizar las fases de desarrollo de ${app.name} (Modo solo lectura)">
                   <i data-lucide="eye"></i>
                   <span>Ver Fases</span>
                 </button>
@@ -6644,3 +6876,11 @@ window.deleteDeveloperUser = deleteDeveloperUser;
 window.manualSyncUsersWithSheets = manualSyncUsersWithSheets;
 window.renderDevelopersFullView = renderDevelopersFullView;
 window.renderHeaderDevDropdown = renderHeaderDevDropdown;
+
+// Dynamic Project Phases Builder Exports
+window.applyPhasePreset = applyPhasePreset;
+window.addNewProjectPhaseRow = addNewProjectPhaseRow;
+window.removeNewProjectPhaseRow = removeNewProjectPhaseRow;
+window.autoBalancePhaseWeights = autoBalancePhaseWeights;
+window.onPhaseBuilderChange = onPhaseBuilderChange;
+window.renderNewProjectPhases = renderNewProjectPhases;
