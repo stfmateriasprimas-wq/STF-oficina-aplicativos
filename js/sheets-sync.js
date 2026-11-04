@@ -595,14 +595,18 @@
         const isEval = String(task.status || task.Estado || '').toLowerCase().includes('audit') ||
           String(task.status || task.Estado || '').toLowerCase().includes('aprob');
 
+        const parsedScore = parseFloat(String(task.evaluation || '95').replace('%', '')) || 95;
+        const parsedPoints = parseFloat(String(task.pointsAdded || task.weight || '15').replace('%', '').replace('+', '')) || (Number(task.weight) || 15);
+
         if (existing) {
           if (isEval && existing.status !== 'evaluated') {
             existing.status = 'evaluated';
             existing.evaluation = existing.evaluation || {
-              evalDate: task.createdDate || '2026-10-23',
+              evalDate: task.evalDate || task.createdDate || '2026-10-23',
               onTime: true,
-              qualityScore: 95,
-              pointsAdded: existing.weight || 15
+              qualityScore: parsedScore,
+              pointsAdded: parsedPoints,
+              notes: task.notes || 'Auditada & Aprobada'
             };
             count++;
           }
@@ -618,10 +622,11 @@
             status: isEval ? 'evaluated' : 'in_progress',
             description: task.description || 'Integración asignada desde Google Sheets.',
             evaluation: isEval ? {
-              evalDate: task.createdDate || '2026-10-23',
+              evalDate: task.evalDate || task.createdDate || '2026-10-23',
               onTime: true,
-              qualityScore: 95,
-              pointsAdded: Number(task.weight || task['Ponderacion_%']) || 15
+              qualityScore: parsedScore,
+              pointsAdded: parsedPoints,
+              notes: task.notes || 'Auditada & Aprobada'
             } : null
           };
           state.integrations.unshift(newTask);

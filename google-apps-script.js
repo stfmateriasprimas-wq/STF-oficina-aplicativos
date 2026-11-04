@@ -1,33 +1,24 @@
 /**
  * ============================================================================
- * STF GROUP · Google Apps Script Backend para Google Sheets
- * Base de Datos en la Nube para Control de Aplicativos & Auditorías
+ * STF GROUP · BASE DE DATOS EJECUTIVA EN GOOGLE SHEETS
+ * Arquitectura Optimizada en 4 Hojas Maestras Conectadas en Tiempo Real
  * ============================================================================
  * 
- * INSTRUCCIONES DE INSTALACIÓN RÁPIDA (2 MINUTOS):
- * 1. Crea una hoja de cálculo nueva en Google Drive (ej: "STF GROUP - Base de Datos Aplicativos").
- * 2. En el menú superior de Google Sheets, ve a: Extensiones > Apps Script.
- * 3. Borra todo el código que aparezca y pega este archivo completo.
- * 4. Haz clic en "Guardar" (ícono de disquete).
- * 5. Haz clic en el botón azul superior "Implementar" > "Nueva implementación".
- * 6. En el engranaje "Seleccionar tipo", elige "Aplicación web".
- * 7. Configura:
- *    - Descripción: STF DB Sync API
- *    - Ejecutar como: "Yo" (tu cuenta de Google)
- *    - Quién tiene acceso: "Cualquier usuario" (Anyone) -> IMPORTANTE para permitir sincronizar desde la web.
- * 8. Haz clic en "Implementar", autoriza los permisos y COPIA la "URL de la aplicación web".
- * 9. Pega esa URL en el modal de "Google Sheets" dentro del aplicativo. ¡Listo!
+ * ESTRUCTURA PROFESIONAL CONSOLIDADA:
+ * 1. 👥 USUARIOS           -> Directorio de Cuentas, Roles y Envío de Correos
+ * 2. 📊 PORTAFOLIO_SISTEMAS -> Cockpit Ejecutivo de los 6 Macro-Sistemas Industriales
+ * 3. 📋 CONTROL_TAREAS      -> Fusión de Tareas + Entregables + Auditorías de Calidad
+ * 4. 📜 BITACORA_HISTORIAL  -> Trazabilidad y Pista de Auditoría Cronológica
+ * 
  * ============================================================================
  */
 
-// Nombres estándar de las pestañas
+// Nombres canónicos de las 4 pestañas consolidadas
 var TABS = {
-  BITACORA: "Bitacora_Cambios",
-  AVANCES: "Avances_Fases",
-  TAREAS: "Tareas_Integraciones",
-  AUDITORIAS: "Auditorias_Calidad",
-  SISTEMAS: "Estado_Sistemas",
-  USUARIOS: "Usuarios"
+  USUARIOS: "USUARIOS",
+  SISTEMAS: "PORTAFOLIO_SISTEMAS",
+  TAREAS: "CONTROL_TAREAS",
+  BITACORA: "BITACORA_HISTORIAL"
 };
 
 /**
@@ -36,182 +27,268 @@ var TABS = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
-    .addItem('🚀 Inicializar Hojas y Usuarios', 'initializeSheets')
+    .addItem('🚀 Reorganizar Base de Datos (Modo Ejecutivo 4 Hojas)', 'setupProfessionalDatabase')
+    .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
 }
 
 /**
- * Inicializa y da formato profesional a las pestañas si no existen
+ * REORGANIZADOR MAESTRO: Transforma la hoja en un modelo de base de datos
+ * ejecutivo de 4 pestañas limpias, estéticas y con alto estándar corporativo.
  */
-function initializeSheets() {
+function setupProfessionalDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. Pestaña USUARIOS
+  setupUsuariosSheet(ss);
 
-  // 1. Bitacora_Cambios
-  var sBitacora = getOrCreateSheet(ss, TABS.BITACORA);
-  if (sBitacora.getLastRow() === 0) {
-    sBitacora.appendRow([
-      "Timestamp",
-      "Fecha_Hora",
-      "Desarrollador",
-      "Tipo_Evento",
-      "Aplicativo",
-      "Descripcion",
-      "Version",
-      "Detalles_JSON"
-    ]);
-    formatHeaderRow(sBitacora, "#1E293B"); // Slate dark
+  // 2. Pestaña PORTAFOLIO_SISTEMAS
+  setupSistemasSheet(ss);
+
+  // 3. Pestaña CONTROL_TAREAS (Fusión Tareas + Auditorías de Calidad)
+  setupTareasSheet(ss);
+
+  // 4. Pestaña BITACORA_HISTORIAL
+  setupBitacoraSheet(ss);
+
+  // 5. Ordenar las 4 pestañas al frente y archivar hojas viejas redundantes
+  cleanAndOrderSheets(ss);
+
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos reorganizada con éxito en 4 pestañas ejecutivas.', 'STF GROUP TI', 6);
+}
+
+/**
+ * 1. Configurar Hoja USUARIOS
+ */
+function setupUsuariosSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.USUARIOS, ["Usuarios"]);
+  if (s.getLastRow() === 0) {
+    s.appendRow(["ID", "Usuario_Logueo", "Rol", "Correo", "Nombre_Completo", "Estado"]);
+    s.appendRow(["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman", "ACTIVO"]);
+    s.appendRow(["1107047649", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David", "ACTIVO"]);
+    s.appendRow(["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar", "ACTIVO"]);
+    s.appendRow(["1010159672", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)", "ACTIVO"]);
+    s.appendRow(["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN"]);
   }
+  formatCorporateSheet(s, "#0F172A", [120, 160, 130, 240, 180, 100]); // Slate Dark
+}
 
-  // 2. Avances_Fases
-  var sAvances = getOrCreateSheet(ss, TABS.AVANCES);
-  if (sAvances.getLastRow() === 0) {
-    sAvances.appendRow([
-      "Timestamp",
-      "Fecha",
-      "Aplicativo",
-      "Fase_ID",
-      "Fase_Nombre",
-      "Avance_Porcentaje",
-      "Completada",
-      "Responsable",
-      "Notas"
+/**
+ * 2. Configurar Hoja PORTAFOLIO_SISTEMAS
+ */
+function setupSistemasSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.SISTEMAS, ["Estado_Sistemas", "Avances_Fases"]);
+  if (s.getLastRow() === 0) {
+    s.appendRow([
+      "Codigo",
+      "Nombre_Aplicativo",
+      "Area_Planta",
+      "Lider_Responsable",
+      "Fase_Actual",
+      "Avance_%",
+      "Estado_SLA",
+      "Fecha_Limite",
+      "Ultima_Actualizacion"
     ]);
-    formatHeaderRow(sAvances, "#2563EB"); // Blue
+    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
+    s.appendRow(["STF-TC-01", "TORRE DE CONTROL", "Control Central TI", "Equipo Grupal (4 Devs)", "Fase 2: Arquitectura & Diseño UI/UX", 15, "En Tiempo", "2026-12-15", nowStr]);
+    s.appendRow(["STF-COL-02", "COLCHAS", "Manufactura & Producción", "Jose Guzman", "Fase 6: Desplegado en Producción", 100, "En Producción", "2026-10-18", nowStr]);
+    s.appendRow(["STF-LAB-03", "LABORATORIO", "Control Textil", "Jose Guzman", "Fase 4: Frontend & Reportes Técnicos", 55, "En Tiempo", "2026-11-30", nowStr]);
+    s.appendRow(["STF-GEO-04", "GEO UBICACION TALLERES", "Logística & Talleres", "Jose Guzman", "Fase 4: Frontend & Tablero Geográfico", 55, "En Riesgo", "2026-11-15", nowStr]);
+    s.appendRow(["STF-CAL-05", "CALIDAD & AUDITORIA", "Auditoría en Línea", "Juan David", "Fase 5: Pruebas QA & AQL en Planta", 70, "En Tiempo", "2026-11-20", nowStr]);
+    s.appendRow(["STF-TIN-06", "TINTORERIA INDUSTRIAL", "Planta Tintorería", "Esteban Escobar", "Fase 4: Integración de Recetas & PLC", 60, "En Tiempo", "2026-12-05", nowStr]);
   }
+  formatCorporateSheet(s, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]); // Indigo Navy
+}
 
-  // 3. Tareas_Integraciones
-  var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
-  if (sTareas.getLastRow() === 0) {
-    sTareas.appendRow([
+/**
+ * 3. Configurar Hoja CONTROL_TAREAS (Tareas + Entregables + Auditorías en una sola fila)
+ */
+function setupTareasSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.TAREAS, ["Tareas_Integraciones", "Auditorias_Calidad", "Efectividad_Calidad"]);
+  if (s.getLastRow() === 0) {
+    s.appendRow([
       "ID_Tarea",
       "Tarea",
       "Aplicativo",
       "Desarrollador",
-      "Ponderacion_%",
+      "Peso_%",
       "Fecha_Entrega",
       "Estado",
-      "Evaluacion_Calidad",
-      "Fecha_Registro"
-    ]);
-    formatHeaderRow(sTareas, "#059669"); // Emerald Green
-  }
-
-  // 4. Auditorias_Calidad
-  var sAuditorias = getOrCreateSheet(ss, TABS.AUDITORIAS);
-  if (sAuditorias.getLastRow() === 0) {
-    sAuditorias.appendRow([
-      "Timestamp",
-      "Fecha_Eval",
-      "Aplicativo",
-      "Desarrollador",
-      "Puntaje_Calidad",
-      "Dias_Holgura",
+      "Calidad_QA",
       "Puntos_Sumados",
-      "Evaluador",
-      "Notas_Auditoria"
+      "Fecha_Auditoria",
+      "Dictamen_Evaluador"
     ]);
-    formatHeaderRow(sAuditorias, "#D97706"); // Amber
+    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
+    s.appendRow(["int_05", "Iniciar el ajuste de LAB.", "LABORATORIO", "Jose Guzman", 15, "2026-11-06", "En Progreso", "Pendiente", "0%", "-", "En curso - Ritmo óptimo"]);
+    s.appendRow(["int_04", "Retomar incorporacion de base de datos.", "LABORATORIO", "Jose Guzman", 20, "2026-10-29", "En Riesgo", "Pendiente", "0%", "-", "Desfase detectado en planta"]);
+    s.appendRow(["int_03", "Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0%", "+14.7%", "2026-10-25", "Auditada & Aprobada por Jefatura TI"]);
+    s.appendRow(["int_02", "Módulo GPS & Trazabilidad de Talleres Satélites", "GEO UBICACION TALLERES", "Jose Guzman", 20, "2026-10-18", "En Riesgo", "Pendiente", "0%", "-", "Desfase acumulado"]);
+    s.appendRow(["int_01", "Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3%", "+14.4%", "2026-10-13", "Auditada & Aprobada por Jefatura TI"]);
   }
-
-  // 5. Estado_Sistemas (Dashboard Snapshot)
-  var sSistemas = getOrCreateSheet(ss, TABS.SISTEMAS);
-  if (sSistemas.getLastRow() === 0) {
-    sSistemas.appendRow([
-      "ID_App",
-      "Nombre_Aplicativo",
-      "Desarrollador_Lider",
-      "Fase_Actual",
-      "Avance_Total_%",
-      "Cumplimiento_SLA",
-      "Ultima_Actualizacion"
-    ]);
-    formatHeaderRow(sSistemas, "#7C3AED"); // Purple
-  }
-
-  // 6. Usuarios (Credenciales y Roles de Acceso)
-  var sUsuarios = getOrCreateSheet(ss, TABS.USUARIOS);
-  if (sUsuarios.getLastRow() === 0) {
-    sUsuarios.appendRow([
-      "ID",
-      "Usuario_Logueo",
-      "Rol",
-      "Correo",
-      "Nombre"
-    ]);
-    formatHeaderRow(sUsuarios, "#0F172A"); // Slate dark
-    sUsuarios.appendRow(["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman"]);
-    sUsuarios.appendRow(["1107047649", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David"]);
-    sUsuarios.appendRow(["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar"]);
-    sUsuarios.appendRow(["1010159672", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)"]);
-    sUsuarios.appendRow(["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz"]);
-  }
-}
-
-function getOrCreateSheet(ss, name) {
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    // Compatibilidad y aliases automáticos con variantes de nombres
-    if (name === TABS.BITACORA) {
-      sheet = ss.getSheetByName("Ingresos_Cambios") || ss.getSheetByName("Bitacora_Cambios");
-    } else if (name === TABS.AUDITORIAS) {
-      sheet = ss.getSheetByName("Efectividad_Calidad") || ss.getSheetByName("Auditorias_Calidad");
-    } else if (name === TABS.USUARIOS) {
-      sheet = ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios");
-    }
-  }
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-  }
-  return sheet;
-}
-
-function formatHeaderRow(sheet, hexBg) {
-  var range = sheet.getRange(1, 1, 1, sheet.getLastColumn());
-  range.setBackground(hexBg)
-    .setFontColor("#FFFFFF")
-    .setFontWeight("bold")
-    .setFontSize(10)
-    .setFontFamily("Arial");
-  sheet.setFrozenRows(1);
+  formatCorporateSheet(s, "#064E3B", [100, 280, 180, 150, 80, 110, 110, 100, 110, 120, 240]); // Emerald Green
 }
 
 /**
- * Petición GET: Test de conectividad o consulta de registros
+ * 4. Configurar Hoja BITACORA_HISTORIAL
+ */
+function setupBitacoraSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.BITACORA, ["Bitacora_Cambios", "Ingresos_Cambios"]);
+  if (s.getLastRow() === 0) {
+    s.appendRow([
+      "Fecha_Hora",
+      "Usuario",
+      "Tipo_Evento",
+      "Aplicativo",
+      "Descripcion_Cambio",
+      "Impacto"
+    ]);
+    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+    s.appendRow([nowStr, "Super Admin", "SISTEMA_INICIALIZADO", "Global", "Base de datos reorganizada a modelo ejecutivo de 4 hojas maestras", "ALTO"]);
+  }
+  formatCorporateSheet(s, "#1E293B", [160, 150, 180, 180, 320, 90]); // Slate Dark
+}
+
+/**
+ * Aplica estilos ejecutivos corporativos (tipografía, padding, colores, bordes suaves)
+ */
+function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
+  sheet.setFrozenRows(1);
+  var lastCol = Math.max(1, sheet.getLastColumn());
+  var headerRange = sheet.getRange(1, 1, 1, lastCol);
+  
+  headerRange
+    .setBackground(headerHexColor)
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold")
+    .setFontSize(10)
+    .setFontFamily("Arial")
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle");
+  
+  sheet.setRowHeight(1, 32);
+
+  if (columnWidths && Array.isArray(columnWidths)) {
+    for (var i = 0; i < columnWidths.length && i < lastCol; i++) {
+      sheet.setColumnWidth(i + 1, columnWidths[i]);
+    }
+  }
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    var dataRange = sheet.getRange(2, 1, lastRow - 1, lastCol);
+    dataRange
+      .setFontFamily("Arial")
+      .setFontSize(9.5)
+      .setVerticalAlignment("middle");
+    
+    // Aplicar altura cómoda de fila
+    for (var r = 2; r <= lastRow; r++) {
+      sheet.setRowHeight(r, 24);
+    }
+  }
+}
+
+/**
+ * Organiza las pestañas colocando las 4 maestras de primero y ocultando las obsoletas
+ */
+function cleanAndOrderSheets(ss) {
+  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS, TABS.TAREAS, TABS.BITACORA];
+  for (var i = 0; i < orderedTabs.length; i++) {
+    var tabSheet = ss.getSheetByName(orderedTabs[i]);
+    if (tabSheet) {
+      ss.setActiveSheet(tabSheet);
+      ss.moveActiveSheet(i + 1);
+    }
+  }
+
+  // Ocultar hojas residuales que generaban ruido si existen
+  var obsoleteSheets = [
+    "Respuestas de formulario 1",
+    "Avances_Fases",
+    "Auditorias_Calidad",
+    "Efectividad_Calidad",
+    "Estado_Sistemas",
+    "Bitacora_Cambios",
+    "Ingresos_Cambios",
+    "Tareas_Integraciones"
+  ];
+  obsoleteSheets.forEach(function(name) {
+    var obs = ss.getSheetByName(name);
+    // Solo ocultar si NO es una de las 4 maestras activas
+    if (obs && orderedTabs.indexOf(name) === -1) {
+      try {
+        obs.hideSheet();
+      } catch (e) {}
+    }
+  });
+
+  // Activar por defecto la primera pestaña
+  var firstSheet = ss.getSheetByName(TABS.USUARIOS);
+  if (firstSheet) ss.setActiveSheet(firstSheet);
+}
+
+/**
+ * Obtiene la pestaña o la crea/renombra según aliases soportados
+ */
+function getOrCreateSheetByName(ss, targetName, aliases) {
+  var sheet = ss.getSheetByName(targetName);
+  if (sheet) return sheet;
+
+  // Buscar si existe con alguno de sus nombres antiguos para reutilizarla
+  if (aliases && Array.isArray(aliases)) {
+    for (var a = 0; a < aliases.length; a++) {
+      var aliasSheet = ss.getSheetByName(aliases[a]);
+      if (aliasSheet) {
+        aliasSheet.setName(targetName);
+        return aliasSheet;
+      }
+    }
+  }
+
+  return ss.insertSheet(targetName);
+}
+
+function getMasterSheet(ss, tabKey) {
+  var preferredName = TABS[tabKey];
+  var sheet = ss.getSheetByName(preferredName);
+  if (sheet) return sheet;
+
+  // Fallbacks universales
+  if (tabKey === "USUARIOS") {
+    return ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios") || ss.insertSheet(TABS.USUARIOS);
+  } else if (tabKey === "SISTEMAS") {
+    return ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.insertSheet(TABS.SISTEMAS);
+  } else if (tabKey === "TAREAS") {
+    return ss.getSheetByName("CONTROL_TAREAS") || ss.getSheetByName("Tareas_Integraciones") || ss.insertSheet(TABS.TAREAS);
+  } else if (tabKey === "BITACORA") {
+    return ss.getSheetByName("BITACORA_HISTORIAL") || ss.getSheetByName("Bitacora_Cambios") || ss.getSheetByName("Ingresos_Cambios") || ss.insertSheet(TABS.BITACORA);
+  }
+  return ss.getSheetByName(preferredName) || ss.insertSheet(preferredName);
+}
+
+/**
+ * ============================================================================
+ * ENDPOINT GET (Lectura, Consultas & Verificación en Tiempo Real)
+ * ============================================================================
  */
 function doGet(e) {
-  initializeSheets();
   var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "ping";
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   if (action === "ping") {
     return createJsonResponse({
       status: "success",
-      message: "STF GROUP Cloud Database Online",
+      message: "STF GROUP Executive Database Online (4 Master Sheets)",
       timestamp: new Date().toISOString(),
       sheets: Object.values(TABS)
     });
   }
 
-  if (action === "get_updates") {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = getOrCreateSheet(ss, TABS.BITACORA);
-    var rows = sheet.getDataRange().getValues();
-    var headers = rows[0];
-    var data = [];
-
-    for (var i = rows.length - 1; i >= 1 && data.length < 50; i--) {
-      var item = {};
-      for (var h = 0; h < headers.length; h++) {
-        item[headers[h]] = rows[i][h];
-      }
-      data.push(item);
-    }
-
-    return createJsonResponse({ status: "success", data: data });
-  }
-
+  // 1. Obtener Lista de Usuarios para Autenticación
   if (action === "get_users") {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sU = getOrCreateSheet(ss, TABS.USUARIOS);
+    var sU = getMasterSheet(ss, "USUARIOS");
     var uRows = sU.getDataRange().getValues();
     var usersList = [];
     if (uRows.length > 1) {
@@ -228,10 +305,28 @@ function doGet(e) {
     return createJsonResponse({ status: "success", users: usersList });
   }
 
+  // 2. Obtener Historial de Eventos
+  if (action === "get_updates") {
+    var sB = getMasterSheet(ss, "BITACORA");
+    var bRows = sB.getDataRange().getValues();
+    var headers = bRows[0] || [];
+    var data = [];
+
+    for (var i = bRows.length - 1; i >= 1 && data.length < 50; i--) {
+      var item = {};
+      for (var h = 0; h < headers.length; h++) {
+        item[headers[h]] = bRows[i][h];
+      }
+      data.push(item);
+    }
+    return createJsonResponse({ status: "success", data: data });
+  }
+
+  // 3. Obtener Todo el Portafolio (Tareas + Sistemas)
   if (action === "get_all_data") {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
-    var tRows = sTareas.getDataRange().getValues();
+    // A. Tareas desde CONTROL_TAREAS
+    var sT = getMasterSheet(ss, "TAREAS");
+    var tRows = sT.getDataRange().getValues();
     var tasks = [];
     if (tRows.length > 1) {
       for (var t = 1; t < tRows.length; t++) {
@@ -244,23 +339,29 @@ function doGet(e) {
           deadline: String(tRows[t][5] || "").trim(),
           status: String(tRows[t][6] || "").trim(),
           evaluation: String(tRows[t][7] || "").trim(),
-          createdDate: String(tRows[t][8] || "").trim()
+          pointsAdded: String(tRows[t][8] || "").trim(),
+          evalDate: String(tRows[t][9] || "").trim(),
+          notes: String(tRows[t][10] || "").trim()
         });
       }
     }
 
-    var sSistemas = getOrCreateSheet(ss, TABS.SISTEMAS);
-    var sysRows = sSistemas.getDataRange().getValues();
+    // B. Sistemas desde PORTAFOLIO_SISTEMAS
+    var sS = getMasterSheet(ss, "SISTEMAS");
+    var sysRows = sS.getDataRange().getValues();
     var systems = [];
     if (sysRows.length > 1) {
       for (var s = 1; s < sysRows.length; s++) {
         systems.push({
-          id: String(sysRows[s][0] || "").trim(),
+          code: String(sysRows[s][0] || "").trim(),
           name: String(sysRows[s][1] || "").trim(),
-          devName: String(sysRows[s][2] || "").trim(),
-          currentPhase: String(sysRows[s][3] || "").trim(),
-          progress: Number(sysRows[s][4]) || 0,
-          slaStatus: String(sysRows[s][5] || "").trim()
+          area: String(sysRows[s][2] || "").trim(),
+          devName: String(sysRows[s][3] || "").trim(),
+          currentPhase: String(sysRows[s][4] || "").trim(),
+          progress: Number(sysRows[s][5]) || 0,
+          slaStatus: String(sysRows[s][6] || "").trim(),
+          deadline: String(sysRows[s][7] || "").trim(),
+          lastUpdate: String(sysRows[s][8] || "").trim()
         });
       }
     }
@@ -272,15 +373,15 @@ function doGet(e) {
     });
   }
 
-  return createJsonResponse({ status: "error", message: "Acción no reconocida" });
+  return createJsonResponse({ status: "error", message: "Acción GET no reconocida" });
 }
 
 /**
- * Petición POST: Guardar cambios, actualizaciones y avances
+ * ============================================================================
+ * ENDPOINT POST (Escritura, Asignación de Tareas, Fases, Auditorías & Correos)
+ * ============================================================================
  */
 function doPost(e) {
-  initializeSheets();
-
   try {
     var payload;
     if (e.postData && e.postData.contents) {
@@ -297,336 +398,186 @@ function doPost(e) {
     var dateStr = Utilities.formatDate(now, "America/Bogota", "yyyy-MM-dd HH:mm:ss");
 
     // =========================================================================
-    // ACCIÓN 1: Registrar Evento en Bitácora de Cambios
-    // =========================================================================
-    if (action === "log_update") {
-      var sBitacora = getOrCreateSheet(ss, TABS.BITACORA);
-      sBitacora.appendRow([
-        now.getTime(),
-        dateStr,
-        payload.developer || "Sistema",
-        payload.eventType || "ACTUALIZACION",
-        payload.appName || "Global",
-        payload.description || "Sin descripción",
-        payload.version || "v2.6",
-        payload.extra ? JSON.stringify(payload.extra) : ""
-      ]);
-
-      return createJsonResponse({
-        status: "success",
-        message: "Cambio registrado exitosamente en Bitácora",
-        date: dateStr
-      });
-    }
-
-    // =========================================================================
-    // ACCIÓN 2: Registrar Avance en Fases de Desarrollo
-    // =========================================================================
-    if (action === "log_phase") {
-      var sAvances = getOrCreateSheet(ss, TABS.AVANCES);
-      sAvances.appendRow([
-        now.getTime(),
-        dateStr,
-        payload.appName || "",
-        payload.phaseId || "",
-        payload.phaseName || "",
-        payload.progress || 0,
-        payload.completed ? "SÍ" : "NO",
-        payload.developer || "",
-        payload.notes || ""
-      ]);
-
-      // También registrar en bitácora
-      var sBit = getOrCreateSheet(ss, TABS.BITACORA);
-      sBit.appendRow([
-        now.getTime(),
-        dateStr,
-        payload.developer || "Sistema",
-        "CAMBIO_FASE",
-        payload.appName || "",
-        "Fase '" + payload.phaseName + "' actualizada al " + payload.progress + "% (Completada: " + (payload.completed ? "SÍ" : "NO") + ")",
-        "v2.6",
-        ""
-      ]);
-
-      return createJsonResponse({
-        status: "success",
-        message: "Avance de fase registrado exitosamente",
-        date: dateStr
-      });
-    }
-
-    // =========================================================================
-    // ACCIÓN 3: Registrar Asignación de Tarea / Integración & Enviar Correo Automático
+    // ACCIÓN 1: Registrar Asignación de Tarea & Enviar Correo Automático
     // =========================================================================
     if (action === "log_task") {
-      var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
+      var sTareas = getMasterSheet(ss, "TAREAS");
+      var taskId = payload.taskId || ("int_" + now.getTime());
+      
+      // Registrar tarea en CONTROL_TAREAS
       sTareas.appendRow([
-        payload.taskId || ("int_" + now.getTime()),
+        taskId,
         payload.taskName || "",
         payload.appName || "",
         payload.developer || "",
-        payload.weight || 0,
+        payload.weight || 15,
         payload.deadline || "",
         payload.status || "En Progreso",
-        payload.qualityScore ? (payload.qualityScore + " / 100") : "Pendiente de Auditoría",
-        dateStr
+        "Pendiente", // Calidad_QA
+        "0%",        // Puntos_Sumados
+        "-",         // Fecha_Auditoria
+        "Asignada desde App Web" // Dictamen
       ]);
 
-      var sBitTask = getOrCreateSheet(ss, TABS.BITACORA);
-      sBitTask.appendRow([
-        now.getTime(),
+      // Registrar evento en BITACORA_HISTORIAL
+      var sBit = getMasterSheet(ss, "BITACORA");
+      sBit.appendRow([
         dateStr,
-        payload.developer || "Sistema",
-        "ASIGNACION_INTEGRACION",
-        payload.appName || "",
-        "Tarea '" + payload.taskName + "' asignada a " + payload.developer + " (+ " + payload.weight + "% avance, plazo: " + payload.deadline + ")",
-        "v2.6",
-        ""
+        "Super Admin",
+        "NUEVA_TAREA_ASIGNADA",
+        payload.appName || "Sistema",
+        "Tarea '" + payload.taskName + "' asignada a " + payload.developer + " (Plazo: " + payload.deadline + ", Peso: +" + payload.weight + "%)",
+        "OPERATIVO"
       ]);
 
-      // Enviar correo electrónico automático al desarrollador asignado
-      var emailSent = false;
-      var targetEmail = (payload.email || "").trim();
-      var devName = payload.developer || "Desarrollador";
+      // Enviar Correo Automático al Desarrollador
+      var emailSent = sendTaskAssignmentEmail(ss, payload);
 
-      // Si no viene en el payload, buscar en la Columna D de la hoja 'Usuarios' o 'USUARIOS'
-      if (!targetEmail) {
-        var sUserSheet = ss.getSheetByName(TABS.USUARIOS) || ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios");
-        if (sUserSheet) {
-          var userValues = sUserSheet.getDataRange().getValues();
-          // Fila 0 es encabezado: [ID, Usuario_Logueo, Rol, Correo, Nombre]
-          for (var u = 1; u < userValues.length; u++) {
-            var rowDevId = String(userValues[u][0] || "").toLowerCase().trim();
-            var rowUser = String(userValues[u][1] || "").toLowerCase().trim();
-            var rowEmail = String(userValues[u][3] || "").trim(); // Columna D
-            var rowName = String(userValues[u][4] || userValues[u][1] || "").toLowerCase().trim();
-            var searchTarget = String(devName).toLowerCase().trim();
+      return createJsonResponse({
+        status: "success",
+        message: "Tarea registrada en CONTROL_TAREAS exitosamente" + (emailSent.sent ? " y notificada por correo a " + emailSent.recipient : ""),
+        emailSent: emailSent.sent,
+        recipient: emailSent.recipient,
+        date: dateStr
+      });
+    }
 
-            if (rowName.indexOf(searchTarget) !== -1 || searchTarget.indexOf(rowName) !== -1 ||
-                rowUser.indexOf(searchTarget) !== -1 || searchTarget.indexOf(rowUser) !== -1 ||
-                rowDevId === searchTarget ||
-                searchTarget.indexOf("jose") !== -1 && rowUser.indexOf("jose") !== -1) {
-              if (rowEmail && rowEmail.indexOf("@") !== -1) {
-                targetEmail = rowEmail;
-                break;
-              }
-            }
+    // =========================================================================
+    // ACCIÓN 2: Registrar Auditoría de Calidad
+    // =========================================================================
+    if (action === "log_audit") {
+      var sTareas2 = getMasterSheet(ss, "TAREAS");
+      var tData = sTareas2.getDataRange().getValues();
+      var foundRow = -1;
+      var targetTaskName = String(payload.appName || "").toLowerCase();
+      var targetDev = String(payload.developer || "").toLowerCase();
+
+      // Buscar la tarea para actualizar su auditoría en la misma fila
+      for (var r = 1; r < tData.length; r++) {
+        var rowTaskName = String(tData[r][1] || "").toLowerCase();
+        var rowApp = String(tData[r][2] || "").toLowerCase();
+        var rowDev = String(tData[r][3] || "").toLowerCase();
+
+        if (rowDev.indexOf(targetDev) !== -1 || targetDev.indexOf(rowDev) !== -1) {
+          if (rowTaskName.indexOf(targetTaskName) !== -1 || rowApp.indexOf(targetTaskName) !== -1) {
+            foundRow = r + 1;
+            break;
           }
         }
       }
 
-      // Fallback directo por ID/nombre conocido si la hoja no devolvió correo
-      if (!targetEmail) {
-        var devLower = String(devName).toLowerCase();
-        if (devLower.indexOf("jose") !== -1 || devLower.indexOf("guzman") !== -1) {
-          targetEmail = "joseoneiber711@gmail.com";
-        } else if (devLower.indexOf("juan") !== -1) {
-          targetEmail = "juan.david@studiof.com.co";
-        } else if (devLower.indexOf("esteban") !== -1) {
-          targetEmail = "esteban.escobar@studiof.com.co";
-        } else if (devLower.indexOf("jhon") !== -1 || devLower.indexOf("mocho") !== -1) {
-          targetEmail = "jhon.eyder@studiof.com.co";
-        } else if (devLower.indexOf("edwin") !== -1 || devLower.indexOf("ediaz") !== -1) {
-          targetEmail = "edwin.diaz@studiof.com.co";
-        }
+      if (foundRow !== -1) {
+        sTareas2.getRange(foundRow, 7).setValue("Auditada"); // Estado
+        sTareas2.getRange(foundRow, 8).setValue((payload.score || 95) + "%"); // Calidad_QA
+        sTareas2.getRange(foundRow, 9).setValue("+" + (payload.pointsAdded || 15) + "%"); // Puntos_Sumados
+        sTareas2.getRange(foundRow, 10).setValue(dateStr.substring(0, 10)); // Fecha_Auditoria
+        sTareas2.getRange(foundRow, 11).setValue(payload.notes || "Auditada & Aprobada"); // Dictamen
       }
 
-      // Si encontramos correo válido, enviar notificación HTML con diseño corporativo STF GROUP
-      var mailErrorDetails = "";
-      if (targetEmail && targetEmail.indexOf("@") !== -1) {
-        try {
-          var emailSubject = "⚡ Nueva Tarea Asignada: " + (payload.taskName || "Integración") + " · STF GROUP";
-          var htmlBody = "" +
-            "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);\">" +
-              "<div style=\"background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 24px; color: #FFFFFF; text-align: left;\">" +
-                "<div style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; margin-bottom: 8px;\">STF GROUP · CONTROL TI</div>" +
-                "<h2 style=\"margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF;\">Nueva Tarea / Integración Asignada</h2>" +
-                "<p style=\"margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;\">El Administrador te ha cargado una nueva responsabilidad en planta.</p>" +
-              "</div>" +
-              "<div style=\"padding: 24px;\">" +
-                "<p style=\"font-size: 15px; color: #1E293B; margin-top: 0;\">Hola <strong>" + devName + "</strong>,</p>" +
-                "<p style=\"font-size: 13.5px; color: #475569; line-height: 1.5;\">Se te ha asignado un nuevo módulo operativo en el <strong>Sistema de Control de Desarrollo de STF GROUP</strong>:</p>" +
-                "<div style=\"background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; margin: 20px 0;\">" +
-                  "<div style=\"font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;\">Nombre de la Tarea</div>" +
-                  "<div style=\"font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 14px;\">" + (payload.taskName || "Módulo") + "</div>" +
-                  "<table style=\"width: 100%; border-collapse: collapse; font-size: 13px;\">" +
-                    "<tr><td style=\"padding: 6px 0; color: #64748B;\">📁 <strong>Aplicativo:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #1E293B;\">" + (payload.appName || "Sistema") + "</td></tr>" +
-                    "<tr><td style=\"padding: 6px 0; color: #64748B;\">⚖️ <strong>Ponderación:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #4E65FF;\">+" + (payload.weight || 15) + "% al avance del sistema</td></tr>" +
-                    "<tr><td style=\"padding: 6px 0; color: #64748B;\">📅 <strong>Fecha Límite:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #EF4444;\">" + (payload.deadline || "Próximamente") + "</td></tr>" +
-                    (payload.description ? "<tr><td style=\"padding: 6px 0; color: #64748B; vertical-align: top;\">📝 <strong>Instrucciones:</strong></td><td style=\"padding: 6px 0; color: #334155;\">" + payload.description + "</td></tr>" : "") +
-                  "</table>" +
-                "</div>" +
-                "<div style=\"text-align: center; margin: 24px 0;\">" +
-                  "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35);\">Ingresar a la Plataforma STF</a>" +
-                "</div>" +
-                "<p style=\"font-size: 12px; color: #94A3B8; text-align: center; margin: 0;\">Este es un correo automático generado por el Sistema de Supervisión de Software STF GROUP.</p>" +
-              "</div>" +
-            "</div>";
-
-          MailApp.sendEmail({
-            to: targetEmail,
-            subject: emailSubject,
-            htmlBody: htmlBody
-          });
-          emailSent = true;
-        } catch (mailErr) {
-          mailErrorDetails = mailErr.toString();
-        }
-      }
-
-      return createJsonResponse({
-        status: "success",
-        message: "Tarea registrada en Tareas_Integraciones exitosamente" + (emailSent ? " y correo enviado a " + targetEmail : (mailErrorDetails ? " (Error correo: " + mailErrorDetails + ")" : "")),
-        emailSent: emailSent,
-        recipient: targetEmail,
-        mailError: mailErrorDetails,
-        date: dateStr
-      });
-    }
-
-    // =========================================================================
-    // ACCIÓN 4: Registrar Auditoría de Calidad
-    // =========================================================================
-    if (action === "log_audit") {
-      var sAuditorias = getOrCreateSheet(ss, TABS.AUDITORIAS);
-      sAuditorias.appendRow([
-        now.getTime(),
-        dateStr,
-        payload.appName || "",
-        payload.developer || "",
-        payload.score || 0,
-        payload.daysDifference || 0,
-        payload.pointsAdded || 0,
-        payload.evaluator || "Super Admin",
-        payload.notes || ""
-      ]);
-
-      var sBit2 = getOrCreateSheet(ss, TABS.BITACORA);
+      // Registrar en BITACORA_HISTORIAL
+      var sBit2 = getMasterSheet(ss, "BITACORA");
       sBit2.appendRow([
-        now.getTime(),
         dateStr,
         payload.evaluator || "Super Admin",
-        "AUDITORIA_FIRMADA",
-        payload.appName || "",
-        "Auditoría aplicada a " + payload.developer + ": " + payload.score + " pts. Notas: " + payload.notes,
-        "v2.6",
-        ""
+        "AUDITORIA_CALIFICADA",
+        payload.appName || "Sistema",
+        "Auditoría a " + payload.developer + ": Nota " + payload.score + "% (Sumó +" + payload.pointsAdded + "%). " + (payload.notes || ""),
+        "ALTO"
       ]);
 
       return createJsonResponse({
         status: "success",
-        message: "Auditoría registrada exitosamente en Google Sheets",
+        message: "Auditoría registrada y consolidada en CONTROL_TAREAS",
         date: dateStr
       });
     }
 
     // =========================================================================
-    // ACCIÓN 4: Sincronización Completa del Estado de los Aplicativos
+    // ACCIÓN 3: Registrar Avance en Fases de Desarrollo
+    // =========================================================================
+    if (action === "log_phase") {
+      var sSistemas = getMasterSheet(ss, "SISTEMAS");
+      var sysData = sSistemas.getDataRange().getValues();
+      var targetAppName = String(payload.appName || "").toLowerCase();
+      
+      for (var s = 1; s < sysData.length; s++) {
+        var curName = String(sysData[s][1] || "").toLowerCase();
+        if (curName.indexOf(targetAppName) !== -1 || targetAppName.indexOf(curName) !== -1) {
+          sSistemas.getRange(s + 1, 5).setValue(payload.phaseName || "Fase Actualizada");
+          sSistemas.getRange(s + 1, 6).setValue(payload.progress || 0);
+          sSistemas.getRange(s + 1, 9).setValue(dateStr);
+          break;
+        }
+      }
+
+      var sBit3 = getMasterSheet(ss, "BITACORA");
+      sBit3.appendRow([
+        dateStr,
+        payload.developer || "Super Admin",
+        "FASE_ACTUALIZADA",
+        payload.appName || "Sistema",
+        "Fase '" + payload.phaseName + "' actualizada al " + payload.progress + "%",
+        "MEDIO"
+      ]);
+
+      return createJsonResponse({
+        status: "success",
+        message: "Avance de fase actualizado en PORTAFOLIO_SISTEMAS",
+        date: dateStr
+      });
+    }
+
+    // =========================================================================
+    // ACCIÓN 4: Sincronización Completa de Estado (Snapshot)
     // =========================================================================
     if (action === "sync_full_state") {
-      var sSistemas = getOrCreateSheet(ss, TABS.SISTEMAS);
-      // Limpiar datos antiguos conservando encabezados
-      var lastRow = sSistemas.getLastRow();
-      if (lastRow > 1) {
-        sSistemas.deleteRows(2, lastRow - 1);
-      }
-
       var apps = payload.applications || [];
-      for (var i = 0; i < apps.length; i++) {
-        var app = apps[i];
-        sSistemas.appendRow([
-          app.id || ("app_" + i),
-          app.name || "",
-          app.devName || "",
-          app.currentPhase || "",
-          app.progress || 0,
-          app.slaStatus || "En Tiempo",
-          dateStr
-        ]);
-      }
+      if (apps.length > 0) {
+        var sSis = getMasterSheet(ss, "SISTEMAS");
+        var lastR = sSis.getLastRow();
+        if (lastR > 1) sSis.deleteRows(2, lastR - 1);
 
-      // Sincronizar también todas las tareas/integraciones operativas
-      var tasks = payload.integrations || [];
-      if (tasks.length > 0) {
-        var sTareas = getOrCreateSheet(ss, TABS.TAREAS);
-        var lastRowTasks = sTareas.getLastRow();
-        if (lastRowTasks > 1) {
-          sTareas.deleteRows(2, lastRowTasks - 1);
-        }
-        for (var t = 0; t < tasks.length; t++) {
-          var tsk = tasks[t];
-          sTareas.appendRow([
-            tsk.id || ("int_" + t),
-            tsk.name || "",
-            tsk.appName || "",
-            tsk.devName || "",
-            tsk.weight || 0,
-            tsk.deadline || "",
-            tsk.status || "En Progreso",
-            tsk.evaluation ? (tsk.evaluation.qualityScore + " / 100") : "Pendiente de Auditoría",
+        for (var a = 0; a < apps.length; a++) {
+          var ap = apps[a];
+          sSis.appendRow([
+            ap.code || ("STF-APP-" + (a + 1)),
+            ap.name || "",
+            ap.category || "General",
+            ap.devName || "Equipo STF",
+            ap.currentPhase || "En Desarrollo",
+            ap.progress || 0,
+            ap.slaStatus || "En Tiempo",
+            ap.deadline || "2026-12-31",
             dateStr
           ]);
         }
+        formatCorporateSheet(sSis, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]);
       }
-
-      var sBit3 = getOrCreateSheet(ss, TABS.BITACORA);
-      sBit3.appendRow([
-        now.getTime(),
-        dateStr,
-        payload.user || "Administrador",
-        "SYNC_TOTAL",
-        "Todos los Sistemas",
-        "Sincronización completa de portafolio (" + apps.length + " aplicativos y " + tasks.length + " tareas sincronizadas)",
-        "v2.6",
-        ""
-      ]);
 
       return createJsonResponse({
         status: "success",
-        message: "Base de datos actualizada con " + apps.length + " aplicativos y " + tasks.length + " tareas",
-        count: apps.length,
-        taskCount: tasks.length,
+        message: "Portafolio sincronizado en PORTAFOLIO_SISTEMAS (" + apps.length + " sistemas)",
         date: dateStr
       });
     }
 
     // =========================================================================
-    // ACCIÓN 5: Sincronizar Usuarios
+    // ACCIÓN 5: Registro General en Bitácora
     // =========================================================================
-    if (action === "sync_users") {
-      var sUsers = getOrCreateSheet(ss, TABS.USUARIOS);
-      var lastRowUsers = sUsers.getLastRow();
-      if (lastRowUsers > 1) {
-        sUsers.deleteRows(2, lastRowUsers - 1);
-      } else if (lastRowUsers === 0) {
-        sUsers.appendRow(["ID", "Usuario_Logueo", "Rol", "Correo"]);
-        formatHeaderRow(sUsers, "#0F172A");
-      }
-
-      var uData = payload.users || [
-        { id: "1073524622", username: "jose@guzman", role: "desarrollador", email: "joseoneiber711@gmail.com" },
-        { id: "1107047649", username: "juan@david", role: "desarrollador", email: "" },
-        { id: "1111", username: "esteban@escobar", role: "desarrollador", email: "" },
-        { id: "1010159672", username: "jhon@eyder", role: "desarrollador", email: "" },
-        { id: "Admin", username: "ediaz", role: "Admin", email: "edwin.diaz@studiof.com.co" }
-      ];
-
-      for (var k = 0; k < uData.length; k++) {
-        var userItem = uData[k];
-        sUsers.appendRow([
-          userItem.id || userItem.idPassword || "",
-          userItem.username || "",
-          userItem.role || "desarrollador",
-          userItem.email || "",
-          userItem.name || ""
-        ]);
-      }
+    if (action === "log_update") {
+      var sBitLog = getMasterSheet(ss, "BITACORA");
+      sBitLog.appendRow([
+        dateStr,
+        payload.developer || "Sistema",
+        payload.eventType || "ACTUALIZACION",
+        payload.appName || "Global",
+        payload.description || "Cambio operativo registrado",
+        "INFO"
+      ]);
 
       return createJsonResponse({
         status: "success",
-        message: "Pestaña Usuarios actualizada exitosamente con " + uData.length + " usuarios",
-        count: uData.length,
+        message: "Evento registrado en BITACORA_HISTORIAL",
         date: dateStr
       });
     }
@@ -638,6 +589,103 @@ function doPost(e) {
       status: "error",
       message: err.toString()
     });
+  }
+}
+
+/**
+ * Función auxiliar para buscar el correo y enviar notificación HTML
+ */
+function sendTaskAssignmentEmail(ss, payload) {
+  var devName = payload.developer || "Desarrollador";
+  var targetEmail = (payload.email || "").trim();
+
+  if (!targetEmail) {
+    var sUsers = getMasterSheet(ss, "USUARIOS");
+    var uValues = sUsers.getDataRange().getValues();
+    var search = devName.toLowerCase().trim();
+
+    for (var u = 1; u < uValues.length; u++) {
+      var rUser = String(uValues[u][1] || "").toLowerCase().trim();
+      var rEmail = String(uValues[u][3] || "").trim();
+      var rName = String(uValues[u][4] || "").toLowerCase().trim();
+
+      if (rName.indexOf(search) !== -1 || search.indexOf(rName) !== -1 ||
+          rUser.indexOf(search) !== -1 || search.indexOf(rUser) !== -1 ||
+          (search.indexOf("jose") !== -1 && rUser.indexOf("jose") !== -1)) {
+        if (rEmail && rEmail.indexOf("@") !== -1) {
+          targetEmail = rEmail;
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback de seguridad
+  if (!targetEmail) {
+    var sLower = devName.toLowerCase();
+    if (sLower.indexOf("jose") !== -1 || sLower.indexOf("guzman") !== -1) targetEmail = "joseoneiber711@gmail.com";
+    else if (sLower.indexOf("juan") !== -1) targetEmail = "juan.david@studiof.com.co";
+    else if (sLower.indexOf("esteban") !== -1) targetEmail = "esteban.escobar@studiof.com.co";
+    else if (sLower.indexOf("mocho") !== -1 || sLower.indexOf("jhon") !== -1) targetEmail = "jhon.eyder@studiof.com.co";
+  }
+
+  if (targetEmail && targetEmail.indexOf("@") !== -1) {
+    try {
+      var subject = "⚡ Nueva Tarea Asignada: " + (payload.taskName || "Módulo") + " · STF GROUP";
+      var html = "" +
+        "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);\">" +
+          "<div style=\"background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 24px; color: #FFFFFF; text-align: left;\">" +
+            "<div style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; margin-bottom: 8px;\">STF GROUP · CONTROL TI</div>" +
+            "<h2 style=\"margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF;\">Nueva Tarea / Integración Asignada</h2>" +
+            "<p style=\"margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;\">El Administrador te ha cargado una nueva responsabilidad en planta.</p>" +
+          "</div>" +
+          "<div style=\"padding: 24px;\">" +
+            "<p style=\"font-size: 15px; color: #1E293B; margin-top: 0;\">Hola <strong>" + devName + "</strong>,</p>" +
+            "<p style=\"font-size: 13.5px; color: #475569; line-height: 1.5;\">Se te ha asignado una nueva integración en la plataforma:</p>" +
+            "<div style=\"background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; margin: 20px 0;\">" +
+              "<div style=\"font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;\">Nombre de la Tarea</div>" +
+              "<div style=\"font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 14px;\">" + (payload.taskName || "Módulo") + "</div>" +
+              "<table style=\"width: 100%; border-collapse: collapse; font-size: 13px;\">" +
+                "<tr><td style=\"padding: 6px 0; color: #64748B;\">📁 <strong>Aplicativo:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #1E293B;\">" + (payload.appName || "Sistema") + "</td></tr>" +
+                "<tr><td style=\"padding: 6px 0; color: #64748B;\">⚖️ <strong>Ponderación:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #4E65FF;\">+" + (payload.weight || 15) + "% al avance del sistema</td></tr>" +
+                "<tr><td style=\"padding: 6px 0; color: #64748B;\">📅 <strong>Fecha Límite:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #EF4444;\">" + (payload.deadline || "Próximamente") + "</td></tr>" +
+              "</table>" +
+            "</div>" +
+            "<div style=\"text-align: center; margin: 24px 0;\">" +
+              "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35);\">Ingresar a la Plataforma STF</a>" +
+            "</div>" +
+            "<p style=\"font-size: 12px; color: #94A3B8; text-align: center; margin: 0;\">Este es un correo automático generado por el Sistema de Supervisión STF GROUP.</p>" +
+          "</div>" +
+        "</div>";
+
+      MailApp.sendEmail({
+        to: targetEmail,
+        subject: subject,
+        htmlBody: html
+      });
+      return { sent: true, recipient: targetEmail };
+    } catch (e) {
+      return { sent: false, error: e.toString() };
+    }
+  }
+  return { sent: false, reason: "Sin correo válido" };
+}
+
+function testEmailNotification() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var res = sendTaskAssignmentEmail(ss, {
+    developer: "Jose Guzman",
+    taskName: "Prueba de Conexión Automatizada",
+    appName: "LABORATORIO",
+    weight: 15,
+    deadline: "2026-11-10",
+    email: "joseoneiber711@gmail.com"
+  });
+
+  if (res.sent) {
+    SpreadsheetApp.getUi().alert("✅ Correo de prueba enviado con éxito a " + res.recipient);
+  } else {
+    SpreadsheetApp.getUi().alert("⚠️ No se pudo enviar el correo: " + (res.error || res.reason));
   }
 }
 
