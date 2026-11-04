@@ -67,7 +67,7 @@ const STF_REAL_DATA = {
       codeQuality: 93,
       sprintsCompleted: 16,
       score: "9.5 / 10",
-      activeProjects: ["app_colchas", "app_laboratorio", "app_geo", "app_torre"]
+      activeProjects: ["app_colchas", "app_laboratorio", "app_geo", "app_oficina", "app_torre"]
     },
     {
       id: "dev_jd",
@@ -139,7 +139,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#4E65FF",
       iconInitial: "TDC",
-      webUrl: "https://stf-torre-control.vercel.app",
+      webUrl: "sharepoint",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
@@ -161,7 +161,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#FFA043",
       iconInitial: "COL",
-      webUrl: "https://stf-colchas.vercel.app",
+      webUrl: "https://colchas.vercel.app/",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
@@ -183,7 +183,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#D88BF8",
       iconInitial: "LAB",
-      webUrl: "https://stf-laboratorio.vercel.app",
+      webUrl: "https://stflab-calidad-textil.vercel.app/",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
@@ -205,7 +205,7 @@ const STF_REAL_DATA = {
       status: "risk",
       iconColor: "#10B981",
       iconInitial: "GEO",
-      webUrl: "https://stf-geo-talleres.vercel.app",
+      webUrl: "https://stf-rastreo-calidad.vercel.app/",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Mapas Satelitales", weight: 15, completed: true },
@@ -213,6 +213,28 @@ const STF_REAL_DATA = {
         { id: "p4", name: "4. Frontend & Tablero Geográfico", weight: 25, completed: false },
         { id: "p5", name: "5. Pruebas QA de Conectividad", weight: 15, completed: false },
         { id: "p6", name: "6. Puesta en Marcha", weight: 5, completed: false }
+      ]
+    },
+    {
+      id: "app_oficina",
+      code: "STF-OF-00",
+      name: "OFICINA - APLICATIVOS",
+      category: "Gestión TI & Control",
+      description: "Plataforma central de supervisión, métricas de ingeniería, control de sprints y despliegues web para STF GROUP.",
+      devId: "dev_jg",
+      deadline: "2026-12-30",
+      priority: "Alta",
+      status: "ontime",
+      iconColor: "#0EA5E9",
+      iconInitial: "OFA",
+      webUrl: "https://stf-oficina-aplicativos.vercel.app/",
+      phases: [
+        { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
+        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
+        { id: "p3", name: "3. Desarrollo Core & Integraciones", weight: 30, completed: true },
+        { id: "p4", name: "4. Sincronización Google Sheets", weight: 25, completed: true },
+        { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: true },
+        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: true }
       ]
     },
     {
@@ -227,7 +249,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#3B82F6",
       iconInitial: "CAL",
-      webUrl: "https://stf-calidad-aql.vercel.app",
+      webUrl: "",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Criterios AQL", weight: 15, completed: true },
@@ -249,7 +271,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#8B5CF6",
       iconInitial: "TIN",
-      webUrl: "https://stf-tintoreria.vercel.app",
+      webUrl: "",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Fórmulas Químicas", weight: 15, completed: true },
@@ -394,23 +416,32 @@ function getStoredData() {
             target.username = officialDev.username;
             target.role = officialDev.role;
             if (officialDev.email) target.email = officialDev.email;
-            if (!Array.isArray(target.activeProjects) || target.activeProjects.length === 0) {
+            if (!Array.isArray(target.activeProjects)) {
               target.activeProjects = [...(officialDev.activeProjects || [])];
+            } else {
+              (officialDev.activeProjects || []).forEach(pId => {
+                if (!target.activeProjects.includes(pId)) target.activeProjects.push(pId);
+              });
             }
           } else {
             parsed.developers.push(JSON.parse(JSON.stringify(officialDev)));
           }
         });
-        // Asegurar que applications e integrations sean arrays válidos
+        // Asegurar que applications e integrations sean arrays válidos con los enlaces reales oficiales
         if (!Array.isArray(parsed.applications) || parsed.applications.length === 0) {
           parsed.applications = JSON.parse(JSON.stringify(STF_REAL_DATA.applications));
         } else {
-          parsed.applications.forEach(app => {
-            const official = STF_REAL_DATA.applications.find(a => a.id === app.id || a.code === app.code);
-            if (official && official.webUrl) {
-              if (!app.webUrl) app.webUrl = official.webUrl;
-            } else if (!app.webUrl) {
-              app.webUrl = `https://stf-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`;
+          STF_REAL_DATA.applications.forEach(official => {
+            const existing = parsed.applications.find(a => a.id === official.id || (a.name && official.name && a.name.toLowerCase().trim() === official.name.toLowerCase().trim()));
+            if (!existing) {
+              parsed.applications.push(JSON.parse(JSON.stringify(official)));
+            } else {
+              // Sincronizar URL oficial correspondiente a la tabla real SISTEMAS_WEB
+              if (official.webUrl !== undefined) {
+                existing.webUrl = official.webUrl;
+              }
+              if (official.devId && !existing.devId) existing.devId = official.devId;
+              if (official.devIds) existing.devIds = official.devIds;
             }
           });
         }

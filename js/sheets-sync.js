@@ -664,22 +664,84 @@
 
     /**
      * Fusionar enlaces de Sistemas Web Publicados desde la hoja SISTEMAS_WEB
+     * Estructura: Desarrollador | Sistema_a_Cargo | URL_Sistema_Web | Estado
      */
     mergeCloudWebSystems(webSystems) {
       if (!Array.isArray(webSystems) || webSystems.length === 0 || !window.appState || !Array.isArray(window.appState.applications)) return 0;
       let count = 0;
+
       webSystems.forEach(ws => {
-        const targetApp = window.appState.applications.find(a =>
-          (ws.code && a.code && a.code.toLowerCase() === String(ws.code).toLowerCase()) ||
-          (ws.name && a.name && (a.name.toLowerCase().includes(String(ws.name).toLowerCase()) || String(ws.name).toLowerCase().includes(a.name.toLowerCase())))
+        const cleanSysName = String(ws.name || ws.Sistema_a_Cargo || '').trim();
+        if (!cleanSysName) return;
+
+        // 1. Encontrar o registrar aplicativo
+        let targetApp = window.appState.applications.find(a =>
+          a.name.toLowerCase().trim() === cleanSysName.toLowerCase() ||
+          cleanSysName.toLowerCase().includes(a.name.toLowerCase().trim()) ||
+          a.name.toLowerCase().trim().includes(cleanSysName.toLowerCase()) ||
+          (ws.code && a.code && a.code.toLowerCase() === String(ws.code).toLowerCase())
         );
-        if (targetApp && ws.webUrl && ws.webUrl.startsWith('http')) {
-          if (targetApp.webUrl !== ws.webUrl) {
-            targetApp.webUrl = ws.webUrl;
-            count++;
+
+        if (!targetApp) {
+          // Si es OFICINA - APLICATIVOS u otro sistema nuevo, crearlo
+          const isOficina = cleanSysName.toUpperCase().includes('OFICINA');
+          const newAppId = isOficina ? 'app_oficina' : `app_${cleanSysName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+          targetApp = {
+            id: newAppId,
+            code: isOficina ? 'STF-OF-00' : `STF-${cleanSysName.substring(0, 3).toUpperCase()}-99`,
+            name: cleanSysName,
+            category: isOficina ? 'Gestión TI & Control' : 'Operaciones Planta',
+            description: `Sistema ${cleanSysName} de STF GROUP.`,
+            devId: 'dev_jg',
+            deadline: '2026-12-30',
+            priority: 'Alta',
+            status: 'ontime',
+            iconColor: '#0EA5E9',
+            iconInitial: cleanSysName.substring(0, 3).toUpperCase(),
+            webUrl: String(ws.webUrl || '').trim(),
+            phases: [
+              { id: 'p1', name: '1. Levantamiento & Requisitos', weight: 15, completed: true },
+              { id: 'p2', name: '2. Arquitectura & Diseño', weight: 20, completed: true },
+              { id: 'p3', name: '3. Desarrollo Backend & Core', weight: 35, completed: true },
+              { id: 'p4', name: '4. Frontend & Conexión', weight: 20, completed: true },
+              { id: 'p5', name: '5. Pruebas QA', weight: 5, completed: true },
+              { id: 'p6', name: '6. Despliegue', weight: 5, completed: true }
+            ]
+          };
+          window.appState.applications.push(targetApp);
+          count++;
+        }
+
+        // 2. Asociar al Desarrollador correspondiente
+        const devName = String(ws.devName || ws.Desarrollador || '').trim();
+        const dev = this.findDev(devName);
+        if (dev) {
+          if (!Array.isArray(dev.activeProjects)) dev.activeProjects = [];
+          if (!dev.activeProjects.includes(targetApp.id)) {
+            dev.activeProjects.push(targetApp.id);
+          }
+          if (targetApp.isGroupProject || cleanSysName.toUpperCase().includes('TORRE')) {
+            if (!Array.isArray(targetApp.devIds)) targetApp.devIds = ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee'];
+            if (!targetApp.devIds.includes(dev.id)) targetApp.devIds.push(dev.id);
+          } else if (!targetApp.devId) {
+            targetApp.devId = dev.id;
           }
         }
+
+        // 3. Sincronizar URL Web (soporta Vercel URLs, sharepoint, o vacío)
+        const cleanUrl = String(ws.webUrl || ws.URL_Sistema_Web || '').trim();
+        if (targetApp.webUrl !== cleanUrl) {
+          targetApp.webUrl = cleanUrl;
+          count++;
+        }
+
+        // 4. Sincronizar Estado de la hoja
+        const stateStr = String(ws.status || ws.Estado || '').toLowerCase();
+        if (stateStr.includes('producc')) {
+          targetApp.status = 'ontime';
+        }
       });
+
       if (count > 0 && typeof window.saveData === 'function') {
         window.saveData(window.appState);
       }

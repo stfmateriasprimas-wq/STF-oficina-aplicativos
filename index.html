@@ -345,6 +345,10 @@
               </div>
 
               <div class="tfs-right">
+                <button class="pill-btn web-direct-btn small-glow" id="btnOpenDevWebSystems" title="Abrir sistemas web publicados de este desarrollador">
+                  <i data-lucide="globe"></i>
+                  <span id="btnDevWebLabel">Sistema Web ↗</span>
+                </button>
                 <button class="pill-btn primary-glow-btn small-glow" id="btnOpenDevDetail">
                   <i data-lucide="external-link"></i>
                   <span>Ver Ficha Dev</span>
@@ -2019,6 +2023,40 @@
     </div>
   </div>
 
+  <!-- MODAL: Sistemas Web Publicados del Desarrollador (Sincronizado con SISTEMAS_WEB) -->
+  <div class="modal-backdrop" id="modalDevWebSystems">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-tag" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+            <i data-lucide="globe" style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Sistemas Web & Despliegues Vercel
+          </span>
+          <h2 class="modal-title" id="devWebModalTitle" style="margin-top: 4px;">Sistemas Web a Cargo</h2>
+          <p class="modal-subtitle" id="devWebModalSubtitle">Enlaces en vivo configurados en la pestaña SISTEMAS_WEB de Google Sheets.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseDevWebModal" onclick="closeDeveloperWebSystemsModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px;">
+        <div id="devWebSystemsList">
+          <!-- Dynamically populated list of systems -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="pill-btn secondary-btn" id="btnDevWebOpenSheets" onclick="openSheetsModal()">
+          <i data-lucide="file-spreadsheet"></i>
+          <span>Ver Hoja Google Sheets</span>
+        </button>
+        <button type="button" class="pill-btn primary-btn" onclick="closeDeveloperWebSystemsModal()">
+          <span>Cerrar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Message -->
   <div class="toast-notification" id="toastNotification">
     <i data-lucide="check-circle" class="toast-icon"></i>
@@ -2027,8 +2065,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=17"></script>
-  <script src="js/sheets-sync.js?v=17"></script>
-  <script src="js/app.js?v=17"></script>
+  <script src="js/data.js?v=18"></script>
+  <script src="js/sheets-sync.js?v=18"></script>
+  <script src="js/app.js?v=18"></script>
 </body>
 </html>

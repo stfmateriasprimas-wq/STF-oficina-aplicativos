@@ -120,25 +120,28 @@ function setupSistemasSheet(ss) {
 function setupSistemasWebSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.SISTEMAS_WEB, ["SISTEMAS_WEB", "Sistemas_Web", "Urls_Web", "SISTEMAS_PUBLICADOS"]);
   
-  // Limpiar para asegurar las columnas exactas solicitadas
-  s.clear();
+  // Preservar datos si la hoja ya contiene filas del usuario
+  if (s.getLastRow() === 0) {
+    s.appendRow([
+      "Desarrollador",
+      "Sistema_a_Cargo",
+      "URL_Sistema_Web",
+      "Estado"
+    ]);
 
-  s.appendRow([
-    "Desarrollador",
-    "Sistema_a_Cargo",
-    "URL_Sistema_Web",
-    "Estado"
-  ]);
+    s.appendRow(["Jose Guzman", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
+    s.appendRow(["Jose Guzman", "COLCHAS", "https://colchas.vercel.app/", "En Producción"]);
+    s.appendRow(["Jose Guzman", "LABORATORIO", "https://stflab-calidad-textil.vercel.app/", "En Desarrollo"]);
+    s.appendRow(["Jose Guzman", "GEO UBICACION TALLERES", "https://stf-rastreo-calidad.vercel.app/", "En Desarrollo"]);
+    s.appendRow(["Jose Guzman", "OFICINA - APLICATIVOS", "https://stf-oficina-aplicativos.vercel.app/", "En Desarrollo"]);
+    s.appendRow(["Juan David", "CALIDAD", "", "En Desarrollo"]);
+    s.appendRow(["Juan David", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
+    s.appendRow(["Jhon Eyder (Mocho)", "TINTORERIA", "", "En Desarrollo"]);
+    s.appendRow(["Jhon Eyder (Mocho)", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
+    s.appendRow(["Esteban Escobar", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
 
-  s.appendRow(["Jose Guzman", "TORRE DE CONTROL", "https://stf-torre-control.vercel.app", "En Desarrollo"]);
-  s.appendRow(["Jose Guzman", "COLCHAS", "https://stf-colchas.vercel.app", "En Producción"]);
-  s.appendRow(["Jose Guzman", "LABORATORIO", "https://stf-laboratorio.vercel.app", "En Desarrollo"]);
-  s.appendRow(["Jose Guzman", "GEO UBICACION TALLERES", "https://stf-geo-talleres.vercel.app", "En Desarrollo"]);
-  s.appendRow(["Juan David", "ASEGURAMIENTO CALIDAD AQL", "https://stf-calidad-aql.vercel.app", "En Desarrollo"]);
-  s.appendRow(["Jhon Eyder (Mocho)", "PLANTA TINTORERIA & QUIMICOS", "https://stf-tintoreria.vercel.app", "En Desarrollo"]);
-  s.appendRow(["Esteban Escobar", "MODULO LOGISTICA CENTRAL", "https://stf-logistica.vercel.app", "En Desarrollo"]);
-
-  formatCorporateSheet(s, "#1E3A8A", [220, 260, 340, 140]); // Royal Blue
+    formatCorporateSheet(s, "#1E3A8A", [220, 260, 340, 140]); // Royal Blue
+  }
 }
 
 /**
@@ -630,22 +633,42 @@ function doPost(e) {
         formatCorporateSheet(sSis, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]);
       }
 
-      // Sincronizar también SISTEMAS_WEB según la estructura exacta: Desarrollador | Sistema_a_Cargo | URL_Sistema_Web | Estado
+      // Sincronizar también SISTEMAS_WEB preservando las filas y URLs manuales del usuario
       if (apps.length > 0) {
         var sWeb = getMasterSheet(ss, "SISTEMAS_WEB");
         if (sWeb) {
-          sWeb.clear();
-          sWeb.appendRow(["Desarrollador", "Sistema_a_Cargo", "URL_Sistema_Web", "Estado"]);
-          for (var w = 0; w < apps.length; w++) {
-            var wp = apps[w];
-            sWeb.appendRow([
-              wp.devName || "Equipo STF",
-              wp.name || "",
-              wp.webUrl || ("https://stf-" + String(wp.name || "").toLowerCase().replace(/[^a-z0-9]/g, "-") + ".vercel.app"),
-              wp.progress === 100 ? "En Producción" : "En Desarrollo"
-            ]);
+          if (sWeb.getLastRow() <= 1) {
+            if (sWeb.getLastRow() === 0) {
+              sWeb.appendRow(["Desarrollador", "Sistema_a_Cargo", "URL_Sistema_Web", "Estado"]);
+            }
+            for (var w = 0; w < apps.length; w++) {
+              var wp = apps[w];
+              sWeb.appendRow([
+                wp.devName || "Equipo STF",
+                wp.name || "",
+                wp.webUrl || "",
+                wp.progress === 100 ? "En Producción" : "En Desarrollo"
+              ]);
+            }
+            formatCorporateSheet(sWeb, "#1E3A8A", [220, 260, 340, 140]);
+          } else {
+            // Ya existen filas manuales configuradas por el usuario: actualizar solo URLs si vienen definidas sin borrar la hoja
+            var wData = sWeb.getDataRange().getValues();
+            for (var w = 0; w < apps.length; w++) {
+              var wp = apps[w];
+              if (!wp.webUrl) continue;
+              for (var r = 1; r < wData.length; r++) {
+                var rowSys = String(wData[r][1] || "").toLowerCase().trim();
+                var curSys = String(wp.name || "").toLowerCase().trim();
+                if (rowSys === curSys || rowSys.indexOf(curSys) !== -1 || curSys.indexOf(rowSys) !== -1) {
+                  if (!wData[r][2] || String(wData[r][2]).trim() === "") {
+                    sWeb.getRange(r + 1, 3).setValue(wp.webUrl);
+                  }
+                  break;
+                }
+              }
+            }
           }
-          formatCorporateSheet(sWeb, "#1E3A8A", [220, 260, 340, 140]);
         }
       }
 

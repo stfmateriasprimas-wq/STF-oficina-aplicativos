@@ -1289,6 +1289,152 @@ function selectDeveloper(devId) {
   }
 }
 
+// ==========================================================================
+// FORMATEO & VALIDACIÓN INTELIGENTE DE ENLACES A SISTEMAS WEB (SISTEMAS_WEB)
+// ==========================================================================
+function formatWebLinkInfo(url, appName) {
+  if (!url || !String(url).trim()) {
+    return {
+      isValid: false,
+      url: '',
+      label: 'Despliegue Pendiente',
+      statusText: 'En Desarrollo',
+      isLive: false,
+      isSharepoint: false,
+      btnClass: 'disabled-link',
+      icon: 'clock',
+      shortLabel: 'Pendiente'
+    };
+  }
+  const clean = String(url).trim();
+  if (clean.toLowerCase() === 'sharepoint' || clean.toLowerCase().includes('sharepoint')) {
+    const spUrl = clean.startsWith('http') ? clean : 'https://stfgroup.sharepoint.com/';
+    return {
+      isValid: true,
+      url: spUrl,
+      label: `Abrir SharePoint (${appName || 'Torre de Control'}) ↗`,
+      statusText: 'SharePoint',
+      isLive: false,
+      isSharepoint: true,
+      btnClass: 'sp-link',
+      icon: 'folder',
+      shortLabel: 'SharePoint'
+    };
+  }
+  const fullUrl = (clean.startsWith('http://') || clean.startsWith('https://')) ? clean : `https://${clean}`;
+  return {
+    isValid: true,
+    url: fullUrl,
+    label: `Abrir Sistema Web (${appName || 'Publicado'}) ↗`,
+    statusText: 'En Producción',
+    isLive: true,
+    isSharepoint: false,
+    btnClass: 'live-link',
+    icon: 'globe',
+    shortLabel: 'Web ↗'
+  };
+}
+window.formatWebLinkInfo = formatWebLinkInfo;
+
+function openDeveloperWebSystemsModal(devId) {
+  const effectiveDevId = devId || (!isCurrentSessionAdmin() ? getLoggedDevId() : activeSelectedDevId);
+  const dev = getDeveloperById(effectiveDevId);
+  if (!dev) return;
+
+  const isDevAdmin = isCurrentSessionAdmin() && ((dev && dev.role === 'Admin') || effectiveDevId === 'dev_ediaz' || effectiveDevId === 'all');
+  const assigned = isDevAdmin
+    ? appState.applications
+    : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
+
+  const titleEl = document.getElementById('devWebModalTitle');
+  const subEl = document.getElementById('devWebModalSubtitle');
+  const listEl = document.getElementById('devWebSystemsList');
+
+  if (titleEl) titleEl.textContent = `Sistemas Web · ${dev.name}`;
+  if (subEl) subEl.textContent = `Despliegues y accesos directos en vivo configurados para ${dev.name} (${assigned.length} Sistemas a Cargo)`;
+
+  if (listEl) {
+    if (assigned.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+          <i data-lucide="layers" style="width: 36px; height: 36px; margin: 0 auto 10px; opacity: 0.5;"></i>
+          <p style="margin: 0; font-size: 13.5px; font-weight: 600;">Este desarrollador no tiene aplicativos asignados actualmente.</p>
+        </div>
+      `;
+    } else {
+      listEl.innerHTML = assigned.map(app => {
+        const link = formatWebLinkInfo(app.webUrl, app.name);
+        const prog = calculateAppProgress(app);
+        const statusBadge = prog === 100
+          ? `<span class="status-pill status-done" style="font-size:11px; padding:3px 8px;"><span class="status-pulse-dot"></span> En Producción</span>`
+          : `<span class="status-pill status-ontime" style="font-size:11px; padding:3px 8px;"><span class="status-pulse-dot"></span> En Desarrollo (${prog}%)</span>`;
+
+        let actionBtn = '';
+        if (link.isLive) {
+          actionBtn = `
+            <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="pill-btn primary-btn" style="background:#10B981; color:#FFFFFF; text-decoration:none; padding:7px 14px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+              <i data-lucide="external-link" style="width:13px; height:13px;"></i>
+              <span>Abrir Sistema Web ↗</span>
+            </a>
+          `;
+        } else if (link.isSharepoint) {
+          actionBtn = `
+            <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="pill-btn secondary-btn" style="background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; text-decoration:none; padding:7px 14px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px;">
+              <i data-lucide="folder" style="width:13px; height:13px;"></i>
+              <span>Abrir SharePoint ↗</span>
+            </a>
+          `;
+        } else {
+          actionBtn = `
+            <span class="pill-btn secondary-btn" style="background:#F1F5F9; color:#94A3B8; border:1px solid #E2E8F0; padding:7px 14px; font-size:12px; display:inline-flex; align-items:center; gap:6px; cursor:not-allowed;" title="El enlace web aún no se ha desplegado o está pendiente en SISTEMAS_WEB">
+              <i data-lucide="clock" style="width:13px; height:13px;"></i>
+              <span>Despliegue Pendiente</span>
+            </span>
+          `;
+        }
+
+        return `
+          <div class="web-sys-item-row">
+            <div class="web-sys-item-left">
+              <div class="web-sys-icon" style="background: ${app.iconColor || '#4E65FF'};">
+                ${app.iconInitial || app.name.substring(0, 3).toUpperCase()}
+              </div>
+              <div class="web-sys-meta">
+                <strong>${app.name}</strong>
+                <span>
+                  <span>${app.code}</span> ·
+                  ${statusBadge}
+                </span>
+                ${link.isValid ? `<div style="font-size:11px; color:#10B981; margin-top:2px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:320px;">${link.url}</div>` : ''}
+              </div>
+            </div>
+            <div class="web-sys-item-right">
+              ${actionBtn}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  const modal = document.getElementById('modalDevWebSystems');
+  if (modal) {
+    modal.classList.add('active');
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeDeveloperWebSystemsModal() {
+  const modal = document.getElementById('modalDevWebSystems');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+window.openDeveloperWebSystemsModal = openDeveloperWebSystemsModal;
+window.closeDeveloperWebSystemsModal = closeDeveloperWebSystemsModal;
+
 function updateQuickDevStrip() {
   const effectiveDevId = !isCurrentSessionAdmin() ? getLoggedDevId() : activeSelectedDevId;
   const dev = getDeveloperById(effectiveDevId);
@@ -1313,7 +1459,7 @@ function updateQuickDevStrip() {
   }
   if (scoreEl) scoreEl.textContent = `⭐ ${dev.onTimeDelivery}% Eficiencia`;
 
-  // Render clean project tag pills
+  // Render clean project tag pills with individual web access
   if (tagsContainer) {
     if (assigned.length === 0) {
       tagsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 12px; font-weight: 500; padding: 4px 6px;">Sin sistemas individuales asignados.</span>';
@@ -1321,16 +1467,41 @@ function updateQuickDevStrip() {
       tagsContainer.innerHTML = assigned.map(app => {
         const prog = calculateAppProgress(app);
         const isGroup = app.isGroupProject ? '<span class="tag-group-badge">Grupal</span>' : '';
+        const link = formatWebLinkInfo(app.webUrl, app.name);
+        
+        let webLinkIcon = '';
+        if (link.isLive) {
+          webLinkIcon = `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="tag-web-link-icon" onclick="event.stopPropagation()" title="${link.label}">🌐</a>`;
+        } else if (link.isSharepoint) {
+          webLinkIcon = `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="tag-web-link-icon sp-link" onclick="event.stopPropagation()" title="${link.label}">📁</a>`;
+        } else {
+          webLinkIcon = `<span class="tag-web-link-icon disabled-link" onclick="event.stopPropagation()" title="Despliegue web en desarrollo (Sin URL)">⏳</span>`;
+        }
+
         return `
           <div class="dev-project-tag-pill" onclick="openSystemDetailModal('${app.id}')" title="Clic para ver fases de ${app.name} (Modo solo lectura)">
             <span class="tag-mini-dot" style="background-color: ${app.iconColor || 'var(--primary-blue)'};"></span>
             <span>${app.name}</span>
             ${isGroup}
             <span class="tag-prog-badge">${prog}%</span>
+            ${webLinkIcon}
           </div>
         `;
       }).join('');
     }
+  }
+
+  // Bind Web Systems button
+  const btnWeb = document.getElementById('btnOpenDevWebSystems');
+  const btnWebLabel = document.getElementById('btnDevWebLabel');
+  if (btnWeb) {
+    btnWeb.onclick = () => {
+      openDeveloperWebSystemsModal(effectiveDevId);
+    };
+    if (btnWebLabel) {
+      btnWebLabel.textContent = `🌐 Sistemas Web (${assigned.length}) ↗`;
+    }
+    btnWeb.title = `Abrir los sistemas web publicados de ${dev.name}`;
   }
 
   // Bind buttons
@@ -3064,9 +3235,14 @@ function openSystemDetailModal(appId) {
 
   const webLinkEl = document.getElementById('modalSysWebLink');
   if (webLinkEl) {
-    if (app.webUrl) {
-      webLinkEl.href = app.webUrl;
+    const linkInfo = formatWebLinkInfo(app.webUrl, app.name);
+    if (linkInfo.isValid) {
+      webLinkEl.href = linkInfo.url;
       webLinkEl.style.display = 'inline-flex';
+      webLinkEl.innerHTML = `
+        <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 12px; height: 12px;"></i>
+        <span>${linkInfo.label}</span>
+      `;
     } else {
       webLinkEl.style.display = 'none';
     }
@@ -4784,7 +4960,8 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
       // Action button or evaluated pill
       let actionHtml = '';
-      const appWebUrl = app.webUrl || (appState.applications.find(a => a.id === item.appId) || {}).webUrl || '';
+      const appRawUrl = app.webUrl || (appState.applications.find(a => a.id === item.appId) || {}).webUrl || '';
+      const linkInfo = formatWebLinkInfo(appRawUrl, app.name);
       const appShortName = app.shortName || app.name.split(' ')[0];
 
       if (isEvaluated) {
@@ -4799,11 +4976,11 @@ function renderIntegrationsList(filter = activeIntFilter) {
             </div>
             <i data-lucide="chevron-right" class="eval-action-arrow"></i>
           </div>
-          ${appWebUrl ? `
+          ${linkInfo.isValid ? `
             <div style="margin-top: 8px; width: 100%;">
-              <a href="${appWebUrl}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="Abrir sistema web de ${app.name}" onclick="event.stopPropagation()">
-                <i data-lucide="globe" style="width: 13.5px; height: 13.5px;"></i>
-                <span>Ver Sistema Web (${appShortName})</span>
+              <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="${linkInfo.label}" onclick="event.stopPropagation()">
+                <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 13.5px; height: 13.5px;"></i>
+                <span>${linkInfo.isSharepoint ? 'Abrir SharePoint' : `Ver Sistema Web (${appShortName})`}</span>
                 <i data-lucide="external-link" style="width: 12px; height: 12px; margin-left: auto;"></i>
               </a>
             </div>
@@ -4816,23 +4993,32 @@ function renderIntegrationsList(filter = activeIntFilter) {
               <i data-lucide="award" style="width: 15px; height: 15px;"></i>
               <span>Calificar Efectividad</span>
             </button>
-            ${appWebUrl ? `
-              <a href="${appWebUrl}" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" title="Abrir sistema web publicado de ${app.name}" onclick="event.stopPropagation()">
-                <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
-                <span>Web ↗</span>
+            ${linkInfo.isValid ? `
+              <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" title="${linkInfo.label}" onclick="event.stopPropagation()">
+                <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 14px; height: 14px;"></i>
+                <span>${linkInfo.shortLabel}</span>
               </a>
             ` : ''}
           </div>
         `;
       } else {
         // En perfil de desarrollador: Botón directo para abrir el Sistema Publicado Web
-        actionHtml = `
-          <a href="${appWebUrl || '#'}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="Abrir sistema web publicado de ${app.name}" onclick="event.stopPropagation()">
-            <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
-            <span>Ir al Sistema Web Publicado (${appShortName})</span>
-            <i data-lucide="external-link" style="width: 13px; height: 13px; margin-left: auto;"></i>
-          </a>
-        `;
+        if (linkInfo.isValid) {
+          actionHtml = `
+            <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="${linkInfo.label}" onclick="event.stopPropagation()">
+              <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 14px; height: 14px;"></i>
+              <span>${linkInfo.isSharepoint ? 'Abrir SharePoint' : `Ir al Sistema Web Publicado (${appShortName})`}</span>
+              <i data-lucide="external-link" style="width: 13px; height: 13px; margin-left: auto;"></i>
+            </a>
+          `;
+        } else {
+          actionHtml = `
+            <div class="btn-card-web-link" style="opacity: 0.7; cursor: default; background: #F1F5F9; color: #64748B; border-color: #E2E8F0;" title="El despliegue web aún no ha sido publicado en SISTEMAS_WEB">
+              <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+              <span>Despliegue Web Pendiente (${appShortName})</span>
+            </div>
+          `;
+        }
       }
 
       return `
@@ -5983,12 +6169,23 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <i data-lucide="layers"></i>
                 <span>Tareas (${totalTasksCount})</span>
               </button>
-              ${app.webUrl ? `
-                <a href="${app.webUrl}" target="_blank" rel="noopener noreferrer" class="card-sec-btn card-web-link-btn" title="Abrir sistema web de ${app.name}">
-                  <i data-lucide="globe"></i>
-                  <span>Web ↗</span>
-                </a>
-              ` : ''}
+              ${(() => {
+                const sysLink = formatWebLinkInfo(app.webUrl, app.name);
+                if (sysLink.isValid) {
+                  return `
+                    <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="card-sec-btn card-web-link-btn" style="${sysLink.isSharepoint ? 'background:#EEF2FF; color:#4338CA; border-color:#C7D2FE;' : ''}" title="${sysLink.label}">
+                      <i data-lucide="${sysLink.isSharepoint ? 'folder' : 'globe'}"></i>
+                      <span>${sysLink.shortLabel}</span>
+                    </a>
+                  `;
+                }
+                return `
+                  <span class="card-sec-btn" style="opacity:0.6; cursor:not-allowed;" title="Despliegue web en desarrollo (Sin URL asignada)">
+                    <i data-lucide="clock"></i>
+                    <span>Pendiente</span>
+                  </span>
+                `;
+              })()}
               ${isAdmin ? `
                 <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las fases de desarrollo de ${app.name}">
                   <i data-lucide="clipboard-check"></i>
@@ -6079,11 +6276,21 @@ function renderProjectsView(brand = activeBrandFilter) {
           <td>${statusBadge}</td>
           <td class="text-right" onclick="event.stopPropagation();">
             <div style="display: inline-flex; gap: 6px; align-items: center;">
-              ${app.webUrl ? `
-                <a href="${app.webUrl}" target="_blank" rel="noopener noreferrer" class="action-row-btn" style="text-decoration:none; color:#047857; background:#ECFDF5; border-color:#A7F3D0;" title="Abrir sistema web de ${app.name}">
-                  Web ↗
-                </a>
-              ` : ''}
+              ${(() => {
+                const sysLink = formatWebLinkInfo(app.webUrl, app.name);
+                if (sysLink.isValid) {
+                  return `
+                    <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="action-row-btn" style="text-decoration:none; ${sysLink.isSharepoint ? 'color:#4338CA; background:#EEF2FF; border-color:#C7D2FE;' : 'color:#047857; background:#ECFDF5; border-color:#A7F3D0;'}" title="${sysLink.label}">
+                      ${sysLink.shortLabel}
+                    </a>
+                  `;
+                }
+                return `
+                  <span class="action-row-btn" style="opacity:0.5; cursor:not-allowed;" title="Despliegue web en desarrollo (Sin URL asignada)">
+                    ⏳ Pendiente
+                  </span>
+                `;
+              })()}
               <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Ver'} Fases">
                 ${isAdmin ? 'Auditar' : 'Ver Fases'}
               </button>
