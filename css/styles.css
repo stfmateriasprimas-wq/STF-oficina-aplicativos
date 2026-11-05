@@ -8038,3 +8038,479 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   width: 17px !important;
   height: 17px !important;
 }
+
+
+/* ==========================================================================
+   OPCIÓN 1: PIPELINE VISUAL POR ETAPAS DE PRODUCCIÓN (LINEAR / JIRA STYLE)
+   ========================================================================== */
+
+.projects-pipeline-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(320px, 1fr));
+  gap: 22px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding-bottom: 30px;
+}
+
+@media (max-width: 1180px) {
+  .projects-pipeline-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pipeline-column {
+  background: #F8FAFC;
+  border-radius: 22px;
+  border: 1.5px solid #E2E8F0;
+  padding: 18px 18px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 580px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s ease;
+}
+
+.pipeline-column:hover {
+  border-color: #CBD5E1;
+  background: #FBFDFE;
+}
+
+.pipeline-col-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid #E2E8F0;
+}
+
+.pipeline-col-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pipeline-stage-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pipeline-stage-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.pipeline-stage-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.pipeline-stage-count-badge {
+  font-size: 11.5px;
+  font-weight: 750;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pipeline-stage-sub {
+  font-size: 12px;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.4;
+  padding-left: 2px;
+}
+
+.pipeline-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Individual Pipeline Card */
+.pipeline-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 16px 18px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 6px 18px -3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.pipeline-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.10);
+  border-color: #CBD5E1;
+}
+
+.pipeline-card.is-risk {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF8F8 100%);
+}
+
+.pipeline-card-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+}
+
+/* Pipeline Card Header */
+.pipeline-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.pipeline-identity-left {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.pipeline-app-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+}
+
+.pipeline-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pipeline-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pipeline-code-badge {
+  font-size: 10.5px;
+  font-weight: 750;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: monospace;
+}
+
+.pipeline-category-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pipeline-system-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* Status Pill */
+.pipeline-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pipeline-status-pill.status-done {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.pipeline-status-pill.status-ontime {
+  background: #F0FDF4;
+  color: #16A34A;
+  border: 1px solid #BBF7D0;
+}
+
+.pipeline-status-pill.status-risk {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+/* Phase & Progress Box */
+.pipeline-phase-box {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid #EDF2F7;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pipeline-phase-info {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pipeline-phase-step {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6366F1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pipeline-phase-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  text-align: right;
+  max-width: 65%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pipeline-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pipeline-progress-bar-track {
+  flex: 1;
+  height: 7px;
+  background: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pipeline-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.pipeline-progress-num {
+  font-size: 12.5px;
+  font-weight: 800;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Stepper dots (6 phases of lifecycle) */
+.pipeline-stepper-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+.pipeline-stepper-dot {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: #E2E8F0;
+  transition: all 0.2s ease;
+}
+
+.pipeline-stepper-dot.done {
+  background: #10B981;
+}
+
+.pipeline-stepper-dot.active {
+  background: #4F46E5;
+  height: 4px;
+}
+
+/* Metrics Row */
+.pipeline-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.pipeline-metric-chip {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 9px;
+  padding: 6px 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pipeline-metric-chip i,
+.pipeline-metric-chip svg {
+  width: 13px;
+  height: 13px;
+  color: #64748B;
+  flex-shrink: 0;
+}
+
+.pipeline-metric-chip.chip-danger {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #B91C1C;
+}
+
+.pipeline-metric-chip.chip-danger i,
+.pipeline-metric-chip.chip-danger svg {
+  color: #DC2626;
+}
+
+/* Pipeline Card Footer */
+.pipeline-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.pipeline-dev-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pipeline-dev-av {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pipeline-dev-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.pipeline-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pipeline-audit-btn {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.pipeline-audit-btn:hover {
+  background: #4338CA;
+  transform: translateY(-1px);
+}
+
+.pipeline-audit-btn i,
+.pipeline-audit-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pipeline-web-btn {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.pipeline-web-btn:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+  border-color: #94A3B8;
+}
+
+.pipeline-web-btn i,
+.pipeline-web-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Empty stage column */
+.pipeline-empty-column {
+  padding: 40px 16px;
+  text-align: center;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1.5px dashed #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pipeline-empty-column i,
+.pipeline-empty-column svg {
+  width: 32px;
+  height: 32px;
+  color: #94A3B8;
+}
+
+.pipeline-empty-column span {
+  font-size: 12.5px;
+  color: #64748B;
+  font-weight: 600;
+}

@@ -6056,7 +6056,8 @@ function initApp() {
     });
   });
 
-  // Switch between Projects Grid, Table & Kanban
+  // Switch between Projects Pipeline, Grid & Table
+  document.getElementById('btnViewPipeline')?.addEventListener('click', () => setProjectsViewMode('pipeline'));
   document.getElementById('btnViewGrid')?.addEventListener('click', () => setProjectsViewMode('grid'));
   document.getElementById('btnViewTable')?.addEventListener('click', () => setProjectsViewMode('table'));
   document.getElementById('btnViewKanban')?.addEventListener('click', () => setProjectsViewMode('kanban'));
@@ -6077,7 +6078,7 @@ if (document.readyState === 'loading') {
 // ==========================================================================
 
 let activeBrandFilter = 'all';
-let currentProjectsViewMode = 'grid';
+let currentProjectsViewMode = 'pipeline';
 let currentProjectSearchTerm = '';
 let brandsChartInstance = null;
 let qaBugsChartInstance = null;
@@ -6232,18 +6233,22 @@ function switchView(viewName) {
 function setProjectsViewMode(mode) {
   currentProjectsViewMode = mode;
 
+  const btnPipeline = document.getElementById('btnViewPipeline');
   const btnGrid = document.getElementById('btnViewGrid');
   const btnTable = document.getElementById('btnViewTable');
   const btnKanban = document.getElementById('btnViewKanban');
 
+  if (btnPipeline) btnPipeline.classList.toggle('active', mode === 'pipeline');
   if (btnGrid) btnGrid.classList.toggle('active', mode === 'grid');
   if (btnTable) btnTable.classList.toggle('active', mode === 'table');
   if (btnKanban) btnKanban.classList.toggle('active', mode === 'kanban');
 
+  const pipelineContainer = document.getElementById('projectsPipelineView');
   const gridContainer = document.getElementById('projectsCardsGrid');
   const tableContainer = document.getElementById('projectsTableView');
   const kanbanContainer = document.getElementById('projectsKanbanBoard');
 
+  if (pipelineContainer) pipelineContainer.style.display = mode === 'pipeline' ? 'grid' : 'none';
   if (gridContainer) gridContainer.style.display = mode === 'grid' ? 'grid' : 'none';
   if (tableContainer) tableContainer.style.display = mode === 'table' ? 'block' : 'none';
   if (kanbanContainer) kanbanContainer.style.display = mode === 'kanban' ? 'grid' : 'none';
@@ -6350,6 +6355,7 @@ function renderProjectsView(brand = activeBrandFilter) {
   });
 
   const apps = getFilteredApplications(brand);
+  const pipelineContainer = document.getElementById('projectsPipelineView');
   const gridContainer = document.getElementById('projectsCardsGrid');
   const tableBody = document.getElementById('industrialMatrixTableBody');
   const refDate = getSystemReferenceDate();
@@ -6364,11 +6370,17 @@ function renderProjectsView(brand = activeBrandFilter) {
         <button class="pill-btn secondary-btn" onclick="clearProjectSearch(); renderProjectsView('all');">Restablecer Filtros</button>
       </div>
     `;
+    if (pipelineContainer) pipelineContainer.innerHTML = emptyHtml;
     if (gridContainer) gridContainer.innerHTML = emptyHtml;
     if (tableBody) tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 36px; color: #64748B;">No se encontraron aplicativos coincidentes.</td></tr>`;
     renderKanbanBoard();
     lucide.createIcons();
     return;
+  }
+
+  // 1. RENDERIZADO DEL PIPELINE VISUAL POR ETAPAS (OPCIÓN 1)
+  if (pipelineContainer) {
+    renderPipelineView(apps);
   }
 
   // RENDERIZADO DE LA CUADRÍCULA EJECUTIVA DE TARJETAS
@@ -7474,6 +7486,265 @@ window.switchView = switchView;
 window.showToast = showToast;
 window.renderStackedDeck = renderStackedDeck;
 window.getDeveloperById = getDeveloperById;
+
+// ==========================================================================
+// OPCIÓN 1: PIPELINE VISUAL POR ETAPAS DE PRODUCCIÓN INDUSTRIAL
+// ==========================================================================
+
+function renderPipelineView(apps) {
+  const container = document.getElementById('projectsPipelineView');
+  if (!container) return;
+
+  const isAdmin = isCurrentSessionAdmin();
+  const refDate = getSystemReferenceDate();
+
+  const stages = [
+    {
+      id: 'stage_core',
+      title: '1. En Construcción & Core',
+      sub: 'Arquitectura, backend y desarrollo activo',
+      badgeText: 'Fases 1 a 4',
+      badgeBg: '#EEF2FF',
+      badgeColor: '#4F46E5',
+      accentColor: '#6366F1',
+      icon: 'code-2',
+      filter: (app) => {
+        const prog = calculateAppProgress(app);
+        const activeIdx = (app.phases || []).findIndex(p => !p.completed);
+        const phaseNum = activeIdx !== -1 ? activeIdx + 1 : (app.phases ? app.phases.length : 6);
+        return phaseNum <= 4 && prog < 75;
+      }
+    },
+    {
+      id: 'stage_qa',
+      title: '2. Pruebas QA en Planta',
+      sub: 'Validación en campo y pruebas de conectividad',
+      badgeText: 'Fase 5: Pruebas',
+      badgeBg: '#FEF3C7',
+      badgeColor: '#D97706',
+      accentColor: '#F59E0B',
+      icon: 'flask-conical',
+      filter: (app) => {
+        const prog = calculateAppProgress(app);
+        const activeIdx = (app.phases || []).findIndex(p => !p.completed);
+        const phaseNum = activeIdx !== -1 ? activeIdx + 1 : (app.phases ? app.phases.length : 6);
+        return (phaseNum === 5 || (prog >= 75 && prog < 100)) && (app.id !== 'app_colchas' && app.id !== 'app_oficina');
+      }
+    },
+    {
+      id: 'stage_prod',
+      title: '3. En Producción (En Vivo)',
+      sub: 'Sistemas 100% operativos y auditados',
+      badgeText: 'Fase 6: Desplegado',
+      badgeBg: '#D1FAE5',
+      badgeColor: '#059669',
+      accentColor: '#10B981',
+      icon: 'rocket',
+      filter: (app) => {
+        const prog = calculateAppProgress(app);
+        return prog >= 100 || app.id === 'app_colchas' || app.id === 'app_oficina';
+      }
+    }
+  ];
+
+  container.innerHTML = stages.map(stage => {
+    const stageApps = apps.filter(stage.filter);
+    const countLabel = stageApps.length === 1 ? '1 Sistema' : `${stageApps.length} Sistemas`;
+
+    const cardsHtml = stageApps.length > 0
+      ? stageApps.map(app => renderPipelineCardHtml(app, refDate, isAdmin)).join('')
+      : `
+        <div class="pipeline-empty-column">
+          <i data-lucide="inbox"></i>
+          <span>Sin sistemas en esta etapa</span>
+        </div>
+      `;
+
+    return `
+      <div class="pipeline-column" id="col_${stage.id}" style="border-top: 4px solid ${stage.accentColor};">
+        <div class="pipeline-col-header">
+          <div class="pipeline-col-header-top">
+            <div class="pipeline-stage-title-wrap">
+              <div class="pipeline-stage-icon-badge" style="background: ${stage.badgeBg}; color: ${stage.badgeColor};">
+                <i data-lucide="${stage.icon}"></i>
+              </div>
+              <h3 class="pipeline-stage-title">${stage.title}</h3>
+            </div>
+            <span class="pipeline-stage-count-badge" style="background: ${stage.badgeBg}; color: ${stage.badgeColor};">
+              ${countLabel}
+            </span>
+          </div>
+          <p class="pipeline-stage-sub">${stage.sub}</p>
+        </div>
+
+        <div class="pipeline-cards-list">
+          ${cardsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPipelineCardHtml(app, refDate, isAdmin) {
+  const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
+  const progress = calculateAppProgress(app);
+  const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
+  const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
+  const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 });
+  const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount;
+
+  const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
+    plantArea: app.category,
+    plantRole: 'Operación Industrial en Planta',
+    qaScore: '95.0% QA',
+    qaStatus: 'Auditado',
+    qaColor: '#2563EB'
+  };
+
+  // Tareas e integraciones asignadas
+  const appTasks = (appState.integrations || []).filter(i => i.appId === app.id);
+  const evaluatedTasks = appTasks.filter(i => i.status === 'evaluated' || i.status === 'done');
+  let totalTasksCount = appTasks.length;
+  let completedTasksCount = evaluatedTasks.length;
+
+  if (app.id === 'app_colchas' && progress === 100) {
+    totalTasksCount = Math.max(totalTasksCount, 1);
+    completedTasksCount = totalTasksCount;
+  }
+
+  // Cronograma / Deadline
+  const deadlineDate = new Date((app.deadline || '2026-11-30') + 'T23:59:59');
+  const diffDays = Math.ceil((deadlineDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  let deadlineDisplay, isOverdue = false;
+  if (progress === 100) {
+    deadlineDisplay = 'En Producción';
+  } else if (diffDays < 0 || app.status === 'risk') {
+    isOverdue = true;
+    deadlineDisplay = `${formatShortDate(app.deadline)} (Retraso)`;
+  } else {
+    deadlineDisplay = formatShortDate(app.deadline);
+  }
+
+  // 6 Mini-Dots para el ciclo de vida
+  const dotsHtml = (app.phases || []).map((p, idx) => {
+    let dotClass = 'pending';
+    if (p.completed) dotClass = 'done';
+    else if (idx === activePhaseIndex) dotClass = 'active';
+    return `<div class="pipeline-stepper-dot ${dotClass}" title="Fase ${idx + 1}: ${p.name}"></div>`;
+  }).join('');
+
+  // Web / SharePoint link
+  let webBtnHtml = '';
+  const sysLink = formatWebLinkInfo(app.webUrl, app.name);
+  if (sysLink.isValid) {
+    webBtnHtml = `
+      <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="pipeline-web-btn" title="${sysLink.label}" onclick="event.stopPropagation();">
+        <i data-lucide="${sysLink.isSharepoint ? 'folder' : 'external-link'}"></i>
+        <span>${sysLink.isSharepoint ? 'SharePoint' : 'Web ↗'}</span>
+      </a>
+    `;
+  } else {
+    webBtnHtml = `
+      <span class="pipeline-web-btn" style="opacity: 0.6; cursor: not-allowed;" title="Pendiente de Despliegue" onclick="event.stopPropagation();">
+        <i data-lucide="clock"></i>
+        <span>Pendiente</span>
+      </span>
+    `;
+  }
+
+  return `
+    <div class="pipeline-card ${app.status === 'risk' ? 'is-risk' : ''}" style="--app-accent: ${app.iconColor};" onclick="openSystemDetailModal('${app.id}')">
+      <div class="pipeline-card-accent-bar" style="background: ${app.iconColor};"></div>
+
+      <div class="pipeline-card-header">
+        <div class="pipeline-identity-left">
+          <div class="pipeline-app-avatar" style="background: ${app.iconColor}18; color: ${app.iconColor}; border: 1.5px solid ${app.iconColor}38;">
+            ${app.iconInitial}
+          </div>
+          <div class="pipeline-meta">
+            <div class="pipeline-tags-row">
+              <span class="pipeline-code-badge">${app.code}</span>
+              <span class="pipeline-category-badge">${app.category}</span>
+            </div>
+            <h4 class="pipeline-system-title">${app.name}</h4>
+          </div>
+        </div>
+        <div class="pipeline-status-col">
+          <span class="pipeline-status-pill ${app.status === 'risk' ? 'status-risk' : (progress >= 100 ? 'status-done' : 'status-ontime')}">
+            <span class="status-pulse-dot"></span>
+            ${app.status === 'risk' ? 'En Riesgo' : (progress >= 100 ? 'En Producción' : 'En Tiempo')}
+          </span>
+        </div>
+      </div>
+
+      <div class="pipeline-phase-box">
+        <div class="pipeline-phase-info">
+          <span class="pipeline-phase-step">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
+          <strong class="pipeline-phase-name">${activePhase.name}</strong>
+        </div>
+        <div class="pipeline-progress-wrapper">
+          <div class="pipeline-progress-bar-track">
+            <div class="pipeline-progress-bar-fill" style="width: ${progress}%; background: linear-gradient(90deg, ${app.iconColor}, ${app.iconColor}DD);"></div>
+          </div>
+          <span class="pipeline-progress-num" style="color: ${app.iconColor};">${progress}%</span>
+        </div>
+        <div class="pipeline-stepper-dots">
+          ${dotsHtml}
+        </div>
+      </div>
+
+      <div class="pipeline-metrics-row">
+        <div class="pipeline-metric-chip" title="Entregables e Integraciones">
+          <i data-lucide="check-square"></i>
+          <span><strong>${completedTasksCount}/${totalTasksCount}</strong> Listos</span>
+        </div>
+        <div class="pipeline-metric-chip" title="Calidad Técnica Auditada">
+          <i data-lucide="shield-check"></i>
+          <span><strong style="color: ${ind.qaColor};">${ind.qaScore}</strong></span>
+        </div>
+        <div class="pipeline-metric-chip ${isOverdue ? 'chip-danger' : ''}" title="Fecha Límite / Cronograma">
+          <i data-lucide="calendar"></i>
+          <span>${deadlineDisplay}</span>
+        </div>
+      </div>
+
+      <div class="pipeline-card-footer" onclick="event.stopPropagation();">
+        <div class="pipeline-dev-info">
+          ${app.isGroupProject ? `
+            <div class="stacked-team-avatars" style="margin-right: 4px;" title="Desarrollo colaborativo grupal (4 devs)">
+              ${(app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']).map(dId => {
+                const d = getDeveloperById(dId);
+                return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
+              }).join('')}
+            </div>
+            <span class="pipeline-dev-name" style="font-size: 11.5px;">Equipo Grupal</span>
+          ` : `
+            <img src="${dev.avatar}" alt="${dev.name}" class="pipeline-dev-av" title="${dev.name}">
+            <span class="pipeline-dev-name">${dev.name}</span>
+          `}
+        </div>
+
+        <div class="pipeline-actions-group">
+          ${webBtnHtml}
+          ${isAdmin ? `
+            <button class="pipeline-audit-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar fases de ${app.name}">
+              <i data-lucide="clipboard-check"></i>
+              <span>Auditar</span>
+            </button>
+          ` : `
+            <button class="pipeline-audit-btn" style="background: #E2E8F0; color: #334155;" onclick="openSystemDetailModal('${app.id}')" title="Ver fases de ${app.name}">
+              <i data-lucide="eye"></i>
+              <span>Ver Fases</span>
+            </button>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
 window.setProjectsViewMode = setProjectsViewMode;
 window.handleProjectSearch = handleProjectSearch;
 window.clearProjectSearch = clearProjectSearch;

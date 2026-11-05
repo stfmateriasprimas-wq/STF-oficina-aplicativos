@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=29">
+  <link rel="stylesheet" href="css/styles.css?v=30">
 </head>
 <body>
 
@@ -578,21 +578,29 @@
             </div>
 
             <div class="view-switch-btns">
-              <button class="switch-btn active" id="btnViewGrid" title="Vista en Cuadrícula Ejecutiva">
+              <button class="switch-btn active" id="btnViewPipeline" title="Pipeline Visual por Etapas de Producción">
+                <i data-lucide="kanban"></i>
+                <span style="font-size: 12px; font-weight: 700; margin-left: 6px;">Pipeline</span>
+              </button>
+              <button class="switch-btn" id="btnViewGrid" title="Catálogo de Fichas">
                 <i data-lucide="layout-grid"></i>
+                <span style="font-size: 12px; font-weight: 700; margin-left: 6px;">Catálogo</span>
               </button>
-              <button class="switch-btn" id="btnViewTable" title="Vista en Matriz Operativa (Tabla)">
+              <button class="switch-btn" id="btnViewTable" title="Matriz Operativa (Tabla)">
                 <i data-lucide="table"></i>
-              </button>
-              <button class="switch-btn" id="btnViewKanban" title="Vista en Tablero Kanban">
-                <i data-lucide="columns-3"></i>
+                <span style="font-size: 12px; font-weight: 700; margin-left: 6px;">Tabla</span>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- 1. Projects Grid View (Executive Cards) -->
-        <div class="projects-cards-grid" id="projectsCardsGrid">
+        <!-- 1. Pipeline Visual por Etapas de Producción (Opción 1: Linear / Jira Enterprise) -->
+        <div class="projects-pipeline-board" id="projectsPipelineView">
+          <!-- Populated via JavaScript -->
+        </div>
+
+        <!-- 2. Projects Grid View (Executive Cards) -->
+        <div class="projects-cards-grid" id="projectsCardsGrid" style="display: none;">
           <!-- Populated via JavaScript -->
         </div>
 
@@ -2070,8 +2078,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=29"></script>
-  <script src="js/sheets-sync.js?v=29"></script>
-  <script src="js/app.js?v=29"></script>
+  <script src="js/data.js?v=30"></script>
+  <script src="js/sheets-sync.js?v=30"></script>
+  <script src="js/app.js?v=30"></script>
 </body>
 </html>
