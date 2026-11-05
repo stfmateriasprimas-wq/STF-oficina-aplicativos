@@ -6578,82 +6578,36 @@ function renderDevelopersFullView() {
     const qualityVal = dev.codeQuality || 94;
 
     return `
-      <div class="dev-compact-card" data-dev-id="${dev.id}">
-        <!-- Compact Header -->
-        <div class="dev-compact-header">
-          <div class="dev-compact-profile">
-            <div class="dev-avatar-wrap">
-              <img src="${avatarUrl}" alt="${dev.name}" class="dev-compact-avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'">
-              <span class="dev-online-status" title="Activo en STF Systems"></span>
-            </div>
-            <div class="dev-name-meta">
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <strong class="dev-compact-name">${dev.name}</strong>
-                <span class="dev-role-badge ${isAdmin ? 'badge-admin' : 'badge-dev'}">${isAdmin ? '🛡️ Admin' : '💻 Dev'}</span>
-              </div>
-              <span class="dev-compact-user">${cleanUsername}</span>
-              ${dev.email ? `<span style="font-size: 10.5px; color: #94A3B8; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 175px;" title="${dev.email}">${dev.email}</span>` : ''}
-            </div>
+      <div class="dev-row-card" data-dev-id="${dev.id}">
+        <!-- Perfil e Identidad Horizontal -->
+        <div class="dev-row-profile">
+          <div class="dev-avatar-wrap">
+            <img src="${avatarUrl}" alt="${dev.name}" class="dev-row-avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'">
+            <span class="dev-online-status" title="Activo en STF Systems"></span>
           </div>
-          ${isProtectedAdmin ? '' : `
-            <button class="btn-delete-compact-dev" onclick="deleteDeveloperUser('${dev.id}', event)" title="Eliminar usuario del sistema y de Google Sheets">
-              <i data-lucide="trash-2"></i>
-            </button>
-          `}
-        </div>
-
-        <!-- Compact KPIs -->
-        <div class="dev-compact-kpi-block">
-          <div class="compact-score-row">
-            <span class="compact-score-label">Rendimiento Operativo</span>
-            <span class="compact-score-value">★ Score ${scoreVal}</span>
-          </div>
-          <div class="compact-bars-stack">
-            <div class="compact-bar-item">
-              <div class="compact-bar-label">
-                <span>Cumplimiento a Tiempo</span>
-                <span style="color: #4E65FF;">${onTimeVal}%</span>
-              </div>
-              <div class="compact-track">
-                <div class="compact-fill" style="width: ${onTimeVal}%; background: linear-gradient(90deg, #4E65FF, #7B8CFF);"></div>
-              </div>
+          <div class="dev-row-meta">
+            <div class="dev-row-name-line">
+              <strong class="dev-row-name">${dev.name}</strong>
+              <span class="dev-role-badge ${isAdmin ? 'badge-admin' : 'badge-dev'}">${isAdmin ? '🛡️ Admin' : '💻 Dev'}</span>
             </div>
-            <div class="compact-bar-item">
-              <div class="compact-bar-label">
-                <span>Calidad Técnica QA</span>
-                <span style="color: #10B981;">${qualityVal}%</span>
-              </div>
-              <div class="compact-track">
-                <div class="compact-fill" style="width: ${qualityVal}%; background: linear-gradient(90deg, #22C55E, #10B981);"></div>
-              </div>
+            <div class="dev-row-contact-line">
+              <span class="dev-row-user">${cleanUsername}</span>
+              <span class="dev-row-dot">·</span>
+              ${dev.email ? `<span class="dev-row-email" title="${dev.email}">${dev.email}</span>` : '<span class="dev-row-email" style="color: #94A3B8;">Sin correo</span>'}
             </div>
           </div>
         </div>
 
-        <!-- Sistemas a su Cargo -->
-        <div class="dev-compact-systems-section">
-          <span class="compact-systems-title">Sistemas a su Cargo (${assignedApps.length}):</span>
-          <div class="compact-systems-tags">
-            ${assignedApps.length > 0 ? assignedApps.map(a => `
-              <div class="sys-micro-tag" title="${a.name} (${calculateAppProgress(a)}%)">
-                <strong>${a.shortName || a.name.split(' ')[0]}</strong>
-                <span>${calculateAppProgress(a)}%</span>
-              </div>
-            `).join('') : '<span class="tag-empty">Sin aplicativos asignados</span>'}
-          </div>
-        </div>
-
-        <!-- Compact Card Actions -->
-        <div class="dev-compact-actions">
-          <button class="compact-btn-sec" onclick="openDevScorecardModal('${dev.id}')" title="Ver historial y métricas detalladas">
-            <i data-lucide="file-text"></i>
-            <span>Historial</span>
-          </button>
+        <!-- Acciones: Eliminar Usuario -->
+        <div class="dev-row-actions">
           ${isProtectedAdmin ? `
-            <span style="font-size: 11px; color: #94A3B8; font-style: italic;">🛡️ Administrador Base</span>
+            <span class="dev-protected-badge" title="Cuenta principal de administración protegida">
+              <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+              <span>Admin Base</span>
+            </span>
           ` : `
-            <button class="compact-btn-del" onclick="deleteDeveloperUser('${dev.id}', event)" title="Eliminar de Google Sheets y Sistema">
-              <i data-lucide="trash-2"></i>
+            <button class="btn-delete-row-dev" onclick="deleteDeveloperUser('${dev.id}', event)" title="Eliminar usuario del sistema y de Google Sheets">
+              <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
               <span>Eliminar</span>
             </button>
           `}
