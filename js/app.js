@@ -5811,29 +5811,6 @@ function initApp() {
   // Settings Actions
   document.getElementById('btnDownloadBackup')?.addEventListener('click', downloadFullBackupJSON);
   document.getElementById('btnResetFactoryData')?.addEventListener('click', resetFactoryData);
-
-  // Sincronizador de modales abiertos: oculta la barra flotante al abrir cualquier modal en móviles
-  function syncModalOpenState() {
-    const hasOpenModal = !!document.querySelector('.modal-backdrop.show');
-    if (hasOpenModal) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-  }
-
-  // Observador de cambios en el DOM para detectar modales abiertos/cerrados instantáneamente
-  const modalObserver = new MutationObserver(() => {
-    syncModalOpenState();
-  });
-  modalObserver.observe(document.body, {
-    attributes: true,
-    subtree: true,
-    attributeFilter: ['class']
-  });
-
-  // Ejecutar verificación inicial
-  syncModalOpenState();
 }
 
 if (document.readyState === 'loading') {
