@@ -7886,35 +7886,81 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 
 /* Modal Registro Desarrollador Ampliado y Confortable */
 .modal-card-create-dev {
-  max-width: 720px !important;
+  max-width: 680px !important;
   width: 100% !important;
+  max-height: 90vh !important;
   border-radius: 24px !important;
   box-shadow: 0 30px 80px -15px rgba(15, 23, 42, 0.25) !important;
   background: #FFFFFF !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+#modalCreateDeveloper form#formCreateDeveloper {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
   overflow: hidden !important;
 }
 
 .modal-card-create-dev .modal-header {
-  padding: 24px 32px !important;
+  flex-shrink: 0 !important;
+  padding: 20px 28px !important;
   border-bottom: 1px solid #EDF1F7 !important;
 }
 
 .modal-card-create-dev .modal-body {
-  padding: 26px 32px !important;
-  max-height: none !important;
-  overflow-y: visible !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 20px 28px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 13px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #CBD5E1 transparent !important;
+}
+
+.modal-card-create-dev .modal-body::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.modal-card-create-dev .modal-body::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1 !important;
+  border-radius: 10px !important;
 }
 
 .modal-card-create-dev .modal-footer {
-  padding: 18px 32px !important;
+  flex-shrink: 0 !important;
+  padding: 16px 28px !important;
   background: #FAFCFE !important;
   border-top: 1px solid #EDF1F7 !important;
   border-radius: 0 0 24px 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.modal-card-create-dev .modal-footer .pill-btn {
+  padding: 10px 20px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+
+.modal-card-create-dev .modal-footer #btnSubmitNewDev {
+  font-weight: 700 !important;
+  padding: 10px 24px !important;
 }
 
 @media (max-width: 768px) {
   .modal-card-create-dev {
     max-width: 100% !important;
+    max-height: 88vh !important;
     border-radius: 24px 24px 0 0 !important;
   }
   .modal-card-create-dev .modal-header {
@@ -7922,10 +7968,9 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   }
   .modal-card-create-dev .modal-body {
     padding: 16px 20px !important;
-    max-height: calc(85vh - 130px) !important;
-    overflow-y: auto !important;
   }
   .modal-card-create-dev .modal-footer {
     padding: 14px 20px calc(16px + env(safe-area-inset-bottom, 16px)) 20px !important;
+    border-radius: 0 !important;
   }
 }
