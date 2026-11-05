@@ -3578,6 +3578,25 @@ function openSystemDetailModal(appId) {
   currentEditingSysId = appId;
   const dev = getDeveloperById(app.devId);
   const progress = calculateAppProgress(app);
+  const accentColor = app.iconColor || '#4F46E5';
+
+  const accentBar = document.getElementById('modalSysAccentBar');
+  if (accentBar) {
+    accentBar.style.background = `linear-gradient(90deg, ${accentColor}, ${accentColor}99)`;
+  }
+
+  const iconBadge = document.getElementById('modalSysIconBadge');
+  if (iconBadge) {
+    iconBadge.textContent = app.iconInitial || (app.name || 'APP').substring(0, 3).toUpperCase();
+    iconBadge.style.background = `${accentColor}18`;
+    iconBadge.style.color = accentColor;
+    iconBadge.style.border = `1.5px solid ${accentColor}38`;
+  }
+
+  const catEl = document.getElementById('modalSysCategory');
+  if (catEl) {
+    catEl.textContent = app.category || 'Operaciones Planta';
+  }
 
   document.getElementById('modalSysCode').textContent = app.code;
   document.getElementById('modalSysTitle').textContent = app.name;
@@ -3597,21 +3616,51 @@ function openSystemDetailModal(appId) {
       webLinkEl.style.display = 'none';
     }
   }
-  if (app.isGroupProject) {
-    document.getElementById('modalSysDevName').textContent = 'Jose Guzman, Juan David, Mocho, Esteban Escobar (Equipo Grupal)';
-    document.getElementById('modalSysDevImg').src = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&h=100&fit=crop';
-  } else {
-    document.getElementById('modalSysDevName').textContent = dev.name;
-    document.getElementById('modalSysDevImg').src = dev.avatar;
+
+  const devContainer = document.getElementById('modalSysDevContainer');
+  if (devContainer) {
+    if (app.isGroupProject) {
+      const teamIds = app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee'];
+      const avatarsHtml = teamIds.map(dId => {
+        const d = getDeveloperById(dId);
+        return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
+      }).join('');
+      devContainer.innerHTML = `
+        <div class="stacked-team-avatars" style="flex-shrink: 0;">${avatarsHtml}</div>
+        <div class="s-user-meta">
+          <strong id="modalSysDevName">Equipo Grupal (4 Devs)</strong>
+          <span class="s-sub-hint" title="Jose Guzman, Juan David, Jhon Eyder (Mocho), Esteban Escobar">Jose · Juan · Mocho · Esteban</span>
+        </div>
+      `;
+    } else {
+      devContainer.innerHTML = `
+        <img src="${dev.avatar}" alt="${dev.name}" id="modalSysDevImg" class="mini-avatar">
+        <div class="s-user-meta">
+          <strong id="modalSysDevName">${dev.name}</strong>
+          <span class="s-sub-hint">${dev.role === 'Admin' ? 'Director TI' : 'Ingeniero Responsable'}</span>
+        </div>
+      `;
+    }
   }
+
   document.getElementById('modalSysDeadline').textContent = formatDate(app.deadline);
   
   // Health
+  const isProd = typeof isAppInLiveProduction === 'function' ? isAppInLiveProduction(app) : (progress === 100);
   const healthEl = document.getElementById('modalSysHealth');
-  healthEl.className = 'status-pill ' + (app.status === 'risk' ? 'status-risk' : (progress === 100 ? 'status-done' : 'status-ontime'));
-  healthEl.textContent = app.status === 'risk' ? 'En Riesgo' : (progress === 100 ? 'Completado' : 'En Tiempo');
+  healthEl.className = 'status-pill ' + (isProd ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime'));
+  healthEl.innerHTML = `<span class="status-pulse-dot"></span> ${isProd ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo')}`;
 
-  // Big progress
+  const stageHintEl = document.getElementById('modalSysStageHint');
+  if (stageHintEl) {
+    stageHintEl.textContent = isProd ? 'Operación Activa en Planta' : (app.status === 'risk' ? 'Atención Prioritaria' : 'Dentro del Cronograma');
+  }
+
+  // Big progress & completed phases count
+  const completedCount = (app.phases || []).filter(p => p.completed).length;
+  const totalCount = (app.phases || []).length || 6;
+  const countEl = document.getElementById('modalSysCompletedCount');
+  if (countEl) countEl.textContent = `${completedCount}/${totalCount} Fases`;
   updateModalProgressDisplay(progress);
 
   // Read-only indicator notice banner
@@ -3643,19 +3692,19 @@ function openSystemDetailModal(appId) {
   const headingEl = document.querySelector('#modalSystemDetail .phases-accordion-section .section-heading');
   if (headingEl) {
     headingEl.innerHTML = isAdmin
-      ? '<i data-lucide="clipboard-check" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Fases de Desarrollo (Marca para recalcular el % en tiempo real):'
-      : '<i data-lucide="eye" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Fases de Desarrollo (Modo Visual · Solo Lectura):';
+      ? '<i data-lucide="clipboard-check" style="width:15px; height:15px; color:#4F46E5; display:inline-block; vertical-align:middle; margin-right:5px;"></i> Fases de Desarrollo (Marca para recalcular el % en tiempo real):'
+      : '<i data-lucide="eye" style="width:15px; height:15px; color:#4F46E5; display:inline-block; vertical-align:middle; margin-right:5px;"></i> Fases de Desarrollo (Modo Visual · Solo Lectura):';
   }
 
-  // Render 6 Phases with real weight
+  // Render 6 Phases with real weight in 2-Column Grid
   const phasesListEl = document.getElementById('modalPhasesList');
   phasesListEl.innerHTML = app.phases.map((phase, idx) => {
     const statusTag = phase.completed
-      ? '<span style="background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 750; padding: 2px 8px; border-radius: 6px; border: 1px solid #A7F3D0;">✓ Completada</span>'
-      : '<span style="background: #F8FAFC; color: #94A3B8; font-size: 11px; font-weight: 650; padding: 2px 8px; border-radius: 6px; border: 1px solid #E2E8F0;">Pendiente</span>';
+      ? '<span class="phase-state-chip done">✓ Completada</span>'
+      : '<span class="phase-state-chip pending">Pendiente</span>';
 
     return `
-      <div class="phase-card-item ${phase.completed ? 'phase-completed' : ''}">
+      <div class="phase-card-item ${phase.completed ? 'phase-completed' : ''}" id="modalPhaseCard_${idx}">
         <div class="phase-header-line">
           <label class="phase-check-label" style="${isAdmin ? '' : 'cursor: default;'}">
             <input type="checkbox" class="phase-check-input" data-phase-idx="${idx}" ${phase.completed ? 'checked' : ''} ${isAdmin ? 'onchange="onPhaseCheckboxToggle()"' : 'disabled style="cursor: not-allowed; opacity: 0.8;"'}>
@@ -3664,7 +3713,7 @@ function openSystemDetailModal(appId) {
             </div>
             <span class="phase-name">${phase.name}</span>
           </label>
-          <div style="display: flex; align-items: center; gap: 8px;">
+          <div class="phase-meta-right">
             ${!isAdmin ? statusTag : ''}
             <span class="phase-weight-badge">Peso: ${phase.weight}%</span>
           </div>
@@ -3695,12 +3744,23 @@ function onPhaseCheckboxToggle() {
   if (!app) return;
 
   let currentWeight = 0;
+  let checkedCount = 0;
   checkboxes.forEach(cb => {
     const idx = parseInt(cb.dataset.phaseIdx);
+    const cardEl = document.getElementById(`modalPhaseCard_${idx}`);
     if (cb.checked) {
       currentWeight += app.phases[idx].weight;
+      checkedCount++;
+      if (cardEl) cardEl.classList.add('phase-completed');
+    } else {
+      if (cardEl) cardEl.classList.remove('phase-completed');
     }
   });
+
+  const countEl = document.getElementById('modalSysCompletedCount');
+  if (countEl) {
+    countEl.textContent = `${checkedCount}/${(app.phases || []).length || 6} Fases`;
+  }
 
   updateModalProgressDisplay(currentWeight);
 }

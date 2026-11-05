@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=33">
+  <link rel="stylesheet" href="css/styles.css?v=34">
 </head>
 <body>
 
@@ -973,68 +973,96 @@
 
   <!-- MODAL: System Detail & Phase Breakdown (Calculates real weighted %) -->
   <div class="modal-backdrop" id="modalSystemDetail">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
-            <span class="modal-tag" id="modalSysCode" style="margin-bottom: 0;">STF-APP-01</span>
-            <a id="modalSysWebLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" style="display: none;" title="Abrir sistema web en nueva pestaña">
-              <i data-lucide="globe" style="width: 12px; height: 12px;"></i>
-              <span>Abrir Sistema Web Publicado ↗</span>
-            </a>
+    <div class="modal-card modal-card-audit-sys">
+      <div class="sys-modal-accent-bar" id="modalSysAccentBar"></div>
+      <div class="modal-header sys-audit-header">
+        <div class="sys-audit-header-left">
+          <div class="sys-audit-avatar" id="modalSysIconBadge">TDC</div>
+          <div class="modal-title-group">
+            <div class="sys-audit-tags-row">
+              <span class="modal-tag" id="modalSysCode" style="margin-bottom: 0;">STF-APP-01</span>
+              <span class="sys-audit-cat-pill" id="modalSysCategory">Desarrollo Grupal</span>
+              <a id="modalSysWebLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" style="display: none;" title="Abrir sistema web en nueva pestaña">
+                <i data-lucide="globe" style="width: 12px; height: 12px;"></i>
+                <span>Abrir Sistema Web Publicado ↗</span>
+              </a>
+            </div>
+            <h2 class="modal-title" id="modalSysTitle">TORRE DE CONTROL</h2>
+            <p class="modal-subtitle" id="modalSysDesc">Sistema integral de supervisión operativa en tiempo real.</p>
           </div>
-          <h2 class="modal-title" id="modalSysTitle">POS Omnicanal Studio F</h2>
-          <p class="modal-subtitle" id="modalSysDesc">Sistema integral de facturación rápida, inventario local y pasarela de pago para tiendas físicas.</p>
         </div>
-        <button class="modal-close-btn" id="btnCloseSystemModal">
+        <button class="modal-close-btn" id="btnCloseSystemModal" title="Cerrar ventana">
           <i data-lucide="x"></i>
         </button>
       </div>
 
-      <div class="modal-body">
-        <!-- System Key Info Grid -->
+      <div class="modal-body sys-audit-body">
+        <!-- System Key Info Grid (4 Balanced Executive Cards) -->
         <div class="sys-summary-row">
           <div class="summary-box">
-            <span class="s-label">Desarrollador Responsable</span>
-            <div class="s-user">
+            <span class="s-label"><i data-lucide="users"></i> Desarrollador Responsable</span>
+            <div class="s-user" id="modalSysDevContainer">
               <img src="" alt="" id="modalSysDevImg" class="mini-avatar">
-              <strong id="modalSysDevName">Carlos Mendoza</strong>
+              <div class="s-user-meta">
+                <strong id="modalSysDevName">Jose Guzman</strong>
+                <span id="modalSysDevSub" class="s-sub-hint">Ingeniero Responsable</span>
+              </div>
             </div>
           </div>
           <div class="summary-box">
-            <span class="s-label">Fecha Límite</span>
-            <strong id="modalSysDeadline">15 Noviembre 2026</strong>
+            <span class="s-label"><i data-lucide="calendar"></i> Fecha Límite</span>
+            <div class="s-box-content">
+              <strong id="modalSysDeadline" class="s-main-val">15 de dic de 2026</strong>
+              <span class="s-sub-hint">Cronograma Oficial STF</span>
+            </div>
           </div>
           <div class="summary-box">
-            <span class="s-label">Estado de Salud</span>
-            <span class="status-pill status-ontime" id="modalSysHealth">En Tiempo</span>
+            <span class="s-label"><i data-lucide="shield-check"></i> Estado de Salud</span>
+            <div class="s-box-content">
+              <div>
+                <span class="status-pill status-ontime" id="modalSysHealth">En Tiempo</span>
+              </div>
+              <span class="s-sub-hint" id="modalSysStageHint">Monitoreo SLA Activo</span>
+            </div>
           </div>
           <div class="summary-box highlight-box">
-            <span class="s-label">Avance Real Ponderado</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span class="s-label" style="margin-bottom: 0;"><i data-lucide="trending-up"></i> Avance Real</span>
+              <span class="sys-audit-phases-count" id="modalSysCompletedCount">1/6 Fases</span>
+            </div>
             <div class="big-progress-val">
-              <span id="modalSysProgress">88%</span>
+              <span id="modalSysProgress">10%</span>
               <div class="mini-progress-track">
-                <div class="mini-progress-fill" id="modalSysProgressFill" style="width: 88%"></div>
+                <div class="mini-progress-fill" id="modalSysProgressFill" style="width: 10%"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 6 Phases Checklist (The real engineering method for accurate %) -->
+        <!-- 6 Phases Checklist (2-Column Interactive Grid) -->
         <div class="phases-accordion-section">
-          <h3 class="section-heading">Fases de Desarrollo (Marca para recalcular el % en tiempo real):</h3>
-          <div class="phases-list" id="modalPhasesList">
+          <div class="phases-section-header-bar">
+            <h3 class="section-heading" style="margin-bottom: 0;">Fases de Desarrollo (Marca para recalcular el % en tiempo real):</h3>
+            <span class="phases-weight-total-pill">Ponderación Total: 100%</span>
+          </div>
+          <div class="phases-list phases-grid-2col" id="modalPhasesList">
             <!-- Dynamically populated phases with weighted percentages -->
           </div>
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button class="pill-btn secondary-btn" id="btnCancelSysModal">Cerrar</button>
-        <button class="pill-btn primary-glow-btn" id="btnSaveSysChanges">
-          <i data-lucide="check"></i>
-          <span>Guardar Cambios</span>
-        </button>
+      <div class="modal-footer sys-audit-footer">
+        <div class="sys-audit-footer-hint">
+          <i data-lucide="check-circle-2"></i>
+          <span>Cálculo ponderado auditable y sincronizado en tiempo real</span>
+        </div>
+        <div class="sys-audit-footer-actions">
+          <button class="pill-btn secondary-btn" id="btnCancelSysModal">Cerrar</button>
+          <button class="pill-btn primary-glow-btn" id="btnSaveSysChanges">
+            <i data-lucide="check"></i>
+            <span>Guardar Cambios</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -2033,8 +2061,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=33"></script>
-  <script src="js/sheets-sync.js?v=33"></script>
-  <script src="js/app.js?v=33"></script>
+  <script src="js/data.js?v=34"></script>
+  <script src="js/sheets-sync.js?v=34"></script>
+  <script src="js/app.js?v=34"></script>
 </body>
 </html>

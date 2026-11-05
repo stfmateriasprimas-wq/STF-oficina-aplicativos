@@ -8543,3 +8543,350 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   color: #64748B;
   font-weight: 600;
 }
+
+/* ==========================================================================
+   MODAL EJECUTIVO DE AUDITORÍA DE FASES (#modalSystemDetail)
+   ========================================================================== */
+
+#modalSystemDetail .modal-card.modal-card-audit-sys {
+  width: 92vw !important;
+  max-width: 790px !important;
+  border-radius: 24px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.28) !important;
+}
+
+.sys-modal-accent-bar {
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(90deg, #4F46E5, #818CF8);
+  flex-shrink: 0;
+}
+
+#modalSystemDetail .sys-audit-header {
+  padding: 22px 28px 18px 28px !important;
+  border-bottom: 1px solid #EEF2F7 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  background: #FFFFFF !important;
+  flex-shrink: 0 !important;
+}
+
+.sys-audit-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sys-audit-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.sys-audit-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
+}
+
+.sys-audit-cat-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+#modalSystemDetail .modal-title {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  margin: 0 0 3px 0 !important;
+  letter-spacing: -0.01em;
+}
+
+#modalSystemDetail .modal-subtitle {
+  font-size: 12.5px !important;
+  color: #64748B !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+}
+
+#modalSystemDetail .sys-audit-body {
+  padding: 22px 28px !important;
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+}
+
+#modalSystemDetail .sys-summary-row {
+  display: grid !important;
+  grid-template-columns: 1.45fr 1fr 1fr 1.25fr !important;
+  gap: 12px !important;
+  margin-bottom: 20px !important;
+  align-items: stretch !important;
+}
+
+@media (max-width: 720px) {
+  #modalSystemDetail .sys-summary-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+#modalSystemDetail .summary-box {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  padding: 13px 15px !important;
+  border-radius: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+#modalSystemDetail .summary-box.highlight-box {
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%) !important;
+  border-color: #C7D2FE !important;
+}
+
+#modalSystemDetail .s-label {
+  font-size: 10.5px !important;
+  color: #64748B !important;
+  font-weight: 750 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin-bottom: 0 !important;
+}
+
+#modalSystemDetail .s-label i,
+#modalSystemDetail .s-label svg {
+  width: 12.5px;
+  height: 12.5px;
+  color: #4F46E5;
+  flex-shrink: 0;
+}
+
+#modalSystemDetail .s-user {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+#modalSystemDetail .s-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+#modalSystemDetail .s-user-meta strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.s-box-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.s-main-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.s-sub-hint {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sys-audit-phases-count {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #4338CA;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #C7D2FE;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.phases-section-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.phases-weight-total-pill {
+  font-size: 11px;
+  font-weight: 750;
+  color: #4F46E5;
+  background: #EEF2FF;
+  border: 1px solid #C7D2FE;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* 2-Column Phases Grid so all 6 phases fit cleanly without scroll clutter */
+#modalSystemDetail .phases-list.phases-grid-2col {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 11px !important;
+}
+
+@media (max-width: 640px) {
+  #modalSystemDetail .phases-list.phases-grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+#modalSystemDetail .phase-card-item {
+  background: #FFFFFF !important;
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 14px !important;
+  padding: 13px 15px !important;
+  transition: all 0.2s ease !important;
+}
+
+#modalSystemDetail .phase-card-item:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+}
+
+#modalSystemDetail .phase-card-item.phase-completed {
+  background: linear-gradient(135deg, #F8FAFF 0%, #F0F5FF 100%) !important;
+  border-color: #93C5FD !important;
+}
+
+#modalSystemDetail .phase-header-line {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+#modalSystemDetail .phase-check-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+#modalSystemDetail .phase-name {
+  font-size: 12.5px !important;
+  font-weight: 750 !important;
+  color: #1E293B !important;
+  line-height: 1.3 !important;
+}
+
+.phase-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#modalSystemDetail .phase-weight-badge {
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  padding: 3px 9px !important;
+  border-radius: 8px !important;
+  background: #F1F5F9 !important;
+  color: #475569 !important;
+  white-space: nowrap !important;
+}
+
+#modalSystemDetail .phase-card-item.phase-completed .phase-weight-badge {
+  background: #DBEAFE !important;
+  color: #1D4ED8 !important;
+}
+
+.phase-state-chip {
+  font-size: 10.5px;
+  font-weight: 750;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.phase-state-chip.done {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.phase-state-chip.pending {
+  background: #F8FAFC;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+#modalSystemDetail .sys-audit-footer {
+  padding: 15px 28px !important;
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.sys-audit-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.sys-audit-footer-hint i,
+.sys-audit-footer-hint svg {
+  width: 15px;
+  height: 15px;
+  color: #10B981;
+}
+
+.sys-audit-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
