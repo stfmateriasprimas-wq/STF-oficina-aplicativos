@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=34">
+  <link rel="stylesheet" href="css/styles.css?v=35">
 </head>
 <body>
 
@@ -849,50 +849,397 @@
         </div>
       </section>
 
-      <!-- VIEW 5: CONFIGURACIÓN & METODOLOGÍA -->
+      <!-- VIEW 6: CENTRO INTEGRAL DE GOBIERNO TI & PARÁMETROS OPERATIVOS (4 CUADRANTES EJECUTIVOS) -->
       <section class="view-panel" id="view-settings">
-        <div class="settings-grid">
-          <!-- Ponderation Settings Card -->
-          <div class="grid-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h2 class="card-title">Ponderación Oficial de Fases de Desarrollo</h2>
-                <span class="card-subtext">Criterio porcentual auditado para la medición del avance</span>
+        <!-- Franja Superior de Indicadores de Gobernanza TI -->
+        <div class="industrial-kpi-bar settings-kpi-strip">
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-indigo">
+              <i data-lucide="layers"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">ESTÁNDAR SDLC AUDITADO</span>
+              <h3 class="ind-kpi-val" id="settingsKpiSdlcTitle">6 Fases (100%)</h3>
+              <span class="ind-kpi-sub" id="settingsKpiSdlcSub"><strong class="text-emerald">Calidad mín. 95% AQL</strong> · Ciclo oficial STF</span>
+            </div>
+          </div>
+
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-emerald">
+              <i data-lucide="cloud-cog"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">SINCRONIZACIÓN CLOUD</span>
+              <h3 class="ind-kpi-val" id="settingsKpiCloudTitle">5 Hojas Maestras</h3>
+              <span class="ind-kpi-sub" id="settingsKpiCloudSub"><strong class="text-emerald">Google Sheets Activo</strong> · Bidireccional</span>
+            </div>
+          </div>
+
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-blue">
+              <i data-lucide="gauge"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">BENCHMARK DE INGENIERÍA</span>
+              <h3 class="ind-kpi-val" id="settingsKpiSprintGoal">25 Módulos / Mes</h3>
+              <span class="ind-kpi-sub" id="settingsKpiQ4Goal"><strong class="text-indigo">Meta Trimestral: 85%</strong> · 8 Mods/Sem</span>
+            </div>
+          </div>
+
+          <div class="ind-kpi-card">
+            <div class="ind-kpi-icon icon-amber">
+              <i data-lucide="shield-alert"></i>
+            </div>
+            <div class="ind-kpi-info">
+              <span class="ind-kpi-label">MOTOR PREVENTIVO SLA & CORREOS</span>
+              <h3 class="ind-kpi-val" id="settingsKpiSlaDays">Alerta a 5 Días</h3>
+              <span class="ind-kpi-sub" id="settingsKpiMailStatus"><strong class="text-emerald">Notificaciones MailApp ON</strong> · Campana activa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cuadrícula Simétrica 2x2 de los 4 Paneles Ejecutivos -->
+        <div class="settings-governance-grid">
+          
+          <!-- PANEL 1: GOBERNANZA DE FASES & ESTÁNDAR DE AUDITORÍA SDLC -->
+          <div class="grid-card settings-quadrant-card">
+            <div class="settings-quad-header">
+              <div class="settings-quad-title-group">
+                <div class="settings-quad-icon quad-indigo">
+                  <i data-lucide="git-pull-request-closed"></i>
+                </div>
+                <div>
+                  <div class="settings-quad-title-row">
+                    <h2 class="card-title">1. Gobernanza de Fases & Estándar SDLC</h2>
+                    <span class="settings-status-chip chip-valid" id="settingsPhasesSumBadge">✓ Suma: 100%</span>
+                  </div>
+                  <span class="card-subtext">Ponderación porcentual auditada por etapa para el cálculo automático de avance</span>
+                </div>
+              </div>
+              <div class="settings-quad-actions">
+                <button type="button" class="settings-mini-btn" onclick="resetOfficialPhaseWeights()" title="Restaurar distribución oficial (10/15/30/25/15/5)">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span>Oficial</span>
+                </button>
+                <button type="button" class="settings-mini-btn primary" onclick="saveGovernancePhaseWeights()" title="Aplicar ponderación a los 7 sistemas">
+                  <i data-lucide="check"></i>
+                  <span>Aplicar</span>
+                </button>
               </div>
             </div>
-            
+
+            <!-- Barra Visual Multicapa del 100% -->
+            <div class="settings-sdlc-bar-box">
+              <div class="settings-sdlc-bar-header">
+                <span>Distribución Visual del Ciclo de Vida (6 Etapas)</span>
+                <strong id="settingsSdlcTotalText">100% Ponderado</strong>
+              </div>
+              <div class="settings-sdlc-stacked-bar" id="settingsPhaseStackedBar">
+                <!-- Segmentos dinámicos renderizados por JS -->
+              </div>
+            </div>
+
+            <!-- Lista de 6 Fases con Pesos Interactivos -->
             <div class="phases-settings-list" id="settingsPhasesList">
               <!-- Rendered via JS -->
             </div>
           </div>
 
-          <!-- Data Management & Backups -->
-          <div class="grid-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h2 class="card-title">Respaldo y Datos de STF GROUP</h2>
-                <span class="card-subtext">Exporta, importa o reinicia los datos de seguimiento</span>
+          <!-- PANEL 2: MOTOR CLOUD GOOGLE SHEETS & NOTIFICACIONES CORPORATIVAS -->
+          <div class="grid-card settings-quadrant-card">
+            <div class="settings-quad-header">
+              <div class="settings-quad-title-group">
+                <div class="settings-quad-icon quad-emerald">
+                  <i data-lucide="file-spreadsheet"></i>
+                </div>
+                <div>
+                  <div class="settings-quad-title-row">
+                    <h2 class="card-title">2. Motor Cloud Google Sheets & Correos</h2>
+                    <span class="settings-status-chip chip-online" id="settingsSheetsLiveBadge">● Conectado</span>
+                  </div>
+                  <span class="card-subtext">Sincronización en vivo de las 5 hojas maestras y alertas automáticas por correo</span>
+                </div>
+              </div>
+              <div class="settings-quad-actions">
+                <button type="button" class="settings-mini-btn" onclick="openSheetsModal()">
+                  <i data-lucide="sliders"></i>
+                  <span>Webhook</span>
+                </button>
               </div>
             </div>
 
-            <div class="settings-actions-box">
-              <p style="color: var(--text-body); font-size: 14px; margin-bottom: 16px;">
-                Toda la información se encuentra guardada de manera segura y persistente en tu navegador. Puedes descargar un respaldo en formato JSON para compartirlo con el equipo de tecnología.
-              </p>
+            <!-- Estado de las 5 Hojas Maestras -->
+            <div class="settings-sheets-tabs-box">
+              <div class="settings-sub-label-row">
+                <span>ESTADO DE LAS 5 HOJAS MAESTRAS EN GOOGLE SHEETS</span>
+                <span class="settings-sync-timestamp" id="settingsLastSyncLabel">Última sinc: En vivo</span>
+              </div>
+              <div class="settings-sheets-pills-grid">
+                <div class="sheet-tab-pill">
+                  <span class="sheet-tab-dot"></span>
+                  <div>
+                    <strong>USUARIOS</strong>
+                    <span>Credenciales & Roles</span>
+                  </div>
+                </div>
+                <div class="sheet-tab-pill">
+                  <span class="sheet-tab-dot"></span>
+                  <div>
+                    <strong>PORTAFOLIO_SISTEMAS</strong>
+                    <span>7 Sistemas & Fases</span>
+                  </div>
+                </div>
+                <div class="sheet-tab-pill">
+                  <span class="sheet-tab-dot"></span>
+                  <div>
+                    <strong>SISTEMAS_WEB</strong>
+                    <span>URLs & SharePoint</span>
+                  </div>
+                </div>
+                <div class="sheet-tab-pill">
+                  <span class="sheet-tab-dot"></span>
+                  <div>
+                    <strong>CONTROL_TAREAS</strong>
+                    <span>Integraciones & SLA</span>
+                  </div>
+                </div>
+                <div class="sheet-tab-pill sheet-tab-wide">
+                  <span class="sheet-tab-dot"></span>
+                  <div>
+                    <strong>BITACORA_HISTORIAL</strong>
+                    <span>Trazabilidad de Auditorías, Cambios de Fase & Calificaciones</span>
+                  </div>
+                </div>
+              </div>
 
-              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <button class="pill-btn primary-glow-btn" id="btnDownloadBackup">
-                  <i data-lucide="download"></i>
-                  <span>Descargar Respaldo JSON</span>
+              <div class="settings-cloud-btn-row">
+                <button type="button" class="pill-btn primary-glow-btn settings-action-btn" onclick="triggerSettingsFullCloudPush()">
+                  <i data-lucide="upload-cloud"></i>
+                  <span>Sincronizar Todo hacia Sheets</span>
                 </button>
+                <button type="button" class="pill-btn secondary-btn settings-action-btn" onclick="triggerSettingsCloudPull()">
+                  <i data-lucide="download-cloud"></i>
+                  <span>Traer Datos de la Nube</span>
+                </button>
+              </div>
+            </div>
 
-                <button class="pill-btn secondary-btn" id="btnResetFactoryData">
-                  <i data-lucide="rotate-ccw"></i>
-                  <span>Restablecer Datos de Demostración</span>
-                </button>
+            <!-- Switches de Notificaciones Corporativas -->
+            <div class="settings-toggles-list">
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <strong>Notificaciones por Correo Corporativo (MailApp)</strong>
+                  <span>Envía correo automático al desarrollador cuando se le asigna o audita una integración</span>
+                </div>
+                <label class="stf-switch">
+                  <input type="checkbox" id="settingsToggleEmailAlerts" checked onchange="saveGovernanceSettings()">
+                  <span class="stf-slider"></span>
+                </label>
+              </div>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <strong>Sincronización Cloud Instantánea (Auto-Sync)</strong>
+                  <span>Respalda en segundo plano cada cambio de fase, tarea o desarrollador en Google Sheets</span>
+                </div>
+                <label class="stf-switch">
+                  <input type="checkbox" id="settingsToggleAutoSync" checked onchange="saveGovernanceSettings()">
+                  <span class="stf-slider"></span>
+                </label>
+              </div>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <strong>Alertas Preventivas en Campana de Supervisión</strong>
+                  <span>Activa avisos visuales en la campana superior para tareas próximas a vencer o en riesgo</span>
+                </div>
+                <label class="stf-switch">
+                  <input type="checkbox" id="settingsToggleBellAlerts" checked onchange="saveGovernanceSettings()">
+                  <span class="stf-slider"></span>
+                </label>
               </div>
             </div>
           </div>
+
+          <!-- PANEL 3: METAS DE INGENIERÍA, SPRINTS & REGLAS DE SLA (BENCHMARKS) -->
+          <div class="grid-card settings-quadrant-card">
+            <div class="settings-quad-header">
+              <div class="settings-quad-title-group">
+                <div class="settings-quad-icon quad-blue">
+                  <i data-lucide="target"></i>
+                </div>
+                <div>
+                  <div class="settings-quad-title-row">
+                    <h2 class="card-title">3. Metas de Sprints, Benchmarks & Reglas SLA</h2>
+                    <span class="settings-status-chip chip-info">Impacto en Vivo</span>
+                  </div>
+                  <span class="card-subtext">Umbrales oficiales que alimentan las gráficas de Velocidad, Meta Q4 y alertas de retraso</span>
+                </div>
+              </div>
+              <div class="settings-quad-actions">
+                <button type="button" class="settings-mini-btn primary" onclick="saveGovernanceBenchmarks()">
+                  <i data-lucide="save"></i>
+                  <span>Guardar Metas</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Controles Numéricos 2x2 -->
+            <div class="settings-benchmarks-grid">
+              <div class="benchmark-input-card">
+                <div class="bm-card-top">
+                  <span class="bm-label">META MENSUAL DE EQUIPO</span>
+                  <i data-lucide="calendar-check-2"></i>
+                </div>
+                <div class="bm-input-wrap">
+                  <input type="number" id="settingMonthlyGoal" class="bm-number-input" min="5" max="120" value="25">
+                  <span class="bm-unit">Módulos / Mes</span>
+                </div>
+                <span class="bm-hint">Línea objetivo en gráfica mensual de Sprints</span>
+              </div>
+
+              <div class="benchmark-input-card">
+                <div class="bm-card-top">
+                  <span class="bm-label">META SEMANAL (SPRINT)</span>
+                  <i data-lucide="zap"></i>
+                </div>
+                <div class="bm-input-wrap">
+                  <input type="number" id="settingWeeklyGoal" class="bm-number-input" min="1" max="40" value="8">
+                  <span class="bm-unit">Módulos / Sem</span>
+                </div>
+                <span class="bm-hint">Ritmo esperado por semana de ingeniería</span>
+              </div>
+
+              <div class="benchmark-input-card">
+                <div class="bm-card-top">
+                  <span class="bm-label">META GLOBAL TRIMESTRAL (Q4)</span>
+                  <i data-lucide="trending-up"></i>
+                </div>
+                <div class="bm-input-wrap">
+                  <input type="number" id="settingQuarterlyGoal" class="bm-number-input" min="50" max="100" value="85">
+                  <span class="bm-unit">% Avance Global</span>
+                </div>
+                <span class="bm-hint">Sincronizado con el velocímetro del Dashboard</span>
+              </div>
+
+              <div class="benchmark-input-card">
+                <div class="bm-card-top">
+                  <span class="bm-label">ALERTA PREVENTIVA SLA & QA</span>
+                  <i data-lucide="clock"></i>
+                </div>
+                <div class="bm-dual-inputs">
+                  <div class="bm-mini-field" title="Días previos al vencimiento para alertar en riesgo">
+                    <input type="number" id="settingSlaWarningDays" class="bm-number-input" min="1" max="30" value="5">
+                    <span class="bm-unit">Días SLA</span>
+                  </div>
+                  <div class="bm-mini-field" title="Calificación mínima de calidad técnica AQL/QA">
+                    <input type="number" id="settingMinQaScore" class="bm-number-input" min="70" max="100" value="95">
+                    <span class="bm-unit">% QA Mín</span>
+                  </div>
+                </div>
+                <span class="bm-hint">Anticipación de riesgo y estándar AQL planta</span>
+              </div>
+            </div>
+
+            <!-- Distribución de Cuota Mensual por Desarrollador -->
+            <div class="settings-dev-quotas-box">
+              <div class="settings-sub-label-row">
+                <span>CUOTA MENSUAL PROPORCIONAL POR INGENIERO (SPRINTS)</span>
+                <span id="settingsDevQuotaTotalLabel">Total Equipo: 25 Mods/Mes</span>
+              </div>
+              <div class="settings-dev-quotas-row" id="settingsDevQuotasList">
+                <!-- Renderizado dinámicamente por JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 4: BÓVEDA DE RESPALDO, IMPORTACIÓN & MANTENIMIENTO DE DATOS -->
+          <div class="grid-card settings-quadrant-card">
+            <div class="settings-quad-header">
+              <div class="settings-quad-title-group">
+                <div class="settings-quad-icon quad-amber">
+                  <i data-lucide="database-backup"></i>
+                </div>
+                <div>
+                  <div class="settings-quad-title-row">
+                    <h2 class="card-title">4. Bóveda de Respaldo, Exportación & Mantenimiento</h2>
+                    <span class="settings-status-chip chip-secure">🛡️ Protegido</span>
+                  </div>
+                  <span class="card-subtext">Copias de seguridad JSON, restauración instantánea, exportación a Excel y limpieza de caché</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen de Almacenamiento y Entorno -->
+            <div class="settings-vault-stats-grid">
+              <div class="vault-stat-item">
+                <span class="vault-stat-label">PORTAFOLIO OFICIAL</span>
+                <strong class="vault-stat-val" id="vaultStatSystems">7 Sistemas</strong>
+                <span class="vault-stat-sub">4 Construcción · 3 En Vivo</span>
+              </div>
+              <div class="vault-stat-item">
+                <span class="vault-stat-label">EQUIPO & TAREAS</span>
+                <strong class="vault-stat-val" id="vaultStatTasks">4 Devs · 6 Tareas</strong>
+                <span class="vault-stat-sub">Control de tiempos activo</span>
+              </div>
+              <div class="vault-stat-item">
+                <span class="vault-stat-label">SESIÓN & VERSIÓN</span>
+                <strong class="vault-stat-val" id="vaultStatSession">Admin Activo</strong>
+                <span class="vault-stat-sub" id="vaultStatStorageSize">STF Core v3.5 · Local + Cloud</span>
+              </div>
+            </div>
+
+            <!-- Botonera Ejecutiva 2x2 de Gestión de Datos -->
+            <div class="settings-vault-actions-grid">
+              <button type="button" class="vault-action-card primary-vault" id="btnDownloadBackup">
+                <div class="vault-card-icon">
+                  <i data-lucide="download"></i>
+                </div>
+                <div class="vault-card-text">
+                  <strong>Descargar Respaldo JSON</strong>
+                  <span>Snapshot completo de sistemas, fases y tareas</span>
+                </div>
+              </button>
+
+              <button type="button" class="vault-action-card indigo-vault" id="btnImportBackupTrigger" onclick="document.getElementById('inputImportBackupJson').click()">
+                <div class="vault-card-icon">
+                  <i data-lucide="upload"></i>
+                </div>
+                <div class="vault-card-text">
+                  <strong>Restaurar / Importar JSON</strong>
+                  <span>Cargar copia de seguridad desde tu equipo</span>
+                </div>
+              </button>
+              <input type="file" id="inputImportBackupJson" accept=".json,application/json" style="display: none;" onchange="handleImportBackupJSON(event)">
+
+              <button type="button" class="vault-action-card emerald-vault" id="btnExportPortfolioCsv" onclick="exportPortfolioSystemsCSV()">
+                <div class="vault-card-icon">
+                  <i data-lucide="file-spreadsheet"></i>
+                </div>
+                <div class="vault-card-text">
+                  <strong>Exportar Inventario a Excel (CSV)</strong>
+                  <span>Tabla gerencial con avances, SLA y responsables</span>
+                </div>
+              </button>
+
+              <button type="button" class="vault-action-card danger-vault" id="btnResetFactoryData">
+                <div class="vault-card-icon">
+                  <i data-lucide="rotate-ccw"></i>
+                </div>
+                <div class="vault-card-text">
+                  <strong>Restablecer Datos Oficiales</strong>
+                  <span>Limpia caché local y restaura base oficial STF</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Nota de Seguridad Corporativa -->
+            <div class="settings-security-footer">
+              <i data-lucide="shield-check"></i>
+              <span>Los respaldos incluyen la configuración de fases, historial de calificaciones, usuarios y vínculos de SharePoint/Web de <strong>STF GROUP</strong>.</span>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -2061,8 +2408,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=34"></script>
-  <script src="js/sheets-sync.js?v=34"></script>
-  <script src="js/app.js?v=34"></script>
+  <script src="js/data.js?v=35"></script>
+  <script src="js/sheets-sync.js?v=35"></script>
+  <script src="js/app.js?v=35"></script>
 </body>
 </html>

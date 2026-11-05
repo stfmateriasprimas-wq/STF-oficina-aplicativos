@@ -7523,12 +7523,65 @@ function renderAnalyticsView() {
 }
 
 // ==========================================================================
-// VIEW 5: SETTINGS & BACKUP
+// VIEW 6: CENTRO INTEGRAL DE GOBIERNO TI & PARÁMETROS OPERATIVOS (4 CUADRANTES)
 // ==========================================================================
+
+const STF_PHASE_PALETTE = ['#4E65FF', '#7C3AED', '#2563EB', '#0EA5E9', '#10B981', '#F59E0B'];
+const OFFICIAL_PHASE_WEIGHTS = [10, 15, 30, 25, 15, 5];
+
+function getGovernanceConfig() {
+  const defaultCfg = {
+    monthlyGoal: (typeof STF_VELOCITY_DATA !== 'undefined' && STF_VELOCITY_DATA.benchmarks?.all?.monthly) ? STF_VELOCITY_DATA.benchmarks.all.monthly : 25,
+    weeklyGoal: (typeof STF_VELOCITY_DATA !== 'undefined' && STF_VELOCITY_DATA.benchmarks?.all?.weekly) ? STF_VELOCITY_DATA.benchmarks.all.weekly : 8,
+    quarterlyGoal: (appState && appState.quarterlyGoal) ? Number(appState.quarterlyGoal) : 85,
+    slaWarningDays: 5,
+    minQaScore: 95,
+    emailAlerts: true,
+    autoSync: true,
+    bellAlerts: true,
+    phaseWeights: [...OFFICIAL_PHASE_WEIGHTS]
+  };
+
+  try {
+    const raw = localStorage.getItem('STF_GOVERNANCE_SETTINGS_V1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...defaultCfg,
+        ...parsed,
+        quarterlyGoal: (appState && appState.quarterlyGoal) ? Number(appState.quarterlyGoal) : (parsed.quarterlyGoal || 85),
+        phaseWeights: (Array.isArray(parsed.phaseWeights) && parsed.phaseWeights.length === 6)
+          ? parsed.phaseWeights.map(n => Number(n) || 0)
+          : [...OFFICIAL_PHASE_WEIGHTS]
+      };
+    }
+  } catch (e) {
+    console.warn('[Settings] Error loading governance config:', e);
+  }
+  return defaultCfg;
+}
+
+function persistGovernanceConfig(cfg) {
+  try {
+    localStorage.setItem('STF_GOVERNANCE_SETTINGS_V1', JSON.stringify(cfg));
+    if (appState) {
+      appState.governanceSettings = cfg;
+    }
+  } catch (e) {
+    console.warn('[Settings] Error saving governance config:', e);
+  }
+}
+
+let currentEditingPhaseWeights = null;
 
 function renderSettingsView() {
   const container = document.getElementById('settingsPhasesList');
   if (!container) return;
+
+  const cfg = getGovernanceConfig();
+  if (!currentEditingPhaseWeights || currentEditingPhaseWeights.length !== 6) {
+    currentEditingPhaseWeights = [...cfg.phaseWeights];
+  }
 
   const baseStandardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases) 
     ? STF_DATA.standardPhases 
@@ -7536,40 +7589,426 @@ function renderSettingsView() {
         ? STF_REAL_DATA.standardPhases 
         : (window.STF_DATA ? window.STF_DATA.standardPhases : []));
 
-  container.innerHTML = baseStandardPhases.map(p => {
+  const isAdmin = isCurrentSessionAdmin();
+
+  // 1. Renderizar Lista de 6 Fases y Barra Visual Multicapa
+  container.innerHTML = baseStandardPhases.map((p, idx) => {
+    const weightVal = currentEditingPhaseWeights[idx] !== undefined ? currentEditingPhaseWeights[idx] : p.weight;
+    const dotColor = STF_PHASE_PALETTE[idx % STF_PHASE_PALETTE.length];
     return `
       <div class="phase-setting-item">
-        <div>
-          <span class="phase-setting-name">${p.name}</span>
-          <p style="font-size: 12px; color: #8E96A6; margin-top: 2px;">${p.description}</p>
+        <div class="phase-setting-left">
+          <span class="phase-color-dot" style="background: ${dotColor}; box-shadow: 0 0 0 3px ${dotColor}22;"></span>
+          <div class="phase-setting-info">
+            <span class="phase-setting-name">${p.name}</span>
+            <span class="phase-setting-desc" title="${p.description}">${p.description}</span>
+          </div>
         </div>
-        <span class="phase-setting-weight">${p.weight}% Ponderación</span>
+        ${isAdmin ? `
+          <div class="phase-weight-stepper">
+            <button type="button" class="phase-step-btn" onclick="changeSettingsPhaseWeight(${idx}, -5, false)" title="Restar 5%">−</button>
+            <input type="number" class="phase-weight-input" min="0" max="100" value="${weightVal}" onchange="changeSettingsPhaseWeight(${idx}, this.value, true)">
+            <span style="font-size: 12px; font-weight: 800; color: #64748B; margin-right: 2px;">%</span>
+            <button type="button" class="phase-step-btn" onclick="changeSettingsPhaseWeight(${idx}, 5, false)" title="Sumar 5%">+</button>
+          </div>
+        ` : `
+          <span class="phase-setting-weight">${weightVal}% Ponderación</span>
+        `}
+      </div>
+    `;
+  }).join('');
+
+  updateSettingsSdlcBarAndSum();
+
+  // 2. Poblar Inputs de Benchmarks y Switches
+  const elMonthly = document.getElementById('settingMonthlyGoal');
+  const elWeekly = document.getElementById('settingWeeklyGoal');
+  const elQuarterly = document.getElementById('settingQuarterlyGoal');
+  const elSlaDays = document.getElementById('settingSlaWarningDays');
+  const elMinQa = document.getElementById('settingMinQaScore');
+
+  if (elMonthly) elMonthly.value = cfg.monthlyGoal;
+  if (elWeekly) elWeekly.value = cfg.weeklyGoal;
+  if (elQuarterly) elQuarterly.value = cfg.quarterlyGoal;
+  if (elSlaDays) elSlaDays.value = cfg.slaWarningDays;
+  if (elMinQa) elMinQa.value = cfg.minQaScore;
+
+  const swEmail = document.getElementById('settingsToggleEmailAlerts');
+  const swAutoSync = document.getElementById('settingsToggleAutoSync');
+  const swBell = document.getElementById('settingsToggleBellAlerts');
+
+  if (swEmail) swEmail.checked = cfg.emailAlerts !== false;
+  if (swAutoSync) swAutoSync.checked = cfg.autoSync !== false;
+  if (swBell) swBell.checked = cfg.bellAlerts !== false;
+
+  // 3. Renderizar Cuotas Proporcionales por Ingeniero
+  renderSettingsDevQuotas(cfg.monthlyGoal);
+
+  // 4. Actualizar Estado de Google Sheets y Bóveda de Respaldo
+  updateSettingsKpiStripAndVault(cfg);
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function updateSettingsSdlcBarAndSum() {
+  const weights = currentEditingPhaseWeights || OFFICIAL_PHASE_WEIGHTS;
+  const total = weights.reduce((acc, w) => acc + (Number(w) || 0), 0);
+
+  const badge = document.getElementById('settingsPhasesSumBadge');
+  const totalText = document.getElementById('settingsSdlcTotalText');
+  const bar = document.getElementById('settingsPhaseStackedBar');
+
+  if (badge) {
+    if (total === 100) {
+      badge.className = 'settings-status-chip chip-valid';
+      badge.textContent = '✓ Suma: 100%';
+    } else {
+      badge.className = 'settings-status-chip chip-invalid';
+      badge.textContent = `⚠ Suma: ${total}% (Requiere 100%)`;
+    }
+  }
+
+  if (totalText) {
+    totalText.textContent = `${total}% Ponderado`;
+    totalText.style.color = total === 100 ? '#059669' : '#DC2626';
+  }
+
+  if (bar) {
+    const safeTotal = total > 0 ? total : 100;
+    bar.innerHTML = weights.map((w, idx) => {
+      const pct = Math.max(0, (Number(w) / safeTotal) * 100);
+      const color = STF_PHASE_PALETTE[idx % STF_PHASE_PALETTE.length];
+      return `<div class="sdlc-bar-segment" style="width: ${pct}%; background: ${color};" title="Fase ${idx + 1}: ${w}%"></div>`;
+    }).join('');
+  }
+}
+
+function changeSettingsPhaseWeight(idx, deltaOrVal, isDirectInput) {
+  if (!currentEditingPhaseWeights) {
+    currentEditingPhaseWeights = [...OFFICIAL_PHASE_WEIGHTS];
+  }
+  let current = Number(currentEditingPhaseWeights[idx]) || 0;
+  let next = isDirectInput ? parseInt(deltaOrVal, 10) : (current + Number(deltaOrVal));
+  if (isNaN(next)) next = 0;
+  next = Math.max(0, Math.min(100, next));
+  currentEditingPhaseWeights[idx] = next;
+  renderSettingsView();
+}
+
+function resetOfficialPhaseWeights() {
+  currentEditingPhaseWeights = [...OFFICIAL_PHASE_WEIGHTS];
+  saveGovernancePhaseWeights(true);
+}
+
+function saveGovernancePhaseWeights(isReset = false) {
+  const weights = currentEditingPhaseWeights || [...OFFICIAL_PHASE_WEIGHTS];
+  const total = weights.reduce((acc, w) => acc + (Number(w) || 0), 0);
+
+  if (total !== 100) {
+    showToast(`⚠️ La suma de las 6 fases debe ser exactamente 100% (actual: ${total}%).`);
+    return;
+  }
+
+  const cfg = getGovernanceConfig();
+  cfg.phaseWeights = [...weights];
+  persistGovernanceConfig(cfg);
+
+  // Actualizar pesos en STF_DATA y en los 7 aplicativos del portafolio
+  if (typeof STF_DATA !== 'undefined' && Array.isArray(STF_DATA.standardPhases)) {
+    STF_DATA.standardPhases.forEach((p, idx) => {
+      if (weights[idx] !== undefined) p.weight = weights[idx];
+    });
+  }
+
+  if (appState && Array.isArray(appState.applications)) {
+    appState.applications.forEach(app => {
+      if (Array.isArray(app.phases) && app.phases.length === 6) {
+        app.phases.forEach((ph, idx) => {
+          ph.weight = weights[idx];
+        });
+      }
+    });
+    saveData(appState);
+  }
+
+  refreshAllViews();
+  showToast(isReset
+    ? '✅ Ponderación oficial restaurada (10% · 15% · 30% · 25% · 15% · 5%).'
+    : '✅ Ponderación SDLC aplicada y recalculada en los 7 sistemas.');
+}
+
+function renderSettingsDevQuotas(teamMonthlyGoal) {
+  const container = document.getElementById('settingsDevQuotasList');
+  const totalLabel = document.getElementById('settingsDevQuotaTotalLabel');
+  if (!container) return;
+
+  const totalGoal = Number(teamMonthlyGoal) || 25;
+  if (totalLabel) totalLabel.textContent = `Meta Equipo: ${totalGoal} Mods/Mes`;
+
+  const devShares = [
+    { id: 'dev_jg', ratio: 0.38 },
+    { id: 'dev_jd', ratio: 0.22 },
+    { id: 'dev_mocho', ratio: 0.22 },
+    { id: 'dev_ee', ratio: 0.18 }
+  ];
+
+  container.innerHTML = devShares.map(item => {
+    const dev = getDeveloperById(item.id) || { name: item.id, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120' };
+    const quota = Math.max(1, Math.round(totalGoal * item.ratio));
+    const shortName = dev.name.split(' ').slice(0, 2).join(' ');
+    return `
+      <div class="dev-quota-chip">
+        <img src="${dev.avatar}" alt="${dev.name}">
+        <div class="dev-quota-meta">
+          <strong title="${dev.name}">${shortName}</strong>
+          <span>${quota} Mods/Mes</span>
+        </div>
       </div>
     `;
   }).join('');
 }
 
+function saveGovernanceBenchmarks() {
+  const cfg = getGovernanceConfig();
+  const monthly = Math.max(5, Math.min(150, parseInt(document.getElementById('settingMonthlyGoal')?.value, 10) || 25));
+  const weekly = Math.max(1, Math.min(50, parseInt(document.getElementById('settingWeeklyGoal')?.value, 10) || 8));
+  const quarterly = Math.max(50, Math.min(100, parseInt(document.getElementById('settingQuarterlyGoal')?.value, 10) || 85));
+  const slaDays = Math.max(1, Math.min(30, parseInt(document.getElementById('settingSlaWarningDays')?.value, 10) || 5));
+  const minQa = Math.max(70, Math.min(100, parseInt(document.getElementById('settingMinQaScore')?.value, 10) || 95));
+
+  cfg.monthlyGoal = monthly;
+  cfg.weeklyGoal = weekly;
+  cfg.quarterlyGoal = quarterly;
+  cfg.slaWarningDays = slaDays;
+  cfg.minQaScore = minQa;
+  persistGovernanceConfig(cfg);
+
+  // Actualizar STF_VELOCITY_DATA en vivo
+  if (typeof STF_VELOCITY_DATA !== 'undefined' && STF_VELOCITY_DATA.benchmarks) {
+    STF_VELOCITY_DATA.benchmarks.all.monthly = monthly;
+    STF_VELOCITY_DATA.benchmarks.all.weekly = weekly;
+    STF_VELOCITY_DATA.benchmarks.all.label = `${monthly} Mods / Mes`;
+
+    STF_VELOCITY_DATA.benchmarks.dev_jg.monthly = Math.max(1, Math.round(monthly * 0.38));
+    STF_VELOCITY_DATA.benchmarks.dev_jd.monthly = Math.max(1, Math.round(monthly * 0.22));
+    STF_VELOCITY_DATA.benchmarks.dev_mocho.monthly = Math.max(1, Math.round(monthly * 0.22));
+    STF_VELOCITY_DATA.benchmarks.dev_ee.monthly = Math.max(1, Math.round(monthly * 0.18));
+  }
+
+  // Sincronizar Meta Trimestral Q4 con appState y Dashboard
+  if (appState) {
+    appState.quarterlyGoal = quarterly;
+    saveData(appState);
+  }
+
+  refreshAllViews();
+  showToast(`✅ Benchmarks actualizados: ${monthly} Mods/Mes · ${weekly} Mods/Sem · Meta Q4: ${quarterly}%.`);
+}
+
+function saveGovernanceSettings() {
+  const cfg = getGovernanceConfig();
+  cfg.emailAlerts = !!document.getElementById('settingsToggleEmailAlerts')?.checked;
+  cfg.autoSync = !!document.getElementById('settingsToggleAutoSync')?.checked;
+  cfg.bellAlerts = !!document.getElementById('settingsToggleBellAlerts')?.checked;
+
+  persistGovernanceConfig(cfg);
+  updateSettingsKpiStripAndVault(cfg);
+  showToast('✅ Preferencias de sincronización y notificaciones guardadas.');
+}
+
+function updateSettingsKpiStripAndVault(cfg) {
+  const config = cfg || getGovernanceConfig();
+
+  // KPI Strip Superior
+  const kpiSdlcSub = document.getElementById('settingsKpiSdlcSub');
+  if (kpiSdlcSub) {
+    kpiSdlcSub.innerHTML = `<strong class="text-emerald">Calidad mín. ${config.minQaScore}% AQL</strong> · Ciclo oficial STF`;
+  }
+
+  const kpiSprint = document.getElementById('settingsKpiSprintGoal');
+  const kpiQ4 = document.getElementById('settingsKpiQ4Goal');
+  if (kpiSprint) kpiSprint.textContent = `${config.monthlyGoal} Módulos / Mes`;
+  if (kpiQ4) kpiQ4.innerHTML = `<strong class="text-indigo">Meta Trimestral: ${config.quarterlyGoal}%</strong> · ${config.weeklyGoal} Mods/Sem`;
+
+  const kpiSla = document.getElementById('settingsKpiSlaDays');
+  const kpiMail = document.getElementById('settingsKpiMailStatus');
+  if (kpiSla) kpiSla.textContent = `Alerta a ${config.slaWarningDays} Días`;
+  if (kpiMail) {
+    kpiMail.innerHTML = config.emailAlerts
+      ? `<strong class="text-emerald">Notificaciones MailApp ON</strong> · Campana ${config.bellAlerts ? 'activa' : 'pausada'}`
+      : `<strong style="color:#D97706;">MailApp Pausado</strong> · Campana ${config.bellAlerts ? 'activa' : 'pausada'}`;
+  }
+
+  // Estado Google Sheets
+  const isConnected = window.SheetsSync && typeof window.SheetsSync.isConnected === 'function' ? window.SheetsSync.isConnected() : true;
+  const lastSync = localStorage.getItem('STF_SHEETS_LAST_SYNC_TIME') || 'Sincronizado en vivo';
+  const liveBadge = document.getElementById('settingsSheetsLiveBadge');
+  const lastSyncEl = document.getElementById('settingsLastSyncLabel');
+
+  if (liveBadge) {
+    liveBadge.className = isConnected ? 'settings-status-chip chip-online' : 'settings-status-chip chip-invalid';
+    liveBadge.textContent = isConnected ? '● Conectado (5 Hojas)' : '○ Modo Local';
+  }
+  if (lastSyncEl) {
+    lastSyncEl.textContent = `Última sinc: ${lastSync}`;
+  }
+
+  // Bóveda de Respaldo Stats
+  const appsCount = (appState && Array.isArray(appState.applications)) ? appState.applications.length : 7;
+  const devsCount = (appState && Array.isArray(appState.developers)) ? appState.developers.length : 4;
+  const tasksCount = (appState && Array.isArray(appState.integrations)) ? appState.integrations.length : 6;
+
+  const elSys = document.getElementById('vaultStatSystems');
+  const elTasks = document.getElementById('vaultStatTasks');
+  const elSession = document.getElementById('vaultStatSession');
+  const elSize = document.getElementById('vaultStatStorageSize');
+
+  if (elSys) elSys.textContent = `${appsCount} Sistemas`;
+  if (elTasks) elTasks.textContent = `${devsCount} Devs · ${tasksCount} Tareas`;
+
+  const currentDev = getDeveloperById(currentSelectedDevId);
+  if (elSession && currentDev) {
+    elSession.textContent = `${currentDev.name.split(' ')[0]} (${isCurrentSessionAdmin() ? 'Admin' : 'Dev'})`;
+  }
+
+  if (elSize) {
+    const jsonBytes = new Blob([JSON.stringify(appState || {})]).size;
+    const kb = (jsonBytes / 1024).toFixed(1);
+    elSize.textContent = `Snapshot: ${kb} KB · Persistente`;
+  }
+}
+
+async function triggerSettingsFullCloudPush() {
+  if (window.SheetsSync && typeof window.SheetsSync.pushFullState === 'function') {
+    showToast('☁️ Sincronizando las 5 hojas maestras con Google Sheets...');
+    await window.SheetsSync.pushFullState();
+    renderSettingsView();
+  } else {
+    openSheetsModal();
+  }
+}
+
+async function triggerSettingsCloudPull() {
+  if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
+    showToast('🔄 Consultando datos más recientes desde Google Sheets...');
+    await window.SheetsSync.pullCloudData(false);
+    renderSettingsView();
+  } else {
+    openSheetsModal();
+  }
+}
+
+function handleImportBackupJSON(event) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported || !Array.isArray(imported.applications)) {
+        showToast('⚠️ El archivo JSON no tiene el formato oficial de respaldo de STF GROUP.');
+        return;
+      }
+      // Filtrar cualquier registro fantasma si existiera en backups antiguos
+      imported.applications = imported.applications.filter(a => a.id !== 'app_sistema_a_cargo' && a.code !== 'STF-SIS-99');
+      appState = imported;
+      window.appState = appState;
+      saveData(appState);
+      refreshAllViews();
+      showToast(`✅ Respaldo restaurado exitosamente (${imported.applications.length} sistemas cargados).`);
+    } catch (err) {
+      console.error('[Settings] Error importing JSON backup:', err);
+      showToast('⚠️ Error al leer el archivo JSON. Verifica que sea un respaldo válido.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function exportPortfolioSystemsCSV() {
+  const apps = (appState && Array.isArray(appState.applications)) ? appState.applications : [];
+  const headers = ['CODIGO', 'SISTEMA', 'CATEGORIA', 'ETAPA_PIPELINE', 'RESPONSABLE', 'FASE_ACTUAL', 'AVANCE_%', 'CALIDAD_QA', 'FECHA_LIMITE', 'ESTADO_SLA', 'URL_SISTEMA'];
+
+  const rows = apps.map(app => {
+    const dev = getDeveloperById(app.devId) || { name: 'Equipo STF' };
+    const respName = app.isGroupProject ? 'Equipo Grupal (4 Devs)' : dev.name;
+    const progress = calculateAppProgress(app);
+    const stageInfo = getAppPipelineStageInfo(app);
+    const stageName = stageInfo.stageId === 'stage_prod' ? '3. En Produccion (En Vivo)' : (stageInfo.stageId === 'stage_qa' ? '2. Puesta en Planta' : '1. En Construccion');
+    const activePhase = (app.phases || []).find(p => !p.completed) || { name: '6. Salida en Vivo' };
+    const ind = STF_INDUSTRIAL_CONTEXT[app.id] || { qaScore: '95.0% QA' };
+    const statusLabel = isAppInLiveProduction(app) ? 'En Produccion' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo');
+
+    return [
+      app.code || '',
+      app.name || '',
+      app.category || '',
+      stageName,
+      respName,
+      activePhase.name || '',
+      `${progress}%`,
+      ind.qaScore || '95% QA',
+      app.deadline || '',
+      statusLabel,
+      app.webUrl || 'Pendiente'
+    ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `STF_GROUP_PORTAFOLIO_SISTEMAS_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  showToast('📊 Inventario exportado a CSV (Excel) correctamente.');
+}
+
 function downloadFullBackupJSON() {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+  const payload = {
+    ...appState,
+    governanceSettings: getGovernanceConfig(),
+    exportedAt: new Date().toISOString(),
+    platform: 'STF GROUP · Control de Ingeniería'
+  };
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
   const dlAnchorElem = document.createElement('a');
   dlAnchorElem.setAttribute("href", dataStr);
   dlAnchorElem.setAttribute("download", `STF_GROUP_SISTEMAS_BACKUP_${new Date().toISOString().split('T')[0]}.json`);
   dlAnchorElem.click();
-  showToast("Respaldo JSON descargado correctamente.");
+  showToast("📦 Respaldo JSON completo descargado correctamente.");
 }
 
 function resetFactoryData() {
-  if (confirm("¿Estás seguro de restablecer los datos de demostración de STF GROUP? Se sobreescribirán los cambios locales.")) {
+  if (confirm("¿Estás seguro de restablecer los datos oficiales de STF GROUP? Se limpiará la caché local y se restaurarán los 7 sistemas oficiales.")) {
     localStorage.removeItem('STF_GROUP_DASHBOARD_DATA');
     localStorage.removeItem('STF_GROUP_REAL_DATA_V6');
     localStorage.removeItem('STF_USERS_CREDENTIALS_STORE');
+    localStorage.removeItem('STF_GOVERNANCE_SETTINGS_V1');
+    currentEditingPhaseWeights = [...OFFICIAL_PHASE_WEIGHTS];
     appState = getStoredData();
     window.appState = appState;
     refreshAllViews();
     switchView('dashboard');
-    showToast("Datos restaurados a valores oficiales de STF GROUP.");
+    showToast("🔄 Datos restaurados a los valores oficiales de STF GROUP.");
   }
 }
+
+window.changeSettingsPhaseWeight = changeSettingsPhaseWeight;
+window.resetOfficialPhaseWeights = resetOfficialPhaseWeights;
+window.saveGovernancePhaseWeights = saveGovernancePhaseWeights;
+window.saveGovernanceBenchmarks = saveGovernanceBenchmarks;
+window.saveGovernanceSettings = saveGovernanceSettings;
+window.triggerSettingsFullCloudPush = triggerSettingsFullCloudPush;
+window.triggerSettingsCloudPull = triggerSettingsCloudPull;
+window.handleImportBackupJSON = handleImportBackupJSON;
+window.exportPortfolioSystemsCSV = exportPortfolioSystemsCSV;
 
 // Expose all interactive functions globally on window
 window.openNewProjectModal = openNewProjectModal;
