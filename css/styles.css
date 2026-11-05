@@ -4552,8 +4552,17 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 /* ==========================================================================
    SUPER ADMIN INTEGRATIONS CONTROLLER & LIVE METERS
    ========================================================================== */
+.tasks-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
 .integrations-control-card {
   grid-column: 1 / -1;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--bg-card);
   border-radius: 20px;
   padding: 22px 24px;

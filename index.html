@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=22">
+  <link rel="stylesheet" href="css/styles.css?v=23">
 </head>
 <body>
 
@@ -47,6 +47,9 @@
         </button>
         <button class="nav-btn" data-view="settings" title="Configuraciones">
           <i data-lucide="settings"></i>
+        </button>
+        <button class="nav-btn" data-view="tasks" title="Integraciones Operativas & Tareas en Vivo">
+          <i data-lucide="check-square"></i>
         </button>
       </nav>
 
@@ -507,72 +510,6 @@
             </div>
           </div>
 
-          <!-- ROW 4: SUPER ADMIN LIVE INTEGRATIONS & EFFECTIVENESS CONTROLLER (Full-Width) -->
-          <div class="grid-card integrations-control-card">
-            <div class="card-header">
-              <div class="header-left">
-                <div class="super-admin-badge-strip">
-                  <span class="super-admin-shield-pill">
-                    <i data-lucide="shield-check"></i>
-                    <span>Control de Supervisión · Super Admin (Jefe TI)</span>
-                  </span>
-                  <span class="auto-metric-tag">
-                    <i data-lucide="cpu"></i>
-                    <span>Medición 100% Automatizada en Tiempo Real</span>
-                  </span>
-                </div>
-                <h2 class="card-title">Integraciones Operativas & Tiempos en Vivo</h2>
-                <span class="card-subtext">Cálculo dinámico de días transcurridos vs deadline y proyección del avance esperado por desarrollador</span>
-              </div>
-              
-              <div class="header-right integrations-header-actions">
-                <button class="pill-btn primary-glow-btn small-glow" id="btnOpenNewIntegrationModal">
-                  <i data-lucide="plus"></i>
-                  <span>Asignar Integración</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Filter tabs for integrations -->
-            <div class="integrations-filter-bar">
-              <div class="int-filter-pills" id="intFilterPills">
-                <button class="filter-pill active" data-int-filter="all">
-                  <span>Todas las Tareas</span>
-                  <span class="pill-counter" id="countIntAll">6</span>
-                </button>
-                <button class="filter-pill" data-int-filter="in_progress">
-                  <span>En Desarrollo</span>
-                  <span class="pill-counter" id="countIntActive">5</span>
-                </button>
-                <button class="filter-pill" data-int-filter="risk">
-                  <span>En Riesgo / Vencidas</span>
-                  <span class="pill-counter" id="countIntRisk">1</span>
-                </button>
-                <button class="filter-pill" data-int-filter="evaluated">
-                  <span>Auditadas & Calificadas</span>
-                  <span class="pill-counter" id="countIntDone">1</span>
-                </button>
-              </div>
-
-              <div class="int-legend-hints">
-                <span class="friendly-legend-chip badge-hint-done" title="Verde: Tarea más reciente en tiempo óptimo o cumplida/solucionada">
-                  <span class="mini-corner-badge green"><i data-lucide="check" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Verde: Reciente / Cumplida
-                </span>
-                <span class="friendly-legend-chip badge-hint-process" title="Naranja: Plazo medio en desarrollo sin solucionar">
-                  <span class="mini-corner-badge yellow">#</span> Naranja: Plazo Medio
-                </span>
-                <span class="friendly-legend-chip badge-hint-overdue" title="Rojo: Tarea antigua sin solucionar o vencida">
-                  <span class="mini-corner-badge red"><i data-lucide="x" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Rojo: Antigua / Sin solucionar
-                </span>
-              </div>
-            </div>
-
-            <!-- Container for the dynamic integration cards grouped by developer folders -->
-            <div class="integrations-folders-container" id="integrationsCardsList">
-              <!-- Dynamically populated via JavaScript -->
-            </div>
-          </div>
-
         </div> <!-- /dashboard-grid -->
       </section>
 
@@ -995,6 +932,77 @@
                   <span>Restablecer Datos de Demostración</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: INTEGRACIONES OPERATIVAS & TAREAS EN VIVO (Sección dedicada del Menú Lateral) -->
+      <section class="view-panel" id="view-tasks">
+        <div class="tasks-view-wrapper">
+          <!-- SUPER ADMIN LIVE INTEGRATIONS & EFFECTIVENESS CONTROLLER (Full-Width) -->
+          <div class="grid-card integrations-control-card" style="margin-top: 0;">
+            <div class="card-header">
+              <div class="header-left">
+                <div class="super-admin-badge-strip">
+                  <span class="super-admin-shield-pill">
+                    <i data-lucide="shield-check"></i>
+                    <span>Control de Supervisión · Super Admin (Jefe TI)</span>
+                  </span>
+                  <span class="auto-metric-tag">
+                    <i data-lucide="cpu"></i>
+                    <span>Medición 100% Automatizada en Tiempo Real</span>
+                  </span>
+                </div>
+                <h2 class="card-title">Integraciones Operativas & Tiempos en Vivo</h2>
+                <span class="card-subtext">Cálculo dinámico de días transcurridos vs deadline y proyección del avance esperado por desarrollador</span>
+              </div>
+              
+              <div class="header-right integrations-header-actions">
+                <button class="pill-btn primary-glow-btn small-glow" id="btnOpenNewIntegrationModal">
+                  <i data-lucide="plus"></i>
+                  <span>Asignar Integración</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Filter tabs for integrations -->
+            <div class="integrations-filter-bar">
+              <div class="int-filter-pills" id="intFilterPills">
+                <button class="filter-pill active" data-int-filter="all">
+                  <span>Todas las Tareas</span>
+                  <span class="pill-counter" id="countIntAll">6</span>
+                </button>
+                <button class="filter-pill" data-int-filter="in_progress">
+                  <span>En Desarrollo</span>
+                  <span class="pill-counter" id="countIntActive">5</span>
+                </button>
+                <button class="filter-pill" data-int-filter="risk">
+                  <span>En Riesgo / Vencidas</span>
+                  <span class="pill-counter" id="countIntRisk">1</span>
+                </button>
+                <button class="filter-pill" data-int-filter="evaluated">
+                  <span>Auditadas & Calificadas</span>
+                  <span class="pill-counter" id="countIntDone">1</span>
+                </button>
+              </div>
+
+              <div class="int-legend-hints">
+                <span class="friendly-legend-chip badge-hint-done" title="Verde: Tarea más reciente en tiempo óptimo o cumplida/solucionada">
+                  <span class="mini-corner-badge green"><i data-lucide="check" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Verde: Reciente / Cumplida
+                </span>
+                <span class="friendly-legend-chip badge-hint-process" title="Naranja: Plazo medio en desarrollo sin solucionar">
+                  <span class="mini-corner-badge yellow">#</span> Naranja: Plazo Medio
+                </span>
+                <span class="friendly-legend-chip badge-hint-overdue" title="Rojo: Tarea antigua sin solucionar o vencida">
+                  <span class="mini-corner-badge red"><i data-lucide="x" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Rojo: Antigua / Sin solucionar
+                </span>
+              </div>
+            </div>
+
+            <!-- Container for the dynamic integration cards grouped by developer folders -->
+            <div class="integrations-folders-container" id="integrationsCardsList">
+              <!-- Dynamically populated via JavaScript -->
             </div>
           </div>
         </div>
@@ -2066,8 +2074,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=22"></script>
-  <script src="js/sheets-sync.js?v=22"></script>
-  <script src="js/app.js?v=22"></script>
+  <script src="js/data.js?v=23"></script>
+  <script src="js/sheets-sync.js?v=23"></script>
+  <script src="js/app.js?v=23"></script>
 </body>
 </html>

@@ -443,12 +443,14 @@ function applyRoleBasedUI() {
   const navDashBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="dashboard"]');
   const navProjBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="projects"]');
   const navAnalyticsBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="analytics"]');
+  const navTasksBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="tasks"]');
 
   if (navDevBtn) navDevBtn.style.display = isAdmin ? '' : 'none';
   if (navSettingsBtn) navSettingsBtn.style.display = isAdmin ? '' : 'none';
   if (navDashBtn) navDashBtn.title = isAdmin ? 'Dashboard General' : 'Mi Panel de Desarrollo';
   if (navProjBtn) navProjBtn.title = isAdmin ? 'Aplicativos y Módulos' : 'Mis Aplicativos Asignados';
   if (navAnalyticsBtn) navAnalyticsBtn.title = isAdmin ? 'Métricas y QA' : 'Mis Métricas y Fases';
+  if (navTasksBtn) navTasksBtn.title = isAdmin ? 'Integraciones Operativas & Tareas en Vivo' : 'Mis Tareas & Entregables Asignados';
 
   // 3. Acciones de Cabecera Superior (Top Header)
   const btnNewProj = document.getElementById('btnNewProject');
@@ -5960,6 +5962,18 @@ function switchView(viewName) {
     if (titleEl) titleEl.innerHTML = 'Configuración del Sistema · <span class="text-gradient">STF GROUP</span>';
     if (subtitleEl) subtitleEl.textContent = 'Parámetros del entorno, copias de seguridad de datos y restablecimiento del sistema.';
     renderSettingsView();
+  } else if (viewName === 'tasks') {
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Integraciones Operativas & Tareas en Vivo · <span class="text-gradient">STF GROUP</span>'
+        : `Mis Tareas & Entregables Asignados · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Control de supervisión, cálculo dinámico de días transcurridos vs deadline y auditoría técnica de efectividad.'
+        : 'Seguimiento de tareas asignadas por el Jefe TI, plazos de entrega y dictamen de efectividad técnica.';
+    }
+    renderIntegrationsList();
   } else if (viewName === 'dashboard') {
     if (titleEl) {
       titleEl.innerHTML = isAdmin
@@ -6450,8 +6464,8 @@ function openAppTasksDrawer(appId) {
   const app = getApplicationById(appId);
   if (!app) return;
 
-  // Cambiar a la vista del dashboard y expandir las tareas del desarrollador asignado
-  switchView('dashboard');
+  // Cambiar directamente a la vista dedicada de tareas e integraciones
+  switchView('tasks');
   setTimeout(() => {
     if (app.devId) openedDevFolders.add(app.devId);
     if (app.devIds) app.devIds.forEach(id => openedDevFolders.add(id));
