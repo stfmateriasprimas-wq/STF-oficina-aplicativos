@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=31">
+  <link rel="stylesheet" href="css/styles.css?v=32">
 </head>
 <body>
 
@@ -582,14 +582,6 @@
                 <i data-lucide="kanban"></i>
                 <span style="font-size: 12px; font-weight: 700; margin-left: 6px;">Pipeline</span>
               </button>
-              <button class="switch-btn" id="btnViewGrid" title="Catálogo de Fichas">
-                <i data-lucide="layout-grid"></i>
-                <span style="font-size: 12px; font-weight: 700; margin-left: 6px;">Catálogo</span>
-              </button>
-              <button class="switch-btn" id="btnViewTable" title="Matriz Operativa (Tabla)">
-                <i data-lucide="table"></i>
-                <span style="font-size: 12px; font-weight: 700; margin-left: 6px;">Tabla</span>
-              </button>
             </div>
           </div>
         </div>
@@ -597,43 +589,6 @@
         <!-- 1. Pipeline Visual por Etapas de Producción (Opción 1: Linear / Jira Enterprise) -->
         <div class="projects-pipeline-board" id="projectsPipelineView">
           <!-- Populated via JavaScript -->
-        </div>
-
-        <!-- 2. Projects Grid View (Executive Cards) -->
-        <div class="projects-cards-grid" id="projectsCardsGrid" style="display: none;">
-          <!-- Populated via JavaScript -->
-        </div>
-
-        <!-- 2. Projects Table View (Industrial Matrix - Hidden by default) -->
-        <div class="projects-table-container" id="projectsTableView" style="display: none;">
-          <div class="industrial-matrix-card">
-            <div class="table-responsive">
-              <table class="industrial-matrix-table" id="industrialMatrixTable">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Sistema & Planta</th>
-                    <th>Responsable</th>
-                    <th>Fase de Software</th>
-                    <th>Avance Real</th>
-                    <th>Entregables</th>
-                    <th>Calidad QA</th>
-                    <th>Cronograma</th>
-                    <th>Estado SLA</th>
-                    <th class="text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="industrialMatrixTableBody">
-                  <!-- Populated via JavaScript -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Projects Kanban View (Hidden by default) -->
-        <div class="projects-kanban-board" id="projectsKanbanBoard" style="display: none;">
-          <!-- 4 Kanban Columns: Requisitos, Backend/Core, Frontend/QA, Desplegado -->
         </div>
       </section>
 
@@ -2078,8 +2033,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=31"></script>
-  <script src="js/sheets-sync.js?v=31"></script>
-  <script src="js/app.js?v=31"></script>
+  <script src="js/data.js?v=32"></script>
+  <script src="js/sheets-sync.js?v=32"></script>
+  <script src="js/app.js?v=32"></script>
 </body>
 </html>
