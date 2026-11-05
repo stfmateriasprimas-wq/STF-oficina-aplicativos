@@ -2550,9 +2550,19 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           c.font = '800 11px "Plus Jakarta Sans", sans-serif';
           const textW = c.measureText(text).width;
           const padX = 10;
+          const totalBadgeW = textW + (padX * 2);
           const badgeH = 22;
-          const badgeX = bar.x - (textW / 2) - padX;
-          const badgeY = bar.y - 30;
+          let badgeX = bar.x - (totalBadgeW / 2);
+          const chartRight = chart.chartArea ? chart.chartArea.right : (chart.width - 10);
+          const chartLeft = chart.chartArea ? chart.chartArea.left : 10;
+          if (badgeX + totalBadgeW > chartRight - 2) {
+            badgeX = chartRight - totalBadgeW - 2;
+          }
+          if (badgeX < chartLeft + 2) {
+            badgeX = chartLeft + 2;
+          }
+          const textCenterX = badgeX + (totalBadgeW / 2);
+          const badgeY = Math.max(8, bar.y - 30);
 
           c.shadowColor = 'rgba(78, 101, 255, 0.35)';
           c.shadowBlur = 8;
@@ -2560,9 +2570,9 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           c.fillStyle = '#4E65FF';
           c.beginPath();
           if (typeof c.roundRect === 'function') {
-            c.roundRect(badgeX, badgeY, textW + (padX * 2), badgeH, 11);
+            c.roundRect(badgeX, badgeY, totalBadgeW, badgeH, 11);
           } else {
-            c.rect(badgeX, badgeY, textW + (padX * 2), badgeH);
+            c.rect(badgeX, badgeY, totalBadgeW, badgeH);
           }
           c.fill();
           c.shadowColor = 'transparent';
@@ -2570,7 +2580,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           c.fillStyle = '#FFFFFF';
           c.textAlign = 'center';
           c.textBaseline = 'middle';
-          c.fillText(text, bar.x, badgeY + (badgeH / 2));
+          c.fillText(text, textCenterX, badgeY + (badgeH / 2));
         } else if (val > 0) {
           c.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
           c.fillStyle = val >= targetBenchmark ? '#1E293B' : '#64748B';
@@ -4549,20 +4559,49 @@ function printExecutiveReportDoc() {
 }
 
 
-// Utility formatting
+// Utility formatting segura para cualquier formato de fecha (YYYY-MM-DD, ISO o Date string)
+function parseSafeDate(dateVal) {
+  if (!dateVal) return null;
+  if (dateVal instanceof Date) return isNaN(dateVal.getTime()) ? null : dateVal;
+  const str = String(dateVal).trim();
+  if (!str) return null;
+
+  // Manejar formato YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const parts = str.substring(0, 10).split('-');
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const dateObj = new Date(y, m, d);
+    return isNaN(dateObj.getTime()) ? null : dateObj;
+  }
+
+  // Manejar formato DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+    const parts = str.split('/');
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const y = parseInt(parts[2], 10);
+    const dateObj = new Date(y, m, d);
+    return isNaN(dateObj.getTime()) ? null : dateObj;
+  }
+
+  // Intentar parseo nativo de Date
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return 'N/A';
-  const parts = dateStr.split('-');
-  if (parts.length < 3) return dateStr;
-  const d = new Date(parts[0], parts[1] - 1, parts[2]);
-  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+  const d = parseSafeDate(dateStr);
+  if (!d) return String(dateStr).substring(0, 12);
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatShortDate(dateStr) {
   if (!dateStr) return 'N/A';
-  const parts = dateStr.split('-');
-  if (parts.length < 3) return dateStr;
-  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  const d = parseSafeDate(dateStr);
+  if (!d) return String(dateStr).substring(0, 10);
   return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 }
 
@@ -4584,19 +4623,22 @@ function getSystemReferenceDate() {
 
 function calculateIntegrationTimeProgress(integration) {
   const refDate = getSystemReferenceDate();
-  const start = new Date(integration.startDate + 'T00:00:00').getTime();
-  const end = new Date(integration.deadline + 'T23:59:59').getTime();
+  const dStart = parseSafeDate(integration.startDate) || new Date('2026-10-19T00:00:00');
+  const dEnd = parseSafeDate(integration.deadline) || new Date('2026-11-15T23:59:59');
+
+  const start = dStart.getTime();
+  const end = dEnd.getTime();
   const now = refDate.getTime();
 
   const totalMs = Math.max(1, end - start);
   const elapsedMs = Math.max(0, now - start);
   const remainingMs = end - now;
 
-  const totalDays = Math.max(1, Math.round(totalMs / (1000 * 60 * 60 * 24)));
-  const elapsedDays = Math.min(totalDays, Math.max(0, Math.round(elapsedMs / (1000 * 60 * 60 * 24))));
-  const daysRemaining = Math.round(remainingMs / (1000 * 60 * 60 * 24));
+  const totalDays = Math.max(1, Math.round(totalMs / (1000 * 60 * 60 * 24)) || 10);
+  const elapsedDays = Math.min(totalDays, Math.max(0, Math.round(elapsedMs / (1000 * 60 * 60 * 24)) || 0));
+  const daysRemaining = Math.round(remainingMs / (1000 * 60 * 60 * 24)) || 0;
 
-  const timeBurnRate = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+  const timeBurnRate = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100) || 50));
   const expectedProgress = timeBurnRate;
 
   if (integration.status === 'evaluated') {
@@ -4964,7 +5006,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
             <i data-lucide="chevron-right" class="eval-action-arrow"></i>
           </div>
           ${linkInfo.isValid ? `
-            <div style="margin-top: 8px; width: 100%;">
+            <div style="width: 100%;">
               <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="${linkInfo.label}" onclick="event.stopPropagation()">
                 <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 13.5px; height: 13.5px;"></i>
                 <span>${linkInfo.isSharepoint ? 'Abrir SharePoint' : `Ver Sistema Web (${appShortName})`}</span>
