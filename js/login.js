@@ -716,6 +716,11 @@ if (typeof document !== 'undefined') {
       const form = document.getElementById('loginForm');
       if (form) form.addEventListener('submit', handleLoginSubmit);
 
+      const emailEl = document.getElementById('loginEmail');
+      const passEl = document.getElementById('loginPassword');
+      if (emailEl) emailEl.value = '';
+      if (passEl) passEl.value = '';
+
       renderDevChips();
       autoPullUsersFromSheets();
 
@@ -733,6 +738,10 @@ if (typeof document !== 'undefined') {
     initPullString();
     const form = document.getElementById('loginForm');
     if (form) form.addEventListener('submit', handleLoginSubmit);
+    const emailEl = document.getElementById('loginEmail');
+    const passEl = document.getElementById('loginPassword');
+    if (emailEl) emailEl.value = '';
+    if (passEl) passEl.value = '';
     renderDevChips();
     autoPullUsersFromSheets();
   }
