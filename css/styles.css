@@ -2672,6 +2672,104 @@ body {
   box-shadow: 0 4px 12px rgba(78, 101, 255, 0.25);
 }
 
+/* Bloques de Sistemas en Desarrollo para Móviles (Formato vertical y 100% responsivo) */
+.systems-mobile-cards {
+  display: none;
+}
+
+.sys-mobile-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sys-mobile-card:active {
+  transform: scale(0.99);
+  background: #FAFBFF;
+}
+
+.smc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.smc-identity {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+
+.smc-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.smc-title {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smc-code {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.smc-details-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E8F0;
+}
+
+.smc-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.smc-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.smc-val {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.smc-progress-section {
+  background: #F8FAFD;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid #EDF2F7;
+}
+
+.smc-actions-row {
+  padding-top: 4px;
+}
+
 /* ==========================================================================
    MODALS & OVERLAYS
    ========================================================================== */
@@ -2685,7 +2783,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 1000;
+  z-index: 100000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2694,6 +2792,17 @@ body {
 .modal-backdrop.show {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Ocultar completamente la barra flotante de menú cuando un modal esté abierto */
+body.modal-open .floating-sidebar,
+body:has(.modal-backdrop.show) .floating-sidebar,
+.modal-backdrop.show ~ .floating-sidebar {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateY(120px) !important;
 }
 
 .modal-card {
@@ -6259,6 +6368,12 @@ body {
     max-width: 100% !important;
   }
 
+  /* Separación segura de la Baraja de Proyectos en móviles para nunca solapar la curva */
+  .stacked-cards-container {
+    margin-bottom: 28px !important;
+    width: 100% !important;
+  }
+
   /* Gráficas Responsivas */
   .overview-chart-card .card-header {
     flex-direction: column !important;
@@ -6395,6 +6510,18 @@ body {
     gap: 12px !important;
   }
 
+  .systems-table-card .table-responsive {
+    display: none !important;
+  }
+
+  .systems-mobile-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+  }
+
   .table-responsive {
     width: 100% !important;
     max-width: 100% !important;
@@ -6441,12 +6568,13 @@ body {
     gap: 12px !important;
   }
 
-  /* Modales en Móviles (Ajuste Perfecto) */
+  /* Modales en Móviles (Ajuste Perfecto sin interferencias) */
   .modal-backdrop {
-    padding: 8px !important;
+    padding: 0 !important;
     display: flex !important;
     align-items: flex-end !important;
     justify-content: center !important;
+    z-index: 100000 !important;
   }
 
   .modal-card,
@@ -6456,14 +6584,15 @@ body {
   .modal-card-velocity-cal {
     width: 100% !important;
     max-width: 100% !important;
-    max-height: 92vh !important;
-    border-radius: 22px 22px 0 0 !important;
-    padding: 16px !important;
+    max-height: 88vh !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 16px)) 16px !important;
     margin: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .modal-header {
-    padding: 12px 14px !important;
+    padding: 14px 16px !important;
   }
 
   .modal-title {
@@ -6476,20 +6605,23 @@ body {
 
   .modal-body {
     padding: 12px 14px !important;
-    max-height: calc(92vh - 120px) !important;
+    max-height: calc(88vh - 130px) !important;
     overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .modal-footer {
-    padding: 12px 14px !important;
+    padding: 14px 14px 8px 14px !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100% !important;
   }
 
   .modal-footer .pill-btn {
     width: 100% !important;
     justify-content: center !important;
+    min-height: 44px !important;
+    font-size: 13.5px !important;
   }
 
   .form-row {

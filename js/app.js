@@ -757,7 +757,7 @@ function renderDeckFromList(appsList) {
   else if (bgCount === 2) step = 36;
 
   const activeTop = bgCount * step;
-  const containerHeight = activeTop + 185;
+  const containerHeight = activeTop + 245;
   deckContainer.style.height = `${containerHeight}px`;
 
   let html = '';
@@ -830,6 +830,15 @@ function renderDeckFromList(appsList) {
 
   deckContainer.innerHTML = html;
   if (window.lucide) lucide.createIcons();
+
+  // Asegurar que el contenedor de baraja nunca se solape con la sección inferior en móviles o pantallas táctiles
+  requestAnimationFrame(() => {
+    const activeCard = deckContainer.querySelector('.deck-tab-active');
+    if (activeCard) {
+      const actualH = activeCard.offsetHeight || 235;
+      deckContainer.style.height = `${activeTop + actualH + 20}px`;
+    }
+  });
 }
 
 // 2. Render Vertical Capsule Progress Bar
@@ -1596,6 +1605,83 @@ function renderSystemsTable(filterQuery = '') {
       </tr>
     `;
   }).join('');
+
+  // Renderizar también la vista adaptada en bloques verticales para móviles (100% responsive sin cortes)
+  const mobileCardsContainer = document.getElementById('systemsMobileCards');
+  if (mobileCardsContainer) {
+    mobileCardsContainer.innerHTML = filtered.map(app => {
+      const dev = getDeveloperById(app.devId);
+      const progress = calculateAppProgress(app);
+      
+      let statusClass = 'status-ontime';
+      let statusText = 'En Tiempo';
+      if (progress === 100) {
+        statusClass = 'status-done';
+        statusText = 'Desplegado';
+      } else if (app.status === 'risk') {
+        statusClass = 'status-risk';
+        statusText = 'En Riesgo';
+      } else if (app.status === 'delayed') {
+        statusClass = 'status-delayed';
+        statusText = 'Retrasado';
+      }
+
+      const currentPhase = app.phases.find(p => !p.completed) || { name: 'Completado' };
+
+      return `
+        <div class="sys-mobile-card" onclick="cycleStackedDeckByAppId('${app.id}')" title="Clic para enfocar en la curva de avance y tarjetas">
+          <div class="smc-header">
+            <div class="system-icon-box" style="background: ${app.iconColor}">
+              ${app.iconInitial}
+            </div>
+            <div class="smc-identity">
+              <div class="smc-title-row">
+                <span class="smc-title">${app.name}</span>
+                <span class="status-pill ${statusClass}">${statusText}</span>
+              </div>
+              <span class="smc-code">${app.code} · ${app.category}</span>
+            </div>
+          </div>
+
+          <div class="smc-details-row">
+            <div class="smc-detail-item">
+              <span class="smc-label">Líder Asignado</span>
+              ${app.isGroupProject ? `
+                <span class="smc-val" style="color: #2563EB; font-weight: 700; font-size: 12px;">👥 Equipo Grupal (4 Devs)</span>
+              ` : `
+                <div class="dev-cell" style="margin-top: 2px;">
+                  <img src="${dev.avatar}" alt="${dev.name}">
+                  <span class="smc-val">${dev.name}</span>
+                </div>
+              `}
+            </div>
+            <div class="smc-detail-item">
+              <span class="smc-label">Fase Actual</span>
+              <span class="smc-val" style="color: #475569; font-weight: 600; font-size: 12.5px;">${currentPhase.name}</span>
+            </div>
+          </div>
+
+          <div class="smc-progress-section">
+            <div class="progress-header-text">
+              <span>Avance Ponderado</span>
+              <strong>${progress}%</strong>
+            </div>
+            <div class="mini-bar-track">
+              <div class="mini-bar-fill" style="width: ${progress}%"></div>
+            </div>
+          </div>
+
+          <div class="smc-actions-row">
+            <button class="action-row-btn" onclick="event.stopPropagation(); openSystemDetailModal('${app.id}')" style="width: 100%; justify-content: center; padding: 10px 14px; font-size: 12.5px; border-radius: 12px;">
+              <i data-lucide="${isAdmin ? 'edit-3' : 'eye'}" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+              <span>${isAdmin ? 'Auditar Fases del Sistema' : 'Ver Fases del Sistema'}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    if (window.lucide) lucide.createIcons();
+  }
 }
 
 // ==========================================================================
@@ -2670,38 +2756,41 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
         }
       },
       interaction: {
-        mode: 'index',
+        mode: 'nearest',
+        axis: 'x',
         intersect: false
       },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1E232E',
+          position: 'nearest',
+          yAlign: 'bottom',
+          backgroundColor: 'rgba(15, 23, 42, 0.94)',
           titleColor: '#FFFFFF',
-          bodyColor: '#E2E8F0',
-          borderColor: '#334155',
+          bodyColor: '#F1F5F9',
+          borderColor: 'rgba(255, 255, 255, 0.15)',
           borderWidth: 1,
-          padding: 12,
-          cornerRadius: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-          filter: (item) => item.datasetIndex !== 0,
+          padding: 8,
+          cornerRadius: 10,
+          boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+          caretSize: 6,
+          titleFont: { family: 'Plus Jakarta Sans', size: 11, weight: '700' },
+          bodyFont: { family: 'Plus Jakarta Sans', size: 10.5, weight: '500' },
+          filter: (item) => item.datasetIndex === 1 || item.datasetIndex === 2,
           callbacks: {
             title: (items) => {
-              const devTitle = isAll ? 'Equipo STF' : (devObj ? devObj.name : 'Desarrollador');
+              const devTitle = isAll ? 'Equipo STF' : (devObj ? devObj.name.split(' ')[0] : 'Dev');
               return `${items[0].label} · ${devTitle}`;
             },
             label: (ctx) => {
               if (ctx.datasetIndex === 1) {
                 const diff = ctx.raw - targetBenchmark;
-                let status = diff > 0 ? ` (+${diff} sobre meta)` : (diff === 0 ? ' (Meta exacta)' : ` (${diff} bajo meta)`);
-                return `📦 Módulos Entregados: ${ctx.raw} mods${status}`;
+                const sign = diff >= 0 ? `+${diff}` : `${diff}`;
+                return `📦 ${ctx.raw} mods (${sign} meta)`;
               }
               if (ctx.datasetIndex === 2) {
                 const actualH = actualHours[ctx.dataIndex] || 0;
-                return `⏱️ Inversión Real: ${actualH} horas`;
-              }
-              if (ctx.datasetIndex === 3) {
-                return `🎯 Meta Benchmark: ${ctx.raw} mods`;
+                return `⏱️ Inversión: ${actualH}h`;
               }
               return '';
             }
@@ -5720,6 +5809,29 @@ function initApp() {
   // Settings Actions
   document.getElementById('btnDownloadBackup')?.addEventListener('click', downloadFullBackupJSON);
   document.getElementById('btnResetFactoryData')?.addEventListener('click', resetFactoryData);
+
+  // Sincronizador de modales abiertos: oculta la barra flotante al abrir cualquier modal en móviles
+  function syncModalOpenState() {
+    const hasOpenModal = !!document.querySelector('.modal-backdrop.show');
+    if (hasOpenModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  }
+
+  // Observador de cambios en el DOM para detectar modales abiertos/cerrados instantáneamente
+  const modalObserver = new MutationObserver(() => {
+    syncModalOpenState();
+  });
+  modalObserver.observe(document.body, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ['class']
+  });
+
+  // Ejecutar verificación inicial
+  syncModalOpenState();
 }
 
 if (document.readyState === 'loading') {
