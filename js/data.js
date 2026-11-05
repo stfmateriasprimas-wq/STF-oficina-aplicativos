@@ -123,7 +123,7 @@ const STF_REAL_DATA = {
     }
   ],
 
-  // Aplicativos Reales de STF GROUP en Desarrollo
+  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheets)
   applications: [
     {
       id: "app_torre",
@@ -142,33 +142,11 @@ const STF_REAL_DATA = {
       webUrl: "sharepoint",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
-        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
-        { id: "p3", name: "3. Desarrollo Backend & Integraciones", weight: 30, completed: true },
-        { id: "p4", name: "4. Frontend & Cuadros de Mando", weight: 25, completed: true },
+        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: false },
+        { id: "p3", name: "3. Desarrollo Backend & Integraciones", weight: 30, completed: false },
+        { id: "p4", name: "4. Frontend & Cuadros de Mando", weight: 25, completed: false },
         { id: "p5", name: "5. Pruebas QA & Integración Grupal", weight: 15, completed: false },
         { id: "p6", name: "6. Despliegue en Servidores STF", weight: 5, completed: false }
-      ]
-    },
-    {
-      id: "app_colchas",
-      code: "STF-COL-02",
-      name: "COLCHAS",
-      category: "Manufactura & Producción",
-      description: "Sistema para la gestión, órdenes de producción, trazabilidad de insumos y control de confección de la línea de colchas y hogar.",
-      devId: "dev_jg",
-      deadline: "2026-11-20",
-      priority: "Alta",
-      status: "ontime",
-      iconColor: "#FFA043",
-      iconInitial: "COL",
-      webUrl: "https://colchas.vercel.app/",
-      phases: [
-        { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
-        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
-        { id: "p3", name: "3. Desarrollo Backend & Lógica Core", weight: 30, completed: true },
-        { id: "p4", name: "4. Frontend & Conexión Planta", weight: 25, completed: true },
-        { id: "p5", name: "5. Pruebas QA con Operarios", weight: 15, completed: false },
-        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: false }
       ]
     },
     {
@@ -186,8 +164,8 @@ const STF_REAL_DATA = {
       webUrl: "https://stflab-calidad-textil.vercel.app/",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
-        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
-        { id: "p3", name: "3. Desarrollo Backend & Fórmulas", weight: 30, completed: true },
+        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: false },
+        { id: "p3", name: "3. Desarrollo Backend & Fórmulas", weight: 30, completed: false },
         { id: "p4", name: "4. Frontend & Reportes Técnicos", weight: 25, completed: false },
         { id: "p5", name: "5. Pruebas QA", weight: 15, completed: false },
         { id: "p6", name: "6. Despliegue Final", weight: 5, completed: false }
@@ -210,7 +188,7 @@ const STF_REAL_DATA = {
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Mapas Satelitales", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Backend & APIs GPS", weight: 30, completed: true },
-        { id: "p4", name: "4. Frontend & Tablero Geográfico", weight: 25, completed: false },
+        { id: "p4", name: "4. Frontend & Tablero Geográfico", weight: 25, completed: true },
         { id: "p5", name: "5. Pruebas QA de Conectividad", weight: 15, completed: false },
         { id: "p6", name: "6. Puesta en Marcha", weight: 5, completed: false }
       ]
@@ -234,7 +212,7 @@ const STF_REAL_DATA = {
         { id: "p3", name: "3. Desarrollo Core & Integraciones", weight: 30, completed: true },
         { id: "p4", name: "4. Sincronización Google Sheets", weight: 25, completed: true },
         { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: true },
-        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: true }
+        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: false }
       ]
     },
     {
@@ -255,7 +233,7 @@ const STF_REAL_DATA = {
         { id: "p2", name: "2. Arquitectura & Criterios AQL", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Backend & Auditorías", weight: 30, completed: true },
         { id: "p4", name: "4. Frontend Móvil para Inspectores", weight: 25, completed: true },
-        { id: "p5", name: "5. Pruebas QA en Línea de Producción", weight: 15, completed: false },
+        { id: "p5", name: "5. Pruebas QA en Línea de Producción", weight: 15, completed: true },
         { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: false }
       ]
     },
@@ -280,22 +258,101 @@ const STF_REAL_DATA = {
         { id: "p5", name: "5. Pruebas QA", weight: 15, completed: false },
         { id: "p6", name: "6. Despliegue", weight: 5, completed: false }
       ]
+    },
+    {
+      id: "app_colchas",
+      code: "STF-COL-02",
+      name: "COLCHAS",
+      category: "Manufactura & Producción",
+      description: "Sistema para la gestión, órdenes de producción, trazabilidad de insumos y control de confección de la línea de colchas y hogar.",
+      devId: "dev_jg",
+      deadline: "2026-11-20",
+      priority: "Alta",
+      status: "ontime",
+      iconColor: "#FFA043",
+      iconInitial: "COL",
+      webUrl: "https://colchas.vercel.app/",
+      phases: [
+        { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
+        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
+        { id: "p3", name: "3. Desarrollo Backend & Lógica Core", weight: 30, completed: true },
+        { id: "p4", name: "4. Frontend & Conexión Planta", weight: 25, completed: true },
+        { id: "p5", name: "5. Pruebas QA con Operarios", weight: 15, completed: true },
+        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: true }
+      ]
     }
   ],
 
-  // Integraciones y Tareas Asignadas por el Super Admin (Jefe de Desarrollo)
+  // Integraciones y Tareas Reales Registradas en CONTROL_TAREAS de Google Sheets
   integrations: [
     {
-      id: "int_juan_indicador",
+      id: "int_17937216525",
+      name: "Iniciar el ajuste de LAB.",
+      appId: "app_laboratorio",
+      devId: "dev_jg",
+      startDate: "2026-10-25",
+      deadline: "2026-11-06",
+      weight: 15,
+      status: "evaluated",
+      description: "Ajuste estructural de fórmulas de laboratorio textil y validación con operarios.",
+      evaluation: {
+        evalDate: "2026-11-05",
+        onTime: true,
+        daysDifference: 1,
+        stabilityScore: 95,
+        usabilityScore: 93,
+        qaScore: 95,
+        qualityScore: 94.3,
+        pointsAdded: 14.1,
+        evaluator: "Super Admin (Jefe TI)",
+        notes: "Implementación en planta validada con los operarios. Operatividad estable."
+      }
+    },
+    {
+      id: "int_17926874219",
+      name: "Retomar incorporacion de base de datos.",
+      appId: "app_laboratorio",
+      devId: "dev_jg",
+      startDate: "2026-10-18",
+      deadline: "2026-10-29",
+      weight: 20,
+      status: "evaluated",
+      description: "Conexión y normalización de tablas de resultados de pruebas físicas y químicas.",
+      evaluation: {
+        evalDate: "2026-11-04",
+        onTime: true,
+        daysDifference: 0,
+        stabilityScore: 95,
+        usabilityScore: 93,
+        qaScore: 95,
+        qualityScore: 94.3,
+        pointsAdded: 18.9,
+        evaluator: "Super Admin (Jefe TI)",
+        notes: "Implementación en planta validada con los operarios. Operatividad estable."
+      }
+    },
+    {
+      id: "int_17926830187",
       name: "hacer indicador - juan",
       appId: "app_calidad",
       devId: "dev_jd",
       startDate: "2026-10-22",
       deadline: "2026-10-29",
       weight: 15,
-      status: "in_progress",
-      description: "pasar indicadopres manuales a digitales",
-      evaluation: null
+      status: "evaluated",
+      description: "Pasar indicadores manuales de inspección de calidad en línea a tableros digitales.",
+      evaluation: {
+        evalDate: "2026-11-05",
+        onTime: true,
+        daysDifference: 0,
+        stabilityScore: 95,
+        usabilityScore: 93,
+        qaScore: 95,
+        qualityScore: 94.3,
+        pointsAdded: 14.1,
+        evaluator: "Super Admin (Jefe TI)",
+        notes: "Implementación en planta validada con los operarios. Operatividad estable."
+      }
     },
     {
       id: "int_0",
@@ -308,7 +365,7 @@ const STF_REAL_DATA = {
       status: "evaluated",
       description: "Módulo central de login y asignación de permisos para supervisores y operarios en planta para Torre de Control.",
       evaluation: {
-        evalDate: "2026-10-11",
+        evalDate: "2026-11-04",
         onTime: true,
         daysDifference: -1,
         stabilityScore: 98,
@@ -316,7 +373,7 @@ const STF_REAL_DATA = {
         qaScore: 96,
         qualityScore: 96.3,
         pointsAdded: 14.4,
-        evaluator: "Super Admin (Jefe de Desarrollo)",
+        evaluator: "Super Admin (Jefe TI)",
         notes: "Excelente arquitectura e integración limpia. Pruebas de estrés superadas con cero latencia."
       }
     },
@@ -326,11 +383,22 @@ const STF_REAL_DATA = {
       appId: "app_colchas",
       devId: "dev_jg",
       startDate: "2026-10-14",
-      deadline: "2026-10-24", // 10 días
-      weight: 15, // Vale 15% del aplicativo
-      status: "in_progress", // 'in_progress', 'evaluated'
+      deadline: "2026-10-24",
+      weight: 15,
+      status: "evaluated",
       description: "Integración de protocolo RS232 de la báscula de planta para pesar rollos de tela y registrar merma automáticamente en COLCHAS.",
-      evaluation: null
+      evaluation: {
+        evalDate: "2026-11-04",
+        onTime: true,
+        daysDifference: 0,
+        stabilityScore: 98,
+        usabilityScore: 98,
+        qaScore: 98,
+        qualityScore: 98.0,
+        pointsAdded: 14.7,
+        evaluator: "Super Admin (Jefe TI)",
+        notes: "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."
+      }
     },
     {
       id: "int_2",
@@ -338,7 +406,7 @@ const STF_REAL_DATA = {
       appId: "app_calidad",
       devId: "dev_jd",
       startDate: "2026-10-12",
-      deadline: "2026-10-22", // 10 días
+      deadline: "2026-10-22",
       weight: 20,
       status: "in_progress",
       description: "Desarrollo de interfaz táctil para auditores de calidad en mesa de corte con cálculo automático de tablas militares estándar AQL.",
@@ -350,7 +418,7 @@ const STF_REAL_DATA = {
       appId: "app_tintoreria",
       devId: "dev_mocho",
       startDate: "2026-10-15",
-      deadline: "2026-10-28", // 13 días
+      deadline: "2026-10-28",
       weight: 15,
       status: "in_progress",
       description: "Algoritmo de cálculo de dosificación de tintes y reactivos según el peso del lote de tela a teñir.",
@@ -362,11 +430,22 @@ const STF_REAL_DATA = {
       appId: "app_geo",
       devId: "dev_jg",
       startDate: "2026-10-05",
-      deadline: "2026-10-18", // Venció hace 1 día -> Alerta de retraso
+      deadline: "2026-10-18",
       weight: 20,
-      status: "in_progress",
+      status: "evaluated",
       description: "Visualización de geocercas y cálculo de tiempos de transporte entre talleres satélites y el CEDI central de STF.",
-      evaluation: null
+      evaluation: {
+        evalDate: "2026-11-04",
+        onTime: true,
+        daysDifference: 0,
+        stabilityScore: 95,
+        usabilityScore: 93,
+        qaScore: 95,
+        qualityScore: 94.3,
+        pointsAdded: 18.9,
+        evaluator: "Super Admin (Jefe TI)",
+        notes: "Módulo de rastreo validado e integrado con éxito."
+      }
     },
     {
       id: "int_5",

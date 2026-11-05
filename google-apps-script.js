@@ -1,19 +1,19 @@
 /**
  * ============================================================================
- * STF GROUP · BASE DE DATOS EJECUTIVA EN GOOGLE SHEETS
- * Arquitectura Optimizada en 4 Hojas Maestras Conectadas en Tiempo Real
+ * STF GROUP · BASE DE DATOS EJECUTIVA EN GOOGLE SHEETS (v3.5 PRODUCTION)
+ * Arquitectura Estabilizada en 5 Hojas Maestras Conectadas en Tiempo Real
  * ============================================================================
- * 
- * ESTRUCTURA PROFESIONAL CONSOLIDADA:
- * 1. 👥 USUARIOS           -> Directorio de Cuentas, Roles y Envío de Correos
- * 2. 📊 PORTAFOLIO_SISTEMAS -> Cockpit Ejecutivo de los 6 Macro-Sistemas Industriales
- * 3. 📋 CONTROL_TAREAS      -> Fusión de Tareas + Entregables + Auditorías de Calidad
- * 4. 📜 BITACORA_HISTORIAL  -> Trazabilidad y Pista de Auditoría Cronológica
- * 
+ *
+ * ESTRUCTURA OFICIAL DE LAS 5 HOJAS MAESTRAS (100% ALINEADA A TABLAS NATIVAS):
+ * 1. 👥 USUARIOS            (6 Columnas A:F) -> Credenciales, Roles, Correos y Acceso
+ * 2. 📊 PORTAFOLIO_SISTEMAS (9 Columnas A:I) -> Los 7 Sistemas Reales, Fases, Avance % y SLA
+ * 3. 🌐 SISTEMAS_WEB        (4 Columnas A:D) -> Enlaces Web / SharePoint y Estado en Planta
+ * 4. 📋 CONTROL_TAREAS      (10 Columnas A:J)-> Integraciones, Tiempos, Calidad QA y Dictamen
+ * 5. 📜 BITACORA_HISTORIAL  (7 Columnas A:G) -> Trazabilidad Completa de Todos los Procesos
+ *
  * ============================================================================
  */
 
-// Nombres canónicos de las 5 pestañas consolidadas
 var TABS = {
   USUARIOS: "USUARIOS",
   SISTEMAS: "PORTAFOLIO_SISTEMAS",
@@ -22,185 +22,376 @@ var TABS = {
   BITACORA: "BITACORA_HISTORIAL"
 };
 
+var HEADERS = {
+  USUARIOS: [
+    "ID",
+    "Usuario_Logueo",
+    "Rol",
+    "Correo",
+    "Nombre_Completo",
+    "Estado"
+  ],
+  SISTEMAS: [
+    "Codigo",
+    "Nombre_Aplicativo",
+    "Area_Planta",
+    "Lider_Responsable",
+    "Fase_Actual",
+    "Avance_%",
+    "Estado_SLA",
+    "Fecha_Limite",
+    "Ultima_Actualizacion"
+  ],
+  SISTEMAS_WEB: [
+    "Desarrollador",
+    "Sistema_a_Cargo",
+    "URL_Sistema_Web",
+    "Estado"
+  ],
+  TAREAS: [
+    "ID_Tarea",
+    "Tarea",
+    "Aplicativo",
+    "Desarrollador",
+    "Ponderacion_%",
+    "Fecha_Entrega",
+    "Estado",
+    "Evaluacion_Calidad",
+    "Fecha_Registro",
+    "Observaciones_Auditoria"
+  ],
+  BITACORA: [
+    "Timestamp",
+    "Fecha_Hora",
+    "Desarrollador",
+    "Tipo_Evento",
+    "Aplicativo",
+    "Descripcion",
+    "Version"
+  ]
+};
+
 /**
  * Menú personalizado automático en la barra superior de Google Sheets
  */
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
-    .addItem('🚀 Reorganizar Base de Datos (Modo Ejecutivo 5 Hojas)', 'setupProfessionalDatabase')
-    .addItem('🌐 Inicializar / Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
+    .addItem('🚀 Estabilizar & Reparar Base de Datos (5 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
 }
 
 function setupSistemasWebSheetDirect() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  setupSistemasWebSheet(ss);
+  setupSistemasWebSheet(ss, true);
   cleanAndOrderSheets(ss);
-  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña SISTEMAS_WEB creada y formateada con éxito.', 'STF GROUP TI', 6);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña SISTEMAS_WEB reparada y actualizada con éxito.', 'STF GROUP TI', 6);
 }
 
 /**
- * REORGANIZADOR MAESTRO: Transforma la hoja en un modelo de base de datos
- * ejecutivo de 5 pestañas limpias, estéticas y con alto estándar corporativo.
+ * ESTABILIZADOR MAESTRO: Repara encabezados corridos (Columna 1 / Columna 2),
+ * corrige filas desplazadas en BITACORA_HISTORIAL y sincroniza los 7 sistemas reales.
  */
 function setupProfessionalDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  // 1. Pestaña USUARIOS
+
+  // 1. Pestaña USUARIOS (6 Columnas A:F)
   setupUsuariosSheet(ss);
 
-  // 2. Pestaña PORTAFOLIO_SISTEMAS
-  setupSistemasSheet(ss);
+  // 2. Pestaña PORTAFOLIO_SISTEMAS (9 Columnas A:I)
+  setupSistemasSheet(ss, true);
 
-  // 3. Pestaña SISTEMAS_WEB (URLs publicadas y asignación de desarrolladores)
-  setupSistemasWebSheet(ss);
+  // 3. Pestaña SISTEMAS_WEB (4 Columnas A:D)
+  setupSistemasWebSheet(ss, true);
 
-  // 4. Pestaña CONTROL_TAREAS (Fusión Tareas + Auditorías de Calidad)
+  // 4. Pestaña CONTROL_TAREAS (10 Columnas A:J)
   setupTareasSheet(ss);
 
-  // 5. Pestaña BITACORA_HISTORIAL
+  // 5. Pestaña BITACORA_HISTORIAL (7 Columnas A:G con auto-reparación de filas)
   setupBitacoraSheet(ss);
 
-  // 6. Ordenar las 5 pestañas al frente y archivar hojas viejas redundantes
+  // 6. Ordenar las 5 pestañas al frente
   cleanAndOrderSheets(ss);
 
-  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos reorganizada con éxito en 5 pestañas ejecutivas (incluye SISTEMAS_WEB).', 'STF GROUP TI', 6);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 5 hojas maestras (7 Sistemas Oficiales).', 'STF GROUP TI', 7);
 }
 
 /**
- * 1. Configurar Hoja USUARIOS
+ * Garantiza que la Fila 1 tenga exactamente los encabezados oficiales sin "Columna 1 / Columna 2"
+ */
+function ensureExactHeaders(sheet, expectedHeaders) {
+  var numCols = expectedHeaders.length;
+  sheet.getRange(1, 1, 1, numCols).setValues([expectedHeaders]);
+
+  // Si la hoja tenía columnas extra con "Columna 1" o vacías a la derecha, limpiar su encabezado
+  var maxCol = sheet.getLastColumn();
+  if (maxCol > numCols) {
+    for (var c = numCols + 1; c <= maxCol; c++) {
+      var val = String(sheet.getRange(1, c).getValue() || "").trim();
+      if (val.indexOf("Columna") === 0 || val === "") {
+        sheet.getRange(1, c).clearContent();
+      }
+    }
+  }
+}
+
+/**
+ * 1. Configurar y Estabilizar Hoja USUARIOS (6 Columnas A:F)
  */
 function setupUsuariosSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.USUARIOS, ["Usuarios"]);
-  if (s.getLastRow() === 0) {
-    s.appendRow(["ID", "Usuario_Logueo", "Rol", "Correo", "Nombre_Completo", "Estado"]);
-    s.appendRow(["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman", "ACTIVO"]);
-    s.appendRow(["1107047649", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David", "ACTIVO"]);
-    s.appendRow(["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar", "ACTIVO"]);
-    s.appendRow(["1010159672", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)", "ACTIVO"]);
-    s.appendRow(["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN"]);
+  ensureExactHeaders(s, HEADERS.USUARIOS);
+
+  if (s.getLastRow() <= 1) {
+    var defaultUsers = [
+      ["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman", "ACTIVO"],
+      ["1107047649", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David", "ACTIVO"],
+      ["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar", "ACTIVO"],
+      ["1010159672", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)", "ACTIVO"],
+      ["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN"]
+    ];
+    s.getRange(2, 1, defaultUsers.length, 6).setValues(defaultUsers);
+  } else {
+    // Asegurar que todas las filas existentes tengan Nombre_Completo (Col E) y Estado (Col F)
+    var rows = s.getDataRange().getValues();
+    for (var r = 1; r < rows.length; r++) {
+      var uLog = String(rows[r][1] || "").toLowerCase().trim();
+      var role = String(rows[r][2] || "desarrollador").trim();
+      var name = String(rows[r][4] || "").trim();
+      var state = String(rows[r][5] || "").trim();
+
+      if (!name) {
+        if (uLog.indexOf("jose") !== -1) name = "Jose Guzman";
+        else if (uLog.indexOf("juan") !== -1) name = "Juan David";
+        else if (uLog.indexOf("esteban") !== -1) name = "Esteban Escobar";
+        else if (uLog.indexOf("jhon") !== -1 || uLog.indexOf("mocho") !== -1) name = "Jhon Eyder (Mocho)";
+        else if (uLog.indexOf("ediaz") !== -1) name = "Edwin Diaz";
+        else name = uLog;
+        s.getRange(r + 1, 5).setValue(name);
+      }
+      if (!state) {
+        s.getRange(r + 1, 6).setValue(role.toLowerCase() === "admin" ? "ADMIN" : "ACTIVO");
+      }
+    }
   }
-  formatCorporateSheet(s, "#0F172A", [120, 160, 130, 240, 180, 100]); // Slate Dark
+  formatCorporateSheet(s, "#0F172A", [120, 160, 130, 240, 180, 100]);
 }
 
 /**
- * 2. Configurar Hoja PORTAFOLIO_SISTEMAS
+ * 2. Configurar y Estabilizar Hoja PORTAFOLIO_SISTEMAS (9 Columnas A:I)
+ * Orden Oficial:
+ * - En Construcción (4): TORRE DE CONTROL, LABORATORIO, GEO UBICACION TALLERES, OFICINA - APLICATIVOS
+ * - En Producción (3): CALIDAD, TINTORERIA, COLCHAS
  */
-function setupSistemasSheet(ss) {
+function setupSistemasSheet(ss, forceRealData) {
   var s = getOrCreateSheetByName(ss, TABS.SISTEMAS, ["Estado_Sistemas", "Avances_Fases"]);
-  if (s.getLastRow() === 0) {
-    s.appendRow([
-      "Codigo",
-      "Nombre_Aplicativo",
-      "Area_Planta",
-      "Lider_Responsable",
-      "Fase_Actual",
-      "Avance_%",
-      "Estado_SLA",
-      "Fecha_Limite",
-      "Ultima_Actualizacion"
-    ]);
-    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
-    s.appendRow(["STF-TC-01", "TORRE DE CONTROL", "Control Central TI", "Equipo Grupal (4 Devs)", "Fase 2: Arquitectura & Diseño UI/UX", 15, "En Tiempo", "2026-12-15", nowStr]);
-    s.appendRow(["STF-COL-02", "COLCHAS", "Manufactura & Producción", "Jose Guzman", "Fase 6: Desplegado en Producción", 100, "En Producción", "2026-10-18", nowStr]);
-    s.appendRow(["STF-LAB-03", "LABORATORIO", "Control Textil", "Jose Guzman", "Fase 4: Frontend & Reportes Técnicos", 55, "En Tiempo", "2026-11-30", nowStr]);
-    s.appendRow(["STF-GEO-04", "GEO UBICACION TALLERES", "Logística & Talleres", "Jose Guzman", "Fase 4: Frontend & Tablero Geográfico", 55, "En Riesgo", "2026-11-15", nowStr]);
-    s.appendRow(["STF-CAL-05", "CALIDAD & AUDITORIA", "Auditoría en Línea", "Juan David", "Fase 5: Pruebas QA & AQL en Planta", 70, "En Tiempo", "2026-11-20", nowStr]);
-    s.appendRow(["STF-TIN-06", "TINTORERIA INDUSTRIAL", "Planta Tintorería", "Esteban Escobar", "Fase 4: Integración de Recetas & PLC", 60, "En Tiempo", "2026-12-05", nowStr]);
+  ensureExactHeaders(s, HEADERS.SISTEMAS);
+
+  var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+  var officialSystems = [
+    ["STF-TC-01", "TORRE DE CONTROL", "Desarrollo Grupal", "Equipo Grupal (4 Devs)", "2. Arquitectura & Diseño UI/UX", 10, "En Construcción", "2026-12-15", nowStr],
+    ["STF-LAB-03", "LABORATORIO", "Control Textil", "Jose Guzman", "2. Arquitectura & Diseño UI/UX", 10, "En Construcción", "2026-11-30", nowStr],
+    ["STF-GEO-04", "GEO UBICACION TALLERES", "Logística & Talleres", "Jose Guzman", "5. Pruebas QA de Conectividad", 80, "En Riesgo", "2026-11-15", nowStr],
+    ["STF-OF-00", "OFICINA - APLICATIVOS", "Gestión TI & Control", "Jose Guzman", "6. Salida en Vivo", 95, "En Construcción", "2026-12-30", nowStr],
+    ["STF-CAL-05", "CALIDAD", "Aseguramiento de Calidad", "Juan David", "6. Salida en Vivo", 95, "En Producción", "2026-11-25", nowStr],
+    ["STF-TIN-06", "TINTORERIA", "Planta Textil", "Jhon Eyder (Mocho)", "4. Frontend para Operarios de Planta", 55, "En Producción", "2026-12-05", nowStr],
+    ["STF-COL-02", "COLCHAS", "Manufactura & Producción", "Jose Guzman", "6. Salida en Vivo", 100, "En Producción", "2026-11-20", nowStr]
+  ];
+
+  if (forceRealData || s.getLastRow() <= 1) {
+    var lastR = s.getLastRow();
+    if (lastR > 1) {
+      s.getRange(2, 1, lastR - 1, Math.max(9, s.getLastColumn())).clearContent();
+    }
+    s.getRange(2, 1, officialSystems.length, 9).setValues(officialSystems);
   }
-  formatCorporateSheet(s, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]); // Indigo Navy
+  formatCorporateSheet(s, "#1E1B4B", [110, 210, 175, 175, 250, 95, 130, 115, 155]);
 }
 
 /**
- * 3. Configurar Hoja SISTEMAS_WEB
- * Estructura solicitada: Nombre del desarrollador, sistemas que tiene a cargo y la URL de cada sistema.
+ * 3. Configurar y Estabilizar Hoja SISTEMAS_WEB (4 Columnas A:D)
+ * Corrige "Columna 1..4" en Fila 1, elimina encabezados duplicados en Fila 2
+ * y sincroniza el estado real de los 7 sistemas.
  */
-function setupSistemasWebSheet(ss) {
+function setupSistemasWebSheet(ss, forceClean) {
   var s = getOrCreateSheetByName(ss, TABS.SISTEMAS_WEB, ["SISTEMAS_WEB", "Sistemas_Web", "Urls_Web", "SISTEMAS_PUBLICADOS"]);
-  
-  // Preservar datos si la hoja ya contiene filas del usuario
-  if (s.getLastRow() === 0) {
-    s.appendRow([
-      "Desarrollador",
-      "Sistema_a_Cargo",
-      "URL_Sistema_Web",
-      "Estado"
-    ]);
 
-    s.appendRow(["Jose Guzman", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
-    s.appendRow(["Jose Guzman", "COLCHAS", "https://colchas.vercel.app/", "En Producción"]);
-    s.appendRow(["Jose Guzman", "LABORATORIO", "https://stflab-calidad-textil.vercel.app/", "En Desarrollo"]);
-    s.appendRow(["Jose Guzman", "GEO UBICACION TALLERES", "https://stf-rastreo-calidad.vercel.app/", "En Desarrollo"]);
-    s.appendRow(["Jose Guzman", "OFICINA - APLICATIVOS", "https://stf-oficina-aplicativos.vercel.app/", "En Desarrollo"]);
-    s.appendRow(["Juan David", "CALIDAD", "", "En Desarrollo"]);
-    s.appendRow(["Juan David", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
-    s.appendRow(["Jhon Eyder (Mocho)", "TINTORERIA", "", "En Desarrollo"]);
-    s.appendRow(["Jhon Eyder (Mocho)", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
-    s.appendRow(["Esteban Escobar", "TORRE DE CONTROL", "sharepoint", "En Desarrollo"]);
-
-    formatCorporateSheet(s, "#1E3A8A", [220, 260, 340, 140]); // Royal Blue
+  // Preservar URLs personalizadas que el usuario haya ingresado
+  var customUrls = {};
+  if (s.getLastRow() > 1) {
+    var existingData = s.getDataRange().getValues();
+    for (var i = 1; i < existingData.length; i++) {
+      var sysName = String(existingData[i][1] || "").trim().toUpperCase();
+      var urlVal = String(existingData[i][2] || "").trim();
+      if (sysName && sysName !== "SISTEMA_A_CARGO" && urlVal && urlVal.toLowerCase() !== "url_sistema_web") {
+        customUrls[sysName] = urlVal;
+      }
+    }
   }
+
+  // Asegurar encabezados exactos en Fila 1 (elimina Columna 1, Columna 2, Columna 3, Columna 4)
+  ensureExactHeaders(s, HEADERS.SISTEMAS_WEB);
+
+  var officialWebRows = [
+    ["Equipo Grupal (4 Devs)", "TORRE DE CONTROL", customUrls["TORRE DE CONTROL"] || "sharepoint", "En Construcción"],
+    ["Jose Guzman", "LABORATORIO", customUrls["LABORATORIO"] || "https://stflab-calidad-textil.vercel.app/", "En Construcción"],
+    ["Jose Guzman", "GEO UBICACION TALLERES", customUrls["GEO UBICACION TALLERES"] || "https://stf-rastreo-calidad.vercel.app/", "En Construcción"],
+    ["Jose Guzman", "OFICINA - APLICATIVOS", customUrls["OFICINA - APLICATIVOS"] || "https://stf-oficina-aplicativos.vercel.app/", "En Construcción"],
+    ["Juan David", "CALIDAD", customUrls["CALIDAD"] || "", "En Producción"],
+    ["Jhon Eyder (Mocho)", "TINTORERIA", customUrls["TINTORERIA"] || "", "En Producción"],
+    ["Jose Guzman", "COLCHAS", customUrls["COLCHAS"] || "https://colchas.vercel.app/", "En Producción"]
+  ];
+
+  var lastR = s.getLastRow();
+  if (lastR > 1) {
+    s.getRange(2, 1, lastR - 1, Math.max(4, s.getLastColumn())).clearContent();
+    if (lastR > officialWebRows.length + 1) {
+      try {
+        s.deleteRows(officialWebRows.length + 2, lastR - (officialWebRows.length + 1));
+      } catch (e) {}
+    }
+  }
+  s.getRange(2, 1, officialWebRows.length, 4).setValues(officialWebRows);
+  formatCorporateSheet(s, "#14532D", [200, 230, 320, 140]);
 }
 
 /**
- * 3. Configurar Hoja CONTROL_TAREAS (Tareas + Entregables + Auditorías en una sola fila)
+ * 4. Configurar y Estabilizar Hoja CONTROL_TAREAS (10 Columnas A:J compatible con Tabla_1)
+ * Reemplaza "Columna 2" en J1 por "Observaciones_Auditoria" y normaliza los estados.
  */
 function setupTareasSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.TAREAS, ["Tareas_Integraciones", "Auditorias_Calidad", "Efectividad_Calidad"]);
-  if (s.getLastRow() === 0) {
-    s.appendRow([
-      "ID_Tarea",
-      "Tarea",
-      "Aplicativo",
-      "Desarrollador",
-      "Peso_%",
-      "Fecha_Entrega",
-      "Estado",
-      "Calidad_QA",
-      "Puntos_Sumados",
-      "Fecha_Auditoria",
-      "Dictamen_Evaluador"
-    ]);
-    var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
-    s.appendRow(["int_05", "Iniciar el ajuste de LAB.", "LABORATORIO", "Jose Guzman", 15, "2026-11-06", "En Progreso", "Pendiente", "0%", "-", "En curso - Ritmo óptimo"]);
-    s.appendRow(["int_04", "Retomar incorporacion de base de datos.", "LABORATORIO", "Jose Guzman", 20, "2026-10-29", "En Riesgo", "Pendiente", "0%", "-", "Desfase detectado en planta"]);
-    s.appendRow(["int_03", "Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0%", "+14.7%", "2026-10-25", "Auditada & Aprobada por Jefatura TI"]);
-    s.appendRow(["int_02", "Módulo GPS & Trazabilidad de Talleres Satélites", "GEO UBICACION TALLERES", "Jose Guzman", 20, "2026-10-18", "En Riesgo", "Pendiente", "0%", "-", "Desfase acumulado"]);
-    s.appendRow(["int_01", "Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3%", "+14.4%", "2026-10-13", "Auditada & Aprobada por Jefatura TI"]);
+  ensureExactHeaders(s, HEADERS.TAREAS);
+
+  if (s.getLastRow() <= 1) {
+    var seedTasks = [
+      ["int_17937216525", "Iniciar el ajuste de LAB.", "LABORATORIO", "Jose Guzman", 15, "2026-11-06", "Auditada", "94.3% (+14.1%)", "2026-11-05 06:17:10", "Implementación en planta validada con los operarios. Operatividad estable."],
+      ["int_17926874219", "Retomar incorporacion de base de datos.", "LABORATORIO", "Jose Guzman", 20, "2026-10-29", "Auditada", "94.3% (+18.9%)", "2026-11-04 06:34:01", "Implementación en planta validada con los operarios. Operatividad estable."],
+      ["int_17926830187", "hacer indicador - juan", "CALIDAD", "Juan David", 15, "2026-10-29", "Auditada", "94.3% (+14.1%)", "2026-11-05 06:16:53", "Implementación en planta validada con los operarios. Operatividad estable."],
+      ["int_0", "Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3% (+14.4%)", "2026-11-04 06:34:01", "Excelente arquitectura e integración limpia. Pruebas de estrés superadas."],
+      ["int_1", "Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0% (+14.7%)", "2026-11-04 06:34:01", "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."],
+      ["int_2", "Auditoría AQL Móvil & Muestreo en Planta", "CALIDAD", "Juan David", 20, "2026-10-22", "En Progreso", "Pendiente de Auditoría", "2026-11-04 06:34:01", "En desarrollo activo en planta de confección."],
+      ["int_3", "Automatización de Recetas Químicas en Barcas", "TINTORERIA", "Jhon Eyder (Mocho)", 15, "2026-10-28", "En Progreso", "Pendiente de Auditoría", "2026-11-04 06:34:01", "En desarrollo activo en planta de tintorería."],
+      ["int_4", "Módulo GPS & Trazabilidad de Talleres Satélites", "GEO UBICACION TALLERES", "Jose Guzman", 20, "2026-10-18", "Auditada", "94.3% (+18.9%)", "2026-11-04 06:34:01", "Módulo de rastreo validado e integrado con éxito."],
+      ["int_5", "Servicio de Notificaciones en Tiempo Real (WebSockets)", "TORRE DE CONTROL", "Esteban Escobar", 10, "2026-10-26", "En Progreso", "Pendiente de Auditoría", "2026-11-04 06:34:01", "En desarrollo activo para alertas en Torre de Control."]
+    ];
+    s.getRange(2, 1, seedTasks.length, 10).setValues(seedTasks);
+  } else {
+    // Normalizar filas existentes a las 10 columnas exactas sin perder ninguna tarea
+    var data = s.getDataRange().getValues();
+    var cleanedRows = [];
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var idT = String(row[0] || "").trim();
+      var nameT = String(row[1] || "").trim();
+      if (!idT && !nameT) continue;
+
+      var rawState = String(row[6] || "En Progreso").trim();
+      // Normalizar "Auditoría Oficializada" -> "Auditada" para evitar triángulos rojos en el dropdown de Tabla_1
+      var normState = (rawState.toLowerCase().indexOf("audit") !== -1 || rawState.toLowerCase().indexOf("aprob") !== -1)
+        ? "Auditada"
+        : (rawState.toLowerCase().indexOf("riesgo") !== -1 ? "En Riesgo" : "En Progreso");
+
+      var evalQual = String(row[7] || (normState === "Auditada" ? "95.0%" : "Pendiente de Auditoría")).trim();
+      var regDate = row[8] || Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+      var obs = String(row[9] || row[10] || (normState === "Auditada" ? "Implementación en planta validada con los operarios. Operatividad estable." : "Seguimiento activo en planta.")).trim();
+
+      cleanedRows.push([
+        idT,
+        nameT,
+        String(row[2] || "").trim(),
+        String(row[3] || "").trim(),
+        Number(row[4]) || 15,
+        row[5] || "",
+        normState,
+        evalQual,
+        regDate,
+        obs
+      ]);
+    }
+    if (cleanedRows.length > 0) {
+      s.getRange(2, 1, cleanedRows.length, 10).setValues(cleanedRows);
+      if (s.getLastColumn() > 10) {
+        s.getRange(1, 11, s.getLastRow(), s.getLastColumn() - 10).clearContent();
+      }
+    }
   }
-  formatCorporateSheet(s, "#064E3B", [100, 280, 180, 150, 80, 110, 110, 100, 110, 120, 240]); // Emerald Green
+  formatCorporateSheet(s, "#854D0E", [125, 250, 175, 145, 105, 110, 120, 145, 140, 260]);
 }
 
 /**
- * 4. Configurar Hoja BITACORA_HISTORIAL
+ * 5. Configurar y Auto-Reparar Hoja BITACORA_HISTORIAL (7 Columnas A:G compatible con Tabla_7)
+ * Repara automáticamente las filas históricas de 6 columnas corridas hacia la izquierda
+ * para eliminar el triángulo rojo de validación en la Columna B (Fecha_Hora).
  */
 function setupBitacoraSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.BITACORA, ["Bitacora_Cambios", "Ingresos_Cambios"]);
-  if (s.getLastRow() === 0) {
-    s.appendRow([
-      "Fecha_Hora",
-      "Usuario",
-      "Tipo_Evento",
-      "Aplicativo",
-      "Descripcion_Cambio",
-      "Impacto"
-    ]);
+  ensureExactHeaders(s, HEADERS.BITACORA);
+
+  var lastR = s.getLastRow();
+  if (lastR <= 1) {
     var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
-    s.appendRow([nowStr, "Super Admin", "SISTEMA_INICIALIZADO", "Global", "Base de datos reorganizada a modelo ejecutivo de 4 hojas maestras", "ALTO"]);
+    s.appendRow([nowStr, nowStr, "Edwin Diaz (Admin)", "BASE_DATOS_ESTABILIZADA", "Portafolio STF GROUP", "Base de datos oficial de 5 hojas verificada y lista para pruebas en planta.", "ALTO · v3.5"]);
+  } else {
+    // Detectar y reparar filas corridas (cuando Col B tiene el nombre del desarrollador en vez de la Fecha_Hora y Col G está vacía)
+    var bData = s.getRange(2, 1, lastR - 1, 7).getValues();
+    var repaired = false;
+    for (var i = 0; i < bData.length; i++) {
+      var r = bData[i];
+      var colA = r[0];
+      var colB = String(r[1] || "").trim();
+      var colG = String(r[6] || "").trim();
+
+      // Si Col B NO empieza por año (202...) y no es un objeto Date, entonces la fila está corrida 1 columna a la izquierda
+      var isColBDate = (r[1] instanceof Date) || /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(colB);
+      if (!isColBDate && colB !== "" && colG === "") {
+        var fixedDate = colA || Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+        bData[i] = [
+          fixedDate,                   // Col A: Timestamp
+          fixedDate,                   // Col B: Fecha_Hora (Fecha válida para Tabla_7)
+          r[1],                        // Col C: Desarrollador
+          r[2],                        // Col D: Tipo_Evento
+          r[3],                        // Col E: Aplicativo
+          r[4],                        // Col F: Descripcion
+          String(r[5] || "INFO") + " · v3.5" // Col G: Version / Impacto
+        ];
+        repaired = true;
+      }
+    }
+    if (repaired) {
+      s.getRange(2, 1, bData.length, 7).setValues(bData);
+    }
   }
-  formatCorporateSheet(s, "#1E293B", [160, 150, 180, 180, 320, 90]); // Slate Dark
+  formatCorporateSheet(s, "#14532D", [145, 145, 155, 175, 185, 340, 110]);
 }
 
 /**
- * Aplica estilos ejecutivos corporativos (tipografía, padding, colores, bordes suaves)
+ * Función auxiliar para insertar siempre 7 columnas exactas en BITACORA_HISTORIAL
+ */
+function appendBitacoraRow(ss, dateStr, usuario, tipoEvento, aplicativo, descripcion, impactoVersion) {
+  var sBit = getMasterSheet(ss, "BITACORA");
+  ensureExactHeaders(sBit, HEADERS.BITACORA);
+  sBit.appendRow([
+    dateStr,
+    dateStr,
+    usuario || "Sistema STF",
+    tipoEvento || "ACTUALIZACION",
+    aplicativo || "Portafolio STF",
+    descripcion || "",
+    impactoVersion || "INFO · v3.5"
+  ]);
+}
+
+/**
+ * Aplica estilos ejecutivos corporativos
  */
 function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
   sheet.setFrozenRows(1);
   var lastCol = Math.max(1, sheet.getLastColumn());
   var headerRange = sheet.getRange(1, 1, 1, lastCol);
-  
+
   headerRange
     .setBackground(headerHexColor)
     .setFontColor("#FFFFFF")
@@ -209,7 +400,7 @@ function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
     .setFontFamily("Arial")
     .setHorizontalAlignment("center")
     .setVerticalAlignment("middle");
-  
+
   sheet.setRowHeight(1, 32);
 
   if (columnWidths && Array.isArray(columnWidths)) {
@@ -225,8 +416,7 @@ function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
       .setFontFamily("Arial")
       .setFontSize(9.5)
       .setVerticalAlignment("middle");
-    
-    // Aplicar altura cómoda de fila
+
     for (var r = 2; r <= lastRow; r++) {
       sheet.setRowHeight(r, 24);
     }
@@ -246,7 +436,6 @@ function cleanAndOrderSheets(ss) {
     }
   }
 
-  // Ocultar hojas residuales que generaban ruido si existen
   var obsoleteSheets = [
     "Respuestas de formulario 1",
     "Avances_Fases",
@@ -259,7 +448,6 @@ function cleanAndOrderSheets(ss) {
   ];
   obsoleteSheets.forEach(function(name) {
     var obs = ss.getSheetByName(name);
-    // Solo ocultar si NO es una de las 5 maestras activas
     if (obs && orderedTabs.indexOf(name) === -1) {
       try {
         obs.hideSheet();
@@ -267,19 +455,14 @@ function cleanAndOrderSheets(ss) {
     }
   });
 
-  // Activar por defecto la primera pestaña
   var firstSheet = ss.getSheetByName(TABS.USUARIOS);
   if (firstSheet) ss.setActiveSheet(firstSheet);
 }
 
-/**
- * Obtiene la pestaña o la crea/renombra según aliases soportados
- */
 function getOrCreateSheetByName(ss, targetName, aliases) {
   var sheet = ss.getSheetByName(targetName);
   if (sheet) return sheet;
 
-  // Buscar si existe con alguno de sus nombres antiguos para reutilizarla
   if (aliases && Array.isArray(aliases)) {
     for (var a = 0; a < aliases.length; a++) {
       var aliasSheet = ss.getSheetByName(aliases[a]);
@@ -298,7 +481,6 @@ function getMasterSheet(ss, tabKey) {
   var sheet = ss.getSheetByName(preferredName);
   if (sheet) return sheet;
 
-  // Fallbacks universales
   if (tabKey === "USUARIOS") {
     return ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios") || ss.insertSheet(TABS.USUARIOS);
   } else if (tabKey === "SISTEMAS") {
@@ -325,7 +507,7 @@ function doGet(e) {
   if (action === "ping") {
     return createJsonResponse({
       status: "success",
-      message: "STF GROUP Executive Database Online (4 Master Sheets)",
+      message: "STF GROUP Executive Database Online (5 Master Sheets v3.5)",
       timestamp: new Date().toISOString(),
       sheets: Object.values(TABS)
     });
@@ -338,12 +520,15 @@ function doGet(e) {
     var usersList = [];
     if (uRows.length > 1) {
       for (var r = 1; r < uRows.length; r++) {
+        var uLogin = String(uRows[r][1] || "").trim();
+        if (!uLogin || uLogin.toLowerCase() === "usuario_logueo") continue;
         usersList.push({
           idPassword: String(uRows[r][0] || "").trim(),
-          username: String(uRows[r][1] || "").trim(),
-          role: String(uRows[r][2] || "").trim(),
+          username: uLogin,
+          role: String(uRows[r][2] || "desarrollador").trim(),
           email: String(uRows[r][3] || "").trim(),
-          name: uRows[r].length > 4 ? String(uRows[r][4] || "").trim() : ""
+          name: uRows[r].length > 4 ? String(uRows[r][4] || "").trim() : "",
+          status: uRows[r].length > 5 ? String(uRows[r][5] || "ACTIVO").trim() : "ACTIVO"
         });
       }
     }
@@ -354,7 +539,7 @@ function doGet(e) {
   if (action === "get_updates") {
     var sB = getMasterSheet(ss, "BITACORA");
     var bRows = sB.getDataRange().getValues();
-    var headers = bRows[0] || [];
+    var headers = HEADERS.BITACORA;
     var data = [];
 
     for (var i = bRows.length - 1; i >= 1 && data.length < 50; i--) {
@@ -367,39 +552,43 @@ function doGet(e) {
     return createJsonResponse({ status: "success", data: data });
   }
 
-  // 3. Obtener Todo el Portafolio (Tareas + Sistemas)
+  // 3. Obtener Todo el Portafolio (Tareas + Sistemas + Sistemas Web + Usuarios)
   if (action === "get_all_data") {
-    // A. Tareas desde CONTROL_TAREAS
+    // A. Tareas desde CONTROL_TAREAS (10 Columnas A:J)
     var sT = getMasterSheet(ss, "TAREAS");
     var tRows = sT.getDataRange().getValues();
     var tasks = [];
     if (tRows.length > 1) {
       for (var t = 1; t < tRows.length; t++) {
+        var tId = String(tRows[t][0] || "").trim();
+        var tName = String(tRows[t][1] || "").trim();
+        if (!tName || tName.toLowerCase() === "tarea") continue;
         tasks.push({
-          id: String(tRows[t][0] || "").trim(),
-          name: String(tRows[t][1] || "").trim(),
+          id: tId,
+          name: tName,
           appName: String(tRows[t][2] || "").trim(),
           devName: String(tRows[t][3] || "").trim(),
           weight: Number(tRows[t][4]) || 15,
           deadline: String(tRows[t][5] || "").trim(),
           status: String(tRows[t][6] || "").trim(),
           evaluation: String(tRows[t][7] || "").trim(),
-          pointsAdded: String(tRows[t][8] || "").trim(),
-          evalDate: String(tRows[t][9] || "").trim(),
-          notes: String(tRows[t][10] || "").trim()
+          createdDate: String(tRows[t][8] || "").trim(),
+          notes: String(tRows[t][9] || tRows[t][10] || "").trim()
         });
       }
     }
 
-    // B. Sistemas desde PORTAFOLIO_SISTEMAS
+    // B. Sistemas desde PORTAFOLIO_SISTEMAS (9 Columnas A:I)
     var sS = getMasterSheet(ss, "SISTEMAS");
     var sysRows = sS.getDataRange().getValues();
     var systems = [];
     if (sysRows.length > 1) {
       for (var s = 1; s < sysRows.length; s++) {
+        var sysName = String(sysRows[s][1] || "").trim();
+        if (!sysName || sysName.toLowerCase() === "nombre_aplicativo" || sysName.toLowerCase() === "sistema_a_cargo") continue;
         systems.push({
           code: String(sysRows[s][0] || "").trim(),
-          name: String(sysRows[s][1] || "").trim(),
+          name: sysName,
           area: String(sysRows[s][2] || "").trim(),
           devName: String(sysRows[s][3] || "").trim(),
           currentPhase: String(sysRows[s][4] || "").trim(),
@@ -411,14 +600,14 @@ function doGet(e) {
       }
     }
 
-    // C. Enlaces de Sistemas Web Publicados desde SISTEMAS_WEB
+    // C. Enlaces de Sistemas Web Publicados desde SISTEMAS_WEB (4 Columnas A:D)
     var sW = getMasterSheet(ss, "SISTEMAS_WEB");
     var wRows = sW ? sW.getDataRange().getValues() : [];
     var webSystems = [];
     if (wRows.length > 1) {
       for (var w = 1; w < wRows.length; w++) {
         var sysNameW = String(wRows[w][1] || "").trim();
-        if (!sysNameW || sysNameW.toLowerCase() === "sistema_a_cargo" || sysNameW.toLowerCase() === "nombre_aplicativo") continue;
+        if (!sysNameW || sysNameW.toLowerCase() === "sistema_a_cargo" || sysNameW.toLowerCase() === "nombre_aplicativo" || sysNameW.toLowerCase() === "columna 2") continue;
         webSystems.push({
           devName: String(wRows[w][0] || "").trim(),
           name: sysNameW,
@@ -444,7 +633,7 @@ function doGet(e) {
     if (woRows.length > 1) {
       for (var wo = 1; wo < woRows.length; wo++) {
         var sysNameWO = String(woRows[wo][1] || "").trim();
-        if (!sysNameWO || sysNameWO.toLowerCase() === "sistema_a_cargo" || sysNameWO.toLowerCase() === "nombre_aplicativo") continue;
+        if (!sysNameWO || sysNameWO.toLowerCase() === "sistema_a_cargo" || sysNameWO.toLowerCase() === "nombre_aplicativo" || sysNameWO.toLowerCase() === "columna 2") continue;
         webList.push({
           devName: String(woRows[wo][0] || "").trim(),
           name: sysNameWO,
@@ -461,7 +650,7 @@ function doGet(e) {
 
 /**
  * ============================================================================
- * ENDPOINT POST (Escritura, Asignación de Tareas, Fases, Auditorías & Correos)
+ * ENDPOINT POST (Escritura de Todos los Procesos Operativos en las 5 Hojas)
  * ============================================================================
  */
 function doPost(e) {
@@ -485,36 +674,39 @@ function doPost(e) {
     // =========================================================================
     if (action === "log_task") {
       var sTareas = getMasterSheet(ss, "TAREAS");
+      ensureExactHeaders(sTareas, HEADERS.TAREAS);
       var taskId = payload.taskId || ("int_" + now.getTime());
-      
-      // Registrar tarea en CONTROL_TAREAS
+
+      // Insertar o actualizar en CONTROL_TAREAS (10 Columnas A:J)
       sTareas.appendRow([
         taskId,
         payload.taskName || "",
         payload.appName || "",
         payload.developer || "",
-        payload.weight || 15,
+        Number(payload.weight) || 15,
         payload.deadline || "",
-        payload.status || "En Progreso",
-        "Pendiente", // Calidad_QA
-        "0%",        // Puntos_Sumados
-        "-",         // Fecha_Auditoria
-        "Asignada desde App Web" // Dictamen
+        "En Progreso",
+        "Pendiente de Auditoría",
+        dateStr,
+        payload.description || "Integración técnica asignada desde plataforma web."
       ]);
 
-      // Registrar evento en BITACORA_HISTORIAL
-      var sBit = getMasterSheet(ss, "BITACORA");
-      sBit.appendRow([
+      // Registrar en BITACORA_HISTORIAL (7 Columnas A:G)
+      appendBitacoraRow(
+        ss,
         dateStr,
-        "Super Admin",
+        "Super Admin (Jefe TI)",
         "NUEVA_TAREA_ASIGNADA",
         payload.appName || "Sistema",
         "Tarea '" + payload.taskName + "' asignada a " + payload.developer + " (Plazo: " + payload.deadline + ", Peso: +" + payload.weight + "%)",
-        "OPERATIVO"
-      ]);
+        "OPERATIVO · v3.5"
+      );
 
-      // Enviar Correo Automático al Desarrollador
-      var emailSent = sendTaskAssignmentEmail(ss, payload);
+      // Enviar Correo Automático al Desarrollador si está habilitado
+      var emailSent = { sent: false, recipient: "" };
+      if (payload.sendEmail !== false) {
+        emailSent = sendTaskAssignmentEmail(ss, payload);
+      }
 
       return createJsonResponse({
         status: "success",
@@ -526,47 +718,62 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 2: Registrar Auditoría de Calidad
+    // ACCIÓN 2: Registrar Auditoría de Calidad (Actualiza CONTROL_TAREAS y BITACORA)
     // =========================================================================
     if (action === "log_audit") {
       var sTareas2 = getMasterSheet(ss, "TAREAS");
+      ensureExactHeaders(sTareas2, HEADERS.TAREAS);
       var tData = sTareas2.getDataRange().getValues();
       var foundRow = -1;
-      var targetTaskName = String(payload.appName || "").toLowerCase();
-      var targetDev = String(payload.developer || "").toLowerCase();
 
-      // Buscar la tarea para actualizar su auditoría en la misma fila
+      var targetTaskId = String(payload.taskId || "").trim().toLowerCase();
+      var targetTaskName = String(payload.taskName || "").trim().toLowerCase();
+      var targetAppName = String(payload.appName || "").trim().toLowerCase();
+      var targetDev = String(payload.developer || "").trim().toLowerCase();
+
+      // 1. Buscar primero por ID exacto de tarea o nombre de tarea
       for (var r = 1; r < tData.length; r++) {
-        var rowTaskName = String(tData[r][1] || "").toLowerCase();
-        var rowApp = String(tData[r][2] || "").toLowerCase();
-        var rowDev = String(tData[r][3] || "").toLowerCase();
+        var rowId = String(tData[r][0] || "").trim().toLowerCase();
+        var rowTaskName = String(tData[r][1] || "").trim().toLowerCase();
+        if ((targetTaskId && rowId === targetTaskId) || (targetTaskName && rowTaskName === targetTaskName)) {
+          foundRow = r + 1;
+          break;
+        }
+      }
 
-        if (rowDev.indexOf(targetDev) !== -1 || targetDev.indexOf(rowDev) !== -1) {
-          if (rowTaskName.indexOf(targetTaskName) !== -1 || rowApp.indexOf(targetTaskName) !== -1) {
-            foundRow = r + 1;
+      // 2. Fallback por Aplicativo + Desarrollador
+      if (foundRow === -1) {
+        for (var r2 = 1; r2 < tData.length; r2++) {
+          var rApp = String(tData[r2][2] || "").toLowerCase();
+          var rDev = String(tData[r2][3] || "").toLowerCase();
+          if ((rDev.indexOf(targetDev) !== -1 || targetDev.indexOf(rDev) !== -1) &&
+              (rApp.indexOf(targetAppName) !== -1 || targetAppName.indexOf(rApp) !== -1)) {
+            foundRow = r2 + 1;
             break;
           }
         }
       }
 
+      var scoreFormatted = (payload.score || 95) + "% (+" + (payload.pointsAdded || 15) + "%)";
+      var auditNotes = payload.notes || "Implementación en planta validada con los operarios. Operatividad estable.";
+
       if (foundRow !== -1) {
-        sTareas2.getRange(foundRow, 7).setValue("Auditada"); // Estado
-        sTareas2.getRange(foundRow, 8).setValue((payload.score || 95) + "%"); // Calidad_QA
-        sTareas2.getRange(foundRow, 9).setValue("+" + (payload.pointsAdded || 15) + "%"); // Puntos_Sumados
-        sTareas2.getRange(foundRow, 10).setValue(dateStr.substring(0, 10)); // Fecha_Auditoria
-        sTareas2.getRange(foundRow, 11).setValue(payload.notes || "Auditada & Aprobada"); // Dictamen
+        sTareas2.getRange(foundRow, 7).setValue("Auditada");        // Col G: Estado
+        sTareas2.getRange(foundRow, 8).setValue(scoreFormatted);    // Col H: Evaluacion_Calidad
+        sTareas2.getRange(foundRow, 9).setValue(dateStr);           // Col I: Fecha_Registro
+        sTareas2.getRange(foundRow, 10).setValue(auditNotes);       // Col J: Observaciones_Auditoria
       }
 
-      // Registrar en BITACORA_HISTORIAL
-      var sBit2 = getMasterSheet(ss, "BITACORA");
-      sBit2.appendRow([
+      // Registrar en BITACORA_HISTORIAL (7 Columnas A:G)
+      appendBitacoraRow(
+        ss,
         dateStr,
-        payload.evaluator || "Super Admin",
+        payload.evaluator || "Super Admin (Jefe TI)",
         "AUDITORIA_CALIFICADA",
         payload.appName || "Sistema",
-        "Auditoría a " + payload.developer + ": Nota " + payload.score + "% (Sumó +" + payload.pointsAdded + "%). " + (payload.notes || ""),
-        "ALTO"
-      ]);
+        "Auditoría a " + payload.developer + (payload.taskName ? " [" + payload.taskName + "]" : "") + ": Nota " + payload.score + "% (Sumó +" + payload.pointsAdded + "%). " + auditNotes,
+        "ALTO · v3.5"
+      );
 
       return createJsonResponse({
         status: "success",
@@ -576,32 +783,36 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 3: Registrar Avance en Fases de Desarrollo
+    // ACCIÓN 3: Registrar Avance en Fases de Desarrollo (PORTAFOLIO_SISTEMAS + SISTEMAS_WEB + BITACORA)
     // =========================================================================
     if (action === "log_phase") {
       var sSistemas = getMasterSheet(ss, "SISTEMAS");
+      ensureExactHeaders(sSistemas, HEADERS.SISTEMAS);
       var sysData = sSistemas.getDataRange().getValues();
-      var targetAppName = String(payload.appName || "").toLowerCase();
-      
+      var targetApp = String(payload.appName || "").toLowerCase().trim();
+
       for (var s = 1; s < sysData.length; s++) {
-        var curName = String(sysData[s][1] || "").toLowerCase();
-        if (curName.indexOf(targetAppName) !== -1 || targetAppName.indexOf(curName) !== -1) {
+        var curName = String(sysData[s][1] || "").toLowerCase().trim();
+        if (curName === targetApp || curName.indexOf(targetApp) !== -1 || targetApp.indexOf(curName) !== -1) {
           sSistemas.getRange(s + 1, 5).setValue(payload.phaseName || "Fase Actualizada");
-          sSistemas.getRange(s + 1, 6).setValue(payload.progress || 0);
+          sSistemas.getRange(s + 1, 6).setValue(Number(payload.progress) || 0);
+          if (payload.slaStatus) {
+            sSistemas.getRange(s + 1, 7).setValue(payload.slaStatus);
+          }
           sSistemas.getRange(s + 1, 9).setValue(dateStr);
           break;
         }
       }
 
-      var sBit3 = getMasterSheet(ss, "BITACORA");
-      sBit3.appendRow([
+      appendBitacoraRow(
+        ss,
         dateStr,
-        payload.developer || "Super Admin",
+        payload.developer || "Super Admin (Jefe TI)",
         "FASE_ACTUALIZADA",
         payload.appName || "Sistema",
-        "Fase '" + payload.phaseName + "' actualizada al " + payload.progress + "%",
-        "MEDIO"
-      ]);
+        "Fase '" + payload.phaseName + "' actualizada al " + payload.progress + "%" + (payload.notes ? " (" + payload.notes + ")" : ""),
+        "MEDIO · v3.5"
+      );
 
       return createJsonResponse({
         status: "success",
@@ -611,91 +822,248 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 4: Sincronización Completa de Estado (Snapshot)
+    // ACCIÓN 4: Sincronizar Directorio de Usuarios (USUARIOS + BITACORA)
     // =========================================================================
-    if (action === "sync_full_state") {
-      var apps = payload.applications || [];
-      if (apps.length > 0) {
-        var sSis = getMasterSheet(ss, "SISTEMAS");
-        var lastR = sSis.getLastRow();
-        if (lastR > 1) sSis.deleteRows(2, lastR - 1);
-
-        for (var a = 0; a < apps.length; a++) {
-          var ap = apps[a];
-          sSis.appendRow([
-            ap.code || ("STF-APP-" + (a + 1)),
-            ap.name || "",
-            ap.category || "General",
-            ap.devName || "Equipo STF",
-            ap.currentPhase || "En Desarrollo",
-            ap.progress || 0,
-            ap.slaStatus || "En Tiempo",
-            ap.deadline || "2026-12-31",
-            dateStr
+    if (action === "sync_users") {
+      var users = payload.users || [];
+      if (users.length > 0) {
+        var sU = getMasterSheet(ss, "USUARIOS");
+        ensureExactHeaders(sU, HEADERS.USUARIOS);
+        var lastRU = sU.getLastRow();
+        if (lastRU > 1) {
+          sU.getRange(2, 1, lastRU - 1, Math.max(6, sU.getLastColumn())).clearContent();
+        }
+        var uMatrix = [];
+        for (var u = 0; u < users.length; u++) {
+          var usr = users[u];
+          var roleStr = usr.role || "desarrollador";
+          uMatrix.push([
+            usr.idPassword || usr.id || "123456",
+            usr.username || "",
+            roleStr,
+            usr.email || "",
+            usr.name || usr.username || "",
+            String(roleStr).toLowerCase() === "admin" ? "ADMIN" : "ACTIVO"
           ]);
         }
-        formatCorporateSheet(sSis, "#1E1B4B", [110, 220, 180, 180, 260, 90, 120, 110, 140]);
-      }
+        sU.getRange(2, 1, uMatrix.length, 6).setValues(uMatrix);
+        formatCorporateSheet(sU, "#0F172A", [120, 160, 130, 240, 180, 100]);
 
-      // Sincronizar también SISTEMAS_WEB preservando las filas y URLs manuales del usuario
-      if (apps.length > 0) {
-        var sWeb = getMasterSheet(ss, "SISTEMAS_WEB");
-        if (sWeb) {
-          if (sWeb.getLastRow() <= 1) {
-            if (sWeb.getLastRow() === 0) {
-              sWeb.appendRow(["Desarrollador", "Sistema_a_Cargo", "URL_Sistema_Web", "Estado"]);
-            }
-            for (var w = 0; w < apps.length; w++) {
-              var wp = apps[w];
-              sWeb.appendRow([
-                wp.devName || "Equipo STF",
-                wp.name || "",
-                wp.webUrl || "",
-                wp.progress === 100 ? "En Producción" : "En Desarrollo"
-              ]);
-            }
-            formatCorporateSheet(sWeb, "#1E3A8A", [220, 260, 340, 140]);
-          } else {
-            // Ya existen filas manuales configuradas por el usuario: actualizar solo URLs si vienen definidas sin borrar la hoja
-            var wData = sWeb.getDataRange().getValues();
-            for (var w = 0; w < apps.length; w++) {
-              var wp = apps[w];
-              if (!wp.webUrl) continue;
-              for (var r = 1; r < wData.length; r++) {
-                var rowSys = String(wData[r][1] || "").toLowerCase().trim();
-                var curSys = String(wp.name || "").toLowerCase().trim();
-                if (rowSys === curSys || rowSys.indexOf(curSys) !== -1 || curSys.indexOf(rowSys) !== -1) {
-                  if (!wData[r][2] || String(wData[r][2]).trim() === "") {
-                    sWeb.getRange(r + 1, 3).setValue(wp.webUrl);
-                  }
-                  break;
-                }
-              }
-            }
-          }
-        }
+        appendBitacoraRow(
+          ss,
+          dateStr,
+          "Super Admin (Jefe TI)",
+          "USUARIOS_SINCRONIZADOS",
+          "Directorio de Usuarios",
+          "Actualización de cuentas y credenciales en hoja USUARIOS (" + uMatrix.length + " usuarios activos).",
+          "INFO · v3.5"
+        );
       }
 
       return createJsonResponse({
         status: "success",
-        message: "Portafolio y URLs sincronizados en PORTAFOLIO_SISTEMAS y SISTEMAS_WEB (" + apps.length + " sistemas)",
+        message: "Hoja USUARIOS sincronizada exitosamente",
         date: dateStr
       });
     }
 
     // =========================================================================
-    // ACCIÓN 5: Registro General en Bitácora
+    // ACCIÓN 5: Sincronización Maestra de las 5 Hojas (sync_full_state)
+    // Repara encabezados, limpia filas fantasma y sincroniza Sistemas, Web, Tareas, Usuarios y Bitácora
+    // =========================================================================
+    if (action === "sync_full_state") {
+      var apps = (payload.applications || []).filter(function(a) {
+        var n = String(a.name || "").toLowerCase().trim();
+        return n !== "" && n !== "sistema_a_cargo" && n !== "nombre_aplicativo" && a.code !== "STF-SIS-99";
+      });
+
+      // 1. Actualizar PORTAFOLIO_SISTEMAS (9 Columnas A:I)
+      if (apps.length > 0) {
+        var sSis = getMasterSheet(ss, "SISTEMAS");
+        ensureExactHeaders(sSis, HEADERS.SISTEMAS);
+        var lastR = sSis.getLastRow();
+        if (lastR > 1) {
+          sSis.getRange(2, 1, lastR - 1, Math.max(9, sSis.getLastColumn())).clearContent();
+          if (lastR > apps.length + 1) {
+            try {
+              sSis.deleteRows(apps.length + 2, lastR - (apps.length + 1));
+            } catch (e) {}
+          }
+        }
+
+        var sysMatrix = [];
+        for (var a = 0; a < apps.length; a++) {
+          var ap = apps[a];
+          sysMatrix.push([
+            ap.code || ("STF-APP-" + (a + 1)),
+            ap.name || "",
+            ap.category || "General",
+            ap.devName || "Equipo STF",
+            ap.currentPhase || "En Desarrollo",
+            Number(ap.progress) || 0,
+            ap.slaStatus || "En Construcción",
+            ap.deadline || "2026-12-31",
+            dateStr
+          ]);
+        }
+        sSis.getRange(2, 1, sysMatrix.length, 9).setValues(sysMatrix);
+        formatCorporateSheet(sSis, "#1E1B4B", [110, 210, 175, 175, 250, 95, 130, 115, 155]);
+      }
+
+      // 2. Actualizar SISTEMAS_WEB (4 Columnas A:D) eliminando "Columna 1..4" y filas duplicadas
+      if (apps.length > 0) {
+        var sWeb = getMasterSheet(ss, "SISTEMAS_WEB");
+        if (sWeb) {
+          // Rescatar URLs manuales existentes en la hoja
+          var existingUrls = {};
+          if (sWeb.getLastRow() > 1) {
+            var wExisting = sWeb.getDataRange().getValues();
+            for (var ew = 1; ew < wExisting.length; ew++) {
+              var eName = String(wExisting[ew][1] || "").trim().toUpperCase();
+              var eUrl = String(wExisting[ew][2] || "").trim();
+              if (eName && eName !== "SISTEMA_A_CARGO" && eUrl && eUrl.toLowerCase() !== "url_sistema_web") {
+                existingUrls[eName] = eUrl;
+              }
+            }
+          }
+
+          ensureExactHeaders(sWeb, HEADERS.SISTEMAS_WEB);
+          var lastRW = sWeb.getLastRow();
+          if (lastRW > 1) {
+            sWeb.getRange(2, 1, lastRW - 1, Math.max(4, sWeb.getLastColumn())).clearContent();
+            if (lastRW > apps.length + 1) {
+              try {
+                sWeb.deleteRows(apps.length + 2, lastRW - (apps.length + 1));
+              } catch (e) {}
+            }
+          }
+
+          var webMatrix = [];
+          for (var w = 0; w < apps.length; w++) {
+            var wp = apps[w];
+            var uKey = String(wp.name || "").trim().toUpperCase();
+            var finalUrl = wp.webUrl || existingUrls[uKey] || "";
+            var isProdApp = (wp.stageId === "stage_prod") || (String(wp.slaStatus || "").indexOf("Producción") !== -1) ||
+                            (uKey === "CALIDAD" || uKey === "TINTORERIA" || uKey === "COLCHAS");
+            webMatrix.push([
+              wp.devName || "Equipo STF",
+              wp.name || "",
+              finalUrl,
+              isProdApp ? "En Producción" : "En Construcción"
+            ]);
+          }
+          sWeb.getRange(2, 1, webMatrix.length, 4).setValues(webMatrix);
+          formatCorporateSheet(sWeb, "#14532D", [200, 230, 320, 140]);
+        }
+      }
+
+      // 3. Actualizar CONTROL_TAREAS (10 Columnas A:J)
+      var tasksList = payload.integrations || [];
+      if (tasksList.length > 0) {
+        var sTar = getMasterSheet(ss, "TAREAS");
+        ensureExactHeaders(sTar, HEADERS.TAREAS);
+        var lastRT = sTar.getLastRow();
+        if (lastRT > 1) {
+          sTar.getRange(2, 1, lastRT - 1, Math.max(10, sTar.getLastColumn())).clearContent();
+          if (lastRT > tasksList.length + 1) {
+            try {
+              sTar.deleteRows(tasksList.length + 2, lastRT - (tasksList.length + 1));
+            } catch (e) {}
+          }
+        }
+
+        var tMatrix = [];
+        for (var ti = 0; ti < tasksList.length; ti++) {
+          var tk = tasksList[ti];
+          var isEvaluated = (tk.status === "evaluated") || (String(tk.status || "").toLowerCase().indexOf("audit") !== -1);
+          var stateClean = isEvaluated ? "Auditada" : (String(tk.status || "").toLowerCase().indexOf("riesgo") !== -1 ? "En Riesgo" : "En Progreso");
+          var qualText = "Pendiente de Auditoría";
+          var obsText = tk.description || "En desarrollo activo en planta.";
+          var regDateText = tk.createdDate || dateStr;
+
+          if (tk.evaluation && typeof tk.evaluation === "object") {
+            var qScore = tk.evaluation.qualityScore || 95;
+            var pAdd = tk.evaluation.pointsAdded || tk.weight || 15;
+            qualText = qScore + "% (+" + pAdd + "%)";
+            obsText = tk.evaluation.notes || "Implementación en planta validada con los operarios. Operatividad estable.";
+            if (tk.evaluation.evalDate) regDateText = tk.evaluation.evalDate + " 08:00:00";
+          } else if (typeof tk.evaluation === "string" && tk.evaluation) {
+            qualText = tk.evaluation;
+          }
+
+          tMatrix.push([
+            tk.id || ("int_" + ti),
+            tk.name || "",
+            tk.appName || "Sistema",
+            tk.devName || "Desarrollador",
+            Number(tk.weight) || 15,
+            tk.deadline || "",
+            stateClean,
+            qualText,
+            regDateText,
+            obsText
+          ]);
+        }
+        sTar.getRange(2, 1, tMatrix.length, 10).setValues(tMatrix);
+        formatCorporateSheet(sTar, "#854D0E", [125, 250, 175, 145, 105, 110, 120, 145, 140, 260]);
+      }
+
+      // 4. Sincronizar USUARIOS si vienen en el payload
+      if (Array.isArray(payload.users) && payload.users.length > 0) {
+        var sUsr = getMasterSheet(ss, "USUARIOS");
+        ensureExactHeaders(sUsr, HEADERS.USUARIOS);
+        var lastRUsr = sUsr.getLastRow();
+        if (lastRUsr > 1) {
+          sUsr.getRange(2, 1, lastRUsr - 1, Math.max(6, sUsr.getLastColumn())).clearContent();
+        }
+        var usrRows = payload.users.map(function(u) {
+          var r = u.role || "desarrollador";
+          return [
+            u.idPassword || u.id || "123456",
+            u.username || "",
+            r,
+            u.email || "",
+            u.name || u.username || "",
+            String(r).toLowerCase() === "admin" ? "ADMIN" : "ACTIVO"
+          ];
+        });
+        sUsr.getRange(2, 1, usrRows.length, 6).setValues(usrRows);
+        formatCorporateSheet(sUsr, "#0F172A", [120, 160, 130, 240, 180, 100]);
+      }
+
+      // 5. Reparar y registrar en BITACORA_HISTORIAL
+      setupBitacoraSheet(ss);
+      appendBitacoraRow(
+        ss,
+        dateStr,
+        payload.user || "Super Admin (Jefe TI)",
+        "SINCRONIZACION_MAESTRA",
+        "Portafolio STF GROUP",
+        "Sincronización integral de las 5 hojas maestras (" + apps.length + " sistemas y " + tasksList.length + " tareas verificadas).",
+        "ALTO · v3.5"
+      );
+
+      return createJsonResponse({
+        status: "success",
+        message: "Las 5 hojas maestras (USUARIOS, PORTAFOLIO_SISTEMAS, SISTEMAS_WEB, CONTROL_TAREAS, BITACORA_HISTORIAL) han sido estabilizadas y sincronizadas.",
+        date: dateStr
+      });
+    }
+
+    // =========================================================================
+    // ACCIÓN 6: Registro General en Bitácora (Login, Nuevos Aplicativos, Config TI)
     // =========================================================================
     if (action === "log_update") {
-      var sBitLog = getMasterSheet(ss, "BITACORA");
-      sBitLog.appendRow([
+      setupBitacoraSheet(ss);
+      appendBitacoraRow(
+        ss,
         dateStr,
-        payload.developer || "Sistema",
+        payload.developer || "Sistema STF",
         payload.eventType || "ACTUALIZACION",
         payload.appName || "Global",
         payload.description || "Cambio operativo registrado",
-        "INFO"
-      ]);
+        (payload.impact || "INFO") + " · " + (payload.version || "v3.5")
+      );
 
       return createJsonResponse({
         status: "success",
@@ -742,7 +1110,6 @@ function sendTaskAssignmentEmail(ss, payload) {
     }
   }
 
-  // Fallback de seguridad
   if (!targetEmail) {
     var sLower = devName.toLowerCase();
     if (sLower.indexOf("jose") !== -1 || sLower.indexOf("guzman") !== -1) targetEmail = "joseoneiber711@gmail.com";
@@ -798,20 +1165,19 @@ function testEmailNotification() {
   var res = sendTaskAssignmentEmail(ss, {
     developer: "Jose Guzman",
     taskName: "Prueba de Conexión Automatizada",
-    appName: "LABORATORIO",
+    appName: "TORRE DE CONTROL",
     weight: 15,
-    deadline: "2026-11-10",
-    email: "joseoneiber711@gmail.com"
+    deadline: "2026-11-15"
   });
-
   if (res.sent) {
-    SpreadsheetApp.getUi().alert("✅ Correo de prueba enviado con éxito a " + res.recipient);
+    SpreadsheetApp.getUi().alert("✅ Correo de prueba enviado con éxito a: " + res.recipient);
   } else {
     SpreadsheetApp.getUi().alert("⚠️ No se pudo enviar el correo: " + (res.error || res.reason));
   }
 }
 
 function createJsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }

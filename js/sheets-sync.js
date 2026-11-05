@@ -176,6 +176,7 @@
         phaseId: data.phaseId,
         phaseName: data.phaseName,
         progress: data.progress,
+        slaStatus: data.slaStatus || '',
         completed: data.completed,
         developer: data.developer || 'Desarrollador Asignado',
         notes: data.notes || ''
@@ -188,6 +189,15 @@
      * Registrar asignación de nueva tarea o integración
      */
     logTaskAssignment(data) {
+      let sendEmailPref = true;
+      try {
+        const rawCfg = localStorage.getItem('STF_GOVERNANCE_SETTINGS_V1');
+        if (rawCfg) {
+          const parsedCfg = JSON.parse(rawCfg);
+          if (parsedCfg.emailAlerts === false) sendEmailPref = false;
+        }
+      } catch (e) {}
+
       const payload = {
         action: 'log_task',
         taskId: data.taskId || ('int_' + Date.now()),
@@ -199,6 +209,7 @@
         weight: data.weight || 0,
         deadline: data.deadline || '',
         status: data.status || 'En Progreso',
+        sendEmail: sendEmailPref,
         qualityScore: data.qualityScore || null
       };
 
@@ -211,12 +222,14 @@
     logAuditEvaluation(data) {
       const payload = {
         action: 'log_audit',
+        taskId: data.taskId || '',
+        taskName: data.taskName || '',
         appName: data.appName,
         developer: data.developer,
         score: data.score,
         daysDifference: data.daysDifference || 0,
         pointsAdded: data.pointsAdded || 0,
-        evaluator: data.evaluator || 'Super Admin',
+        evaluator: data.evaluator || 'Super Admin (Jefe TI)',
         notes: data.notes || ''
       };
 
@@ -224,13 +237,39 @@
     },
 
     /**
-     * Sincronizar estado completo del portafolio (Snapshot de aplicaciones)
+     * Alias directo para sincronizar las 5 hojas maestras desde el Centro de Gobierno TI
+     */
+    async pushFullState() {
+      return await this.syncFullState(window.appState);
+    },
+
+    /**
+     * Sincronizar estado completo del portafolio en las 5 hojas maestras
      */
     async syncFullState(appState) {
-      if (!appState || !appState.applications) return;
+      const targetState = appState || window.appState;
+      if (!targetState || !targetState.applications) return { status: 'error', message: 'Estado vacío' };
 
-      const appList = appState.applications.map(app => {
-        const dev = appState.developers ? appState.developers.find(d => d.id === app.devId) : null;
+      if (typeof window.purgePhantomAppsFromState === 'function') {
+        window.purgePhantomAppsFromState(targetState);
+      }
+
+      // Ordenar sistemas según las etapas del Pipeline (1. En Construcción -> 3. En Producción)
+      const sortedApps = [...targetState.applications].sort((a, b) => {
+        if (typeof window.getAppPipelineStageInfo === 'function') {
+          const sa = window.getAppPipelineStageInfo(a);
+          const sb = window.getAppPipelineStageInfo(b);
+          const stageWeight = { stage_core: 1, stage_qa: 2, stage_prod: 3 };
+          if (stageWeight[sa.stageId] !== stageWeight[sb.stageId]) {
+            return (stageWeight[sa.stageId] || 1) - (stageWeight[sb.stageId] || 1);
+          }
+          return (sa.order || 99) - (sb.order || 99);
+        }
+        return 0;
+      });
+
+      const appList = sortedApps.map(app => {
+        const dev = targetState.developers ? targetState.developers.find(d => d.id === app.devId) : null;
         const currentPhase = app.phases ? (app.phases.find(p => !p.completed) || app.phases[app.phases.length - 1]) : null;
 
         let progress = 0;
@@ -240,24 +279,41 @@
           progress = Math.round(app.phases.filter(p => p.completed).reduce((s, p) => s + (p.weight || 15), 0));
         }
 
+        const isProd = typeof window.isAppInLiveProduction === 'function'
+          ? window.isAppInLiveProduction(app)
+          : (['app_calidad', 'app_tintoreria', 'app_colchas'].includes(app.id) || progress === 100);
+
+        const stageInfo = typeof window.getAppPipelineStageInfo === 'function'
+          ? window.getAppPipelineStageInfo(app)
+          : { stageId: isProd ? 'stage_prod' : 'stage_core' };
+
+        const slaLabel = isProd
+          ? 'En Producción'
+          : (app.status === 'risk' ? 'En Riesgo' : 'En Construcción');
+
+        const leaderName = (app.isGroupProject || app.id === 'app_torre')
+          ? 'Equipo Grupal (4 Devs)'
+          : (dev ? dev.name : 'Equipo STF');
+
         return {
           id: app.id,
           code: app.code || '',
           name: app.name,
-          devName: dev ? dev.name : 'Equipo STF',
+          devName: leaderName,
           devUser: dev ? (dev.username || dev.email || '') : '',
-          webUrl: app.webUrl || `https://stf-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`,
+          webUrl: app.webUrl !== undefined ? app.webUrl : '',
           category: app.category || 'General',
-          currentPhase: currentPhase ? currentPhase.name : 'En Producción',
+          currentPhase: currentPhase ? currentPhase.name : '6. Salida en Vivo',
           progress: progress,
-          slaStatus: app.slaStatus || 'En Tiempo',
+          slaStatus: slaLabel,
+          stageId: stageInfo.stageId,
           deadline: app.deadline || ''
         };
       });
 
-      const taskList = (appState.integrations || []).map(item => {
-        const app = appState.applications ? appState.applications.find(a => a.id === item.appId) : null;
-        const dev = appState.developers ? appState.developers.find(d => d.id === item.devId) : null;
+      const taskList = (targetState.integrations || []).map(item => {
+        const app = targetState.applications ? targetState.applications.find(a => a.id === item.appId) : null;
+        const dev = targetState.developers ? targetState.developers.find(d => d.id === item.devId) : null;
         return {
           id: item.id,
           name: item.name,
@@ -265,16 +321,27 @@
           devName: dev ? dev.name : 'Desarrollador',
           weight: item.weight || 15,
           deadline: item.deadline || '',
-          status: item.status === 'evaluated' ? 'Auditoría Oficializada' : 'En Progreso',
+          status: item.status === 'evaluated' ? 'Auditada' : 'En Progreso',
+          description: item.description || '',
           evaluation: item.evaluation || null
         };
       });
 
+      const usersList = (targetState.developers || []).map(dev => ({
+        id: dev.idPassword || (dev.id === 'dev_ediaz' ? 'Admin' : dev.id.replace('dev_', '')),
+        idPassword: dev.idPassword || (dev.id === 'dev_ediaz' ? 'Admin' : dev.id.replace('dev_', '')),
+        username: dev.username || dev.id,
+        role: dev.roleType || dev.role || 'desarrollador',
+        email: dev.email || '',
+        name: dev.name
+      }));
+
       const payload = {
         action: 'sync_full_state',
-        user: window.activeSelectedDevId ? getDevNameById(window.activeSelectedDevId) : 'Jose Guzman',
+        user: window.activeSelectedDevId ? getDevNameById(window.activeSelectedDevId) : 'Edwin Diaz (Admin)',
         applications: appList,
-        integrations: taskList
+        integrations: taskList,
+        users: usersList
       };
 
       return await this.sendPayload(payload);
@@ -579,7 +646,7 @@
     },
 
     /**
-     * Fusionar tareas directas de la hoja Tareas_Integraciones
+     * Fusionar tareas directas de la hoja CONTROL_TAREAS (10 Columnas A:J)
      */
     mergeCloudTasks(tasksList) {
       if (!Array.isArray(tasksList) || !window.appState) return 0;
@@ -589,7 +656,7 @@
       let count = 0;
       tasksList.forEach(task => {
         const tName = (task.name || task.Tarea || '').trim();
-        if (!tName) return;
+        if (!tName || tName.toLowerCase() === 'tarea') return;
 
         const appObj = this.findApp(task.appName || task.Aplicativo);
         const devObj = this.findDev(task.devName || task.developer || task.Desarrollador);
@@ -600,23 +667,32 @@
           i.name.trim().toLowerCase() === tName.toLowerCase()
         );
 
-        const isEval = String(task.status || task.Estado || '').toLowerCase().includes('audit') ||
-          String(task.status || task.Estado || '').toLowerCase().includes('aprob');
+        const rawStatus = String(task.status || task.Estado || '').toLowerCase();
+        const isEval = rawStatus.includes('audit') || rawStatus.includes('aprob') || rawStatus === 'evaluated';
 
-        const parsedScore = parseFloat(String(task.evaluation || '95').replace('%', '')) || 95;
-        const parsedPoints = parseFloat(String(task.pointsAdded || task.weight || '15').replace('%', '').replace('+', '')) || (Number(task.weight) || 15);
+        // Parsear calificación limpia (soporta "94.3% (+14.1%)", "94,30%", "96.3 / 100")
+        const rawEvalStr = String(task.evaluation || task.Evaluacion_Calidad || '95').replace(',', '.');
+        const scoreMatch = rawEvalStr.match(/(\d+(?:\.\d+)?)/);
+        const parsedScore = scoreMatch ? parseFloat(scoreMatch[1]) : 95;
+        const tWeight = Number(task.weight || task['Ponderacion_%']) || 15;
+        const parsedPoints = parseFloat(((tWeight * (parsedScore / 100))).toFixed(1));
+        const cleanNotes = String(task.notes || task.Observaciones_Auditoria || 'Implementación en planta validada con los operarios. Operatividad estable.').trim();
+        const rawDate = String(task.evalDate || task.createdDate || task.Fecha_Registro || '2026-11-05').split(' ')[0];
 
         if (existing) {
           if (isEval && existing.status !== 'evaluated') {
             existing.status = 'evaluated';
             existing.evaluation = existing.evaluation || {
-              evalDate: task.evalDate || task.createdDate || '2026-10-23',
+              evalDate: rawDate,
               onTime: true,
               qualityScore: parsedScore,
               pointsAdded: parsedPoints,
-              notes: task.notes || 'Auditada & Aprobada'
+              notes: cleanNotes
             };
             count++;
+          } else if (isEval && existing.evaluation && cleanNotes) {
+            existing.evaluation.notes = cleanNotes;
+            existing.evaluation.qualityScore = parsedScore;
           }
         } else {
           const newTask = {
@@ -625,16 +701,16 @@
             appId: appObj ? appObj.id : 'app_torre',
             devId: devObj ? devObj.id : 'dev_jg',
             startDate: task.startDate || '2026-10-19',
-            deadline: task.deadline || task.Fecha_Entrega || '2026-11-15',
-            weight: Number(task.weight || task['Ponderacion_%']) || 15,
+            deadline: String(task.deadline || task.Fecha_Entrega || '2026-11-15').split('T')[0],
+            weight: tWeight,
             status: isEval ? 'evaluated' : 'in_progress',
-            description: task.description || 'Integración asignada desde Google Sheets.',
+            description: cleanNotes || 'Integración asignada desde Google Sheets.',
             evaluation: isEval ? {
-              evalDate: task.evalDate || task.createdDate || '2026-10-23',
+              evalDate: rawDate,
               onTime: true,
               qualityScore: parsedScore,
               pointsAdded: parsedPoints,
-              notes: task.notes || 'Auditada & Aprobada'
+              notes: cleanNotes
             } : null
           };
           state.integrations.unshift(newTask);
@@ -649,21 +725,54 @@
     },
 
     /**
-     * Fusionar sistemas desde la hoja Estado_Sistemas
+     * Fusionar sistemas desde la hoja PORTAFOLIO_SISTEMAS (9 Columnas A:I)
      */
     mergeCloudSystems(sysList) {
       if (!Array.isArray(sysList) || !window.appState || !Array.isArray(window.appState.applications)) return;
       if (typeof window.purgePhantomAppsFromState === 'function') {
         window.purgePhantomAppsFromState(window.appState);
       }
+      let updated = false;
       sysList.forEach(sys => {
-        const sName = (sys.name || sys.Nombre || '').trim();
-        if (!sName || (typeof window.isInvalidPhantomApp === 'function' && window.isInvalidPhantomApp({ name: sName }))) return;
+        const sName = String(sys.name || sys.Nombre_Aplicativo || sys.Nombre || '').trim();
+        if (!sName || (typeof window.isInvalidPhantomApp === 'function' && window.isInvalidPhantomApp({ name: sName, code: sys.code }))) return;
         const appObj = this.findApp(sName);
-        if (appObj && sys.slaStatus) {
-          if (sys.slaStatus.toLowerCase().includes('riesgo')) appObj.status = 'risk';
+        if (!appObj) return;
+
+        // Sincronizar estado SLA si viene válido
+        if (sys.slaStatus) {
+          const slaLow = String(sys.slaStatus).toLowerCase();
+          if (slaLow.includes('riesgo')) {
+            appObj.status = 'risk';
+            updated = true;
+          } else if (slaLow.includes('producc') || slaLow.includes('tiempo') || slaLow.includes('construcc')) {
+            if (appObj.id !== 'app_geo') appObj.status = 'ontime';
+          }
+        }
+
+        // Sincronizar porcentaje de avance con las fases si el valor es un número válido (0..100)
+        const cloudProg = Number(sys.progress);
+        if (!isNaN(cloudProg) && cloudProg >= 0 && cloudProg <= 100 && Array.isArray(appObj.phases)) {
+          const currentLocalProg = typeof window.calculateAppProgress === 'function' ? window.calculateAppProgress(appObj) : -1;
+          if (currentLocalProg !== cloudProg) {
+            let acc = 0;
+            appObj.phases.forEach(ph => {
+              const w = Number(ph.weight) || 0;
+              if (acc + w <= cloudProg) {
+                ph.completed = true;
+                acc += w;
+              } else {
+                ph.completed = false;
+              }
+            });
+            updated = true;
+          }
         }
       });
+
+      if (updated && typeof window.saveData === 'function') {
+        window.saveData(window.appState);
+      }
     },
 
     /**

@@ -3804,11 +3804,15 @@ function saveSystemChanges() {
       : (dev ? dev.name : 'Equipo STF');
     const completedPhases = app.phases.filter(p => p.completed).map(p => p.name).join(', ');
 
+    const isProd = isAppInLiveProduction(app);
+    const slaStatusLabel = isProd ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Construcción');
+
     window.SheetsSync.logPhaseUpdate({
       appName: app.name,
       phaseId: activePhase ? activePhase.id : 'N/A',
-      phaseName: activePhase ? activePhase.name : 'Todas Completadas',
+      phaseName: activePhase ? activePhase.name : '6. Salida en Vivo',
       progress: currentWeight,
+      slaStatus: slaStatusLabel,
       completed: currentWeight === 100,
       developer: authorName,
       notes: `Fases completas: ${completedPhases || 'Ninguna'}`
@@ -5909,10 +5913,12 @@ function handleConfirmEvaluation() {
   saveData(appState);
   closeEvaluateIntegrationModal();
 
-  // Sincronizar auditoría y evaluación en Google Sheets
+  // Sincronizar auditoría y evaluación en Google Sheets (CONTROL_TAREAS + PORTAFOLIO_SISTEMAS + BITACORA)
   if (window.SheetsSync) {
     const dev = getDeveloperById(item.devId);
     window.SheetsSync.logAuditEvaluation({
+      taskId: item.id,
+      taskName: item.name,
       appName: targetApp ? targetApp.name : 'Aplicativo',
       developer: dev ? dev.name : 'Desarrollador',
       score: overallQuality,
@@ -5921,6 +5927,7 @@ function handleConfirmEvaluation() {
       evaluator: 'Super Admin (Jefe TI)',
       notes: notes || `Estabilidad: ${vStab}%, Usabilidad: ${vUsab}%, QA: ${vQA}%`
     });
+    window.SheetsSync.syncFullState(appState);
   }
 
   // 5. Re-renderizar tablero completo de forma reactiva
@@ -7732,6 +7739,15 @@ function saveGovernancePhaseWeights(isReset = false) {
   }
 
   refreshAllViews();
+  if (window.SheetsSync) {
+    window.SheetsSync.logSystemUpdate({
+      eventType: 'CONFIGURACION_SDLC',
+      appName: 'Gobernanza TI',
+      description: `Ponderación de las 6 fases actualizada a: ${weights.join('% / ')}% (Total 100%)`,
+      developer: 'Super Admin (Jefe TI)'
+    });
+    window.SheetsSync.syncFullState(appState);
+  }
   showToast(isReset
     ? '✅ Ponderación oficial restaurada (10% · 15% · 30% · 25% · 15% · 5%).'
     : '✅ Ponderación SDLC aplicada y recalculada en los 7 sistemas.');
@@ -7802,6 +7818,14 @@ function saveGovernanceBenchmarks() {
   }
 
   refreshAllViews();
+  if (window.SheetsSync) {
+    window.SheetsSync.logSystemUpdate({
+      eventType: 'CONFIGURACION_METAS_SLA',
+      appName: 'Gobernanza TI',
+      description: `Metas actualizadas: ${monthly} Mods/Mes · ${weekly} Mods/Sem · Meta Q4: ${quarterly}% · Alerta SLA: ${slaDays} días`,
+      developer: 'Super Admin (Jefe TI)'
+    });
+  }
   showToast(`✅ Benchmarks actualizados: ${monthly} Mods/Mes · ${weekly} Mods/Sem · Meta Q4: ${quarterly}%.`);
 }
 
