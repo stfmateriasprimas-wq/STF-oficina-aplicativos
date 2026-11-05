@@ -653,8 +653,12 @@
      */
     mergeCloudSystems(sysList) {
       if (!Array.isArray(sysList) || !window.appState || !Array.isArray(window.appState.applications)) return;
+      if (typeof window.purgePhantomAppsFromState === 'function') {
+        window.purgePhantomAppsFromState(window.appState);
+      }
       sysList.forEach(sys => {
         const sName = (sys.name || sys.Nombre || '').trim();
+        if (!sName || (typeof window.isInvalidPhantomApp === 'function' && window.isInvalidPhantomApp({ name: sName }))) return;
         const appObj = this.findApp(sName);
         if (appObj && sys.slaStatus) {
           if (sys.slaStatus.toLowerCase().includes('riesgo')) appObj.status = 'risk';
@@ -670,11 +674,22 @@
       if (!Array.isArray(webSystems) || webSystems.length === 0 || !window.appState || !Array.isArray(window.appState.applications)) return 0;
       let count = 0;
 
+      if (typeof window.purgePhantomAppsFromState === 'function') {
+        window.purgePhantomAppsFromState(window.appState);
+      }
+
       webSystems.forEach(ws => {
         const cleanSysName = String(ws.name || ws.Sistema_a_Cargo || '').trim();
         if (!cleanSysName) return;
+        if (typeof window.isInvalidPhantomApp === 'function' && window.isInvalidPhantomApp({ name: cleanSysName, code: ws.code })) {
+          return;
+        }
+        const normCheck = cleanSysName.toLowerCase().replace(/[\s_-]+/g, '');
+        if (normCheck === 'sistemaacargo' || normCheck === 'nombreaplicativo' || normCheck === 'urlsistemaweb' || normCheck === 'desarrollador') {
+          return;
+        }
 
-        // 1. Encontrar o registrar aplicativo
+        // 1. Encontrar aplicativo existente
         let targetApp = window.appState.applications.find(a =>
           a.name.toLowerCase().trim() === cleanSysName.toLowerCase() ||
           cleanSysName.toLowerCase().includes(a.name.toLowerCase().trim()) ||
@@ -683,21 +698,22 @@
         );
 
         if (!targetApp) {
-          // Si es OFICINA - APLICATIVOS u otro sistema nuevo, crearlo
+          // Solo crear si es OFICINA - APLICATIVOS (evitar crear registros fantasma de filas basura de Sheets)
           const isOficina = cleanSysName.toUpperCase().includes('OFICINA');
-          const newAppId = isOficina ? 'app_oficina' : `app_${cleanSysName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+          if (!isOficina) return;
+          const newAppId = 'app_oficina';
           targetApp = {
             id: newAppId,
-            code: isOficina ? 'STF-OF-00' : `STF-${cleanSysName.substring(0, 3).toUpperCase()}-99`,
-            name: cleanSysName,
-            category: isOficina ? 'Gestión TI & Control' : 'Operaciones Planta',
-            description: `Sistema ${cleanSysName} de STF GROUP.`,
+            code: 'STF-OF-00',
+            name: 'OFICINA - APLICATIVOS',
+            category: 'Gestión TI & Control',
+            description: 'Sistema OFICINA - APLICATIVOS de STF GROUP.',
             devId: 'dev_jg',
             deadline: '2026-12-30',
             priority: 'Alta',
             status: 'ontime',
             iconColor: '#0EA5E9',
-            iconInitial: cleanSysName.substring(0, 3).toUpperCase(),
+            iconInitial: 'OFA',
             webUrl: String(ws.webUrl || '').trim(),
             phases: [
               { id: 'p1', name: '1. Levantamiento & Requisitos', weight: 15, completed: true },
@@ -742,7 +758,7 @@
         }
       });
 
-      if (count > 0 && typeof window.saveData === 'function') {
+      if (typeof window.saveData === 'function') {
         window.saveData(window.appState);
       }
       return count;

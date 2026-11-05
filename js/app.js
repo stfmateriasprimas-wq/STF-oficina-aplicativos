@@ -164,7 +164,17 @@ function isAppAssignedToDev(app, devId) {
 }
 
 function getScopedApplications() {
-  const allApps = (appState && Array.isArray(appState.applications)) ? appState.applications : [];
+  if (typeof window.purgePhantomAppsFromState === 'function' && appState) {
+    window.purgePhantomAppsFromState(appState);
+  }
+  const rawApps = (appState && Array.isArray(appState.applications)) ? appState.applications : [];
+  const allApps = rawApps.filter(a => {
+    if (!a) return false;
+    if (typeof window.isInvalidPhantomApp === 'function' && window.isInvalidPhantomApp(a)) return false;
+    const norm = String(a.name || '').toLowerCase().replace(/[\s_-]+/g, '');
+    if (a.id === 'app_sistema_a_cargo' || a.code === 'STF-SIS-99' || norm === 'sistemaacargo') return false;
+    return true;
+  });
   if (isCurrentSessionAdmin()) return allApps;
   const devId = getLoggedDevId();
   return allApps.filter(a => isAppAssignedToDev(a, devId));
@@ -6125,9 +6135,52 @@ const STF_INDUSTRIAL_CONTEXT = {
     plantRole: 'Control de Barcas de Teñido & Recetas Químicas',
     qaScore: '93.5% QA',
     qaStatus: 'Validado en Planta',
+    qaColor: '#059669'
+  },
+  app_oficina: {
+    plantArea: 'Gestión TI & Control',
+    plantRole: 'Supervisión Central de Software & Despliegues',
+    qaScore: '95.0% QA',
+    qaStatus: 'En Construcción Activa',
     qaColor: '#2563EB'
   }
 };
+
+// Orden y clasificación oficial de sistemas por etapas de planta según directriz ejecutiva
+const PIPELINE_STAGE_1_ORDER = ['app_torre', 'app_laboratorio', 'app_geo', 'app_oficina'];
+const PIPELINE_STAGE_3_ORDER = ['app_calidad', 'app_tintoreria', 'app_colchas'];
+
+function getAppPipelineStageInfo(app) {
+  if (!app) return { stageId: 'stage_core', order: 99 };
+  const id = String(app.id || '').toLowerCase();
+  const name = String(app.name || '').toUpperCase();
+
+  // Si tiene override explícito a Puesta en Planta
+  if (app.pipelineStage === 'stage_qa') {
+    return { stageId: 'stage_qa', order: 1 };
+  }
+
+  // 3. En Producción (En Vivo): CALIDAD, TINTORERIA, COLCHAS
+  const prodIdx = PIPELINE_STAGE_3_ORDER.indexOf(id);
+  if (prodIdx !== -1) return { stageId: 'stage_prod', order: prodIdx };
+  if (name.includes('CALIDAD')) return { stageId: 'stage_prod', order: 0 };
+  if (name.includes('TINTORERIA') || name.includes('TINTORERÍA')) return { stageId: 'stage_prod', order: 1 };
+  if (name.includes('COLCHAS')) return { stageId: 'stage_prod', order: 2 };
+
+  // 1. En Construcción: TORRE DE CONTROL, LABORATORIO, GEO UBICACION TALLERES, OFICINA - APLICATIVOS
+  const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
+  if (coreIdx !== -1) return { stageId: 'stage_core', order: coreIdx };
+  if (name.includes('TORRE')) return { stageId: 'stage_core', order: 0 };
+  if (name.includes('LABORATORIO')) return { stageId: 'stage_core', order: 1 };
+  if (name.includes('GEO')) return { stageId: 'stage_core', order: 2 };
+  if (name.includes('OFICINA')) return { stageId: 'stage_core', order: 3 };
+
+  return { stageId: 'stage_core', order: 50 };
+}
+
+function isAppInLiveProduction(app) {
+  return getAppPipelineStageInfo(app).stageId === 'stage_prod';
+}
 
 function switchView(viewName) {
   const isAdmin = isCurrentSessionAdmin();
@@ -6282,7 +6335,7 @@ function updateProjectsKpiBar() {
   const allApps = getScopedApplications();
   const isAdmin = isCurrentSessionAdmin();
   const totalApps = allApps.length;
-  const prodApps = allApps.filter(a => calculateAppProgress(a) >= 100).length;
+  const prodApps = allApps.filter(a => isAppInLiveProduction(a)).length;
   const riskApps = allApps.filter(a => a.status === 'risk').length;
   const onTimeApps = Math.max(0, totalApps - riskApps);
   const onTimeRate = totalApps > 0 ? Math.round((onTimeApps / totalApps) * 100) : 100;
@@ -6468,9 +6521,9 @@ function renderProjectsView(brand = activeBrandFilter) {
               </div>
 
               <div class="project-status-group">
-                <span class="status-pill ${app.status === 'risk' ? 'status-risk' : (progress === 100 ? 'status-done' : 'status-ontime')}">
+                <span class="status-pill ${isAppInLiveProduction(app) ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime')}">
                   <span class="status-pulse-dot"></span>
-                  ${app.status === 'risk' ? 'En Riesgo' : (progress === 100 ? 'En Producción' : 'En Tiempo')}
+                  ${isAppInLiveProduction(app) ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo')}
                 </span>
                 <span class="priority-pill ${app.priority === 'Alta' ? 'priority-high' : 'priority-med'}">
                   ${app.priority === 'Alta' ? '⚡ Alta Prioridad' : 'Media Prioridad'}
@@ -6618,10 +6671,10 @@ function renderProjectsView(brand = activeBrandFilter) {
         completedTasksCount = totalTasksCount;
       }
 
-      const statusBadge = app.status === 'risk'
-        ? `<span class="status-pill status-risk"><span class="status-pulse-dot"></span> En Riesgo</span>`
-        : (progress === 100
-          ? `<span class="status-pill status-done"><span class="status-pulse-dot"></span> En Producción</span>`
+      const statusBadge = isAppInLiveProduction(app)
+        ? `<span class="status-pill status-done"><span class="status-pulse-dot"></span> En Producción</span>`
+        : (app.status === 'risk'
+          ? `<span class="status-pill status-risk"><span class="status-pulse-dot"></span> En Riesgo</span>`
           : `<span class="status-pill status-ontime"><span class="status-pulse-dot"></span> En Tiempo</span>`);
 
       return `
@@ -7501,54 +7554,43 @@ function renderPipelineView(apps) {
   const stages = [
     {
       id: 'stage_core',
-      title: '1. En Construcción & Core',
+      title: '1. En Construcción',
       sub: 'Arquitectura, backend y desarrollo activo',
-      badgeText: 'Fases 1 a 4',
+      badgeText: 'En Construcción',
       badgeBg: '#EEF2FF',
       badgeColor: '#4F46E5',
       accentColor: '#6366F1',
       icon: 'code-2',
-      filter: (app) => {
-        const prog = calculateAppProgress(app);
-        const activeIdx = (app.phases || []).findIndex(p => !p.completed);
-        const phaseNum = activeIdx !== -1 ? activeIdx + 1 : (app.phases ? app.phases.length : 6);
-        return phaseNum <= 4 && prog < 75;
-      }
+      filter: (app) => getAppPipelineStageInfo(app).stageId === 'stage_core'
     },
     {
       id: 'stage_qa',
-      title: '2. Pruebas QA en Planta',
+      title: '2. Puesta en Planta',
       sub: 'Validación en campo y pruebas de conectividad',
-      badgeText: 'Fase 5: Pruebas',
+      badgeText: 'Puesta en Planta',
       badgeBg: '#FEF3C7',
       badgeColor: '#D97706',
       accentColor: '#F59E0B',
       icon: 'flask-conical',
-      filter: (app) => {
-        const prog = calculateAppProgress(app);
-        const activeIdx = (app.phases || []).findIndex(p => !p.completed);
-        const phaseNum = activeIdx !== -1 ? activeIdx + 1 : (app.phases ? app.phases.length : 6);
-        return (phaseNum === 5 || (prog >= 75 && prog < 100)) && (app.id !== 'app_colchas' && app.id !== 'app_oficina');
-      }
+      filter: (app) => getAppPipelineStageInfo(app).stageId === 'stage_qa'
     },
     {
       id: 'stage_prod',
       title: '3. En Producción (En Vivo)',
-      sub: 'Sistemas 100% operativos y auditados',
-      badgeText: 'Fase 6: Desplegado',
+      sub: 'Sistemas operativos en planta en producción',
+      badgeText: 'Desplegado',
       badgeBg: '#D1FAE5',
       badgeColor: '#059669',
       accentColor: '#10B981',
       icon: 'rocket',
-      filter: (app) => {
-        const prog = calculateAppProgress(app);
-        return prog >= 100 || app.id === 'app_colchas' || app.id === 'app_oficina';
-      }
+      filter: (app) => getAppPipelineStageInfo(app).stageId === 'stage_prod'
     }
   ];
 
   container.innerHTML = stages.map(stage => {
-    const stageApps = apps.filter(stage.filter);
+    const stageApps = apps
+      .filter(stage.filter)
+      .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
     const countLabel = stageApps.length === 1 ? '1 Sistema' : `${stageApps.length} Sistemas`;
 
     const cardsHtml = stageApps.length > 0
@@ -7588,6 +7630,7 @@ function renderPipelineView(apps) {
 function renderPipelineCardHtml(app, refDate, isAdmin) {
   const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
   const progress = calculateAppProgress(app);
+  const isProd = isAppInLiveProduction(app);
   const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
   const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
   const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 });
@@ -7617,7 +7660,7 @@ function renderPipelineCardHtml(app, refDate, isAdmin) {
   const diffDays = Math.ceil((deadlineDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
   
   let deadlineDisplay, isOverdue = false;
-  if (progress === 100) {
+  if (isProd) {
     deadlineDisplay = 'En Producción';
   } else if (diffDays < 0 || app.status === 'risk') {
     isOverdue = true;
@@ -7654,7 +7697,7 @@ function renderPipelineCardHtml(app, refDate, isAdmin) {
   }
 
   return `
-    <div class="pipeline-card ${app.status === 'risk' ? 'is-risk' : ''}" style="--app-accent: ${app.iconColor};" onclick="openSystemDetailModal('${app.id}')">
+    <div class="pipeline-card ${(!isProd && app.status === 'risk') ? 'is-risk' : ''}" style="--app-accent: ${app.iconColor};" onclick="openSystemDetailModal('${app.id}')">
       <div class="pipeline-card-accent-bar" style="background: ${app.iconColor};"></div>
 
       <div class="pipeline-card-header">
@@ -7671,9 +7714,9 @@ function renderPipelineCardHtml(app, refDate, isAdmin) {
           </div>
         </div>
         <div class="pipeline-status-col">
-          <span class="pipeline-status-pill ${app.status === 'risk' ? 'status-risk' : (progress >= 100 ? 'status-done' : 'status-ontime')}">
+          <span class="pipeline-status-pill ${isProd ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime')}">
             <span class="status-pulse-dot"></span>
-            ${app.status === 'risk' ? 'En Riesgo' : (progress >= 100 ? 'En Producción' : 'En Tiempo')}
+            ${isProd ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo')}
           </span>
         </div>
       </div>

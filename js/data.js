@@ -390,6 +390,41 @@ if (typeof window !== 'undefined') {
   window.STF_DATA = STF_REAL_DATA;
 }
 
+// Filtro estricto para eliminar cualquier rastro de "Sistema_a_Cargo" o cabeceras de Sheets
+function isInvalidPhantomApp(appOrId) {
+  if (!appOrId) return true;
+  if (typeof appOrId === 'string') {
+    const cleanId = appOrId.trim().toLowerCase();
+    return cleanId === 'app_sistema_a_cargo' || cleanId === 'sistema_a_cargo' || cleanId === 'stf-sis-99';
+  }
+  const id = String(appOrId.id || '').trim().toLowerCase();
+  const code = String(appOrId.code || '').trim().toLowerCase();
+  const name = String(appOrId.name || '').trim().toLowerCase();
+  const normalizedName = name.replace(/[\s_-]+/g, '');
+  if (id === 'app_sistema_a_cargo' || code === 'stf-sis-99') return true;
+  if (normalizedName === 'sistemaacargo' || normalizedName === 'nombreaplicativo' || normalizedName === 'urlsistemaweb') return true;
+  if (['sistema_a_cargo', 'sistema a cargo', 'nombre_aplicativo', 'desarrollador', 'estado', 'codigo'].includes(name)) return true;
+  return false;
+}
+
+function purgePhantomAppsFromState(stateObj) {
+  if (!stateObj || typeof stateObj !== 'object') return stateObj;
+  if (Array.isArray(stateObj.applications)) {
+    stateObj.applications = stateObj.applications.filter(a => !isInvalidPhantomApp(a));
+  }
+  if (Array.isArray(stateObj.developers)) {
+    stateObj.developers.forEach(d => {
+      if (Array.isArray(d.activeProjects)) {
+        d.activeProjects = d.activeProjects.filter(pid => !isInvalidPhantomApp(pid));
+      }
+    });
+  }
+  if (Array.isArray(stateObj.integrations)) {
+    stateObj.integrations = stateObj.integrations.filter(i => !isInvalidPhantomApp(i.appId) && !isInvalidPhantomApp(i.appName));
+  }
+  return stateObj;
+}
+
 // Guardar o inicializar en LocalStorage con migración inteligente
 function getStoredData() {
   const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V6';
@@ -448,6 +483,7 @@ function getStoredData() {
         if (!Array.isArray(parsed.integrations)) {
           parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations));
         }
+        purgePhantomAppsFromState(parsed);
         saveData(parsed);
         return parsed;
       }
@@ -457,11 +493,13 @@ function getStoredData() {
   }
 
   // Guardar datos reales oficiales
+  purgePhantomAppsFromState(STF_REAL_DATA);
   saveData(STF_REAL_DATA);
   return STF_REAL_DATA;
 }
 
 function saveData(data) {
+  purgePhantomAppsFromState(data);
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('STF_GROUP_REAL_DATA_V6', JSON.stringify(data));
   }
@@ -470,6 +508,8 @@ function saveData(data) {
 if (typeof window !== 'undefined') {
   window.saveData = saveData;
   window.getStoredData = getStoredData;
+  window.isInvalidPhantomApp = isInvalidPhantomApp;
+  window.purgePhantomAppsFromState = purgePhantomAppsFromState;
 }
 
 

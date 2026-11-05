@@ -417,9 +417,11 @@ function doGet(e) {
     var webSystems = [];
     if (wRows.length > 1) {
       for (var w = 1; w < wRows.length; w++) {
+        var sysNameW = String(wRows[w][1] || "").trim();
+        if (!sysNameW || sysNameW.toLowerCase() === "sistema_a_cargo" || sysNameW.toLowerCase() === "nombre_aplicativo") continue;
         webSystems.push({
           devName: String(wRows[w][0] || "").trim(),
-          name: String(wRows[w][1] || "").trim(),
+          name: sysNameW,
           webUrl: String(wRows[w][2] || "").trim(),
           status: String(wRows[w][3] || "").trim()
         });
@@ -441,9 +443,11 @@ function doGet(e) {
     var webList = [];
     if (woRows.length > 1) {
       for (var wo = 1; wo < woRows.length; wo++) {
+        var sysNameWO = String(woRows[wo][1] || "").trim();
+        if (!sysNameWO || sysNameWO.toLowerCase() === "sistema_a_cargo" || sysNameWO.toLowerCase() === "nombre_aplicativo") continue;
         webList.push({
           devName: String(woRows[wo][0] || "").trim(),
-          name: String(woRows[wo][1] || "").trim(),
+          name: sysNameWO,
           webUrl: String(woRows[wo][2] || "").trim(),
           status: String(woRows[wo][3] || "").trim()
         });
