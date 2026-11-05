@@ -2166,8 +2166,8 @@ let vcalSelectedEnd = '2026-10-28';
 // ==========================================================================
 
 function getDynamicDeliveriesList() {
-  const baseDeliveries = Array.isArray(STF_VELOCITY_DATA.dailyDeliveries) ? [...STF_VELOCITY_DATA.dailyDeliveries] : [];
-  const integrations = (appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
+  const baseDeliveries = (typeof STF_VELOCITY_DATA !== 'undefined' && Array.isArray(STF_VELOCITY_DATA.dailyDeliveries)) ? [...STF_VELOCITY_DATA.dailyDeliveries] : [];
+  const integrations = (typeof appState !== 'undefined' && appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
   
   // Agregar tareas evaluadas o completadas en tiempo real al historial de entregas
   integrations.forEach(t => {
@@ -2498,28 +2498,23 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
   const canvas = document.getElementById('velocityBarChart');
   if (!canvas) return;
 
-  if (velocityChartInstance) {
-    velocityChartInstance.destroy();
-  }
-
-  const ctx2d = canvas.getContext('2d');
   const isAll = devId === 'all';
   const devKey = isAll ? 'all' : devId;
   const devObj = isAll ? null : (getDeveloperById(devId) || { name: 'Desarrollador', onTimeDelivery: 95 });
 
   // 1. Obtener etiquetas, valores de módulos y horas dinámicamente según el período y desarrollador
   const dynVelocity = computeDynamicVelocityData(period, devKey);
-  const labels = dynVelocity.labels;
-  const values = dynVelocity.values;
-  const actualHours = dynVelocity.actualHours;
-  const targetBenchmark = dynVelocity.targetBenchmark;
-  const benchmarkUnitText = dynVelocity.benchmarkUnitText;
-  const periodSubtext = dynVelocity.periodSubtext;
-  const periodTypeName = dynVelocity.periodTypeName;
+  let labels = [...dynVelocity.labels];
+  let values = [...dynVelocity.values];
+  let actualHours = [...dynVelocity.actualHours];
+  const targetBenchmark = dynVelocity.targetBenchmark || 8;
+  const benchmarkUnitText = dynVelocity.benchmarkUnitText || 'Mes';
+  const periodSubtext = dynVelocity.periodSubtext || '';
+  const periodTypeName = dynVelocity.periodTypeName || 'Período';
 
-  // Prevenir divisiones por cero
+  // Prevenir divisiones por cero o arrays vacíos
   if (values.length === 0) {
-    labels = ['Sin datos'];
+    labels = ['Sin entregas'];
     values = [0];
     actualHours = [0];
   }
@@ -2594,6 +2589,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
   }
 
   // 3. Gradientes dinámicos para las barras
+  const ctx2d = canvas.getContext('2d');
   const normGrad = ctx2d.createLinearGradient(0, 240, 0, 40);
   normGrad.addColorStop(0, '#E0EAFF');
   normGrad.addColorStop(1, '#C7DCFE');
@@ -2620,18 +2616,59 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
 
   const backgroundCapsules = values.map(() => maxY);
 
-  // 4. Plugin de Chart.js para dibujar números en barras y la insignia flotante ⭐ Récord
+  // 4. Si la instancia del gráfico ya existe, actualizarla de forma reactiva y fluida
+  if (velocityChartInstance && typeof velocityChartInstance.update === 'function') {
+    try {
+      velocityChartInstance.data.labels = labels;
+      velocityChartInstance.data.datasets[0].data = backgroundCapsules;
+      velocityChartInstance.data.datasets[1].data = values;
+      velocityChartInstance.data.datasets[1].backgroundColor = backgroundColors;
+      velocityChartInstance.data.datasets[1].hoverBackgroundColor = hoverColors;
+      velocityChartInstance.data.datasets[2].data = hoursSplineData;
+      velocityChartInstance.data.datasets[3].data = targetValues;
+      velocityChartInstance.data.datasets[3].label = `Meta Benchmark (${targetBenchmark} Mods)`;
+      if (velocityChartInstance.options && velocityChartInstance.options.scales && velocityChartInstance.options.scales.y) {
+        velocityChartInstance.options.scales.y.max = maxY;
+        velocityChartInstance.options.scales.y.ticks.stepSize = Math.max(2, Math.round(maxY / 5));
+      }
+      velocityChartInstance.update();
+      renderVelocitySprintDigest(period, labels, values, actualHours, targetBenchmark, peakIdx);
+      return;
+    } catch (err) {
+      console.warn('Fallo al actualizar velocityChartInstance reactivamente, recreando...', err);
+      try { velocityChartInstance.destroy(); } catch (e) {}
+      velocityChartInstance = null;
+    }
+  }
+
+  // 5. Destrucción limpia previa en el elemento canvas antes de la primera creación
+  const existingChart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+  if (existingChart) {
+    try { existingChart.destroy(); } catch (e) {}
+  }
+  velocityChartInstance = null;
+
+  // 6. Plugin de Chart.js para dibujar números en barras y la insignia flotante ⭐ Récord
   const velocityBarLabelsPlugin = {
     id: 'velocityBarLabels',
     afterDatasetsDraw(chart) {
       const { ctx: c } = chart;
       const barMeta = chart.getDatasetMeta(1);
-      if (!barMeta || !barMeta.data) return;
+      if (!barMeta || !barMeta.data || barMeta.data.length === 0) return;
+
+      const chartValues = chart.data.datasets[1]?.data || [];
+      const chartBenchmark = chart.data.datasets[3]?.data?.[0] || 8;
+
+      let pVal = -1;
+      let pIdx = -1;
+      chartValues.forEach((v, i) => {
+        if (v > pVal) { pVal = v; pIdx = i; }
+      });
 
       c.save();
       barMeta.data.forEach((bar, idx) => {
-        const val = values[idx];
-        const isPeak = idx === peakIdx && val > 0;
+        const val = chartValues[idx] || 0;
+        const isPeak = idx === pIdx && val > 0;
 
         if (isPeak) {
           const text = `⭐ Récord: ${val} Mods`;
@@ -2640,7 +2677,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           const padX = 10;
           const totalBadgeW = textW + (padX * 2);
           const badgeH = 22;
-          let badgeX = bar.x - (totalBadgeW / 2);
+          let badgeX = (bar.x || 0) - (totalBadgeW / 2);
           const chartRight = chart.chartArea ? chart.chartArea.right : (chart.width - 10);
           const chartLeft = chart.chartArea ? chart.chartArea.left : 10;
           if (badgeX + totalBadgeW > chartRight - 2) {
@@ -2650,7 +2687,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
             badgeX = chartLeft + 2;
           }
           const textCenterX = badgeX + (totalBadgeW / 2);
-          const badgeY = Math.max(8, bar.y - 30);
+          const badgeY = Math.max(8, (bar.y || 30) - 30);
 
           c.shadowColor = 'rgba(78, 101, 255, 0.35)';
           c.shadowBlur = 8;
@@ -2658,7 +2695,11 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           c.fillStyle = '#4E65FF';
           c.beginPath();
           if (typeof c.roundRect === 'function') {
-            c.roundRect(badgeX, badgeY, totalBadgeW, badgeH, 11);
+            try {
+              c.roundRect(badgeX, badgeY, totalBadgeW, badgeH, 10);
+            } catch (e) {
+              c.rect(badgeX, badgeY, totalBadgeW, badgeH);
+            }
           } else {
             c.rect(badgeX, badgeY, totalBadgeW, badgeH);
           }
@@ -2671,18 +2712,19 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           c.fillText(text, textCenterX, badgeY + (badgeH / 2));
         } else if (val > 0) {
           c.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
-          c.fillStyle = val >= targetBenchmark ? '#1E293B' : '#64748B';
+          c.fillStyle = val >= chartBenchmark ? '#1E293B' : '#64748B';
           c.textAlign = 'center';
           c.textBaseline = 'bottom';
-          c.fillText(`${val}`, bar.x, bar.y - 6);
+          c.fillText(`${val}`, bar.x || 0, (bar.y || 10) - 6);
         }
       });
       c.restore();
     }
   };
 
-  // 5. Instanciar Chart.js
+  // 7. Instanciar Chart.js con tipo explícito 'bar' a nivel raíz
   velocityChartInstance = new Chart(canvas, {
+    type: 'bar',
     plugins: [velocityBarLabelsPlugin],
     data: {
       labels: labels,
@@ -2827,17 +2869,34 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
     }
   });
 
-  // 6. Renderizar desglose interactivo inferior (Ribbon de chips)
+  // 8. Renderizar desglose interactivo inferior (Ribbon de chips)
   renderVelocitySprintDigest(period, labels, values, actualHours, targetBenchmark, peakIdx);
 }
 
-// Cálculo para rango de fechas personalizado del calendario
+// Cálculo para rango de fechas personalizado del calendario sin desfases de huso horario
 function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
-  const dStart = new Date(startDateStr);
-  const dEnd = new Date(endDateStr);
+  function parseLocalDate(str) {
+    if (!str) return new Date();
+    const p = str.split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+  }
+
+  function formatLocalDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const dStart = parseLocalDate(startDateStr);
+  const dEnd = parseLocalDate(endDateStr);
   const diffDays = Math.max(1, Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24)) + 1);
 
-  const logs = STF_VELOCITY_DATA.dailyDeliveries.filter(log => {
+  const allLogs = (typeof getDynamicDeliveriesList === 'function' && getDynamicDeliveriesList().length > 0)
+    ? getDynamicDeliveriesList()
+    : STF_VELOCITY_DATA.dailyDeliveries;
+
+  const logs = allLogs.filter(log => {
     const isDateMatch = log.date >= startDateStr && log.date <= endDateStr;
     const isDevMatch = devKey === 'all' || log.devId === devKey;
     return isDateMatch && isDevMatch;
@@ -2859,10 +2918,7 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
 
     const cur = new Date(dStart);
     while (cur <= dEnd) {
-      const yyyy = cur.getFullYear();
-      const mm = String(cur.getMonth() + 1).padStart(2, '0');
-      const dd = String(cur.getDate()).padStart(2, '0');
-      const dateKey = `${yyyy}-${mm}-${dd}`;
+      const dateKey = formatLocalDate(cur);
       const dayName = cur.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
       labels.push(dayName);
 
@@ -2878,7 +2934,7 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
     // Agrupación por semanas de 7 días
     periodTypeName = 'Semana';
     benchmarkUnitText = 'Sem';
-    targetBenchmark = devBench.weekly;
+    targetBenchmark = devBench.weekly || 8;
 
     const totalWeeks = Math.ceil(diffDays / 7);
     for (let w = 0; w < totalWeeks; w++) {
@@ -2888,8 +2944,8 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
       wEnd.setDate(wEnd.getDate() + 6);
       if (wEnd > dEnd) wEnd.setTime(dEnd.getTime());
 
-      const startStr = wStart.toISOString().split('T')[0];
-      const endStr = wEnd.toISOString().split('T')[0];
+      const startStr = formatLocalDate(wStart);
+      const endStr = formatLocalDate(wEnd);
       const label = `Sem ${w + 1} (${wStart.getDate()}-${wEnd.getDate()} ${wEnd.toLocaleDateString('es-CO', { month: 'short' })})`;
       labels.push(label);
 
@@ -2903,9 +2959,9 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
     // Agrupación mensual
     periodTypeName = 'Mes';
     benchmarkUnitText = 'Mes';
-    targetBenchmark = devBench.monthly;
+    targetBenchmark = devBench.monthly || 25;
 
-    const cur = new Date(dStart.getFullYear(), dStart.getMonth(), 1);
+    const cur = new Date(dStart.getFullYear(), dStart.getMonth(), 1, 12, 0, 0);
     while (cur <= dEnd) {
       const mLabel = cur.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
       const capitalMLabel = mLabel.charAt(0).toUpperCase() + mLabel.slice(1);
