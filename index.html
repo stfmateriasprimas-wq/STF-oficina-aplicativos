@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=28">
+  <link rel="stylesheet" href="css/styles.css?v=29">
 </head>
 <body>
 
@@ -96,25 +96,21 @@
             <span class="sheets-live-dot offline" id="sheetsLiveDot"></span>
           </button>
 
-          <div class="dropdown-pill">
-            <span>STF Sistemas TI</span>
-            <i data-lucide="chevron-down"></i>
-          </div>
-
           <div class="header-notifications-wrapper" style="position: relative;">
-            <button class="icon-circle-btn notification-btn" id="btnNotifications" title="Notificaciones de Alertas en Planta">
+            <button class="icon-circle-btn notification-btn" id="btnNotifications" title="Centro de Notificaciones en Tiempo Real">
               <i data-lucide="bell"></i>
-              <span class="notification-badge" id="notificationBadgeCount">2</span>
+              <span class="notification-badge" id="notificationBadgeCount" style="display: none;">0</span>
             </button>
-            <div class="header-dev-dropdown" id="notificationsDropdown" style="width: 340px; right: 0;">
-              <div class="dropdown-session-header" style="padding-bottom: 8px;">
-                <div class="dsh-label" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>🔔 Alertas Operativas en Tiempo Real</span>
-                  <span id="notifDropdownTag" style="font-size: 10.5px; color: #F59E0B; font-weight: 700;">Activas</span>
+            <div class="header-dev-dropdown notif-center-dropdown" id="notificationsDropdown" style="width: 380px; right: 0;">
+              <div class="dropdown-session-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 13px; font-weight: 800; color: #1E293B;">🔔 Notificaciones</span>
+                  <span class="badge" id="notifRoleBadge" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #EEF2FF; color: #4E65FF;">Super Admin</span>
                 </div>
+                <button type="button" class="text-link-btn" onclick="markAllNotificationsRead()" style="font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none; cursor: pointer; text-decoration: underline;" title="Marcar todas como leídas">Marcar leídas</button>
               </div>
-              <div class="dev-drop-divider"></div>
-              <div id="notificationsListContainer" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px 0;">
+              <div class="dev-drop-divider" style="margin: 4px 0 8px 0;"></div>
+              <div id="notificationsListContainer" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px;">
                 <!-- Populated dynamically via JS -->
               </div>
             </div>
@@ -2074,8 +2070,8 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=28"></script>
-  <script src="js/sheets-sync.js?v=28"></script>
-  <script src="js/app.js?v=28"></script>
+  <script src="js/data.js?v=29"></script>
+  <script src="js/sheets-sync.js?v=29"></script>
+  <script src="js/app.js?v=29"></script>
 </body>
 </html>

@@ -332,96 +332,291 @@ function syncDynamicSelects() {
   }
 }
 
+// Variable global para tracking de notificaciones leídas
+let readNotificationsSet = new Set();
+try {
+  const storedRead = localStorage.getItem('STF_READ_NOTIFICATIONS');
+  if (storedRead) {
+    readNotificationsSet = new Set(JSON.parse(storedRead));
+  }
+} catch (e) {}
+
+function getNotificationsData() {
+  const isAdmin = isCurrentSessionAdmin();
+  const currentDevId = getLoggedDevId();
+  const allApps = (typeof appState !== 'undefined' && appState && Array.isArray(appState.applications)) ? appState.applications : [];
+  const allInts = (typeof appState !== 'undefined' && appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
+  const notifications = [];
+
+  if (isAdmin) {
+    // =========================================================================
+    // VISTA SUPER ADMIN: Avances de Desarrolladores, Tareas y Alertas en Planta
+    // =========================================================================
+    
+    // 1. Tareas en desarrollo activo con avance de desarrolladores
+    allInts.forEach(task => {
+      const app = allApps.find(a => a.id === task.appId);
+      const dev = getDeveloperById(task.devId);
+      const devName = dev ? dev.name : 'Desarrollador';
+      const appName = app ? app.name : 'Sistema';
+      const diag = calculateIntegrationTimeProgress(task);
+
+      if (task.status === 'in_progress') {
+        notifications.push({
+          id: `notif_prog_${task.id}`,
+          type: 'dev_progress',
+          icon: 'trending-up',
+          iconBg: '#ECFDF5',
+          iconColor: '#10B981',
+          tag: 'Avance de Dev',
+          tagColor: '#059669',
+          tagBg: '#D1FAE5',
+          title: `${devName} reportó avance`,
+          sub: `Tarea: "${task.name}" en ${appName} (Peso: ${task.weight}%)`,
+          time: diag.countdownText || 'En desarrollo',
+          action: () => openEvaluateIntegrationModal(task.id)
+        });
+      } else if (task.status === 'evaluated') {
+        notifications.push({
+          id: `notif_audit_${task.id}`,
+          type: 'audit_done',
+          icon: 'check-circle-2',
+          iconBg: '#EEF2FF',
+          iconColor: '#4E65FF',
+          tag: 'Auditada',
+          tagColor: '#4338CA',
+          tagBg: '#E0E7FF',
+          title: `Avance Certificado: ${task.name}`,
+          sub: `${devName} sumó +${task.evaluation?.pointsAdded || task.weight}% a ${appName}`,
+          time: task.evaluation?.evalDate || 'Reciente',
+          action: () => openEvaluateIntegrationModal(task.id)
+        });
+      }
+    });
+
+    // 2. Sistemas en riesgo o con atrasos para el Super Admin
+    allApps.forEach(app => {
+      if (app.status === 'risk' || app.status === 'delayed') {
+        const leadDev = getDeveloperById(app.devId);
+        notifications.push({
+          id: `notif_app_risk_${app.id}`,
+          type: 'risk',
+          icon: 'alert-triangle',
+          iconBg: '#FEF3C7',
+          iconColor: '#F59E0B',
+          tag: 'Alerta Sistema',
+          tagColor: '#B45309',
+          tagBg: '#FDE68A',
+          title: `Sistema en Riesgo: ${app.name}`,
+          sub: `Líder: ${leadDev ? leadDev.name : 'Equipo'} · Límite: ${formatShortDate(app.deadline)}`,
+          time: 'Requiere atención',
+          action: () => openSystemDetailModal(app.id)
+        });
+      }
+    });
+
+  } else {
+    // =========================================================================
+    // VISTA DESARROLLADOR: Nuevas Tareas Asignadas & Observaciones del Admin
+    // =========================================================================
+    const devTasks = allInts.filter(t => resolveCanonicalDevId(t.devId) === currentDevId);
+    const devObj = getDeveloperById(currentDevId);
+
+    devTasks.forEach(task => {
+      const app = allApps.find(a => a.id === task.appId);
+      const appName = app ? app.name : 'Sistema';
+
+      // 1. Observaciones y dictámenes del Super Admin ante cualquier desarrollo
+      if (task.evaluation && task.evaluation.notes) {
+        notifications.push({
+          id: `notif_obs_${task.id}`,
+          type: 'admin_observation',
+          icon: 'message-square',
+          iconBg: '#F5F3FF',
+          iconColor: '#8B5CF6',
+          tag: 'Observación Admin',
+          tagColor: '#6D28D9',
+          tagBg: '#EDE9FE',
+          title: `Observación de Admin en ${appName}`,
+          sub: `"${task.evaluation.notes}" · Calidad: ${task.evaluation.qualityScore}% (+${task.evaluation.pointsAdded}% sumado)`,
+          time: task.evaluation.evalDate || 'Reciente',
+          action: () => openEvaluateIntegrationModal(task.id)
+        });
+      }
+
+      // 2. Nuevas Tareas Asignadas por el Admin
+      if (task.status === 'in_progress') {
+        const diag = calculateIntegrationTimeProgress(task);
+        notifications.push({
+          id: `notif_new_task_${task.id}`,
+          type: 'new_task',
+          icon: 'clipboard-list',
+          iconBg: '#E0F2FE',
+          iconColor: '#0284C7',
+          tag: 'Nueva Tarea Asignada',
+          tagColor: '#0369A1',
+          tagBg: '#BAE6FD',
+          title: `Tarea Asignada: ${task.name}`,
+          sub: `Sistema: ${appName} · Plazo: ${formatShortDate(task.deadline)} (${task.weight}% peso)`,
+          time: diag.countdownText || 'Activa',
+          action: () => openSystemDetailModal(task.appId)
+        });
+      }
+
+      // 3. Tareas vencidas o próximas a vencer para el desarrollador
+      const diag = calculateIntegrationTimeProgress(task);
+      if (task.status !== 'evaluated' && diag.isOverdue) {
+        notifications.push({
+          id: `notif_dev_overdue_${task.id}`,
+          type: 'overdue',
+          icon: 'clock',
+          iconBg: '#FEE2E2',
+          iconColor: '#EF4444',
+          tag: 'Plazo Vencido',
+          tagColor: '#B91C1C',
+          tagBg: '#FECACA',
+          title: `Vencimiento: ${task.name}`,
+          sub: `Superó el plazo fijado por el Jefe TI (${diag.countdownText})`,
+          time: 'Urgente',
+          action: () => openSystemDetailModal(task.appId)
+        });
+      }
+    });
+
+    // 4. Estado de los aplicativos asignados al desarrollador
+    const assignedApps = allApps.filter(a => isAppAssignedToDev(a, currentDevId));
+    assignedApps.forEach(app => {
+      const completedPhases = app.phases ? app.phases.filter(p => p.completed).length : 0;
+      const totalPhases = app.phases ? app.phases.length : 6;
+      notifications.push({
+        id: `notif_app_status_${app.id}`,
+        type: 'app_status',
+        icon: 'layers',
+        iconBg: '#EFF6FF',
+        iconColor: '#3B82F6',
+        tag: 'Avance Aplicativo',
+        tagColor: '#1D4ED8',
+        tagBg: '#DBEAFE',
+        title: `${app.name}: ${completedPhases}/${totalPhases} Fases Certificadas`,
+        sub: `Avance general: ${calculateAppProgress(app)}% · ${app.status === 'risk' ? 'En Riesgo' : 'En Tiempo'}`,
+        time: 'En supervisión',
+        action: () => openSystemDetailModal(app.id)
+      });
+    });
+  }
+
+  return notifications;
+}
+
+function markAllNotificationsRead() {
+  const notifications = getNotificationsData();
+  notifications.forEach(n => readNotificationsSet.add(n.id));
+  try {
+    localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
+  } catch (e) {}
+  renderNotificationsDropdown();
+  if (typeof showToast === 'function') {
+    showToast('✓ Todas las notificaciones han sido marcadas como leídas');
+  }
+}
+
+function markSingleNotificationRead(notifId) {
+  if (notifId) {
+    readNotificationsSet.add(notifId);
+    try {
+      localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
+    } catch (e) {}
+    renderNotificationsDropdown();
+  }
+}
+
 function renderNotificationsDropdown() {
   const badgeEl = document.getElementById('notificationBadgeCount');
   const listEl = document.getElementById('notificationsListContainer');
-  if (!listEl && !badgeEl) return;
+  const roleBadgeEl = document.getElementById('notifRoleBadge');
 
   const isAdmin = isCurrentSessionAdmin();
-  const scopedApps = getScopedApplications();
-  const scopedInts = getScopedIntegrations();
+  const currentDev = !isAdmin ? getDeveloperById(getLoggedDevId()) : null;
 
-  const alerts = [];
-  // 1. Aplicativos en riesgo
-  scopedApps.forEach(app => {
-    if (app.status === 'risk' || app.status === 'delayed') {
-      alerts.push({
-        type: 'risk',
-        title: `Sistema en Riesgo: ${app.name}`,
-        sub: `Código ${app.code} · Fecha límite: ${formatShortDate(app.deadline)}`,
-        action: () => openSystemDetailModal(app.id)
-      });
+  if (roleBadgeEl) {
+    if (isAdmin) {
+      roleBadgeEl.textContent = 'Super Admin';
+      roleBadgeEl.style.background = '#EEF2FF';
+      roleBadgeEl.style.color = '#4E65FF';
+    } else {
+      const shortName = currentDev ? currentDev.name.split(' ')[0] : 'Dev';
+      roleBadgeEl.textContent = `💻 ${shortName}`;
+      roleBadgeEl.style.background = '#F0FDF4';
+      roleBadgeEl.style.color = '#15803D';
     }
-  });
+  }
 
-  // 2. Tareas e integraciones vencidas o próximas a vencer
-  scopedInts.forEach(task => {
-    if (task.status === 'evaluated') return;
-    const diag = calculateIntegrationTimeProgress(task);
-    const app = getApplicationById(task.appId);
-    const dev = getDeveloperById(task.devId);
-    const taskAction = () => {
-      if (isAdmin) {
-        openEvaluateIntegrationModal(task.id);
-      } else {
-        openSystemDetailModal(task.appId);
-      }
-    };
-    if (diag.isOverdue) {
-      alerts.push({
-        type: 'overdue',
-        title: `Tarea Vencida: ${task.name}`,
-        sub: `${dev ? dev.name : 'Dev'} · ${app ? app.name : 'Sistema'} (${diag.countdownText})`,
-        action: taskAction
-      });
-    } else if (diag.timeBurnRate >= 75) {
-      alerts.push({
-        type: 'warning',
-        title: `Entrega Próxima: ${task.name}`,
-        sub: `${dev ? dev.name : 'Dev'} · ${diag.countdownText}`,
-        action: taskAction
-      });
-    }
-  });
+  const notifications = getNotificationsData();
+  const unreadCount = notifications.filter(n => !readNotificationsSet.has(n.id)).length;
 
   if (badgeEl) {
-    badgeEl.textContent = alerts.length;
-    badgeEl.style.display = alerts.length > 0 ? 'flex' : 'none';
+    badgeEl.textContent = unreadCount;
+    badgeEl.style.display = unreadCount > 0 ? 'flex' : 'none';
   }
 
-  if (listEl) {
-    if (alerts.length === 0) {
-      listEl.innerHTML = `
-        <div style="padding: 16px; text-align: center; color: #64748B; font-size: 12px;">
-          ✅ Todos tus sistemas y entregas están en tiempo sin alertas críticas.
+  if (!listEl) return;
+
+  if (notifications.length === 0) {
+    listEl.innerHTML = `
+      <div style="padding: 26px 16px; text-align: center; color: #64748B;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
+          <i data-lucide="check-circle" style="width: 22px; height: 22px; color: #10B981;"></i>
+        </div>
+        <strong style="font-size: 13px; color: #1E293B; display: block; margin-bottom: 4px;">Sin notificaciones pendientes</strong>
+        <p style="font-size: 11.5px; color: #94A3B8; margin: 0;">Todos los sistemas y tareas están actualizados al día.</p>
+      </div>
+    `;
+  } else {
+    listEl.innerHTML = notifications.map((n, idx) => {
+      const isUnread = !readNotificationsSet.has(n.id);
+      return `
+        <div class="notif-card-item ${isUnread ? 'unread' : ''}" data-notif-idx="${idx}" title="Clic para abrir y ver detalles">
+          ${isUnread ? '<span class="notif-unread-dot"></span>' : ''}
+          <div class="notif-icon-box" style="background: ${n.iconBg}; color: ${n.iconColor};">
+            <i data-lucide="${n.icon}"></i>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span style="font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: ${n.tagBg}; color: ${n.tagColor};">
+                ${n.tag}
+              </span>
+              <span style="font-size: 10px; color: #94A3B8; font-weight: 500; white-space: nowrap;">${n.time}</span>
+            </div>
+            <strong style="font-size: 12.5px; font-weight: 700; color: #0F172A; display: block; line-height: 1.35; margin-bottom: 2px;">${n.title}</strong>
+            <p style="font-size: 11.5px; color: #475569; margin: 0; line-height: 1.4; white-space: normal; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${n.sub}</p>
+          </div>
         </div>
       `;
-    } else {
-      listEl.innerHTML = alerts.map((al, idx) => {
-        const dotColor = al.type === 'overdue' ? '#EF4444' : (al.type === 'risk' ? '#F59E0B' : '#3B82F6');
-        return `
-          <div class="dev-drop-item" data-alert-idx="${idx}" style="align-items: flex-start; gap: 10px; padding: 10px 12px;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${dotColor}; margin-top: 5px; flex-shrink: 0;"></span>
-            <div style="flex: 1;">
-              <strong style="font-size: 12px; display: block; color: #F8FAFC;">${al.title}</strong>
-              <span style="font-size: 11px; color: #94A3B8;">${al.sub}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
+    }).join('');
 
-      listEl.querySelectorAll('.dev-drop-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const i = parseInt(item.getAttribute('data-alert-idx'));
+    listEl.querySelectorAll('.notif-card-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const i = parseInt(item.getAttribute('data-notif-idx'), 10);
+        const notif = notifications[i];
+        if (notif) {
+          markSingleNotificationRead(notif.id);
           document.getElementById('notificationsDropdown')?.classList.remove('show');
-          if (alerts[i] && typeof alerts[i].action === 'function') {
-            alerts[i].action();
+          if (typeof notif.action === 'function') {
+            notif.action();
           }
-        });
+        }
       });
-    }
+    });
+  }
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
   }
 }
+
+window.markAllNotificationsRead = markAllNotificationsRead;
+window.markSingleNotificationRead = markSingleNotificationRead;
+window.renderNotificationsDropdown = renderNotificationsDropdown;
 
 function applyRoleBasedUI() {
   const isAdmin = isCurrentSessionAdmin();
@@ -590,6 +785,7 @@ function refreshAllViews() {
   if (typeof renderProjectsView === 'function') renderProjectsView(activeBrandFilter);
   if (typeof updateOverviewChart === 'function') updateOverviewChart();
   if (typeof updateVelocitySection === 'function') updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
+  if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
   if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 }
 window.refreshAllViews = refreshAllViews;
@@ -5726,6 +5922,7 @@ function initApp() {
   initVelocityBarChart();
   renderIntegrationsList(); // Render Super Admin Integrations Controller
   updateHeaderStatChips(); // Actualizar contadores dinámicos de cabecera
+  renderNotificationsDropdown(); // Initial notifications check
 
 
   // Global search input
