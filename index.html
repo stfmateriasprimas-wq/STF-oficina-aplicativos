@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=43">
+  <link rel="stylesheet" href="css/styles.css?v=44">
 </head>
 <body>
 
@@ -762,27 +762,35 @@
 
         <div class="analytics-grid">
           <!-- Brand Distribution Chart -->
-          <div class="grid-card">
+          <div class="grid-card analytics-chart-card">
             <div class="card-header">
               <div class="header-left">
                 <h2 class="card-title">Avance Ponderado por Marca / Categoría</h2>
                 <span class="card-subtext">Progreso de digitalización en unidades de negocio STF GROUP</span>
               </div>
             </div>
-            <div style="height: 280px; position: relative;">
+            <div class="doughnut-chart-wrapper">
               <canvas id="brandsProgressChart"></canvas>
+              <div class="doughnut-center-metric" id="doughnutCenterMetric">
+                <span class="dcm-val" id="dcmAverageValue">64%</span>
+                <span class="dcm-lbl">Promedio</span>
+              </div>
+            </div>
+            <!-- Custom Clean Legend / Breakdown Grid for Mobile & Desktop -->
+            <div class="analytics-brand-pills-grid" id="brandsProgressPillsGrid">
+              <!-- Populated via JS -->
             </div>
           </div>
 
           <!-- Quality / Bugs Chart -->
-          <div class="grid-card">
+          <div class="grid-card analytics-chart-card">
             <div class="card-header">
               <div class="header-left">
                 <h2 class="card-title">Estado de Pruebas QA & Incidencias</h2>
                 <span class="card-subtext">Defectos detectados vs. subsanados antes de producción</span>
               </div>
             </div>
-            <div style="height: 280px; position: relative;">
+            <div class="qa-bugs-chart-wrapper">
               <canvas id="qaBugsChart"></canvas>
             </div>
           </div>

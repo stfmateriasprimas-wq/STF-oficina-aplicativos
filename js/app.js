@@ -7515,9 +7515,9 @@ function renderAnalyticsView() {
   if (brandsChartInstance) brandsChartInstance.destroy();
   if (qaBugsChartInstance) qaBugsChartInstance.destroy();
 
-  // 1. Brands / Systems Progress Doughnut
+  // 1. Brands / Systems Progress Doughnut (Avance Ponderado por Marca / Categoría)
   if (brandsCtx) {
-    // Si no hay aplicativos
+    const isMobile = window.innerWidth <= 768;
     const labels = scopedApps.length > 0 
       ? scopedApps.map(a => {
           const dev = getDeveloperById(a.devId);
@@ -7528,6 +7528,35 @@ function renderAnalyticsView() {
     const progressValues = scopedApps.length > 0 ? scopedApps.map(a => calculateAppProgress(a)) : [0];
     const colors = scopedApps.length > 0 ? scopedApps.map(a => a.iconColor || '#4E65FF') : ['#E2E8F0'];
 
+    // Métrica central calculada en vivo
+    const avgProg = progressValues.length > 0
+      ? Math.round(progressValues.reduce((a, b) => a + b, 0) / progressValues.length)
+      : 0;
+    const dcmVal = document.getElementById('dcmAverageValue');
+    if (dcmVal) dcmVal.textContent = `${avgProg}%`;
+
+    // Renderizar cuadrícula limpia de pastillas (Evita el amontonamiento de leyendas en móvil)
+    const pillsGrid = document.getElementById('brandsProgressPillsGrid');
+    if (pillsGrid) {
+      if (scopedApps.length === 0) {
+        pillsGrid.innerHTML = '<span style="font-size:11.5px;color:#94a3b8;grid-column:1/-1;text-align:center;padding:8px;">Sin aplicativos asignados</span>';
+      } else {
+        pillsGrid.innerHTML = scopedApps.map((a, idx) => {
+          const dev = getDeveloperById(a.devId);
+          const devName = a.isGroupProject ? 'Grupal' : (dev ? dev.name.split(' ')[0] : '');
+          const prog = progressValues[idx];
+          const color = colors[idx];
+          return `
+            <div class="ab-pill" onclick="openSystemDetailModal('${a.id}')" title="Ver detalles de ${a.name} (${prog}% avance)">
+              <span class="ab-dot" style="background: ${color};"></span>
+              <span class="ab-name">${a.name}${devName ? ` <small class="ab-dev">(${devName})</small>` : ''}</span>
+              <strong class="ab-pct" style="color: ${color};">${prog}%</strong>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
     brandsChartInstance = new Chart(brandsCtx, {
       type: 'doughnut',
       data: {
@@ -7535,9 +7564,9 @@ function renderAnalyticsView() {
         datasets: [{
           data: progressValues,
           backgroundColor: colors,
-          borderWidth: 4,
+          borderWidth: 3,
           borderColor: '#FFFFFF',
-          hoverOffset: 8
+          hoverOffset: 6
         }]
       },
       options: {
@@ -7545,12 +7574,7 @@ function renderAnalyticsView() {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 12,
-              font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
-              color: '#4F5668'
-            }
+            display: false // Usamos nuestra cuadrícula ejecutiva de pastillas debajo del gráfico
           },
           tooltip: {
             callbacks: {
@@ -7558,19 +7582,14 @@ function renderAnalyticsView() {
             }
           }
         },
-        cutout: '68%'
+        cutout: '72%'
       }
     });
   }
 
-  // 2. QA Defects Grouped Bar Chart
+  // 2. QA Defects Grouped Bar Chart (Estado de Pruebas QA & Incidencias)
   if (qaCtx) {
-    const appNames = scopedApps.map(a => {
-      const dev = getDeveloperById(a.devId);
-      const devInit = a.isGroupProject ? '👥' : (dev ? `[${dev.name.split(' ')[0]}]` : '');
-      const shortTitle = a.name.length > 12 ? a.name.substring(0, 12) + '..' : a.name;
-      return `${shortTitle} ${devInit}`;
-    });
+    const isMobile = window.innerWidth <= 768;
     const defaultReportedByApp = {
       app_torre: 18,
       app_colchas: 14,
@@ -7587,7 +7606,23 @@ function renderAnalyticsView() {
       app_calidad: 11,
       app_tintoreria: 9
     };
-    // Cálculo dinámico de defectos QA según estado de fases y auditorías reales
+
+    // Nombres nítidos y sin colapso diagonal
+    const appNames = scopedApps.map(a => {
+      if (isMobile) {
+        let short = a.name
+          .replace('OFICINA - APLICATIVOS', 'Oficina Ap.')
+          .replace('GEO UBICACION TALLERES', 'Talleres/GPS')
+          .replace('TORRE DE CONTROL', 'Torre Control');
+        return short.length > 14 ? short.substring(0, 13) + '…' : short;
+      } else {
+        const dev = getDeveloperById(a.devId);
+        const devInit = a.isGroupProject ? '👥' : (dev ? `[${dev.name.split(' ')[0]}]` : '');
+        const shortTitle = a.name.length > 14 ? a.name.substring(0, 14) + '..' : a.name;
+        return `${shortTitle} ${devInit}`;
+      }
+    });
+
     const bugsReported = scopedApps.map(a => {
       const pendingPhases = (a.phases || []).filter(p => !p.completed).length;
       const hasRisk = a.status === 'risk';
@@ -7614,33 +7649,60 @@ function renderAnalyticsView() {
         labels: appNames,
         datasets: [
           {
-            label: 'Incidencias Detectadas QA',
+            label: isMobile ? 'Detectadas' : 'Incidencias Detectadas QA',
             data: bugsReported,
             backgroundColor: '#FFA043',
-            borderRadius: 8,
-            barThickness: 16
+            borderRadius: isMobile ? 5 : 8,
+            barThickness: isMobile ? 9 : 16
           },
           {
-            label: 'Incidencias Subsanadas',
+            label: isMobile ? 'Subsanadas' : 'Incidencias Subsanadas',
             data: bugsResolved,
             backgroundColor: '#4E65FF',
-            borderRadius: 8,
-            barThickness: 16
+            borderRadius: isMobile ? 5 : 8,
+            barThickness: isMobile ? 9 : 16
           }
         ]
       },
       options: {
+        indexAxis: isMobile ? 'y' : 'x', // En móvil barras horizontales para que los nombres nunca se corten ni se crucen
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'top',
-            labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } }
+            labels: {
+              boxWidth: 12,
+              font: { family: 'Plus Jakarta Sans', size: isMobile ? 11 : 11.5, weight: '700' },
+              color: '#334155',
+              padding: isMobile ? 8 : 14
+            }
+          },
+          tooltip: {
+            callbacks: {
+              title: ctx => {
+                const idx = ctx[0].dataIndex;
+                return scopedApps[idx] ? scopedApps[idx].name : ctx[0].label;
+              },
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} incidencias`
+            }
           }
         },
         scales: {
-          x: { grid: { display: false } },
-          y: { grid: { color: '#EDF1F7' } }
+          x: {
+            grid: { color: isMobile ? '#EDF1F7' : false },
+            ticks: {
+              font: { family: 'Plus Jakarta Sans', size: isMobile ? 10 : 11, weight: '600' },
+              color: '#64748B'
+            }
+          },
+          y: {
+            grid: { color: isMobile ? false : '#EDF1F7' },
+            ticks: {
+              font: { family: 'Plus Jakarta Sans', size: isMobile ? 10.5 : 11, weight: '700' },
+              color: '#1E293B'
+            }
+          }
         }
       }
     });
