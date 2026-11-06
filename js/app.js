@@ -7710,19 +7710,21 @@ function renderAnalyticsView() {
 
   // 3. Renderizar dinámicamente la Matriz de Cuellos de Botella con los sistemas activos según alcance
   const bottleneckBody = document.getElementById('analyticsBottleneckTableBody');
-  if (bottleneckBody) {
-    const standardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases)
-      ? STF_DATA.standardPhases
-      : [
-          { name: '1. Levantamiento & Requisitos', weight: 10 },
-          { name: '2. Arquitectura & Diseño UI/UX', weight: 15 },
-          { name: '3. Desarrollo Backend & Lógica Core', weight: 30 },
-          { name: '4. Frontend & Integración de Interfaces', weight: 25 },
-          { name: '5. Pruebas QA, Seguridad & UAT', weight: 15 },
-          { name: '6. Despliegue & Salida a Producción', weight: 5 }
-        ];
-    const avgDaysByPhase = [6, 10, 22, 18, 14, 3];
+  const mobileCardsContainer = document.getElementById('analyticsBottleneckMobileCards');
+  
+  const standardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases)
+    ? STF_DATA.standardPhases
+    : [
+        { name: '1. Levantamiento & Requisitos', weight: 10 },
+        { name: '2. Arquitectura & Diseño UI/UX', weight: 15 },
+        { name: '3. Desarrollo Backend & Lógica Core', weight: 30 },
+        { name: '4. Frontend & Integración de Interfaces', weight: 25 },
+        { name: '5. Pruebas QA, Seguridad & UAT', weight: 15 },
+        { name: '6. Despliegue & Salida a Producción', weight: 5 }
+      ];
+  const avgDaysByPhase = [6, 10, 22, 18, 14, 3];
 
+  if (bottleneckBody) {
     bottleneckBody.innerHTML = standardPhases.map((phase, idx) => {
       const appsInThisPhase = scopedApps.filter(app => {
         const activeIdx = (app.phases || []).findIndex(p => !p.completed);
@@ -7747,6 +7749,73 @@ function renderAnalyticsView() {
         </tr>
       `;
     }).join('');
+  }
+
+  // Renderizado de Tarjetas Móviles de Progresión de Fases (Reemplaza la tabla desbordada en celular)
+  if (mobileCardsContainer) {
+    mobileCardsContainer.innerHTML = standardPhases.map((phase, idx) => {
+      const appsInThisPhase = scopedApps.filter(app => {
+        const activeIdx = (app.phases || []).findIndex(p => !p.completed);
+        return activeIdx === idx;
+      });
+      const count = appsInThisPhase.length;
+      const hasRiskApp = appsInThisPhase.some(a => a.status === 'risk');
+      const statusClass = hasRiskApp ? 'status-risk' : (count > 0 ? 'status-ontime' : 'status-ontime');
+      const statusLabel = hasRiskApp ? 'Atención Requerida' : (count > 0 ? 'En Desarrollo' : 'Completada');
+      const phaseColor = STF_PHASE_PALETTE[idx] || '#4E65FF';
+      const avgDays = avgDaysByPhase[idx] || 10;
+
+      const systemsChipsHtml = count > 0
+        ? appsInThisPhase.map(app => {
+            const appColor = app.iconColor || phaseColor;
+            return `
+              <div class="bn-sys-chip" onclick="openSystemDetailModal('${app.id}')" title="Ver detalles de ${app.name}">
+                <span class="bn-sys-dot" style="background: ${appColor};"></span>
+                <span class="bn-sys-name">${app.name}</span>
+              </div>
+            `;
+          }).join('')
+        : `<span class="bn-empty-hint"><i data-lucide="check-circle-2"></i> ${idx < 3 ? 'Completada en tus sistemas activos' : '0 aplicativos en esta etapa'}</span>`;
+
+      return `
+        <div class="bn-phase-card ${hasRiskApp ? 'is-risk' : ''}" style="--phase-color: ${phaseColor};">
+          <div class="bn-card-accent" style="background: ${phaseColor};"></div>
+          
+          <div class="bn-card-header">
+            <div class="bn-phase-title-group">
+              <span class="bn-phase-badge" style="background: ${phaseColor}15; color: ${phaseColor};">Fase ${idx + 1}</span>
+              <h4 class="bn-phase-title">${phase.name.replace(/^\d+\.\s*/, '')}</h4>
+            </div>
+            <span class="status-pill ${statusClass}">${statusLabel}</span>
+          </div>
+
+          <div class="bn-metrics-strip">
+            <div class="bn-metric-col">
+              <span class="bn-m-lbl">Peso Etapa</span>
+              <strong class="bn-m-val" style="color: ${phaseColor};">${phase.weight}%</strong>
+            </div>
+            <div class="bn-metric-div"></div>
+            <div class="bn-metric-col">
+              <span class="bn-m-lbl">Tiempo Prom.</span>
+              <strong class="bn-m-val">${avgDays} días</strong>
+            </div>
+            <div class="bn-metric-div"></div>
+            <div class="bn-metric-col">
+              <span class="bn-m-lbl">Carga Activa</span>
+              <strong class="bn-m-val ${count > 0 ? 'highlight-active' : ''}">${count} Sistema${count !== 1 ? 's' : ''}</strong>
+            </div>
+          </div>
+
+          <div class="bn-systems-tray">
+            ${systemsChipsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+      lucide.createIcons();
+    }
   }
 }
 
