@@ -6142,6 +6142,14 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   }
 
   /* Barra de Navegación Flotante Inferior estilo App Móvil Nativa */
+  .stf-mf-trigger,
+  #stfMobileFrameTrigger {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+
   .floating-sidebar {
     position: fixed !important;
     top: auto !important;

@@ -998,6 +998,14 @@ body.lamp-on .login-card-container.glass-tag-plaque {
   }
 
   /* Ocultar el cuerpo físico de la lámpara y el cono/rayo de luz en móvil */
+  .stf-mf-trigger,
+  #stfMobileFrameTrigger {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+
   .lamp-head,
   .lamp-shade-disc,
   .lamp-bulb-diffuser,

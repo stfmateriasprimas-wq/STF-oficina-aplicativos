@@ -54,6 +54,15 @@
         transform: translateY(-2px);
         box-shadow: 0 14px 32px rgba(79, 70, 229, 0.55);
       }
+      @media (max-width: 900px) {
+        .stf-mf-trigger,
+        #stfMobileFrameTrigger {
+          display: none !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+          opacity: 0 !important;
+        }
+      }
       .stf-mf-overlay {
         position: fixed;
         inset: 0;
