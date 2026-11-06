@@ -997,13 +997,15 @@ body.lamp-on .login-card-container.glass-tag-plaque {
     gap: 0;
   }
 
-  /* Ocultar el cuerpo físico de la lámpara en móvil */
+  /* Ocultar el cuerpo físico de la lámpara y el cono/rayo de luz en móvil */
   .lamp-head,
   .lamp-shade-disc,
   .lamp-bulb-diffuser,
   .lamp-stem,
   .lamp-base,
-  .floor-puddle {
+  .floor-puddle,
+  .light-beam-cone,
+  .ambient-glow {
     display: none !important;
   }
 

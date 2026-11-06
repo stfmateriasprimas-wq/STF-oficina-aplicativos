@@ -150,10 +150,17 @@
     }
   }
 
-  // --- Extended Demarcation Boundary (User Red Line) ---
-  // Upper zone: begins at 46.5% width
-  // Lower zone: sweeps down and left under the lamp base down to ~20% width at bottom edge
+  // --- Extended Demarcation Boundary (User Red Line on Desktop, Centered on Mobile) ---
   function getBoundaryFade(x, y) {
+    if (width <= 960) {
+      // En móvil: animación centrada a ancho completo con desvanecimiento suave en bordes laterales
+      const edgePad = width * 0.04;
+      const fadeW = 24;
+      if (x < edgePad) return Math.max(0, (x - (edgePad - fadeW)) / fadeW);
+      if (x > width - edgePad) return Math.max(0, ((width - edgePad + fadeW) - x) / fadeW);
+      return 1.0;
+    }
+
     let minX;
     if (y <= horizonY) {
       minX = width * 0.465;
@@ -188,15 +195,20 @@
 
       this.opacity = randomRange(0.42, 0.95);
 
-      // Lateral start position across extended right half
-      const minX = width * CONFIG.rightZoneStartRatio;
-      const maxX = width * CONFIG.rightZoneEndRatio;
+      // En móvil: centrado de lado a lado; en escritorio: mitad derecha
+      const isMobile = width <= 960;
+      const startRatio = isMobile ? 0.06 : CONFIG.rightZoneStartRatio;
+      const endRatio = isMobile ? 0.94 : CONFIG.rightZoneEndRatio;
+      const minX = width * startRatio;
+      const maxX = width * endRatio;
       this.startX = minX + Math.random() * (maxX - minX);
 
-      // Ground angle factor: allows perspective fan to sweep down-left under the lamp
+      // Ground angle factor: perspectiva simétrica desde el centro en móvil
       const refGroundH = Math.max(10, groundHeight);
-      const rawAngle = (this.startX - vanishX) / (refGroundH * 0.30);
-      this.angleFactor = Math.max(-2.35, rawAngle);
+      const rawAngle = (this.startX - vanishX) / (refGroundH * (isMobile ? 0.34 : 0.30));
+      this.angleFactor = isMobile
+        ? Math.max(-2.1, Math.min(2.1, rawAngle))
+        : Math.max(-2.35, rawAngle);
 
       // Progress p: 0.0 (top) -> 1.0 (horizon) -> 2.1 (bottom of screen)
       if (initialSpawn) {
@@ -418,8 +430,15 @@
     ctx.scale(dpr, dpr);
 
     horizonY = Math.floor(height * CONFIG.horizonYRatio);
-    vanishX = Math.floor(width * CONFIG.vanishXRatio);
+    vanishX = Math.floor(width * (width <= 960 ? 0.50 : CONFIG.vanishXRatio));
     groundHeight = height - horizonY;
+
+    // Re-centrar rayos activos cuando cambia el tamaño de pantalla
+    if (lightStreams && lightStreams.length > 0) {
+      for (let i = 0; i < lightStreams.length; i++) {
+        lightStreams[i].reset(true);
+      }
+    }
   }
 
   // --- Mouse Move for Parallax ---
