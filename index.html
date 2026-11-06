@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=42">
+  <link rel="stylesheet" href="css/styles.css?v=43">
 </head>
 <body>
 
@@ -680,28 +680,31 @@
       <section class="view-panel" id="view-analytics">
         
         <!-- Filter Toolbar for Analytics (Visible to Admin, Contextual for Devs) -->
-        <div class="analytics-filter-toolbar" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; background: #FFFFFF; padding: 14px 20px; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #4E65FF18, #4E65FF28); color: #4E65FF; display: flex; align-items: center; justify-content: center;">
+        <div class="analytics-filter-toolbar">
+          <div class="analytics-toolbar-left">
+            <div class="analytics-toolbar-icon">
               <i data-lucide="bar-chart-3"></i>
             </div>
-            <div>
-              <strong style="font-size: 14.5px; color: #0F172A; display: block;" id="analyticsScopeTitle">Dashboard Analítico de Calidad & QA</strong>
-              <span style="font-size: 12px; color: #64748B;" id="analyticsScopeSubtitle">Visualiza la efectividad, avance y calidad por programador o de toda la compañía</span>
+            <div class="analytics-toolbar-meta">
+              <strong class="analytics-toolbar-title" id="analyticsScopeTitle">Dashboard Analítico de Calidad & QA</strong>
+              <span class="analytics-toolbar-subtitle" id="analyticsScopeSubtitle">Visualiza la efectividad, avance y calidad por programador o de toda la compañía</span>
             </div>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div class="select-pill-wrapper" id="analyticsDevFilterWrap">
-              <i data-lucide="user" class="select-prefix-icon"></i>
-              <select id="analyticsDevFilter" class="form-input" style="padding-left: 34px; padding-right: 32px; height: 38px; border-radius: 20px; font-weight: 700; font-size: 12.5px; border-color: #CBD5E1;">
-                <option value="all">👥 Todo el Equipo (Consolidado STF)</option>
-                <option value="dev_jg">👤 Jose Guzman</option>
-                <option value="dev_jd">👤 Juan David</option>
-                <option value="dev_mocho">👤 Jhon Eyder (Mocho)</option>
-                <option value="dev_ee">👤 Esteban Escobar</option>
-              </select>
-              <i data-lucide="chevron-down" class="select-arrow"></i>
+          <div class="analytics-toolbar-right">
+            <div class="analytics-dev-selector-card" id="analyticsDevFilterWrap">
+              <div class="analytics-dev-selector-inner">
+                <i data-lucide="users" class="analytics-select-icon"></i>
+                <select id="analyticsDevFilter" class="analytics-dev-select" aria-label="Filtrar analítica por desarrollador">
+                  <option value="all">Todo el Equipo (Consolidado STF)</option>
+                  <option value="dev_jg">Jose Guzman (Dev)</option>
+                  <option value="dev_jd">Juan David (Dev)</option>
+                  <option value="dev_mocho">Jhon Eyder (Mocho) (Dev)</option>
+                  <option value="dev_ee">Esteban Escobar (Dev)</option>
+                  <option value="dev_ediaz">Edwin Diaz (Admin)</option>
+                </select>
+                <i data-lucide="chevron-down" class="analytics-select-arrow"></i>
+              </div>
             </div>
             
             <div class="status-pill status-ontime" id="analyticsActiveDevBadge" style="display: none; padding: 6px 14px; font-size: 12px; font-weight: 700;">

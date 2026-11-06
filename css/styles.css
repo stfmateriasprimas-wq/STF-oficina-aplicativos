@@ -4401,6 +4401,144 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 /* ==========================================================================
    VIEW 4: ANALYTICS & VIEW 5: SETTINGS
    ========================================================================== */
+.analytics-filter-toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #FFFFFF;
+  padding: 14px 20px;
+  border-radius: 18px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);
+}
+
+.analytics-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.analytics-toolbar-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(78, 101, 255, 0.12), rgba(78, 101, 255, 0.22));
+  color: #4E65FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.analytics-toolbar-icon i,
+.analytics-toolbar-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.analytics-toolbar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.analytics-toolbar-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.25;
+}
+
+.analytics-toolbar-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.analytics-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.analytics-dev-selector-card {
+  position: relative;
+  display: inline-flex;
+}
+
+.analytics-dev-selector-inner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 999px;
+  padding: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+}
+
+.analytics-dev-selector-inner:hover {
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.analytics-dev-selector-inner:focus-within {
+  border-color: #4E65FF;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(78, 101, 255, 0.15);
+}
+
+.analytics-select-icon {
+  position: absolute;
+  left: 14px;
+  width: 15px;
+  height: 15px;
+  color: #4E65FF;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.analytics-dev-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  padding: 9px 36px 9px 38px;
+  height: 40px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1E293B;
+  cursor: pointer;
+  outline: none;
+  width: auto;
+  min-width: 230px;
+}
+
+.analytics-select-arrow {
+  position: absolute;
+  right: 13px;
+  width: 15px;
+  height: 15px;
+  color: #94A3B8;
+  pointer-events: none;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.analytics-dev-selector-inner:focus-within .analytics-select-arrow {
+  color: #4E65FF;
+  transform: rotate(180deg);
+}
+
 .analytics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
@@ -6130,7 +6268,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 /* 4. Teléfonos Inteligentes & Móviles (<= 768px: iPhone, Galaxy, Pixel, etc.) */
 @media (max-width: 768px) {
   body {
-    padding: max(14px, env(safe-area-inset-top, 14px)) 12px calc(80px + env(safe-area-inset-bottom, 12px)) 12px !important;
+    padding: max(26px, calc(env(safe-area-inset-top, 0px) + 20px)) 12px calc(80px + env(safe-area-inset-bottom, 12px)) 12px !important;
     overflow-x: hidden !important;
     width: 100% !important;
   }
@@ -6220,7 +6358,8 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     display: flex !important;
     flex-direction: column !important;
     gap: 10px !important;
-    margin-bottom: 4px !important;
+    margin-top: 6px !important;
+    margin-bottom: 6px !important;
     width: 100% !important;
   }
 
@@ -7016,6 +7155,95 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     width: 14px !important;
     height: 14px !important;
     flex-shrink: 0 !important;
+  }
+
+  /* Barra de Filtro de Analítica & Selector Ejecutivo Móvil */
+  .analytics-filter-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+    margin-bottom: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .analytics-toolbar-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .analytics-toolbar-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .analytics-toolbar-icon i,
+  .analytics-toolbar-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .analytics-toolbar-title {
+    font-size: 13.5px !important;
+    line-height: 1.3 !important;
+  }
+
+  .analytics-toolbar-subtitle {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  .analytics-toolbar-right {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .analytics-dev-selector-card {
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .analytics-dev-selector-inner {
+    width: 100% !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    background: #F8FAFC !important;
+    border: 1.5px solid #E2E8F0 !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03) !important;
+    box-sizing: border-box !important;
+  }
+
+  .analytics-dev-select {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    padding: 0 34px 0 38px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    box-sizing: border-box !important;
+  }
+
+  .analytics-select-icon {
+    left: 12px !important;
+    width: 16px !important;
+    height: 16px !important;
+    color: #4F46E5 !important;
+  }
+
+  .analytics-select-arrow {
+    right: 12px !important;
+    width: 15px !important;
+    height: 15px !important;
   }
 
   /* Modales en Móviles (Ajuste Superior Armónico y Estable) */

@@ -331,10 +331,10 @@ function syncDynamicSelects() {
   const analyticsDevSel = document.getElementById('analyticsDevFilter');
   if (analyticsDevSel && isCurrentSessionAdmin()) {
     const prevVal = analyticsDevSel.value || 'all';
-    analyticsDevSel.innerHTML = `<option value="all">👥 Todo el Equipo (Consolidado STF)</option>` +
+    analyticsDevSel.innerHTML = `<option value="all">Todo el Equipo (Consolidado STF)</option>` +
       devs.map(d => {
         const isAdm = d.roleType === 'Admin' || d.id === 'dev_ediaz';
-        return `<option value="${d.id}">👤 ${d.name} (${isAdm ? 'Admin' : 'Dev'})</option>`;
+        return `<option value="${d.id}">${d.name} (${isAdm ? 'Admin' : 'Dev'})</option>`;
       }).join('');
     if ([...analyticsDevSel.options].some(o => o.value === prevVal)) {
       analyticsDevSel.value = prevVal;
