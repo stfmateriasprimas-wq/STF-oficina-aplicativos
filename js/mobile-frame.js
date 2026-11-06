@@ -138,13 +138,13 @@
         flex-direction: column;
       }
       .stf-mf-notch-bar {
-        height: 26px;
+        height: 32px;
         background: #090d16;
         color: #e2e8f0;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 20px;
+        padding: 4px 20px 0 20px;
         font-size: 11px;
         font-weight: 700;
         flex-shrink: 0;
@@ -327,3 +327,4 @@
     buildUI();
   }
 })();
+
