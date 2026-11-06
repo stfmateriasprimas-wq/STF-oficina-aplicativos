@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=45">
+  <link rel="stylesheet" href="css/styles.css?v=46">
 </head>
 <body>
 
@@ -793,78 +793,6 @@
             <div class="qa-bugs-chart-wrapper">
               <canvas id="qaBugsChart"></canvas>
             </div>
-          </div>
-        </div>
-
-        <!-- Phase Bottleneck Table -->
-        <div class="grid-card" style="margin-top: 24px;">
-          <div class="card-header">
-            <div class="header-left">
-              <h2 class="card-title">Matriz de Cuellos de Botella y Tiempo en Fases</h2>
-              <span class="card-subtext">Detección temprana de fases con mayor esfuerzo de desarrollo</span>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="systems-table">
-              <thead>
-                <tr>
-                  <th>Fase del Ciclo de Vida</th>
-                  <th>Peso Ponderado</th>
-                  <th>Sistemas en Esta Fase</th>
-                  <th>Días Promedio</th>
-                  <th>Riesgo de Desviación</th>
-                </tr>
-              </thead>
-              <tbody id="analyticsBottleneckTableBody">
-                <tr>
-                  <td><strong>1. Levantamiento & Requisitos</strong></td>
-                  <td>10%</td>
-                  <td>0 Aplicativos (Completada en los 6 sistemas)</td>
-                  <td>6 días</td>
-                  <td><span class="status-pill status-ontime">Controlado</span></td>
-                </tr>
-                <tr>
-                  <td><strong>2. Arquitectura & Diseño UI/UX</strong></td>
-                  <td>15%</td>
-                  <td>0 Aplicativos (Aprobada en los 6 sistemas)</td>
-                  <td>10 días</td>
-                  <td><span class="status-pill status-ontime">Controlado</span></td>
-                </tr>
-                <tr>
-                  <td><strong>3. Desarrollo Backend & Lógica Core</strong></td>
-                  <td>30%</td>
-                  <td>0 Aplicativos (Completada en los 6 sistemas)</td>
-                  <td>22 días</td>
-                  <td><span class="status-pill status-ontime">En tiempo</span></td>
-                </tr>
-                <tr>
-                  <td><strong>4. Frontend & Integración de Interfaces</strong></td>
-                  <td>25%</td>
-                  <td>3 Aplicativos (LABORATORIO, GEO UBICACION TALLERES, TINTORERIA)</td>
-                  <td>18 días</td>
-                  <td><span class="status-pill status-risk">Atención Requerida</span></td>
-                </tr>
-                <tr>
-                  <td><strong>5. Pruebas QA, Seguridad & UAT</strong></td>
-                  <td>15%</td>
-                  <td>3 Aplicativos (TORRE DE CONTROL, COLCHAS, CALIDAD)</td>
-                  <td>14 días</td>
-                  <td><span class="status-pill status-ontime">En tiempo</span></td>
-                </tr>
-                <tr>
-                  <td><strong>6. Despliegue & Salida a Producción</strong></td>
-                  <td>5%</td>
-                  <td>0 Aplicativos en fase final</td>
-                  <td>3 días</td>
-                  <td><span class="status-pill status-ontime">Programado</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Mobile Phase Progression Cards (Visible on Mobile <= 768px) -->
-          <div class="analytics-bottleneck-mobile-cards" id="analyticsBottleneckMobileCards">
-            <!-- Populated via JavaScript -->
           </div>
         </div>
       </section>
