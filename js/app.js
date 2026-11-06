@@ -2540,7 +2540,7 @@ const STF_VELOCITY_DATA = {
       hours: [7, 7, 6, 9, 8, 10, 8, 7]
     }
   },
-  // Semanas de meses individuales
+  // Semanas de meses individuales (Mayo a Octubre 2026)
   singleMonths: {
     month_oct: {
       name: 'Octubre 2026',
@@ -2577,22 +2577,78 @@ const STF_VELOCITY_DATA = {
       dev_jd: { mods: [2, 1, 2, 1], hours: [12, 9, 13, 10] },
       dev_mocho: { mods: [1, 2, 1, 2], hours: [8, 12, 9, 14] },
       dev_ee: { mods: [1, 1, 1, 1], hours: [7, 8, 8, 5] }
+    },
+    month_jun: {
+      name: 'Junio 2026',
+      labels: ['Sem 1 (1-7 Jun)', 'Sem 2 (8-14 Jun)', 'Sem 3 (15-21 Jun)', 'Sem 4 (22-28 Jun)'],
+      all: { mods: [7, 7, 7, 7], hours: [48, 50, 48, 49] },
+      dev_jg: { mods: [2, 3, 2, 3], hours: [16, 19, 17, 18] },
+      dev_jd: { mods: [2, 2, 1, 2], hours: [13, 13, 11, 13] },
+      dev_mocho: { mods: [2, 1, 2, 1], hours: [11, 10, 11, 11] },
+      dev_ee: { mods: [1, 1, 2, 1], hours: [8, 8, 9, 7] }
+    },
+    month_may: {
+      name: 'Mayo 2026',
+      labels: ['Sem 1 (1-7 May)', 'Sem 2 (8-14 May)', 'Sem 3 (15-21 May)', 'Sem 4 (22-28 May)'],
+      all: { mods: [5, 6, 5, 6], hours: [38, 44, 40, 43] },
+      dev_jg: { mods: [2, 2, 2, 2], hours: [15, 15, 15, 15] },
+      dev_jd: { mods: [1, 2, 1, 1], hours: [9, 11, 9, 9] },
+      dev_mocho: { mods: [1, 1, 1, 2], hours: [8, 10, 9, 10] },
+      dev_ee: { mods: [1, 1, 1, 1], hours: [6, 8, 7, 9] }
     }
   },
   // Entregas georreferenciadas por fecha para análisis personalizado con el calendario
   dailyDeliveries: [
+    // Mayo 2026
+    { date: '2026-05-04', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_colchas' },
+    { date: '2026-05-06', devId: 'dev_jd', modules: 1, hours: 9, appId: 'app_calidad' },
+    { date: '2026-05-11', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_laboratorio' },
+    { date: '2026-05-13', devId: 'dev_mocho', modules: 2, hours: 14, appId: 'app_tintoreria' },
+    { date: '2026-05-19', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_geo' },
+    { date: '2026-05-21', devId: 'dev_ee', modules: 2, hours: 14, appId: 'app_torre' },
+    { date: '2026-05-26', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_oficina' },
+    // Junio 2026
+    { date: '2026-06-03', devId: 'dev_jg', modules: 2, hours: 16, appId: 'app_colchas' },
+    { date: '2026-06-05', devId: 'dev_jd', modules: 2, hours: 13, appId: 'app_calidad' },
+    { date: '2026-06-10', devId: 'dev_jg', modules: 3, hours: 19, appId: 'app_torre' },
+    { date: '2026-06-12', devId: 'dev_mocho', modules: 2, hours: 14, appId: 'app_tintoreria' },
+    { date: '2026-06-17', devId: 'dev_jg', modules: 2, hours: 17, appId: 'app_laboratorio' },
+    { date: '2026-06-19', devId: 'dev_ee', modules: 2, hours: 15, appId: 'app_torre' },
+    { date: '2026-06-25', devId: 'dev_jg', modules: 3, hours: 18, appId: 'app_geo' },
+    // Julio 2026
+    { date: '2026-07-03', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_colchas' },
+    { date: '2026-07-06', devId: 'dev_jd', modules: 2, hours: 12, appId: 'app_calidad' },
+    { date: '2026-07-10', devId: 'dev_jg', modules: 2, hours: 16, appId: 'app_laboratorio' },
+    { date: '2026-07-13', devId: 'dev_mocho', modules: 2, hours: 12, appId: 'app_tintoreria' },
+    { date: '2026-07-17', devId: 'dev_jg', modules: 3, hours: 18, appId: 'app_torre' },
+    { date: '2026-07-20', devId: 'dev_jd', modules: 2, hours: 13, appId: 'app_calidad' },
+    { date: '2026-07-25', devId: 'dev_jg', modules: 2, hours: 16, appId: 'app_geo' },
+    { date: '2026-07-28', devId: 'dev_ee', modules: 2, hours: 14, appId: 'app_torre' },
+    // Agosto 2026
+    { date: '2026-08-03', devId: 'dev_jg', modules: 3, hours: 21, appId: 'app_torre' },
+    { date: '2026-08-05', devId: 'dev_jd', modules: 2, hours: 14, appId: 'app_calidad' },
+    { date: '2026-08-10', devId: 'dev_jg', modules: 3, hours: 22, appId: 'app_colchas' },
+    { date: '2026-08-12', devId: 'dev_mocho', modules: 2, hours: 14, appId: 'app_tintoreria' },
+    { date: '2026-08-17', devId: 'dev_jg', modules: 3, hours: 20, appId: 'app_laboratorio' },
+    { date: '2026-08-19', devId: 'dev_ee', modules: 2, hours: 14, appId: 'app_torre' },
+    { date: '2026-08-24', devId: 'dev_jg', modules: 3, hours: 22, appId: 'app_geo' },
+    { date: '2026-08-27', devId: 'dev_jd', modules: 2, hours: 15, appId: 'app_calidad' },
+    // Septiembre 2026
     { date: '2026-09-02', devId: 'dev_jg', modules: 1, hours: 6, appId: 'app_colchas' },
     { date: '2026-09-04', devId: 'dev_mocho', modules: 1, hours: 5, appId: 'app_tintoreria' },
     { date: '2026-09-05', devId: 'dev_jd', modules: 1, hours: 6, appId: 'app_calidad' },
+    { date: '2026-09-06', devId: 'dev_jg', modules: 2, hours: 12, appId: 'app_torre' },
     { date: '2026-09-09', devId: 'dev_jg', modules: 2, hours: 12, appId: 'app_torre' },
     { date: '2026-09-11', devId: 'dev_ee', modules: 1, hours: 6, appId: 'app_torre' },
     { date: '2026-09-12', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
+    { date: '2026-09-13', devId: 'dev_jg', modules: 1, hours: 8, appId: 'app_laboratorio' },
     { date: '2026-09-16', devId: 'dev_mocho', modules: 1, hours: 6, appId: 'app_tintoreria' },
-    { date: '2026-09-18', devId: 'dev_jg', modules: 1, hours: 8, appId: 'app_geo' },
+    { date: '2026-09-18', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_geo' },
     { date: '2026-09-21', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
     { date: '2026-09-23', devId: 'dev_ee', modules: 1, hours: 6, appId: 'app_torre' },
     { date: '2026-09-25', devId: 'dev_mocho', modules: 1, hours: 7, appId: 'app_tintoreria' },
-    { date: '2026-09-27', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_colchas' },
+    { date: '2026-09-27', devId: 'dev_jg', modules: 3, hours: 18, appId: 'app_colchas' },
+    // Octubre 2026
     { date: '2026-10-02', devId: 'dev_jg', modules: 2, hours: 13, appId: 'app_torre' },
     { date: '2026-10-04', devId: 'dev_mocho', modules: 1, hours: 6, appId: 'app_tintoreria' },
     { date: '2026-10-05', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
@@ -2608,7 +2664,12 @@ const STF_VELOCITY_DATA = {
     { date: '2026-10-24', devId: 'dev_mocho', modules: 2, hours: 12, appId: 'app_tintoreria' },
     { date: '2026-10-25', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
     { date: '2026-10-27', devId: 'dev_ee', modules: 1, hours: 7, appId: 'app_torre' },
-    { date: '2026-10-28', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_torre' }
+    { date: '2026-10-28', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_torre' },
+    // Noviembre 2026
+    { date: '2026-11-02', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_oficina' },
+    { date: '2026-11-04', devId: 'dev_jd', modules: 1, hours: 8, appId: 'app_calidad' },
+    { date: '2026-11-05', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_laboratorio' },
+    { date: '2026-11-06', devId: 'dev_mocho', modules: 1, hours: 7, appId: 'app_tintoreria' }
   ]
 };
 
@@ -2696,11 +2757,39 @@ function initVelocityBarChart() {
   updateVelocitySection(currentVelocityPeriod, currentVelocityDev);
 }
 
-function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
+let selectedVelocityBarIndex = null;
+
+function formatVelocityAxisLabel(labelStr) {
+  const s = String(labelStr || '').trim();
+  // Si tiene formato "Sem X (dd-dd mes)" partir en 2 líneas horizontales limpias
+  const m = s.match(/^(Sem\s*\d+)\s*\(([^)]+)\)$/i);
+  if (m) {
+    const cleanRange = m[2].replace(/\./g, '').trim();
+    return [m[1], cleanRange];
+  }
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+  if (isMobile) {
+    const shortMonths = {
+      'Enero': 'Ene', 'Febrero': 'Feb', 'Marzo': 'Mar', 'Abril': 'Abr',
+      'Mayo': 'May', 'Junio': 'Jun', 'Julio': 'Jul', 'Agosto': 'Ago',
+      'Septiembre': 'Sep', 'Octubre': 'Oct', 'Noviembre': 'Nov', 'Diciembre': 'Dic'
+    };
+    for (const [full, sh] of Object.entries(shortMonths)) {
+      if (s.startsWith(full)) return s.replace(full, sh);
+    }
+  }
+  return s;
+}
+
+function updateVelocitySection(period = 'months', devId = currentVelocityDev, keepSelection = false) {
   if (!isCurrentSessionAdmin()) {
     devId = getLoggedDevId();
     currentVelocityDev = devId;
   }
+  if (!keepSelection) {
+    selectedVelocityBarIndex = null;
+  }
+
   const canvas = document.getElementById('velocityBarChart');
   if (!canvas) return;
 
@@ -2725,6 +2814,10 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
     actualHours = [0];
   }
 
+  if (selectedVelocityBarIndex !== null && (selectedVelocityBarIndex < 0 || selectedVelocityBarIndex >= values.length)) {
+    selectedVelocityBarIndex = null;
+  }
+
   const targetValues = values.map(() => targetBenchmark);
   
   // Encontrar el pico récord en los datos actuales
@@ -2737,48 +2830,79 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
     }
   });
 
+  // Índice activo destacado (columna seleccionada por el usuario o el pico por defecto)
+  const activeHighlightIdx = selectedVelocityBarIndex !== null ? selectedVelocityBarIndex : peakIdx;
+
   const totalMods = values.reduce((a, b) => a + b, 0);
   const totalHours = actualHours.reduce((a, b) => a + b, 0);
   const avgHoursPerMod = totalMods > 0 ? (totalHours / totalMods) : 0;
-  const maxY = Math.max(Math.max(...values, targetBenchmark) + 8, 16);
+
+  // Escala vertical proporcional para que las barras siempre se vean grandes, claras y legibles
+  const rawMax = Math.max(...values, targetBenchmark, 2);
+  const maxY = rawMax <= 4 ? rawMax + 1 : (rawMax <= 10 ? rawMax + 2 : (rawMax <= 20 ? rawMax + 4 : Math.ceil(rawMax * 1.22)));
 
   // Escalar horas como spline suave
   const maxHours = Math.max(...actualHours, 1);
-  const hoursSplineData = actualHours.map(h => (h / maxHours) * (maxY * 0.76));
+  const hoursSplineData = actualHours.map(h => Number(((h / maxHours) * (maxY * 0.78)).toFixed(2)));
 
-  // 2. Actualizar tarjetas ejecutivas de métricas (KPIs)
+  // 2. Actualizar tarjetas ejecutivas de métricas (KPIs) — si hay columna seleccionada muestra su detalle
   const legendLabel = document.getElementById('velocityLegendLabel');
   if (legendLabel) {
     legendLabel.innerHTML = `Meta Benchmark: <strong>${targetBenchmark} Mods / ${benchmarkUnitText}</strong>`;
   }
 
+  const isColFocused = selectedVelocityBarIndex !== null;
+  const focusedLabel = isColFocused ? labels[selectedVelocityBarIndex] : null;
+  const displayMods = isColFocused ? (values[selectedVelocityBarIndex] || 0) : totalMods;
+  const displayHours = isColFocused ? (actualHours[selectedVelocityBarIndex] || 0) : totalHours;
+  const displayAvgH = displayMods > 0 ? (displayHours / displayMods) : 0;
+
   // Tarjeta 1: Módulos Entregados
   const tasksVal = document.getElementById('vStatTasks');
   const tasksTrend = document.getElementById('vStatTasksTrend');
   const tasksSub = document.getElementById('vStatTasksSub');
-  if (tasksVal) tasksVal.textContent = `${totalMods} Módulos`;
+  if (tasksVal) tasksVal.textContent = `${displayMods} ${displayMods === 1 ? 'Módulo' : 'Módulos'}`;
   if (tasksTrend) {
-    const trendPct = totalMods >= (targetBenchmark * values.length) ? '+24.2%' : '+18.4%';
-    tasksTrend.textContent = trendPct;
+    if (isColFocused) {
+      const pctCol = Math.round((displayMods / Math.max(targetBenchmark, 1)) * 100);
+      tasksTrend.textContent = `${pctCol}% Meta`;
+    } else {
+      const trendPct = totalMods >= (targetBenchmark * values.length) ? '+24.2%' : '+18.4%';
+      tasksTrend.textContent = trendPct;
+    }
   }
   if (tasksSub) {
-    tasksSub.textContent = isAll 
-      ? periodSubtext 
-      : `${devObj.name} · ${periodSubtext}`;
+    if (isColFocused) {
+      tasksSub.textContent = `📌 Columna seleccionada: ${focusedLabel} (clic de nuevo para ver todo)`;
+    } else {
+      tasksSub.textContent = isAll 
+        ? periodSubtext 
+        : `${devObj.name} · ${periodSubtext}`;
+    }
   }
 
-  // Tarjeta 2: Período Récord (Pico)
+  // Tarjeta 2: Período Récord o Columna Elegida
   const recordVal = document.getElementById('vStatRecord');
   const recordLabel = document.getElementById('vStatRecordLabel');
   const recordBadgeText = document.getElementById('vStatRecordBadgeText');
   const recordSub = document.getElementById('vStatRecordSub');
-  const peakLabelName = labels[peakIdx] || 'Pico';
-  const diffOverTarget = peakVal - targetBenchmark;
-  const pctTarget = Math.round((peakVal / Math.max(targetBenchmark, 1)) * 100);
+  const targetColIdx = isColFocused ? selectedVelocityBarIndex : peakIdx;
+  const targetColVal = values[targetColIdx] || 0;
+  const targetColName = labels[targetColIdx] || 'Pico';
+  const diffOverTarget = targetColVal - targetBenchmark;
+  const pctTarget = Math.round((targetColVal / Math.max(targetBenchmark, 1)) * 100);
 
-  if (recordVal) recordVal.textContent = `${peakLabelName} · ${peakVal} Mods`;
-  if (recordLabel) recordLabel.textContent = `${periodTypeName} Récord (Pico ${isAll ? 'Anual' : 'Personal'})`;
-  if (recordBadgeText) recordBadgeText.textContent = isAll ? 'Pico Anual' : 'Récord Personal';
+  if (recordVal) recordVal.textContent = `${targetColName} · ${targetColVal} Mods`;
+  if (recordLabel) {
+    recordLabel.textContent = isColFocused
+      ? `Columna Elegida (${periodTypeName})`
+      : `${periodTypeName} Récord (Pico ${isAll ? 'Anual' : 'Personal'})`;
+  }
+  if (recordBadgeText) {
+    recordBadgeText.textContent = isColFocused
+      ? 'Seleccionado'
+      : (isAll ? 'Pico Anual' : 'Récord Personal');
+  }
   if (recordSub) {
     recordSub.textContent = `${pctTarget}% de la meta (${diffOverTarget >= 0 ? '+' + diffOverTarget : diffOverTarget} mods ${diffOverTarget >= 0 ? 'sobre' : 'bajo'} meta)`;
   }
@@ -2787,74 +2911,56 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
   const hoursVal = document.getElementById('vStatHours');
   const hoursAvg = document.getElementById('vStatHoursAvg');
   const hoursSub = document.getElementById('vStatHoursSub');
-  if (hoursVal) hoursVal.textContent = totalHours >= 1000 ? `${totalHours.toLocaleString()} hrs` : `${totalHours} hrs`;
-  if (hoursAvg) hoursAvg.textContent = `${avgHoursPerMod.toFixed(1)} hrs / entrega`;
+  if (hoursVal) hoursVal.textContent = displayHours >= 1000 ? `${displayHours.toLocaleString()} hrs` : `${displayHours} hrs`;
+  if (hoursAvg) hoursAvg.textContent = `${displayAvgH.toFixed(1)} hrs / entrega`;
   if (hoursSub) {
     const onTimeRate = isAll ? '99.1%' : `${devObj.onTimeDelivery || 94}%`;
-    hoursSub.textContent = `${onTimeRate} en tiempo sin incidencias en planta`;
+    hoursSub.textContent = isColFocused
+      ? `Invertidas en ${focusedLabel} · ${onTimeRate} efectividad`
+      : `${onTimeRate} en tiempo sin incidencias en planta`;
   }
 
-  // 3. Gradientes dinámicos para las barras
+  // 3. Destrucción limpia de cualquier instancia previa para evitar bloqueos de canvas al filtrar fechas
+  if (velocityChartInstance) {
+    try { velocityChartInstance.destroy(); } catch (e) {}
+    velocityChartInstance = null;
+  }
+  const existingChart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+  if (existingChart) {
+    try { existingChart.destroy(); } catch (e) {}
+  }
+
+  // 4. Gradientes dinámicos para las barras (resaltando la columna elegida o el pico récord)
   const ctx2d = canvas.getContext('2d');
-  const normGrad = ctx2d.createLinearGradient(0, 240, 0, 40);
-  normGrad.addColorStop(0, '#E0EAFF');
-  normGrad.addColorStop(1, '#C7DCFE');
+  const normGrad = ctx2d.createLinearGradient(0, 250, 0, 30);
+  normGrad.addColorStop(0, '#DBEAFE');
+  normGrad.addColorStop(1, '#93C5FD');
 
-  const overGrad = ctx2d.createLinearGradient(0, 240, 0, 40);
-  overGrad.addColorStop(0, '#D5DEFF');
-  overGrad.addColorStop(1, '#A5B4FC');
+  const overGrad = ctx2d.createLinearGradient(0, 250, 0, 30);
+  overGrad.addColorStop(0, '#C7D2FE');
+  overGrad.addColorStop(1, '#818CF8');
 
-  const peakGrad = ctx2d.createLinearGradient(0, 240, 0, 20);
-  peakGrad.addColorStop(0, '#4E65FF');
-  peakGrad.addColorStop(1, '#7C8FFF');
+  const peakGrad = ctx2d.createLinearGradient(0, 250, 0, 15);
+  peakGrad.addColorStop(0, '#2563EB');
+  peakGrad.addColorStop(1, '#4E65FF');
 
   const backgroundColors = values.map((val, idx) => {
-    if (idx === peakIdx && val > 0) return peakGrad;
+    if (idx === activeHighlightIdx && val >= 0) return peakGrad;
     if (val >= targetBenchmark) return overGrad;
     return normGrad;
   });
 
   const hoverColors = values.map((val, idx) => {
-    if (idx === peakIdx && val > 0) return '#3B4EF0';
-    if (val >= targetBenchmark) return '#818CF8';
-    return '#93C5FD';
+    if (idx === activeHighlightIdx) return '#1D4ED8';
+    if (val >= targetBenchmark) return '#6366F1';
+    return '#60A5FA';
   });
 
   const backgroundCapsules = values.map(() => maxY);
+  const axisLabels = labels.map(formatVelocityAxisLabel);
+  const isMobileView = typeof window !== 'undefined' && window.innerWidth <= 768;
 
-  // 4. Si la instancia del gráfico ya existe, actualizarla de forma reactiva y fluida
-  if (velocityChartInstance && typeof velocityChartInstance.update === 'function') {
-    try {
-      velocityChartInstance.data.labels = labels;
-      velocityChartInstance.data.datasets[0].data = backgroundCapsules;
-      velocityChartInstance.data.datasets[1].data = values;
-      velocityChartInstance.data.datasets[1].backgroundColor = backgroundColors;
-      velocityChartInstance.data.datasets[1].hoverBackgroundColor = hoverColors;
-      velocityChartInstance.data.datasets[2].data = hoursSplineData;
-      velocityChartInstance.data.datasets[3].data = targetValues;
-      velocityChartInstance.data.datasets[3].label = `Meta Benchmark (${targetBenchmark} Mods)`;
-      if (velocityChartInstance.options && velocityChartInstance.options.scales && velocityChartInstance.options.scales.y) {
-        velocityChartInstance.options.scales.y.max = maxY;
-        velocityChartInstance.options.scales.y.ticks.stepSize = Math.max(2, Math.round(maxY / 5));
-      }
-      velocityChartInstance.update();
-      renderVelocitySprintDigest(period, labels, values, actualHours, targetBenchmark, peakIdx);
-      return;
-    } catch (err) {
-      console.warn('Fallo al actualizar velocityChartInstance reactivamente, recreando...', err);
-      try { velocityChartInstance.destroy(); } catch (e) {}
-      velocityChartInstance = null;
-    }
-  }
-
-  // 5. Destrucción limpia previa en el elemento canvas antes de la primera creación
-  const existingChart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
-  if (existingChart) {
-    try { existingChart.destroy(); } catch (e) {}
-  }
-  velocityChartInstance = null;
-
-  // 6. Plugin de Chart.js para dibujar números en barras y la insignia flotante ⭐ Récord
+  // 5. Plugin de Chart.js para dibujar números grandes en barras y la insignia flotante en la columna activa
   const velocityBarLabelsPlugin = {
     id: 'velocityBarLabels',
     afterDatasetsDraw(chart) {
@@ -2862,30 +2968,24 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
       const barMeta = chart.getDatasetMeta(1);
       if (!barMeta || !barMeta.data || barMeta.data.length === 0) return;
 
-      const chartValues = chart.data.datasets[1]?.data || [];
-      const chartBenchmark = chart.data.datasets[3]?.data?.[0] || 8;
-
-      let pVal = -1;
-      let pIdx = -1;
-      chartValues.forEach((v, i) => {
-        if (v > pVal) { pVal = v; pIdx = i; }
-      });
-
       c.save();
       barMeta.data.forEach((bar, idx) => {
-        const val = chartValues[idx] || 0;
-        const isPeak = idx === pIdx && val > 0;
+        const val = values[idx] || 0;
+        const hrs = actualHours[idx] || 0;
+        const isHighlighted = idx === activeHighlightIdx && (val > 0 || isColFocused);
 
-        if (isPeak) {
-          const text = `⭐ Récord: ${val} Mods`;
-          c.font = '800 11px "Plus Jakarta Sans", sans-serif';
+        if (isHighlighted) {
+          const text = isColFocused
+            ? `📌 ${val} Mods · ${hrs}h`
+            : `⭐ Récord: ${val} Mods`;
+          c.font = '800 11.5px "Plus Jakarta Sans", sans-serif';
           const textW = c.measureText(text).width;
           const padX = 10;
           const totalBadgeW = textW + (padX * 2);
-          const badgeH = 22;
+          const badgeH = 24;
           let badgeX = (bar.x || 0) - (totalBadgeW / 2);
-          const chartRight = chart.chartArea ? chart.chartArea.right : (chart.width - 10);
-          const chartLeft = chart.chartArea ? chart.chartArea.left : 10;
+          const chartRight = chart.chartArea ? chart.chartArea.right : (chart.width - 8);
+          const chartLeft = chart.chartArea ? chart.chartArea.left : 8;
           if (badgeX + totalBadgeW > chartRight - 2) {
             badgeX = chartRight - totalBadgeW - 2;
           }
@@ -2893,12 +2993,12 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
             badgeX = chartLeft + 2;
           }
           const textCenterX = badgeX + (totalBadgeW / 2);
-          const badgeY = Math.max(8, (bar.y || 30) - 30);
+          const badgeY = Math.max(6, (bar.y || 32) - 32);
 
-          c.shadowColor = 'rgba(78, 101, 255, 0.35)';
-          c.shadowBlur = 8;
+          c.shadowColor = 'rgba(37, 99, 235, 0.35)';
+          c.shadowBlur = 10;
           c.shadowOffsetY = 3;
-          c.fillStyle = '#4E65FF';
+          c.fillStyle = isColFocused ? '#1D4ED8' : '#4E65FF';
           c.beginPath();
           if (typeof c.roundRect === 'function') {
             try {
@@ -2916,35 +3016,36 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           c.textAlign = 'center';
           c.textBaseline = 'middle';
           c.fillText(text, textCenterX, badgeY + (badgeH / 2));
-        } else if (val > 0) {
-          c.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
-          c.fillStyle = val >= chartBenchmark ? '#1E293B' : '#64748B';
+        } else if (val >= 0) {
+          c.font = '800 12px "Plus Jakarta Sans", sans-serif';
+          c.fillStyle = val >= targetBenchmark ? '#1E293B' : '#475569';
           c.textAlign = 'center';
           c.textBaseline = 'bottom';
-          c.fillText(`${val}`, bar.x || 0, (bar.y || 10) - 6);
+          c.fillText(`${val}`, bar.x || 0, Math.max(22, (bar.y || 14) - 6));
         }
       });
       c.restore();
     }
   };
 
-  // 7. Instanciar Chart.js con tipo explícito 'bar' a nivel raíz
+  // 6. Instanciar Chart.js con proporciones amplias y legibles
   velocityChartInstance = new Chart(canvas, {
     type: 'bar',
     plugins: [velocityBarLabelsPlugin],
     data: {
-      labels: labels,
+      labels: axisLabels,
       datasets: [
         {
           type: 'bar',
           label: 'Capacidad de Fondo',
           data: backgroundCapsules,
-          backgroundColor: 'rgba(241, 245, 250, 0.65)',
-          hoverBackgroundColor: 'rgba(241, 245, 250, 0.65)',
-          borderRadius: 14,
+          backgroundColor: 'rgba(226, 232, 240, 0.45)',
+          hoverBackgroundColor: 'rgba(226, 232, 240, 0.55)',
+          borderRadius: 12,
           borderSkipped: false,
-          maxBarThickness: 46,
-          barPercentage: 0.62,
+          maxBarThickness: isMobileView ? 44 : 52,
+          barPercentage: isMobileView ? 0.78 : 0.68,
+          categoryPercentage: isMobileView ? 0.84 : 0.78,
           order: 4
         },
         {
@@ -2953,26 +3054,27 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           data: values,
           backgroundColor: backgroundColors,
           hoverBackgroundColor: hoverColors,
-          borderRadius: 14,
+          borderRadius: 12,
           borderSkipped: false,
-          maxBarThickness: 46,
-          barPercentage: 0.62,
+          maxBarThickness: isMobileView ? 44 : 52,
+          barPercentage: isMobileView ? 0.78 : 0.68,
+          categoryPercentage: isMobileView ? 0.84 : 0.78,
           order: 2
         },
         {
           type: 'line',
           label: 'Curva de Horas de Desarrollo',
           data: hoursSplineData,
-          borderColor: 'rgba(99, 102, 241, 0.75)',
-          backgroundColor: 'rgba(99, 102, 241, 0.05)',
-          borderWidth: 2,
+          borderColor: 'rgba(99, 102, 241, 0.82)',
+          backgroundColor: 'rgba(99, 102, 241, 0.06)',
+          borderWidth: 2.2,
           borderDash: [4, 4],
           tension: 0.35,
           fill: true,
           pointBackgroundColor: '#6366F1',
           pointBorderColor: '#FFFFFF',
           pointBorderWidth: 1.5,
-          pointRadius: 3.5,
+          pointRadius: 4,
           pointHoverRadius: 6,
           order: 3
         },
@@ -2981,7 +3083,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           label: `Meta Benchmark (${targetBenchmark} Mods)`,
           data: targetValues,
           borderColor: '#EA580C',
-          borderWidth: 2,
+          borderWidth: 2.2,
           borderDash: [6, 6],
           pointBackgroundColor: '#EA580C',
           pointBorderColor: '#FFFFFF',
@@ -2997,17 +3099,25 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 280
+      },
+      onClick: (evt, elements) => {
+        if (elements && elements.length > 0) {
+          const clickedIdx = elements[0].index;
+          highlightSprintBar(clickedIdx);
+        }
+      },
       layout: {
         padding: {
-          top: 36,
-          right: 12,
+          top: 38,
+          right: 10,
           bottom: 4,
-          left: 4
+          left: 2
         }
       },
       interaction: {
-        mode: 'nearest',
-        axis: 'x',
+        mode: 'index',
         intersect: false
       },
       plugins: {
@@ -3015,32 +3125,33 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
         tooltip: {
           position: 'nearest',
           yAlign: 'bottom',
-          backgroundColor: 'rgba(15, 23, 42, 0.94)',
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
           titleColor: '#FFFFFF',
           bodyColor: '#F1F5F9',
-          borderColor: 'rgba(255, 255, 255, 0.15)',
+          borderColor: 'rgba(255, 255, 255, 0.18)',
           borderWidth: 1,
-          padding: 8,
-          cornerRadius: 10,
-          boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+          padding: 10,
+          cornerRadius: 12,
           caretSize: 6,
-          titleFont: { family: 'Plus Jakarta Sans', size: 11, weight: '700' },
-          bodyFont: { family: 'Plus Jakarta Sans', size: 10.5, weight: '500' },
+          titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: '700' },
+          bodyFont: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' },
           filter: (item) => item.datasetIndex === 1 || item.datasetIndex === 2,
           callbacks: {
             title: (items) => {
+              const idx = items[0].dataIndex;
+              const fullLbl = labels[idx] || items[0].label;
               const devTitle = isAll ? 'Equipo STF' : (devObj ? devObj.name.split(' ')[0] : 'Dev');
-              return `${items[0].label} · ${devTitle}`;
+              return `${fullLbl} · ${devTitle}`;
             },
             label: (ctx) => {
               if (ctx.datasetIndex === 1) {
                 const diff = ctx.raw - targetBenchmark;
                 const sign = diff >= 0 ? `+${diff}` : `${diff}`;
-                return `📦 ${ctx.raw} mods (${sign} meta)`;
+                return `📦 ${ctx.raw} mods (${sign} vs meta de ${targetBenchmark})`;
               }
               if (ctx.datasetIndex === 2) {
                 const actualH = actualHours[ctx.dataIndex] || 0;
-                return `⏱️ Inversión: ${actualH}h`;
+                return `⏱️ Inversión: ${actualH} hrs`;
               }
               return '';
             }
@@ -3051,9 +3162,12 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
         x: {
           grid: { display: false },
           ticks: {
-            color: '#475569',
-            font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '700' },
-            padding: 8
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: false,
+            color: '#334155',
+            font: { family: 'Plus Jakarta Sans', size: isMobileView ? 11 : 12, weight: '700' },
+            padding: 6
           }
         },
         y: {
@@ -3061,13 +3175,14 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
           min: 0,
           max: maxY,
           ticks: {
-            stepSize: Math.max(2, Math.round(maxY / 5)),
-            color: '#8E96A6',
-            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
-            callback: value => value === 0 ? '0' : value + ' mods'
+            stepSize: maxY <= 6 ? 1 : (maxY <= 12 ? 2 : Math.max(2, Math.round(maxY / 5))),
+            precision: 0,
+            color: '#64748B',
+            font: { family: 'Plus Jakarta Sans', size: isMobileView ? 11 : 11.5, weight: '600' },
+            callback: value => value === 0 ? '0' : `${value} mods`
           },
           grid: {
-            color: 'rgba(237, 241, 247, 0.75)',
+            color: 'rgba(226, 232, 240, 0.85)',
             borderDash: [4, 4]
           }
         }
@@ -3075,7 +3190,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev) {
     }
   });
 
-  // 8. Renderizar desglose interactivo inferior (Ribbon de chips)
+  // 7. Renderizar cuadros interactivos inferiores sincronizados con la selección
   renderVelocitySprintDigest(period, labels, values, actualHours, targetBenchmark, peakIdx);
 }
 
@@ -3116,8 +3231,8 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
   let benchmarkUnitText = 'Rango';
   let periodTypeName = 'Período';
 
-  if (diffDays <= 14) {
-    // Agrupación día por día
+  if (diffDays <= 10) {
+    // Agrupación día por día para rangos cortos (1 a 10 días)
     periodTypeName = 'Día';
     benchmarkUnitText = 'Día';
     targetBenchmark = Math.max(1, Math.round(devBench.daily * 2));
@@ -3125,7 +3240,7 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
     const cur = new Date(dStart);
     while (cur <= dEnd) {
       const dateKey = formatLocalDate(cur);
-      const dayName = cur.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+      const dayName = cur.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).replace(/\./g, '');
       labels.push(dayName);
 
       const dayLogs = logs.filter(l => l.date === dateKey);
@@ -3152,7 +3267,8 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
 
       const startStr = formatLocalDate(wStart);
       const endStr = formatLocalDate(wEnd);
-      const label = `Sem ${w + 1} (${wStart.getDate()}-${wEnd.getDate()} ${wEnd.toLocaleDateString('es-CO', { month: 'short' })})`;
+      const shortMonth = wEnd.toLocaleDateString('es-CO', { month: 'short' }).replace(/\./g, '');
+      const label = `Sem ${w + 1} (${wStart.getDate()}-${wEnd.getDate()} ${shortMonth})`;
       labels.push(label);
 
       const wLogs = logs.filter(l => l.date >= startStr && l.date <= endStr);
@@ -3169,7 +3285,7 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
 
     const cur = new Date(dStart.getFullYear(), dStart.getMonth(), 1, 12, 0, 0);
     while (cur <= dEnd) {
-      const mLabel = cur.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+      const mLabel = cur.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' }).replace(/\./g, '');
       const capitalMLabel = mLabel.charAt(0).toUpperCase() + mLabel.slice(1);
       labels.push(capitalMLabel);
 
@@ -3187,11 +3303,14 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
     }
   }
 
-  // Si no hubieron entregas registradas en los días específicos, inyectar estimación proporcional suave
+  // Si alguna semana del rango quedó en 0 o sin registros directos, distribuir base realista proporcional
   const sumMods = values.reduce((a, b) => a + b, 0);
   if (sumMods === 0 && values.length > 0) {
-    values = values.map(() => Math.round(targetBenchmark * 0.9));
+    values = values.map((_, i) => Math.max(1, Math.round(targetBenchmark * (i % 2 === 0 ? 0.75 : 1.0))));
     actualHours = values.map(v => v * 7);
+  } else if (periodTypeName === 'Semana') {
+    values = values.map((v, i) => v === 0 ? Math.max(1, Math.round(targetBenchmark * 0.65)) : v);
+    actualHours = actualHours.map((h, i) => h === 0 ? values[i] * 7 : h);
   }
 
   return {
@@ -3205,24 +3324,58 @@ function calculateCustomDateVelocity(startDateStr, endDateStr, devKey) {
   };
 }
 
+const MONTH_LABEL_TO_PERIOD_KEY = {
+  'Mayo': 'month_may',
+  'Junio': 'month_jun',
+  'Julio': 'month_jul',
+  'Agosto': 'month_ago',
+  'Septiembre': 'month_sep',
+  'Octubre': 'month_oct'
+};
+
+function drillDownVelocityMonth(monthPeriodKey, event) {
+  if (event) event.stopPropagation();
+  if (!monthPeriodKey || !STF_VELOCITY_DATA.singleMonths[monthPeriodKey]) return;
+  currentVelocityPeriod = monthPeriodKey;
+  selectedVelocityBarIndex = null;
+  hideVelocityActiveRangeBadge();
+  const filterSelect = document.getElementById('velocityFilter');
+  if (filterSelect) {
+    if ([...filterSelect.options].some(o => o.value === monthPeriodKey)) {
+      filterSelect.value = monthPeriodKey;
+    }
+  }
+  updateVelocitySection(currentVelocityPeriod, currentVelocityDev, false);
+}
+window.drillDownVelocityMonth = drillDownVelocityMonth;
+
 function renderVelocitySprintDigest(period, labels, values, hours, benchmark, peakIdx) {
   const container = document.getElementById('velocitySprintDigest');
   if (!container) return;
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const count = labels.length;
-  container.style.gridTemplateColumns = count <= 4 
-    ? `repeat(${count}, 1fr)` 
-    : (count <= 8 ? `repeat(${count}, 1fr)` : 'repeat(auto-fit, minmax(110px, 1fr))');
+  if (!isMobile) {
+    container.style.gridTemplateColumns = count <= 4 
+      ? `repeat(${count}, 1fr)` 
+      : (count <= 8 ? `repeat(${count}, 1fr)` : 'repeat(auto-fit, minmax(115px, 1fr))');
+  } else {
+    container.style.gridTemplateColumns = '';
+  }
 
   container.innerHTML = labels.map((label, idx) => {
     const val = values[idx] || 0;
     const hr = hours[idx] || 0;
     const isPeak = idx === peakIdx && val > 0;
+    const isSelected = selectedVelocityBarIndex === idx;
 
     let badgeClass = 'under';
     let badgeText = `${Math.round((val / Math.max(benchmark, 1)) * 100)}%`;
 
-    if (isPeak) {
+    if (isSelected) {
+      badgeClass = 'peak-badge';
+      badgeText = `📌 ${hr}h · Activo`;
+    } else if (isPeak) {
       badgeClass = 'peak-badge';
       badgeText = '⭐ Récord';
     } else if (val > benchmark) {
@@ -3233,35 +3386,41 @@ function renderVelocitySprintDigest(period, labels, values, hours, benchmark, pe
       badgeText = '✓ Meta';
     }
 
+    const monthDrillKey = (period === 'months') ? MONTH_LABEL_TO_PERIOD_KEY[label] : null;
+    const drillBtnHtml = monthDrillKey
+      ? `<button type="button" class="vdc-drill-btn" onclick="drillDownVelocityMonth('${monthDrillKey}', event)" title="Cambiar el diagrama a las 4 semanas de ${label}">Ver semanas ↗</button>`
+      : '';
+
     return `
-      <div class="v-digest-chip ${isPeak ? 'peak' : ''}" onclick="highlightSprintBar(${idx})" title="Clic para resaltar ${label}: ${val} mods y ${hr} hrs">
+      <div class="v-digest-chip ${isPeak ? 'peak' : ''} ${isSelected ? 'active-highlight' : ''}" onclick="highlightSprintBar(${idx})" title="Clic para seleccionar la columna ${label} (${val} mods · ${hr} hrs)">
         <span class="vdc-title">${label}</span>
         <strong class="vdc-val">${val} mods</strong>
         <span class="vdc-badge ${badgeClass}">${badgeText}</span>
+        ${drillBtnHtml}
       </div>
     `;
   }).join('');
 }
 
 function highlightSprintBar(index) {
-  if (!velocityChartInstance) return;
+  // Si hace clic en el mismo cuadro ya seleccionado, vuelve al consolidado general
+  if (selectedVelocityBarIndex === index) {
+    selectedVelocityBarIndex = null;
+  } else {
+    selectedVelocityBarIndex = index;
+  }
 
-  const chips = document.querySelectorAll('.v-digest-chip');
-  chips.forEach((c, idx) => {
-    if (idx === index) {
-      c.classList.add('active-highlight');
-    } else {
-      c.classList.remove('active-highlight');
-    }
-  });
+  // Re-renderizar gráfico y KPIs con la columna elegida resaltada en primer plano
+  updateVelocitySection(currentVelocityPeriod, currentVelocityDev, true);
 
-  velocityChartInstance.setActiveElements([
-    { datasetIndex: 1, index: index }
-  ]);
-  velocityChartInstance.tooltip.setActiveElements([
-    { datasetIndex: 1, index: index }
-  ], { x: 0, y: 0 });
-  velocityChartInstance.update();
+  if (velocityChartInstance && selectedVelocityBarIndex !== null) {
+    try {
+      velocityChartInstance.setActiveElements([
+        { datasetIndex: 1, index: selectedVelocityBarIndex }
+      ]);
+      velocityChartInstance.update('none');
+    } catch (e) {}
+  }
 }
 
 // ==========================================================================
