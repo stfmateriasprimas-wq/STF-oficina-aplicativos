@@ -780,6 +780,26 @@ function applyRoleBasedUI() {
       ? 'Cálculo dinámico de días transcurridos vs deadline y proyección del avance esperado por desarrollador'
       : 'Monitoreo en tiempo real de tus entregas asignadas, plazos comprometidos y dictámenes de calidad';
   }
+
+  // 11. Bitácora de Observaciones de Tareas
+  const obsBadge = document.getElementById('obsSectionBadgeLabel');
+  const obsTitle = document.getElementById('obsSectionTitle');
+  const obsSub = document.getElementById('obsSectionSubtitle');
+  if (obsBadge) {
+    obsBadge.textContent = isAdmin
+      ? 'Bitácora Operativa & Trazabilidad TI'
+      : `Mi Bitácora de Tareas · ${session.name}`;
+  }
+  if (obsTitle) {
+    obsTitle.textContent = isAdmin
+      ? 'Observaciones de Tareas en Proceso por Desarrollador'
+      : 'Mis Observaciones, Bloqueos y Avances en Tareas';
+  }
+  if (obsSub) {
+    obsSub.textContent = isAdmin
+      ? 'Seguimiento cronológico y detallado de notas, bloqueos, avances y acuerdos técnicos ocurridos durante la asignación y desarrollo de cada tarea.'
+      : 'Historial de notas, acuerdos técnicos y bloqueos reportados en tus tareas asignadas en planta.';
+  }
 }
 
 function refreshAllViews() {
@@ -790,6 +810,7 @@ function refreshAllViews() {
   if (typeof renderSystemsTable === 'function') renderSystemsTable();
   if (typeof renderDevelopersSection === 'function') renderDevelopersSection();
   if (typeof renderIntegrationsList === 'function') renderIntegrationsList(activeIntFilter);
+  if (typeof renderTaskObservationsFeed === 'function') renderTaskObservationsFeed();
   if (typeof updateQuickDevStrip === 'function') updateQuickDevStrip();
   if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
   if (typeof renderProjectsView === 'function') renderProjectsView(activeBrandFilter);
@@ -6104,6 +6125,629 @@ function handleConfirmEvaluation() {
 }
 
 // ==========================================================================
+// BITÁCORA Y OBSERVACIONES DE TAREAS EN PROCESO (Super Admin & Devs)
+// ==========================================================================
+
+let activeObsType = 'all'; // 'all' | 'bloqueo' | 'ajuste' | 'avance' | 'auditoria'
+let activeObsDev = 'all';  // 'all' | devId
+let activeObsSearch = '';
+
+/**
+ * Asegura que todas las tareas en appState.integrations tengan su array de observaciones
+ * y si está vacío, inicializa un set rico y realista para el equipo de STF GROUP.
+ */
+function ensureTaskObservationsData() {
+  if (!appState || !Array.isArray(appState.integrations)) return;
+
+  const defaultSeeds = [
+    {
+      matchTaskId: "int_17937216525", // Iniciar el ajuste de LAB (Jose Guzman)
+      appFallback: "app_laboratorio",
+      devFallback: "dev_jg",
+      observations: [
+        {
+          id: "obs_seed_1",
+          date: "2026-11-05 16:30",
+          type: "avance",
+          severity: "normal",
+          author: "Jose Guzman",
+          text: "Se completó la migración de fórmulas textiles para tintura en el módulo de laboratorio. Cuatro operarios de planta realizaron pruebas de pesaje con aprobación del 100%."
+        },
+        {
+          id: "obs_seed_2",
+          date: "2026-10-31 10:15",
+          type: "bloqueo",
+          severity: "alta",
+          author: "Edwin Diaz (Jefe TI)",
+          text: "Desconexión intermitente con el puerto COM de la balanza analítica en planta. Se implementó un microservicio WebSocket intermedio para garantizar reconexión automática sin pérdida de datos."
+        },
+        {
+          id: "obs_seed_3",
+          date: "2026-11-05 18:20",
+          type: "auditoria",
+          severity: "normal",
+          author: "Super Admin (Jefe TI)",
+          text: "Implementación en planta validada con los operarios. Operatividad estable. Calificación técnica 94.3%."
+        }
+      ]
+    },
+    {
+      matchTaskId: "int_17926874219", // Retomar incorporacion de base de datos (Jose Guzman)
+      appFallback: "app_laboratorio",
+      devFallback: "dev_jg",
+      observations: [
+        {
+          id: "obs_seed_4",
+          date: "2026-10-28 15:45",
+          type: "ajuste",
+          severity: "normal",
+          author: "Jose Guzman",
+          text: "Se normalizaron los modelos de datos en PostgreSQL para almacenar el histórico de pruebas físicas y solidez al lavado. Índices B-Tree aplicados para reducir latencia a menos de 95ms."
+        }
+      ]
+    },
+    {
+      matchTaskId: "int_17926830187", // hacer indicador - juan (Juan David)
+      appFallback: "app_calidad",
+      devFallback: "dev_jd",
+      observations: [
+        {
+          id: "obs_seed_5",
+          date: "2026-10-27 11:30",
+          type: "avance",
+          severity: "normal",
+          author: "Juan David",
+          text: "Diseño de dashboard de métricas de calidad en confección integrado con Google Sheets. Se agregaron gráficas de dispersión de defectos por lote y operario."
+        },
+        {
+          id: "obs_seed_6",
+          date: "2026-10-24 16:10",
+          type: "ajuste",
+          severity: "normal",
+          author: "Edwin Diaz (Jefe TI)",
+          text: "Revisión conjunta del indicador AQL. Se estableció umbral de alerta temprana al superar el 2.5% de defectos en líneas de costura pesada."
+        }
+      ]
+    },
+    {
+      matchTaskId: "int_0", // Gateway de Autenticación & Roles Operativos (Jose Guzman / Torre)
+      appFallback: "app_torre",
+      devFallback: "dev_jg",
+      observations: [
+        {
+          id: "obs_seed_7",
+          date: "2026-10-12 17:00",
+          type: "auditoria",
+          severity: "normal",
+          author: "Super Admin (Jefe TI)",
+          text: "Excelente arquitectura e integración limpia con el Directorio Activo de STF. Pruebas de concurrencia superadas con cero latencia y tolerancia a fallos."
+        },
+        {
+          id: "obs_seed_8",
+          date: "2026-10-06 14:00",
+          type: "bloqueo",
+          severity: "alta",
+          author: "Jose Guzman",
+          text: "Tiempos de espera excesivos en validación de tokens en tabletas de operarios con baja señal WiFi en bodega. Se optimizó el tiempo de vida de la caché y se redujo el payload JWT."
+        }
+      ]
+    }
+  ];
+
+  let hasModifications = false;
+
+  // Garantizar que cada tarea tenga su array observations
+  appState.integrations.forEach(task => {
+    if (!Array.isArray(task.observations)) {
+      task.observations = [];
+      hasModifications = true;
+    }
+  });
+
+  // Si ninguna tarea tiene observaciones aún, sembramos las semillas iniciales
+  const totalObs = appState.integrations.reduce((sum, t) => sum + (t.observations ? t.observations.length : 0), 0);
+  if (totalObs === 0) {
+    defaultSeeds.forEach(seed => {
+      let targetTask = appState.integrations.find(t => t.id === seed.matchTaskId);
+      if (!targetTask && seed.appFallback) {
+        targetTask = appState.integrations.find(t => t.appId === seed.appFallback);
+      }
+      if (targetTask) {
+        if (!Array.isArray(targetTask.observations)) targetTask.observations = [];
+        targetTask.observations = [...seed.observations];
+        hasModifications = true;
+      }
+    });
+
+    // Si aún sobran tareas sin observaciones y hay notas en evaluation, convertirlas a auditoría
+    appState.integrations.forEach(t => {
+      if ((!t.observations || t.observations.length === 0) && t.evaluation && t.evaluation.notes) {
+        t.observations = [{
+          id: 'obs_eval_' + (t.id || Date.now()),
+          date: t.evaluation.evalDate ? `${t.evaluation.evalDate} 17:00` : '2026-11-04 16:00',
+          type: 'auditoria',
+          severity: 'normal',
+          author: t.evaluation.evaluator || 'Super Admin (Jefe TI)',
+          text: t.evaluation.notes
+        }];
+        hasModifications = true;
+      }
+    });
+  }
+
+  if (hasModifications && typeof saveData === 'function') {
+    saveData(appState);
+  }
+}
+
+/**
+ * Obtiene todas las observaciones de todas las tareas, agregando metadatos de tarea y desarrollador
+ */
+function getAllTaskObservations() {
+  ensureTaskObservationsData();
+  if (!appState || !Array.isArray(appState.integrations)) return [];
+
+  const list = [];
+  appState.integrations.forEach(task => {
+    if (!task || !Array.isArray(task.observations)) return;
+    const app = getApplicationById(task.appId) || { name: 'Aplicativo', code: 'STF' };
+    const dev = getDeveloperById(task.devId) || { name: 'Desarrollador', role: 'Dev', avatar: '' };
+
+    task.observations.forEach(obs => {
+      list.push({
+        ...obs,
+        taskId: task.id,
+        taskName: task.name,
+        taskStatus: task.status,
+        taskDeadline: task.deadline,
+        appId: task.appId,
+        appName: app.name,
+        appCode: app.code,
+        devId: task.devId,
+        devName: dev.name,
+        devRole: dev.role || 'Desarrollador',
+        devAvatar: dev.avatar || ''
+      });
+    });
+  });
+
+  // Ordenar cronológicamente descendente (la más reciente arriba)
+  list.sort((a, b) => {
+    const da = new Date(a.date || '2026-01-01').getTime();
+    const db = new Date(b.date || '2026-01-01').getTime();
+    if (db !== da) return db - da;
+    return (b.id || '').localeCompare(a.id || '');
+  });
+
+  return list;
+}
+
+/**
+ * Renderiza el feed completo de observaciones con sus filtros y contadores
+ */
+function renderTaskObservationsFeed() {
+  const container = document.getElementById('taskObservationsFeed');
+  if (!container) return;
+
+  const isAdmin = isCurrentSessionAdmin();
+  const session = getLoggedSessionUser();
+  const loggedDevId = getLoggedDevId();
+
+  // Si es desarrollador y no es admin, filtramos solo sus observaciones o tareas si corresponde
+  let allObservations = getAllTaskObservations();
+  if (!isAdmin) {
+    allObservations = allObservations.filter(o => o.devId === loggedDevId);
+  }
+
+  // Actualizar selector de desarrolladores
+  const devSelect = document.getElementById('obsFilterDev');
+  if (devSelect) {
+    const realDevs = (appState.developers || []).filter(dev => dev.role !== 'Admin' && dev.id !== 'dev_ediaz');
+    
+    if (isAdmin) {
+      devSelect.innerHTML = `
+        <option value="all">Todos los Desarrolladores</option>
+        ${realDevs.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
+      `;
+      devSelect.value = (activeObsDev && activeObsDev !== 'all') ? activeObsDev : 'all';
+      devSelect.disabled = false;
+    } else {
+      devSelect.innerHTML = `<option value="${loggedDevId}">Mis Observaciones (${session.name})</option>`;
+      devSelect.disabled = true;
+    }
+  }
+
+  // Actualizar contadores en los chips
+  const countAll = allObservations.length;
+  const countBloqueo = allObservations.filter(o => o.type === 'bloqueo').length;
+  const countAjuste = allObservations.filter(o => o.type === 'ajuste').length;
+  const countAvance = allObservations.filter(o => o.type === 'avance').length;
+  const countAuditoria = allObservations.filter(o => o.type === 'auditoria').length;
+
+  const elAll = document.getElementById('obsCountAll');
+  const elBloqueo = document.getElementById('obsCountBloqueo');
+  const elAjuste = document.getElementById('obsCountAjuste');
+  const elAvance = document.getElementById('obsCountAvance');
+  const elAuditoria = document.getElementById('obsCountAuditoria');
+
+  if (elAll) elAll.textContent = countAll;
+  if (elBloqueo) elBloqueo.textContent = countBloqueo;
+  if (elAjuste) elAjuste.textContent = countAjuste;
+  if (elAvance) elAvance.textContent = countAvance;
+  if (elAuditoria) elAuditoria.textContent = countAuditoria;
+
+  // Filtrado
+  let filtered = allObservations;
+
+  // 1. Filtro por tipo
+  if (activeObsType !== 'all') {
+    filtered = filtered.filter(o => o.type === activeObsType);
+  }
+
+  // 2. Filtro por desarrollador (en modo admin)
+  if (isAdmin && activeObsDev !== 'all') {
+    filtered = filtered.filter(o => o.devId === activeObsDev);
+  }
+
+  // 3. Filtro por búsqueda
+  if (activeObsSearch.trim()) {
+    const q = activeObsSearch.trim().toLowerCase();
+    filtered = filtered.filter(o => 
+      (o.text && o.text.toLowerCase().includes(q)) ||
+      (o.taskName && o.taskName.toLowerCase().includes(q)) ||
+      (o.devName && o.devName.toLowerCase().includes(q)) ||
+      (o.appName && o.appName.toLowerCase().includes(q)) ||
+      (o.author && o.author.toLowerCase().includes(q))
+    );
+  }
+
+  // Si no hay observaciones
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="obs-empty-state">
+        <i data-lucide="message-square-off"></i>
+        <h4 class="obs-empty-title">No hay observaciones registradas en este filtro</h4>
+        <p class="obs-empty-hint">
+          ${isAdmin 
+            ? 'Usa el botón superior "+ Registrar Observación" para documentar cualquier bloqueo, hito o ajuste en las tareas asignadas.' 
+            : 'No tienes observaciones registradas para este criterio de búsqueda.'}
+        </p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  // Construir HTML de las tarjetas
+  const typeMap = {
+    bloqueo: { label: 'Bloqueo / Cuello de Botella', icon: 'alert-triangle', badgeClass: 'badge-bloqueo', cardClass: 'type-bloqueo' },
+    ajuste: { label: 'Ajuste Técnico', icon: 'git-commit', badgeClass: 'badge-ajuste', cardClass: 'type-ajuste' },
+    avance: { label: 'Avance / Hito', icon: 'trending-up', badgeClass: 'badge-avance', cardClass: 'type-avance' },
+    auditoria: { label: 'Dictamen de Auditoría', icon: 'award', badgeClass: 'badge-auditoria', cardClass: 'type-auditoria' }
+  };
+
+  const cardsHtml = filtered.map(obs => {
+    const meta = typeMap[obs.type] || typeMap.avance;
+    const devInitials = (obs.devName || 'D').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    
+    // Status chip para la tarea
+    let statusClass = 'active';
+    let statusLabel = 'En Desarrollo';
+    if (obs.taskStatus === 'evaluated') {
+      statusClass = 'done';
+      statusLabel = 'Auditada';
+    } else if (obs.taskStatus === 'risk') {
+      statusClass = 'risk';
+      statusLabel = 'En Riesgo';
+    }
+
+    // Severidad
+    const sev = obs.severity || 'normal';
+    const sevLabels = { alta: 'Prioridad Alta', normal: 'Normal', baja: 'Baja' };
+    const sevLabel = sevLabels[sev] || 'Normal';
+
+    return `
+      <div class="obs-entry-card ${meta.cardClass}" id="obsCard_${obs.id}">
+        <!-- Top Row: Dev Info, Type Badge & Date -->
+        <div class="obs-card-top">
+          <div class="obs-dev-profile">
+            ${obs.devAvatar 
+              ? `<img src="${obs.devAvatar}" class="obs-dev-avatar" alt="${obs.devName}">`
+              : `<div class="obs-dev-avatar-fallback">${devInitials}</div>`}
+            <div class="obs-dev-meta">
+              <div class="obs-dev-meta-top">
+                <span class="obs-dev-name">${obs.devName}</span>
+                <span class="obs-dev-role-pill">${obs.devRole === 'desarrollador' ? 'Dev' : obs.devRole}</span>
+              </div>
+              <span class="obs-app-tag">Sistema: <strong>${obs.appCode} · ${obs.appName}</strong></span>
+            </div>
+          </div>
+
+          <div class="obs-card-badge-group">
+            <span class="obs-type-badge ${meta.badgeClass}">
+              <i data-lucide="${meta.icon}"></i>
+              <span>${meta.label}</span>
+            </span>
+            <span class="obs-time-text">${obs.date || 'Reciente'}</span>
+          </div>
+        </div>
+
+        <!-- Task Context Strip -->
+        <div class="obs-task-context-strip">
+          <div class="obs-task-title-wrap" title="${obs.taskName}">
+            <i data-lucide="folder-git-2"></i>
+            <span>Tarea: <strong>${obs.taskName}</strong></span>
+          </div>
+          <div class="obs-task-meta-right">
+            <span class="obs-status-chip ${statusClass}">${statusLabel}</span>
+            ${obs.taskDeadline ? `<span style="color: #64748B; font-size: 11px;">Plazo: ${obs.taskDeadline}</span>` : ''}
+          </div>
+        </div>
+
+        <!-- Observation Text Body -->
+        <div class="obs-card-text-body">
+          ${obs.text}
+        </div>
+
+        <!-- Footer: Author & Action Buttons -->
+        <div class="obs-card-footer">
+          <div class="obs-footer-left">
+            <span class="obs-author-tag">
+              <i data-lucide="user-check"></i>
+              <span>Registrado por: <strong>${obs.author || 'Super Admin TI'}</strong></span>
+            </span>
+            <span class="obs-severity-pill sev-${sev}">${sevLabel}</span>
+          </div>
+
+          <div class="obs-footer-actions">
+            <button type="button" class="btn-obs-action-mini" onclick="scrollToIntegrationTask('${obs.taskId}')" title="Ir a la tarea en las carpetas superiores">
+              <i data-lucide="external-link" style="width: 12px; height: 12px;"></i>
+              <span>Ver Tarea</span>
+            </button>
+            ${isAdmin ? `
+              <button type="button" class="btn-obs-action-mini btn-delete-obs" onclick="deleteTaskObservation('${obs.taskId}', '${obs.id}')" title="Eliminar esta observación">
+                <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                <span>Eliminar</span>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = cardsHtml;
+  lucide.createIcons();
+}
+
+/**
+ * Filtro por tipo de observación (Pills)
+ */
+function filterObservationsByType(type) {
+  activeObsType = type;
+  document.querySelectorAll('#obsQuickChipsRow .obs-quick-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.obsType === type);
+  });
+  renderTaskObservationsFeed();
+}
+
+/**
+ * Filtro por desarrollador (Select)
+ */
+function filterObservationsByDev(devId) {
+  activeObsDev = devId;
+  renderTaskObservationsFeed();
+}
+
+/**
+ * Búsqueda en vivo en observaciones
+ */
+function handleObservationsSearch(val) {
+  activeObsSearch = val;
+  const btnClear = document.getElementById('btnClearObsSearch');
+  if (btnClear) btnClear.style.display = val.trim() ? 'block' : 'none';
+  renderTaskObservationsFeed();
+}
+
+function clearObservationsSearch() {
+  activeObsSearch = '';
+  const input = document.getElementById('obsSearchInput');
+  const btnClear = document.getElementById('btnClearObsSearch');
+  if (input) input.value = '';
+  if (btnClear) btnClear.style.display = 'none';
+  renderTaskObservationsFeed();
+}
+
+/**
+ * Desplaza la vista suavemente hasta la tarjeta de la tarea y la resalta
+ */
+function scrollToIntegrationTask(taskId) {
+  const task = appState.integrations.find(t => t.id === taskId);
+  if (task && typeof openedDevFolders !== 'undefined') {
+    openedDevFolders.add(task.devId);
+    renderIntegrationsList(activeIntFilter);
+  }
+
+  setTimeout(() => {
+    const cardEl = document.getElementById(`intCard_${taskId}`);
+    if (cardEl) {
+      cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      cardEl.style.transition = 'box-shadow 0.4s ease, transform 0.4s ease';
+      cardEl.style.boxShadow = '0 0 0 3px #4E65FF, 0 10px 30px rgba(78, 101, 255, 0.3)';
+      cardEl.style.transform = 'scale(1.02)';
+      setTimeout(() => {
+        cardEl.style.boxShadow = '';
+        cardEl.style.transform = '';
+      }, 2000);
+    }
+  }, 100);
+}
+
+/**
+ * Modal para registrar una nueva observación
+ */
+function openNewObservationModal() {
+  const select = document.getElementById('newObsTaskSelect');
+  if (!select) return;
+
+  const isAdmin = isCurrentSessionAdmin();
+  const loggedDevId = getLoggedDevId();
+
+  let tasks = appState.integrations || [];
+  if (!isAdmin) {
+    tasks = tasks.filter(t => t.devId === loggedDevId);
+  }
+
+  if (tasks.length === 0) {
+    showToast('No hay tareas operativas disponibles para registrar observaciones.', 'warning');
+    return;
+  }
+
+  select.innerHTML = tasks.map(t => {
+    const app = getApplicationById(t.appId) || { name: 'App', code: 'STF' };
+    const dev = getDeveloperById(t.devId) || { name: 'Dev' };
+    return `<option value="${t.id}">[${app.code}] ${t.name} — ${dev.name}</option>`;
+  }).join('');
+
+  handleObsTaskSelectChange(select.value);
+
+  document.getElementById('modalNewObservation')?.classList.add('show');
+}
+
+function closeNewObservationModal() {
+  document.getElementById('modalNewObservation')?.classList.remove('show');
+  document.getElementById('newObservationForm')?.reset();
+}
+
+function handleObsTaskSelectChange(taskId) {
+  const preview = document.getElementById('obsModalDevPreview');
+  if (!preview) return;
+
+  const task = (appState.integrations || []).find(t => t.id === taskId);
+  if (!task) {
+    preview.innerHTML = '';
+    return;
+  }
+
+  const app = getApplicationById(task.appId) || { name: 'Aplicativo', code: 'STF' };
+  const dev = getDeveloperById(task.devId) || { name: 'Desarrollador' };
+
+  preview.innerHTML = `
+    <i data-lucide="info"></i>
+    <span>Tarea asignada a <strong>${dev.name}</strong> para el sistema <strong>${app.name} (${app.code})</strong>. Plazo límite: ${task.deadline || 'Pendiente'}.</span>
+  `;
+  lucide.createIcons();
+}
+
+/**
+ * Guarda la nueva observación en appState, localStorage y Sheets (si conectado)
+ */
+function handleSaveObservation(event) {
+  if (event) event.preventDefault();
+
+  const taskSelect = document.getElementById('newObsTaskSelect');
+  const typeSelect = document.getElementById('newObsTypeSelect');
+  const sevSelect = document.getElementById('newObsSeveritySelect');
+  const textInput = document.getElementById('newObsText');
+
+  const taskId = taskSelect?.value;
+  const type = typeSelect?.value || 'avance';
+  const severity = sevSelect?.value || 'normal';
+  const text = (textInput?.value || '').trim();
+
+  if (!taskId || !text) {
+    showToast('Por favor completa todos los campos requeridos.', 'warning');
+    return;
+  }
+
+  const task = (appState.integrations || []).find(t => t.id === taskId);
+  if (!task) {
+    showToast('No se encontró la tarea seleccionada.', 'error');
+    return;
+  }
+
+  if (!Array.isArray(task.observations)) {
+    task.observations = [];
+  }
+
+  const session = getLoggedSessionUser();
+  const isAdmin = isCurrentSessionAdmin();
+  const authorName = isAdmin ? 'Super Admin (Jefe TI)' : session.name;
+
+  // Formato de fecha actual YYYY-MM-DD HH:mm
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+
+  const newObs = {
+    id: 'obs_' + Date.now(),
+    date: formattedDate,
+    type: type,
+    severity: severity,
+    author: authorName,
+    text: text
+  };
+
+  // Agregar al inicio del array de observaciones de la tarea
+  task.observations.unshift(newObs);
+
+  // Guardar en almacenamiento
+  saveData(appState);
+
+  // Registrar en Google Sheets si está activo
+  if (window.SheetsSync && typeof window.SheetsSync.appendBitacoraRow === 'function') {
+    const app = getApplicationById(task.appId) || { name: 'Aplicativo' };
+    const dev = getDeveloperById(task.devId) || { name: 'Desarrollador' };
+    window.SheetsSync.appendBitacoraRow({
+      date: formattedDate,
+      developer: dev.name,
+      eventType: `OBSERVACION_${type.toUpperCase()}`,
+      appName: app.name,
+      description: `[${task.name}] (${severity.toUpperCase()}) ${text}`,
+      version: 'v3.5'
+    });
+  }
+
+  closeNewObservationModal();
+  renderTaskObservationsFeed();
+  showToast('¡Observación registrada con éxito en la Bitácora!');
+}
+
+/**
+ * Eliminar una observación (Super Admin)
+ */
+function deleteTaskObservation(taskId, obsId) {
+  if (!confirm('¿Estás seguro de que deseas eliminar esta observación de la bitácora?')) {
+    return;
+  }
+
+  const task = (appState.integrations || []).find(t => t.id === taskId);
+  if (!task || !Array.isArray(task.observations)) return;
+
+  task.observations = task.observations.filter(o => o.id !== obsId);
+  saveData(appState);
+  renderTaskObservationsFeed();
+  showToast('Observación eliminada.');
+}
+
+// Exponer funciones en window para listeners inline
+window.openNewObservationModal = openNewObservationModal;
+window.closeNewObservationModal = closeNewObservationModal;
+window.handleObsTaskSelectChange = handleObsTaskSelectChange;
+window.handleSaveObservation = handleSaveObservation;
+window.filterObservationsByType = filterObservationsByType;
+window.filterObservationsByDev = filterObservationsByDev;
+window.handleObservationsSearch = handleObservationsSearch;
+window.clearObservationsSearch = clearObservationsSearch;
+window.scrollToIntegrationTask = scrollToIntegrationTask;
+window.deleteTaskObservation = deleteTaskObservation;
+window.renderTaskObservationsFeed = renderTaskObservationsFeed;
+
+// ==========================================================================
 // EVENT LISTENERS & BOOTSTRAP
 // ==========================================================================
 
@@ -6150,6 +6794,7 @@ function initApp() {
   });
 
   // Initial renders
+  ensureTaskObservationsData();
   renderStackedDeck();
   renderCapsuleProgressBar();
   renderDevelopersSection();
@@ -6157,6 +6802,7 @@ function initApp() {
   initOverviewChart();
   initVelocityBarChart();
   renderIntegrationsList(); // Render Super Admin Integrations Controller
+  renderTaskObservationsFeed(); // Render Task Observations Feed
   updateHeaderStatChips(); // Actualizar contadores dinámicos de cabecera
   renderNotificationsDropdown(); // Initial notifications check
 
