@@ -93,11 +93,14 @@ function initPullString() {
     }
   });
 
+  let baseCordHeight = 68;
+
   // Mouse Drag Physics
   pullWrapper.addEventListener('mousedown', (e) => {
     isDragging = true;
     startY = e.clientY;
     pullDistance = 0;
+    baseCordHeight = cordLine ? cordLine.offsetHeight : 68;
     pullWrapper.classList.add('is-pulling');
     e.preventDefault();
   });
@@ -107,7 +110,7 @@ function initPullString() {
     const deltaY = Math.max(0, e.clientY - startY);
     pullDistance = Math.min(deltaY, MAX_PULL);
 
-    if (cordLine) cordLine.style.height = `${68 + pullDistance}px`;
+    if (cordLine) cordLine.style.height = `${baseCordHeight + pullDistance}px`;
     if (handle) handle.style.transform = `translateY(${pullDistance}px) scale(1.08)`;
   });
 
@@ -129,6 +132,7 @@ function initPullString() {
     isDragging = true;
     startY = e.touches[0].clientY;
     pullDistance = 0;
+    baseCordHeight = cordLine ? cordLine.offsetHeight : 68;
     pullWrapper.classList.add('is-pulling');
   }, { passive: true });
 
@@ -137,7 +141,7 @@ function initPullString() {
     const deltaY = Math.max(0, e.touches[0].clientY - startY);
     pullDistance = Math.min(deltaY, MAX_PULL);
 
-    if (cordLine) cordLine.style.height = `${68 + pullDistance}px`;
+    if (cordLine) cordLine.style.height = `${baseCordHeight + pullDistance}px`;
     if (handle) handle.style.transform = `translateY(${pullDistance}px) scale(1.08)`;
   }, { passive: true });
 
