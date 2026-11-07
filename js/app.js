@@ -5717,51 +5717,64 @@ function renderIntegrationsList(filter = activeIntFilter) {
         `;
       }
 
-      // Action button or evaluated pill con botón para Registrar Observación
+      // Action button or evaluated pill (El botón Registrar Observación es EXCLUSIVO para perfiles de desarrollador)
       let actionHtml = '';
       const obsCount = Array.isArray(item.observations) ? item.observations.length : 0;
 
-      if (isEvaluated) {
-        actionHtml = `
-          <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
-            <div class="eval-action-badge">
-              <i data-lucide="check" style="width: 13px; height: 13px;"></i>
+      if (isAdmin) {
+        // PERFIL SUPER ADMIN: Solo calificar o ver dictamen técnico (sin botón de registrar observación)
+        if (isEvaluated) {
+          actionHtml = `
+            <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
+              <div class="eval-action-badge">
+                <i data-lucide="check" style="width: 13px; height: 13px;"></i>
+              </div>
+              <div class="eval-action-details">
+                <span class="eval-action-title">+${item.evaluation?.pointsAdded || item.weight}% Sumado (${item.evaluation?.qualityScore || 95}%)</span>
+                <span class="eval-action-sub">Auditada & Aprobada · Ver Dictamen</span>
+              </div>
+              <i data-lucide="chevron-right" class="eval-action-arrow"></i>
             </div>
-            <div class="eval-action-details">
-              <span class="eval-action-title">+${item.evaluation?.pointsAdded || item.weight}% Sumado (${item.evaluation?.qualityScore || 95}%)</span>
-              <span class="eval-action-sub">Auditada & Aprobada · Ver Dictamen</span>
+          `;
+        } else {
+          actionHtml = `
+            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+              <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas" style="flex: 1;">
+                <i data-lucide="award" style="width: 15px; height: 15px;"></i>
+                <span>Calificar Efectividad</span>
+              </button>
             </div>
-            <i data-lucide="chevron-right" class="eval-action-arrow"></i>
-          </div>
-          <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación en esta tarea">
-            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
-            <span>Registrar observación</span>
-            ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
-          </button>
-        `;
-      } else if (isAdmin) {
-        actionHtml = `
-          <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-            <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas" style="flex: 1;">
-              <i data-lucide="award" style="width: 15px; height: 15px;"></i>
-              <span>Calificar Efectividad</span>
-            </button>
-          </div>
-          <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación o novedad en esta tarea">
-            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
-            <span>Registrar observación</span>
-            ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
-          </button>
-        `;
+          `;
+        }
       } else {
-        // En perfil de desarrollador: Botón prominente de Registrar Observación
-        actionHtml = `
-          <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación de avance o bloqueo en esta tarea">
-            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
-            <span>Registrar observación</span>
-            ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
-          </button>
-        `;
+        // PERFIL DESARROLLADOR: Exclusivo con botón para Registrar Observaciones hacia el Administrador
+        if (isEvaluated) {
+          actionHtml = `
+            <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
+              <div class="eval-action-badge">
+                <i data-lucide="check" style="width: 13px; height: 13px;"></i>
+              </div>
+              <div class="eval-action-details">
+                <span class="eval-action-title">+${item.evaluation?.pointsAdded || item.weight}% Sumado (${item.evaluation?.qualityScore || 95}%)</span>
+                <span class="eval-action-sub">Auditada & Aprobada · Ver Dictamen</span>
+              </div>
+              <i data-lucide="chevron-right" class="eval-action-arrow"></i>
+            </div>
+            <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación en esta tarea">
+              <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
+              <span>Registrar observación</span>
+              ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
+            </button>
+          `;
+        } else {
+          actionHtml = `
+            <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación de avance o bloqueo en esta tarea">
+              <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
+              <span>Registrar observación</span>
+              ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
+            </button>
+          `;
+        }
       }
 
       return `
