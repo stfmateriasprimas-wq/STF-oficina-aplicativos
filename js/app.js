@@ -3520,17 +3520,11 @@ function renderVelocitySprintDigest(period, labels, values, hours, benchmark, pe
       badgeText = '✓ Meta';
     }
 
-    const monthDrillKey = (period === 'months') ? MONTH_LABEL_TO_PERIOD_KEY[label] : null;
-    const drillBtnHtml = monthDrillKey
-      ? `<button type="button" class="vdc-drill-btn" onclick="drillDownVelocityMonth('${monthDrillKey}', event)" title="Cambiar el diagrama a las 4 semanas de ${label}">Ver semanas ↗</button>`
-      : '';
-
     return `
       <div class="v-digest-chip ${isPeak ? 'peak' : ''} ${isSelected ? 'active-highlight' : ''}" onclick="highlightSprintBar(${idx})" title="Clic para seleccionar la columna ${label} (${val} mods · ${hr} hrs)">
         <span class="vdc-title">${label}</span>
         <strong class="vdc-val">${val} mods</strong>
         <span class="vdc-badge ${badgeClass}">${badgeText}</span>
-        ${drillBtnHtml}
       </div>
     `;
   }).join('');
