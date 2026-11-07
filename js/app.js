@@ -184,7 +184,11 @@ function getScopedIntegrations() {
   const allInts = (appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
   if (isCurrentSessionAdmin()) return allInts;
   const devId = getLoggedDevId();
-  return allInts.filter(t => resolveCanonicalDevId(t.devId) === devId);
+  return allInts.filter(t => {
+    const c1 = resolveCanonicalDevId(t.devId);
+    const c2 = resolveCanonicalDevId(devId);
+    return (c1 && c2 && c1 === c2) || t.devId === devId;
+  });
 }
 
 window.isCurrentSessionAdmin = isCurrentSessionAdmin;
@@ -5361,6 +5365,15 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   if (!isAdmin) {
     openedDevFolders.add(getLoggedDevId());
+    const canon = resolveCanonicalDevId(getLoggedDevId());
+    if (canon) openedDevFolders.add(canon);
+  } else if (openedDevFolders.size === 0 && appState.developers) {
+    // En modo admin, iniciar con carpetas expandidas para máxima claridad operativa
+    appState.developers.forEach(d => {
+      openedDevFolders.add(d.id);
+      const c = resolveCanonicalDevId(d.id);
+      if (c) openedDevFolders.add(c);
+    });
   }
 
   // Update counter badges
@@ -5412,11 +5425,15 @@ function renderIntegrationsList(filter = activeIntFilter) {
   // Calculate fixed consecutive numbering per developer across ALL assigned tasks
   // Ordered chronologically by startDate (earliest assignment is #1, second #2, etc.)
   const devConsecutiveMap = new Map();
-  const allDevIds = new Set(integrations.map(i => i.devId));
+  const allDevIds = new Set(integrations.map(i => resolveCanonicalDevId(i.devId) || i.devId));
 
   allDevIds.forEach(dId => {
     const allTasksForDev = integrations
-      .filter(i => i.devId === dId)
+      .filter(i => {
+        const c1 = resolveCanonicalDevId(i.devId);
+        const c2 = resolveCanonicalDevId(dId);
+        return (c1 && c2 && c1 === c2) || (i.devId === dId);
+      })
       .sort((a, b) => {
         const da = new Date(a.startDate || '2026-01-01').getTime();
         const db = new Date(b.startDate || '2026-01-01').getTime();
@@ -5432,7 +5449,11 @@ function renderIntegrationsList(filter = activeIntFilter) {
   // Group filtered items by developer (sorted descending: most recent assignment at the top, oldest at the bottom)
   const devGroups = [];
   appState.developers.forEach(dev => {
-    const devTasks = filtered.filter(i => i.devId === dev.id);
+    const devTasks = filtered.filter(i => {
+      const c1 = resolveCanonicalDevId(i.devId);
+      const c2 = resolveCanonicalDevId(dev.id);
+      return (c1 && c2 && c1 === c2) || (i.devId === dev.id);
+    });
     if (devTasks.length > 0) {
       devTasks.sort((a, b) => {
         const da = new Date(a.startDate || a.deadline || '2026-01-01').getTime();
@@ -5446,8 +5467,9 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   // Check for any developer not in appState.developers
   filtered.forEach(item => {
-    if (!appState.developers.some(d => d.id === item.devId)) {
-      let group = devGroups.find(g => g.dev.id === item.devId);
+    const cItem = resolveCanonicalDevId(item.devId);
+    if (!appState.developers.some(d => resolveCanonicalDevId(d.id) === cItem || d.id === item.devId)) {
+      let group = devGroups.find(g => resolveCanonicalDevId(g.dev.id) === cItem || g.dev.id === item.devId);
       if (!group) {
         group = { dev: getDeveloperById(item.devId), tasks: [] };
         devGroups.push(group);
@@ -5490,7 +5512,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
   // Folders HTML
   const foldersHtml = devGroups.map(group => {
     const { dev, tasks } = group;
-    const isOpen = openedDevFolders.has(dev.id);
+    const isOpen = !isAdmin || openedDevFolders.has(dev.id) || openedDevFolders.has(resolveCanonicalDevId(dev.id));
 
     // Summary counts for this developer
     let pCount = 0; // en proceso (amarillo)
@@ -5506,8 +5528,16 @@ function renderIntegrationsList(filter = activeIntFilter) {
       else pCount++;
     });
 
-    const totalAllDevTasks = integrations.filter(i => i.devId === dev.id).length;
-    const completedAllDevTasks = integrations.filter(i => i.devId === dev.id && i.status === 'evaluated').length;
+    const totalAllDevTasks = integrations.filter(i => {
+      const c1 = resolveCanonicalDevId(i.devId);
+      const c2 = resolveCanonicalDevId(dev.id);
+      return (c1 && c2 && c1 === c2) || (i.devId === dev.id);
+    }).length;
+    const completedAllDevTasks = integrations.filter(i => {
+      const c1 = resolveCanonicalDevId(i.devId);
+      const c2 = resolveCanonicalDevId(dev.id);
+      return ((c1 && c2 && c1 === c2) || (i.devId === dev.id)) && i.status === 'evaluated';
+    }).length;
     const devRate = totalAllDevTasks > 0 ? Math.round((completedAllDevTasks / totalAllDevTasks) * 100) : 0;
     const hasRisk = oCount > 0;
 
@@ -5871,17 +5901,24 @@ function handleAssignIntegrationSubmit(e) {
     return;
   }
 
+  const app = getApplicationById(appId) || (appState.applications || []).find(a => a.id === appId);
+  const dev = getDeveloperById(devId);
+  const canonicalDevId = resolveCanonicalDevId(devId) || devId;
+
   const newIntegration = {
     id: `int_${Date.now()}`,
     name: name,
     appId: appId,
-    devId: devId,
+    appName: app ? app.name : '',
+    devId: canonicalDevId,
+    devName: dev ? dev.name : '',
     startDate: startDate,
     deadline: deadline,
     weight: weight,
     status: 'in_progress',
     description: desc,
-    evaluation: null
+    evaluation: null,
+    observations: []
   };
 
   if (!appState.integrations) appState.integrations = [];
@@ -5889,6 +5926,12 @@ function handleAssignIntegrationSubmit(e) {
 
   saveData(appState);
   closeAssignIntegrationModal();
+
+  // Asegurar que la carpeta del desarrollador esté desplegada para ver la nueva tarea inmediatamente
+  if (typeof openedDevFolders !== 'undefined') {
+    openedDevFolders.add(devId);
+    openedDevFolders.add(canonicalDevId);
+  }
 
   // Resetear filtro a 'all' y activar píldora 'Todas' para garantizar que se visualice de inmediato
   activeIntFilter = 'all';
@@ -5899,11 +5942,9 @@ function handleAssignIntegrationSubmit(e) {
   // Refrescar todas las vistas en vivo del sistema
   refreshAllViews();
 
-  const app = appState.applications.find(a => a.id === appId);
-  const dev = getDeveloperById(devId);
   showToast(`¡Integración asignada a ${dev ? dev.name : 'Desarrollador'} para ${app?.name || 'Sistema'}! Reloj en vivo activado.`);
 
-  // Sincronizar asignación de tarea en Google Sheets (Hoja: Tareas_Integraciones y Bitácora)
+  // Sincronizar asignación de tarea en Google Sheets (Hoja: CONTROL_TAREAS y BITACORA)
   if (window.SheetsSync) {
     const devEmail = (dev && dev.email) ? dev.email : '';
     window.SheetsSync.logTaskAssignment({

@@ -680,6 +680,10 @@
         const rawDate = String(task.evalDate || task.createdDate || task.Fecha_Registro || '2026-11-05').split(' ')[0];
 
         if (existing) {
+          if (!existing.appName && appObj) existing.appName = appObj.name;
+          if (!existing.devName && devObj) existing.devName = devObj.name;
+          if (!existing.devId && devObj) existing.devId = devObj.id;
+
           if (isEval && existing.status !== 'evaluated') {
             existing.status = 'evaluated';
             existing.evaluation = existing.evaluation || {
@@ -699,7 +703,9 @@
             id: tId,
             name: tName,
             appId: appObj ? appObj.id : 'app_torre',
-            devId: devObj ? devObj.id : 'dev_jg',
+            appName: appObj ? appObj.name : 'Torre de Control',
+            devId: devObj ? (window.resolveCanonicalDevId ? window.resolveCanonicalDevId(devObj.id) : devObj.id) : 'dev_jg',
+            devName: devObj ? devObj.name : 'Jose Guzman',
             startDate: task.startDate || '2026-10-19',
             deadline: String(task.deadline || task.Fecha_Entrega || '2026-11-15').split('T')[0],
             weight: tWeight,
@@ -711,7 +717,8 @@
               qualityScore: parsedScore,
               pointsAdded: parsedPoints,
               notes: cleanNotes
-            } : null
+            } : null,
+            observations: []
           };
           state.integrations.unshift(newTask);
           count++;

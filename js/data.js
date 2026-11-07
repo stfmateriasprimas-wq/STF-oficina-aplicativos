@@ -471,9 +471,10 @@ if (typeof window !== 'undefined') {
 
 // Filtro estricto para eliminar cualquier rastro de "Sistema_a_Cargo" o cabeceras de Sheets
 function isInvalidPhantomApp(appOrId) {
-  if (!appOrId) return true;
+  if (!appOrId) return false;
   if (typeof appOrId === 'string') {
     const cleanId = appOrId.trim().toLowerCase();
+    if (!cleanId) return false;
     return cleanId === 'app_sistema_a_cargo' || cleanId === 'sistema_a_cargo' || cleanId === 'stf-sis-99';
   }
   const id = String(appOrId.id || '').trim().toLowerCase();
@@ -489,17 +490,22 @@ function isInvalidPhantomApp(appOrId) {
 function purgePhantomAppsFromState(stateObj) {
   if (!stateObj || typeof stateObj !== 'object') return stateObj;
   if (Array.isArray(stateObj.applications)) {
-    stateObj.applications = stateObj.applications.filter(a => !isInvalidPhantomApp(a));
+    stateObj.applications = stateObj.applications.filter(a => a && !isInvalidPhantomApp(a));
   }
   if (Array.isArray(stateObj.developers)) {
     stateObj.developers.forEach(d => {
       if (Array.isArray(d.activeProjects)) {
-        d.activeProjects = d.activeProjects.filter(pid => !isInvalidPhantomApp(pid));
+        d.activeProjects = d.activeProjects.filter(pid => pid && !isInvalidPhantomApp(pid));
       }
     });
   }
   if (Array.isArray(stateObj.integrations)) {
-    stateObj.integrations = stateObj.integrations.filter(i => !isInvalidPhantomApp(i.appId) && !isInvalidPhantomApp(i.appName));
+    stateObj.integrations = stateObj.integrations.filter(i => {
+      if (!i) return false;
+      if (i.appId && isInvalidPhantomApp(i.appId)) return false;
+      if (i.appName && isInvalidPhantomApp(i.appName)) return false;
+      return true;
+    });
   }
   return stateObj;
 }
@@ -512,7 +518,7 @@ function getStoredData() {
   if (local) {
     try {
       const parsed = JSON.parse(local);
-      if (parsed.developers && parsed.developers.some(d => d.name === "Jose Guzman") && parsed.integrations) {
+      if (parsed.developers && parsed.developers.some(d => d.name === "Jose Guzman")) {
         // Asegurar que dev_ediaz (ADMIN) esté presente
         if (!parsed.developers.some(d => d.id === 'dev_ediaz')) {
           const ediazDev = STF_REAL_DATA.developers.find(d => d.id === 'dev_ediaz');
@@ -559,8 +565,21 @@ function getStoredData() {
             }
           });
         }
-        if (!Array.isArray(parsed.integrations)) {
+        // Si integrations no es array o quedó vacío por error anterior, restaurar las tareas reales
+        if (!Array.isArray(parsed.integrations) || parsed.integrations.length === 0) {
           parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations));
+        } else {
+          // Asegurar appName y devName en cada integración existente
+          parsed.integrations.forEach(item => {
+            if (!item.appName && item.appId) {
+              const app = (parsed.applications || []).find(a => a.id === item.appId);
+              if (app) item.appName = app.name;
+            }
+            if (!item.devName && item.devId) {
+              const dev = (parsed.developers || []).find(d => d.id === item.devId);
+              if (dev) item.devName = dev.name;
+            }
+          });
         }
         purgePhantomAppsFromState(parsed);
         saveData(parsed);
