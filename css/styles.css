@@ -4656,6 +4656,234 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   width: 100%;
 }
 
+/* Card 3: Balanceo de Capacidad & Carga del Equipo */
+.analytics-workload-chart-wrapper,
+.analytics-coverage-chart-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.team-workload-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #F1F5F9;
+  width: 100%;
+}
+
+.workload-dev-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.18s ease;
+}
+
+.workload-dev-card:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.w-dev-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.w-dev-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.w-dev-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.w-dev-name {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.w-dev-sub {
+  font-size: 10px;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.w-dev-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.w-dev-pct {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.w-dev-badge {
+  font-size: 9.5px;
+  font-weight: 750;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.w-dev-badge.optimal {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.w-dev-badge.high {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.w-dev-badge.overload {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.w-dev-badge.available {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+/* Card 4: Cobertura de Digitalización por Área de Planta */
+.plant-coverage-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #F1F5F9;
+  width: 100%;
+}
+
+.plant-area-pill {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 7px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.18s ease;
+}
+
+.plant-area-pill:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.p-area-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.p-area-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.p-area-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.p-area-title {
+  font-size: 11px;
+  font-weight: 750;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.p-area-system {
+  font-size: 9.5px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.p-area-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.p-area-pct {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.p-area-status {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.p-area-status.live {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.p-area-status.advanced {
+  background: #EEF2FF;
+  color: #4338CA;
+}
+
+.p-area-status.progress {
+  background: #F8FAFC;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+@media (max-width: 768px) {
+  .team-workload-breakdown-grid,
+  .plant-coverage-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));

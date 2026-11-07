@@ -856,6 +856,44 @@
               <canvas id="qaBugsChart"></canvas>
             </div>
           </div>
+
+          <!-- Card 3: ⚖️ Balanceo de Capacidad & Carga del Equipo de Ingenieros -->
+          <div class="grid-card analytics-chart-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">⚖️ Balanceo de Capacidad & Carga del Equipo</h2>
+                <span class="card-subtext">Ponderación asignada (%) y saturación de tareas activas por ingeniero</span>
+              </div>
+              <div class="header-badge-tag" style="background: #EEF2FF; color: #4338CA; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 8px;">
+                <span>Benchmark: 100%</span>
+              </div>
+            </div>
+            <div class="analytics-workload-chart-wrapper" style="height: 220px; position: relative; width: 100%;">
+              <canvas id="teamWorkloadChart"></canvas>
+            </div>
+            <div class="team-workload-breakdown-grid" id="teamWorkloadBreakdownGrid">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <!-- Card 4: 🏭 Cobertura de Digitalización por Área de Planta -->
+          <div class="grid-card analytics-chart-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h2 class="card-title">🏭 Cobertura de Digitalización por Área de Planta</h2>
+                <span class="card-subtext">Nivel de madurez tecnológica y software activo en la cadena industrial STF</span>
+              </div>
+              <div class="header-badge-tag" id="plantGlobalCoverageBadge" style="background: #ECFDF5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 8px;">
+                <span>66.7% Cobertura Planta</span>
+              </div>
+            </div>
+            <div class="analytics-coverage-chart-wrapper" style="height: 220px; position: relative; width: 100%;">
+              <canvas id="plantCoverageChart"></canvas>
+            </div>
+            <div class="plant-coverage-breakdown-grid" id="plantCoverageBreakdownGrid">
+              <!-- Populated via JS -->
+            </div>
+          </div>
         </div>
       </section>
 

@@ -7302,6 +7302,8 @@ let currentProjectsViewMode = 'pipeline';
 let currentProjectSearchTerm = '';
 let brandsChartInstance = null;
 let qaBugsChartInstance = null;
+let teamWorkloadChartInstance = null;
+let plantCoverageChartInstance = null;
 
 // Contexto operacional e industrial de cada sistema en la cadena productiva de STF GROUP
 const STF_INDUSTRIAL_CONTEXT = {
@@ -8498,6 +8500,8 @@ function renderAnalyticsView() {
 
   if (brandsChartInstance) brandsChartInstance.destroy();
   if (qaBugsChartInstance) qaBugsChartInstance.destroy();
+  if (teamWorkloadChartInstance) teamWorkloadChartInstance.destroy();
+  if (plantCoverageChartInstance) plantCoverageChartInstance.destroy();
 
   // 1. Brands / Systems Progress Doughnut (Avance Ponderado por Marca / Categoría)
   if (brandsCtx) {
@@ -8684,6 +8688,309 @@ function renderAnalyticsView() {
             grid: { color: isMobile ? false : '#EDF1F7' },
             ticks: {
               font: { family: 'Plus Jakarta Sans', size: isMobile ? 10.5 : 11, weight: '700' },
+              color: '#1E293B'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 3. Balanceo de Capacidad & Carga del Equipo de Ingenieros
+  const workloadCtx = document.getElementById('teamWorkloadChart');
+  const workloadGrid = document.getElementById('teamWorkloadBreakdownGrid');
+
+  if (workloadCtx) {
+    const devsList = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
+    const allTasks = appState.integrations || [];
+
+    const devData = devsList.map(dev => {
+      const devTasks = allTasks.filter(t => t.devId === dev.id || (t.developer || '').toLowerCase().includes(dev.name.toLowerCase()));
+      const activeTasks = devTasks.filter(t => t.status !== 'done' && t.status !== 'evaluated');
+      const completedTasks = devTasks.filter(t => t.status === 'done' || t.status === 'evaluated');
+      
+      // Cálculo de ponderación activa acumulada
+      const activeWeight = activeTasks.reduce((acc, t) => acc + (Number(t.weight) || 15), 0);
+      const assignedApps = (appState.applications || []).filter(a => isAppAssignedToDev(a, dev.id));
+      
+      // Si no tiene tareas explícitas pero sí sistemas a cargo, estimar proporcionalmente
+      const workloadPct = activeTasks.length > 0 
+        ? Math.min(100, Math.round(activeWeight)) 
+        : (assignedApps.length > 0 ? Math.min(90, assignedApps.length * 20) : 15);
+
+      let statusBadge = 'optimal';
+      let statusLabel = '✓ Carga Óptima';
+      let barColor = '#10B981';
+
+      if (workloadPct > 85) {
+        statusBadge = 'overload';
+        statusLabel = '⚡ Carga Crítica';
+        barColor = '#EF4444';
+      } else if (workloadPct >= 65) {
+        statusBadge = 'high';
+        statusLabel = '⚡ Carga Alta';
+        barColor = '#F59E0B';
+      } else if (workloadPct < 30) {
+        statusBadge = 'available';
+        statusLabel = '✓ Capacidad Libre';
+        barColor = '#3B82F6';
+      }
+
+      return {
+        dev,
+        totalTasks: devTasks.length,
+        activeTasks: activeTasks.length,
+        completedTasks: completedTasks.length,
+        workloadPct,
+        availablePct: Math.max(0, 100 - workloadPct),
+        statusBadge,
+        statusLabel,
+        barColor,
+        appsCount: assignedApps.length
+      };
+    });
+
+    if (workloadGrid) {
+      workloadGrid.innerHTML = devData.map(d => `
+        <div class="workload-dev-card" title="Desarrollador: ${d.dev.name} · ${d.totalTasks} tareas registradas">
+          <div class="w-dev-left">
+            <img src="${d.dev.avatar}" alt="${d.dev.name}" class="w-dev-avatar">
+            <div class="w-dev-meta">
+              <span class="w-dev-name">${d.dev.name}</span>
+              <span class="w-dev-sub">${d.activeTasks} activas · ${d.appsCount} sistemas</span>
+            </div>
+          </div>
+          <div class="w-dev-right">
+            <strong class="w-dev-pct" style="color: ${d.barColor};">${d.workloadPct}%</strong>
+            <span class="w-dev-badge ${d.statusBadge}">${d.statusLabel}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    teamWorkloadChartInstance = new Chart(workloadCtx, {
+      type: 'bar',
+      data: {
+        labels: devData.map(d => d.dev.name.split(' ')[0]),
+        datasets: [
+          {
+            label: 'Carga Asignada (%)',
+            data: devData.map(d => d.workloadPct),
+            backgroundColor: devData.map(d => d.barColor),
+            borderRadius: 6,
+            barThickness: 16
+          },
+          {
+            label: 'Capacidad Disponible (%)',
+            data: devData.map(d => d.availablePct),
+            backgroundColor: '#E2E8F0',
+            borderRadius: 6,
+            barThickness: 16
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y', // Barras horizontales limpias
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              boxWidth: 10,
+              font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' },
+              color: '#475569'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%`
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            max: 100,
+            grid: { color: '#EDF1F7' },
+            ticks: {
+              callback: v => `${v}%`,
+              font: { family: 'Plus Jakarta Sans', size: 10.5, weight: '600' },
+              color: '#64748B'
+            }
+          },
+          y: {
+            stacked: true,
+            grid: { display: false },
+            ticks: {
+              font: { family: 'Plus Jakarta Sans', size: 11, weight: '750' },
+              color: '#1E293B'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 4. Cobertura de Digitalización por Área de Planta Industrial
+  const coverageCtx = document.getElementById('plantCoverageChart');
+  const coverageGrid = document.getElementById('plantCoverageBreakdownGrid');
+  const globalCoverageBadge = document.getElementById('plantGlobalCoverageBadge');
+
+  if (coverageCtx) {
+    const allApps = appState.applications || [];
+
+    // Las 6 macro áreas de la cadena industrial de STF GROUP
+    const plantAreas = [
+      {
+        id: 'area_conf',
+        name: 'Manufactura (Colchas)',
+        category: 'Manufactura & Producción',
+        anchorApp: 'COLCHAS',
+        iconColor: '#10B981'
+      },
+      {
+        id: 'area_qa',
+        name: 'Aseguramiento Calidad',
+        category: 'Aseguramiento de Calidad',
+        anchorApp: 'CALIDAD AQL',
+        iconColor: '#3B82F6'
+      },
+      {
+        id: 'area_ti',
+        name: 'Torre Control & TI',
+        category: 'Desarrollo Grupal',
+        anchorApp: 'TORRE DE CONTROL',
+        iconColor: '#6366F1'
+      },
+      {
+        id: 'area_log',
+        name: 'Logística & Satélites',
+        category: 'Logística & Talleres',
+        anchorApp: 'GEO UBICACIÓN',
+        iconColor: '#06B6D4'
+      },
+      {
+        id: 'area_tint',
+        name: 'Planta Textil (Tintorería)',
+        category: 'Planta Textil',
+        anchorApp: 'TINTORERÍA',
+        iconColor: '#8B5CF6'
+      },
+      {
+        id: 'area_lab',
+        name: 'Control Textil (Lab)',
+        category: 'Control Textil',
+        anchorApp: 'LABORATORIO',
+        iconColor: '#EC4899'
+      }
+    ];
+
+    const areaStats = plantAreas.map(area => {
+      const matchApps = allApps.filter(a => 
+        (a.category || '').toLowerCase().includes(area.category.toLowerCase()) ||
+        (a.name || '').toUpperCase().includes(area.anchorApp.toUpperCase())
+      );
+      
+      let avgProgress = 0;
+      let isLive = false;
+      let statusClass = 'progress';
+      let statusText = 'En Desarrollo';
+
+      if (matchApps.length > 0) {
+        avgProgress = Math.round(matchApps.reduce((acc, a) => acc + calculateAppProgress(a), 0) / matchApps.length);
+        isLive = matchApps.some(a => isAppInLiveProduction(a) || calculateAppProgress(a) >= 100);
+      } else {
+        avgProgress = 30; // Benchmark base
+      }
+
+      if (isLive || avgProgress >= 100) {
+        statusClass = 'live';
+        statusText = '100% En Producción';
+        avgProgress = 100;
+      } else if (avgProgress >= 75) {
+        statusClass = 'advanced';
+        statusText = 'Fase Avanzada';
+      } else {
+        statusClass = 'progress';
+        statusText = 'En Desarrollo';
+      }
+
+      return {
+        ...area,
+        progress: avgProgress,
+        statusClass,
+        statusText,
+        isLive
+      };
+    });
+
+    const overallPlantCoverage = Math.round(areaStats.reduce((acc, a) => acc + a.progress, 0) / areaStats.length);
+    if (globalCoverageBadge) {
+      globalCoverageBadge.innerHTML = `<span>${overallPlantCoverage}% Cobertura Planta</span>`;
+    }
+
+    if (coverageGrid) {
+      coverageGrid.innerHTML = areaStats.map(a => `
+        <div class="plant-area-pill" title="Área: ${a.name} · Sistema Ancla: ${a.anchorApp} (${a.progress}% digitalizado)">
+          <div class="p-area-left">
+            <span class="p-area-dot" style="background: ${a.iconColor};"></span>
+            <div class="p-area-meta">
+              <span class="p-area-title">${a.name}</span>
+              <span class="p-area-system">${a.anchorApp}</span>
+            </div>
+          </div>
+          <div class="p-area-right">
+            <strong class="p-area-pct" style="color: ${a.iconColor};">${a.progress}%</strong>
+            <span class="p-area-status ${a.statusClass}">${a.statusText}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    plantCoverageChartInstance = new Chart(coverageCtx, {
+      type: 'bar',
+      data: {
+        labels: areaStats.map(a => {
+          let s = a.name.split(' ')[0];
+          return s.length > 12 ? s.substring(0, 11) + '..' : s;
+        }),
+        datasets: [
+          {
+            label: 'Nivel de Digitalización (%)',
+            data: areaStats.map(a => a.progress),
+            backgroundColor: areaStats.map(a => a.iconColor),
+            borderRadius: 6,
+            barThickness: 16
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y', // Barras horizontales ejecutivas
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw}% Digitalizado`
+            }
+          }
+        },
+        scales: {
+          x: {
+            max: 100,
+            grid: { color: '#EDF1F7' },
+            ticks: {
+              callback: v => `${v}%`,
+              font: { family: 'Plus Jakarta Sans', size: 10.5, weight: '600' },
+              color: '#64748B'
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              font: { family: 'Plus Jakarta Sans', size: 11, weight: '750' },
               color: '#1E293B'
             }
           }
