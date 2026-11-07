@@ -6308,144 +6308,31 @@ let activeObsSearch = '';
  * Asegura que todas las tareas en appState.integrations tengan su array de observaciones
  * y si está vacío, inicializa un set rico y realista para el equipo de STF GROUP.
  */
+/**
+ * Inicializa y garantiza que cada tarea tenga su array de observaciones vacío (0 observaciones)
+ * Manteniendo la arquitectura y lógica 100% estable para el registro y consulta
+ */
 function ensureTaskObservationsData() {
   if (!appState || !Array.isArray(appState.integrations)) return;
 
-  const defaultSeeds = [
-    {
-      matchTaskId: "int_17937216525", // Iniciar el ajuste de LAB (Jose Guzman)
-      appFallback: "app_laboratorio",
-      devFallback: "dev_jg",
-      observations: [
-        {
-          id: "obs_seed_1",
-          date: "2026-11-05 16:30",
-          type: "avance",
-          severity: "normal",
-          author: "Jose Guzman",
-          text: "Se completó la migración de fórmulas textiles para tintura en el módulo de laboratorio. Cuatro operarios de planta realizaron pruebas de pesaje con aprobación del 100%."
-        },
-        {
-          id: "obs_seed_2",
-          date: "2026-10-31 10:15",
-          type: "bloqueo",
-          severity: "alta",
-          author: "Edwin Diaz (Jefe TI)",
-          text: "Desconexión intermitente con el puerto COM de la balanza analítica en planta. Se implementó un microservicio WebSocket intermedio para garantizar reconexión automática sin pérdida de datos."
-        },
-        {
-          id: "obs_seed_3",
-          date: "2026-11-05 18:20",
-          type: "auditoria",
-          severity: "normal",
-          author: "Super Admin (Jefe TI)",
-          text: "Implementación en planta validada con los operarios. Operatividad estable. Calificación técnica 94.3%."
-        }
-      ]
-    },
-    {
-      matchTaskId: "int_17926874219", // Retomar incorporacion de base de datos (Jose Guzman)
-      appFallback: "app_laboratorio",
-      devFallback: "dev_jg",
-      observations: [
-        {
-          id: "obs_seed_4",
-          date: "2026-10-28 15:45",
-          type: "ajuste",
-          severity: "normal",
-          author: "Jose Guzman",
-          text: "Se normalizaron los modelos de datos en PostgreSQL para almacenar el histórico de pruebas físicas y solidez al lavado. Índices B-Tree aplicados para reducir latencia a menos de 95ms."
-        }
-      ]
-    },
-    {
-      matchTaskId: "int_17926830187", // hacer indicador - juan (Juan David)
-      appFallback: "app_calidad",
-      devFallback: "dev_jd",
-      observations: [
-        {
-          id: "obs_seed_5",
-          date: "2026-10-27 11:30",
-          type: "avance",
-          severity: "normal",
-          author: "Juan David",
-          text: "Diseño de dashboard de métricas de calidad en confección integrado con Google Sheets. Se agregaron gráficas de dispersión de defectos por lote y operario."
-        },
-        {
-          id: "obs_seed_6",
-          date: "2026-10-24 16:10",
-          type: "ajuste",
-          severity: "normal",
-          author: "Edwin Diaz (Jefe TI)",
-          text: "Revisión conjunta del indicador AQL. Se estableció umbral de alerta temprana al superar el 2.5% de defectos en líneas de costura pesada."
-        }
-      ]
-    },
-    {
-      matchTaskId: "int_0", // Gateway de Autenticación & Roles Operativos (Jose Guzman / Torre)
-      appFallback: "app_torre",
-      devFallback: "dev_jg",
-      observations: [
-        {
-          id: "obs_seed_7",
-          date: "2026-10-12 17:00",
-          type: "auditoria",
-          severity: "normal",
-          author: "Super Admin (Jefe TI)",
-          text: "Excelente arquitectura e integración limpia con el Directorio Activo de STF. Pruebas de concurrencia superadas con cero latencia y tolerancia a fallos."
-        },
-        {
-          id: "obs_seed_8",
-          date: "2026-10-06 14:00",
-          type: "bloqueo",
-          severity: "alta",
-          author: "Jose Guzman",
-          text: "Tiempos de espera excesivos en validación de tokens en tabletas de operarios con baja señal WiFi en bodega. Se optimizó el tiempo de vida de la caché y se redujo el payload JWT."
-        }
-      ]
+  const resetFlagKey = 'STF_OBS_RESET_ZERO_V2';
+  let shouldReset = false;
+  try {
+    if (!localStorage.getItem(resetFlagKey)) {
+      shouldReset = true;
+      localStorage.setItem(resetFlagKey, 'true');
     }
-  ];
+  } catch (e) {
+    shouldReset = true;
+  }
 
   let hasModifications = false;
-
-  // Garantizar que cada tarea tenga su array observations
   appState.integrations.forEach(task => {
-    if (!Array.isArray(task.observations)) {
+    if (!Array.isArray(task.observations) || shouldReset) {
       task.observations = [];
       hasModifications = true;
     }
   });
-
-  // Si ninguna tarea tiene observaciones aún, sembramos las semillas iniciales
-  const totalObs = appState.integrations.reduce((sum, t) => sum + (t.observations ? t.observations.length : 0), 0);
-  if (totalObs === 0) {
-    defaultSeeds.forEach(seed => {
-      let targetTask = appState.integrations.find(t => t.id === seed.matchTaskId);
-      if (!targetTask && seed.appFallback) {
-        targetTask = appState.integrations.find(t => t.appId === seed.appFallback);
-      }
-      if (targetTask) {
-        if (!Array.isArray(targetTask.observations)) targetTask.observations = [];
-        targetTask.observations = [...seed.observations];
-        hasModifications = true;
-      }
-    });
-
-    // Si aún sobran tareas sin observaciones y hay notas en evaluation, convertirlas a auditoría
-    appState.integrations.forEach(t => {
-      if ((!t.observations || t.observations.length === 0) && t.evaluation && t.evaluation.notes) {
-        t.observations = [{
-          id: 'obs_eval_' + (t.id || Date.now()),
-          date: t.evaluation.evalDate ? `${t.evaluation.evalDate} 17:00` : '2026-11-04 16:00',
-          type: 'auditoria',
-          severity: 'normal',
-          author: t.evaluation.evaluator || 'Super Admin (Jefe TI)',
-          text: t.evaluation.notes
-        }];
-        hasModifications = true;
-      }
-    });
-  }
 
   if (hasModifications && typeof saveData === 'function') {
     saveData(appState);
