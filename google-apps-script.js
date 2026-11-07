@@ -1,15 +1,16 @@
 /**
  * ============================================================================
  * STF GROUP · BASE DE DATOS EJECUTIVA EN GOOGLE SHEETS (v3.5 PRODUCTION)
- * Arquitectura Estabilizada en 5 Hojas Maestras Conectadas en Tiempo Real
+ * Arquitectura Estabilizada en 6 Hojas Maestras Conectadas en Tiempo Real
  * ============================================================================
  *
- * ESTRUCTURA OFICIAL DE LAS 5 HOJAS MAESTRAS (100% ALINEADA A TABLAS NATIVAS):
- * 1. 👥 USUARIOS            (6 Columnas A:F) -> Credenciales, Roles, Correos y Acceso
- * 2. 📊 PORTAFOLIO_SISTEMAS (9 Columnas A:I) -> Los 7 Sistemas Reales, Fases, Avance % y SLA
- * 3. 🌐 SISTEMAS_WEB        (4 Columnas A:D) -> Enlaces Web / SharePoint y Estado en Planta
- * 4. 📋 CONTROL_TAREAS      (10 Columnas A:J)-> Integraciones, Tiempos, Calidad QA y Dictamen
- * 5. 📜 BITACORA_HISTORIAL  (7 Columnas A:G) -> Trazabilidad Completa de Todos los Procesos
+ * ESTRUCTURA OFICIAL DE LAS 6 HOJAS MAESTRAS (100% ALINEADA A TABLAS NATIVAS):
+ * 1. 👥 USUARIOS                (6 Columnas A:F) -> Credenciales, Roles, Correos y Acceso
+ * 2. 📊 PORTAFOLIO_SISTEMAS     (9 Columnas A:I) -> Los 7 Sistemas Reales, Fases, Avance % y SLA
+ * 3. 🌐 SISTEMAS_WEB            (4 Columnas A:D) -> Enlaces Web / SharePoint y Estado en Planta
+ * 4. 📋 CONTROL_TAREAS          (10 Columnas A:J)-> Integraciones, Tiempos, Calidad QA y Dictamen
+ * 5. 📝 HISTORIAL_OBSERVACIONES (6 Columnas A:F) -> Bloqueos, Avances, Ajustes y Novedades por Tarea
+ * 6. 📜 BITACORA_HISTORIAL      (7 Columnas A:G) -> Trazabilidad Completa de Todos los Procesos
  *
  * ============================================================================
  */
@@ -19,7 +20,8 @@ var TABS = {
   SISTEMAS: "PORTAFOLIO_SISTEMAS",
   SISTEMAS_WEB: "SISTEMAS_WEB",
   TAREAS: "CONTROL_TAREAS",
-  BITACORA: "BITACORA_HISTORIAL"
+  BITACORA: "BITACORA_HISTORIAL",
+  OBSERVACIONES: "HISTORIAL_OBSERVACIONES"
 };
 
 var HEADERS = {
@@ -68,6 +70,14 @@ var HEADERS = {
     "Aplicativo",
     "Descripcion",
     "Version"
+  ],
+  OBSERVACIONES: [
+    "FECHA",
+    "APLICATIVO",
+    "DESARROLLADOR",
+    "TAREA",
+    "NIVEL DE IMPACTO",
+    "OBSERVACION"
   ]
 };
 
@@ -77,8 +87,9 @@ var HEADERS = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
-    .addItem('🚀 Estabilizar & Reparar Base de Datos (5 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('🚀 Estabilizar & Reparar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
     .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
+    .addItem('📝 Configurar Hoja HISTORIAL_OBSERVACIONES', 'setupObservacionesSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
 }
@@ -90,9 +101,17 @@ function setupSistemasWebSheetDirect() {
   SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña SISTEMAS_WEB reparada y actualizada con éxito.', 'STF GROUP TI', 6);
 }
 
+function setupObservacionesSheetDirect() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  setupObservacionesSheet(ss);
+  cleanAndOrderSheets(ss);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña HISTORIAL_OBSERVACIONES configurada y enlazada con éxito.', 'STF GROUP TI', 6);
+}
+
 /**
  * ESTABILIZADOR MAESTRO: Repara encabezados corridos (Columna 1 / Columna 2),
- * corrige filas desplazadas en BITACORA_HISTORIAL y sincroniza los 7 sistemas reales.
+ * corrige filas desplazadas en BITACORA_HISTORIAL y sincroniza los 7 sistemas reales
+ * junto con el nuevo HISTORIAL_OBSERVACIONES.
  */
 function setupProfessionalDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -109,13 +128,16 @@ function setupProfessionalDatabase() {
   // 4. Pestaña CONTROL_TAREAS (10 Columnas A:J)
   setupTareasSheet(ss);
 
-  // 5. Pestaña BITACORA_HISTORIAL (7 Columnas A:G con auto-reparación de filas)
+  // 5. Pestaña HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+  setupObservacionesSheet(ss);
+
+  // 6. Pestaña BITACORA_HISTORIAL (7 Columnas A:G con auto-reparación de filas)
   setupBitacoraSheet(ss);
 
-  // 6. Ordenar las 5 pestañas al frente
+  // 7. Ordenar las 6 pestañas al frente
   cleanAndOrderSheets(ss);
 
-  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 5 hojas maestras (7 Sistemas Oficiales).', 'STF GROUP TI', 7);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 6 hojas maestras (7 Sistemas Oficiales & Historial de Observaciones).', 'STF GROUP TI', 7);
 }
 
 /**
@@ -322,7 +344,17 @@ function setupTareasSheet(ss) {
 }
 
 /**
- * 5. Configurar y Auto-Reparar Hoja BITACORA_HISTORIAL (7 Columnas A:G compatible con Tabla_7)
+ * 5. Configurar y Estabilizar Hoja HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+ * Columnas Oficiales: FECHA | APLICATIVO | DESARROLLADOR | TAREA | NIVEL DE IMPACTO | OBSERVACION
+ */
+function setupObservacionesSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.OBSERVACIONES, ["Historial_Observaciones", "Observaciones", "HISTORIAL_OBSERVACIONES"]);
+  ensureExactHeaders(s, HEADERS.OBSERVACIONES);
+  formatCorporateSheet(s, "#312E81", [150, 190, 175, 230, 150, 380]);
+}
+
+/**
+ * 6. Configurar y Auto-Reparar Hoja BITACORA_HISTORIAL (7 Columnas A:G compatible con Tabla_7)
  * Repara automáticamente las filas históricas de 6 columnas corridas hacia la izquierda
  * para eliminar el triángulo rojo de validación en la Columna B (Fecha_Hora).
  */
@@ -424,10 +456,10 @@ function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
 }
 
 /**
- * Organiza las pestañas colocando las 5 maestras de primero y ocultando las obsoletas
+ * Organiza las pestañas colocando las 6 maestras de primero y ocultando las obsoletas
  */
 function cleanAndOrderSheets(ss) {
-  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.BITACORA];
+  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.OBSERVACIONES, TABS.BITACORA];
   for (var i = 0; i < orderedTabs.length; i++) {
     var tabSheet = ss.getSheetByName(orderedTabs[i]);
     if (tabSheet) {
@@ -489,6 +521,8 @@ function getMasterSheet(ss, tabKey) {
     return ss.getSheetByName("SISTEMAS_WEB") || ss.getSheetByName("Sistemas_Web") || ss.getSheetByName("Urls_Web") || ss.insertSheet(TABS.SISTEMAS_WEB);
   } else if (tabKey === "TAREAS") {
     return ss.getSheetByName("CONTROL_TAREAS") || ss.getSheetByName("Tareas_Integraciones") || ss.insertSheet(TABS.TAREAS);
+  } else if (tabKey === "OBSERVACIONES") {
+    return ss.getSheetByName("HISTORIAL_OBSERVACIONES") || ss.getSheetByName("Historial_Observaciones") || ss.getSheetByName("Observaciones") || ss.insertSheet(TABS.OBSERVACIONES);
   } else if (tabKey === "BITACORA") {
     return ss.getSheetByName("BITACORA_HISTORIAL") || ss.getSheetByName("Bitacora_Cambios") || ss.getSheetByName("Ingresos_Cambios") || ss.insertSheet(TABS.BITACORA);
   }
@@ -617,11 +651,42 @@ function doGet(e) {
       }
     }
 
+    // D. Observaciones desde HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+    var sO = getMasterSheet(ss, "OBSERVACIONES");
+    var oRows = sO ? sO.getDataRange().getValues() : [];
+    var observations = [];
+    if (oRows.length > 1) {
+      for (var o = 1; o < oRows.length; o++) {
+        var rawODate = oRows[o][0];
+        var oDateFormatted = (rawODate instanceof Date)
+          ? Utilities.formatDate(rawODate, "America/Bogota", "yyyy-MM-dd HH:mm")
+          : String(rawODate || "").trim();
+        var oApp = String(oRows[o][1] || "").trim();
+        var oDev = String(oRows[o][2] || "").trim();
+        var oTask = String(oRows[o][3] || "").trim();
+        var oImpact = String(oRows[o][4] || "NORMAL").trim();
+        var oText = String(oRows[o][5] || "").trim();
+
+        if (!oText && !oTask) continue;
+        if (oTask.toLowerCase() === "tarea" && oText.toLowerCase() === "observacion") continue;
+
+        observations.push({
+          date: oDateFormatted,
+          appName: oApp,
+          developer: oDev,
+          taskName: oTask,
+          impact: oImpact,
+          observation: oText
+        });
+      }
+    }
+
     return createJsonResponse({
       status: "success",
       tasks: tasks,
       systems: systems,
-      webSystems: webSystems
+      webSystems: webSystems,
+      observations: observations
     });
   }
 
@@ -643,6 +708,39 @@ function doGet(e) {
       }
     }
     return createJsonResponse({ status: "success", webSystems: webList });
+  }
+
+  // 5. Obtener Historial de Observaciones por Tarea
+  if (action === "get_observations") {
+    var sObsOnly = getMasterSheet(ss, "OBSERVACIONES");
+    var oOnlyRows = sObsOnly ? sObsOnly.getDataRange().getValues() : [];
+    var obsOnlyList = [];
+    if (oOnlyRows.length > 1) {
+      for (var oo = 1; oo < oOnlyRows.length; oo++) {
+        var rawDateOnly = oOnlyRows[oo][0];
+        var dFormatted = (rawDateOnly instanceof Date)
+          ? Utilities.formatDate(rawDateOnly, "America/Bogota", "yyyy-MM-dd HH:mm")
+          : String(rawDateOnly || "").trim();
+        var ooApp = String(oOnlyRows[oo][1] || "").trim();
+        var ooDev = String(oOnlyRows[oo][2] || "").trim();
+        var ooTask = String(oOnlyRows[oo][3] || "").trim();
+        var ooImpact = String(oOnlyRows[oo][4] || "NORMAL").trim();
+        var ooText = String(oOnlyRows[oo][5] || "").trim();
+
+        if (!ooText && !ooTask) continue;
+        if (ooTask.toLowerCase() === "tarea" && ooText.toLowerCase() === "observacion") continue;
+
+        obsOnlyList.push({
+          date: dFormatted,
+          appName: ooApp,
+          developer: ooDev,
+          taskName: ooTask,
+          impact: ooImpact,
+          observation: ooText
+        });
+      }
+    }
+    return createJsonResponse({ status: "success", observations: obsOnlyList });
   }
 
   return createJsonResponse({ status: "error", message: "Acción GET no reconocida" });
@@ -779,6 +877,51 @@ function doPost(e) {
         status: "success",
         message: "Auditoría registrada y consolidada en CONTROL_TAREAS",
         date: dateStr
+      });
+    }
+
+    // =========================================================================
+    // ACCIÓN: Registrar Observación de Tarea en HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+    // =========================================================================
+    if (action === "log_observation") {
+      var sObs = getMasterSheet(ss, "OBSERVACIONES");
+      ensureExactHeaders(sObs, HEADERS.OBSERVACIONES);
+
+      var obsDate = payload.date || dateStr;
+      var obsApp = payload.appName || "Sistema";
+      var obsDev = payload.developer || "Desarrollador";
+      var obsTask = payload.taskName || "Tarea";
+      var obsImpact = String(payload.impact || payload.severity || "NORMAL").toUpperCase();
+      var obsText = payload.observation || payload.text || "";
+
+      // Insertar en HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+      sObs.appendRow([
+        obsDate,
+        obsApp,
+        obsDev,
+        obsTask,
+        obsImpact,
+        obsText
+      ]);
+
+      // Formatear corporativamente
+      formatCorporateSheet(sObs, "#312E81", [150, 190, 175, 230, 150, 380]);
+
+      // Registrar en BITACORA_HISTORIAL (7 Columnas A:G) para trazabilidad central
+      appendBitacoraRow(
+        ss,
+        dateStr,
+        obsDev,
+        "OBSERVACION_REGISTRADA",
+        obsApp,
+        "[" + obsTask + "] (" + obsImpact + ") " + obsText,
+        obsImpact + " · v3.5"
+      );
+
+      return createJsonResponse({
+        status: "success",
+        message: "Observación registrada con éxito en HISTORIAL_OBSERVACIONES",
+        date: obsDate
       });
     }
 
@@ -1031,7 +1174,35 @@ function doPost(e) {
         formatCorporateSheet(sUsr, "#0F172A", [120, 160, 130, 240, 180, 100]);
       }
 
-      // 5. Reparar y registrar en BITACORA_HISTORIAL
+      // 5. Sincronizar HISTORIAL_OBSERVACIONES si vienen observaciones en el payload
+      var obsList = payload.observations || [];
+      if (obsList.length > 0) {
+        var sObsFull = getMasterSheet(ss, "OBSERVACIONES");
+        ensureExactHeaders(sObsFull, HEADERS.OBSERVACIONES);
+        var lastRObsFull = sObsFull.getLastRow();
+        if (lastRObsFull > 1) {
+          sObsFull.getRange(2, 1, lastRObsFull - 1, Math.max(6, sObsFull.getLastColumn())).clearContent();
+          if (lastRObsFull > obsList.length + 1) {
+            try {
+              sObsFull.deleteRows(obsList.length + 2, lastRObsFull - (obsList.length + 1));
+            } catch (e) {}
+          }
+        }
+        var obsFullMatrix = obsList.map(function(o) {
+          return [
+            o.date || dateStr,
+            o.appName || "Sistema",
+            o.developer || o.author || "Desarrollador",
+            o.taskName || "Tarea",
+            String(o.impact || o.severity || "NORMAL").toUpperCase(),
+            o.observation || o.text || ""
+          ];
+        });
+        sObsFull.getRange(2, 1, obsFullMatrix.length, 6).setValues(obsFullMatrix);
+        formatCorporateSheet(sObsFull, "#312E81", [150, 190, 175, 230, 150, 380]);
+      }
+
+      // 6. Reparar y registrar en BITACORA_HISTORIAL
       setupBitacoraSheet(ss);
       appendBitacoraRow(
         ss,
@@ -1039,13 +1210,13 @@ function doPost(e) {
         payload.user || "Super Admin (Jefe TI)",
         "SINCRONIZACION_MAESTRA",
         "Portafolio STF GROUP",
-        "Sincronización integral de las 5 hojas maestras (" + apps.length + " sistemas y " + tasksList.length + " tareas verificadas).",
+        "Sincronización integral de las 6 hojas maestras (" + apps.length + " sistemas, " + tasksList.length + " tareas y " + obsList.length + " observaciones verificadas).",
         "ALTO · v3.5"
       );
 
       return createJsonResponse({
         status: "success",
-        message: "Las 5 hojas maestras (USUARIOS, PORTAFOLIO_SISTEMAS, SISTEMAS_WEB, CONTROL_TAREAS, BITACORA_HISTORIAL) han sido estabilizadas y sincronizadas.",
+        message: "Las 6 hojas maestras (USUARIOS, PORTAFOLIO_SISTEMAS, SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, BITACORA_HISTORIAL) han sido estabilizadas y sincronizadas.",
         date: dateStr
       });
     }

@@ -6799,17 +6799,20 @@ function handleSaveObservation(event) {
   // Guardar en almacenamiento
   saveData(appState);
 
-  // Registrar en Google Sheets si está activo
-  if (window.SheetsSync && typeof window.SheetsSync.appendBitacoraRow === 'function') {
-    const app = getApplicationById(task.appId) || { name: 'Aplicativo' };
-    const dev = getDeveloperById(task.devId) || { name: 'Desarrollador' };
-    window.SheetsSync.appendBitacoraRow({
+  // Registrar en Google Sheets (Hoja HISTORIAL_OBSERVACIONES) en tiempo real
+  if (window.SheetsSync && typeof window.SheetsSync.logTaskObservation === 'function') {
+    const app = getApplicationById(task.appId) || { name: task.appName || 'Aplicativo' };
+    const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador' };
+    window.SheetsSync.logTaskObservation({
       date: formattedDate,
-      developer: dev.name,
-      eventType: `OBSERVACION_${type.toUpperCase()}`,
-      appName: app.name,
-      description: `[${task.name}] (${severity.toUpperCase()}) ${text}`,
-      version: 'v3.5'
+      appName: app.name || task.appName || 'Sistema',
+      developer: authorName || dev.name || 'Desarrollador',
+      taskName: task.name,
+      impact: severity.toUpperCase(),
+      observation: text,
+      taskId: task.id,
+      obsId: obsId,
+      type: type
     });
   }
 

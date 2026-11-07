@@ -237,6 +237,34 @@
     },
 
     /**
+     * Registrar observación de tarea en HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+     * Estructura: FECHA | APLICATIVO | DESARROLLADOR | TAREA | NIVEL DE IMPACTO | OBSERVACION
+     */
+    logTaskObservation(data) {
+      const payload = {
+        action: 'log_observation',
+        date: data.date || '',
+        appName: data.appName || 'Sistema General',
+        developer: data.developer || 'Desarrollador',
+        taskName: data.taskName || 'Tarea',
+        impact: String(data.impact || data.severity || 'NORMAL').toUpperCase(),
+        observation: data.observation || data.text || '',
+        taskId: data.taskId || '',
+        obsId: data.obsId || '',
+        type: data.type || 'avance'
+      };
+
+      return this.sendPayload(payload);
+    },
+
+    /**
+     * Helper de compatibilidad para registrar eventos en la Bitácora
+     */
+    appendBitacoraRow(data) {
+      return this.logSystemUpdate(data);
+    },
+
+    /**
      * Alias directo para sincronizar las 5 hojas maestras desde el Centro de Gobierno TI
      */
     async pushFullState() {
@@ -336,11 +364,35 @@
         name: dev.name
       }));
 
+      const allObservations = [];
+      (targetState.integrations || []).forEach(item => {
+        const app = targetState.applications ? targetState.applications.find(a => a.id === item.appId) : null;
+        const dev = targetState.developers ? targetState.developers.find(d => d.id === item.devId) : null;
+        const appName = item.appName || (app ? app.name : 'Sistema');
+        const devName = item.devName || (dev ? dev.name : 'Desarrollador');
+
+        if (Array.isArray(item.observations)) {
+          item.observations.forEach(obs => {
+            allObservations.push({
+              date: obs.date || '',
+              appName: appName,
+              developer: obs.author || devName,
+              taskName: item.name,
+              impact: String(obs.severity || 'NORMAL').toUpperCase(),
+              observation: obs.text || '',
+              taskId: item.id,
+              obsId: obs.id
+            });
+          });
+        }
+      });
+
       const payload = {
         action: 'sync_full_state',
         user: window.activeSelectedDevId ? getDevNameById(window.activeSelectedDevId) : 'Edwin Diaz (Admin)',
         applications: appList,
         integrations: taskList,
+        observations: allObservations,
         users: usersList
       };
 
@@ -571,6 +623,7 @@
       try {
         let syncedCount = 0;
         let phaseUpdatesCount = 0;
+        let syncedObsCount = 0;
         let fullDataLoaded = false;
 
         // 1. Intentar get_all_data (Endpoint directo de tablas en Apps Script)
@@ -589,6 +642,9 @@
               }
               if (Array.isArray(json.webSystems) && json.webSystems.length > 0) {
                 this.mergeCloudWebSystems(json.webSystems);
+              }
+              if (Array.isArray(json.observations) && json.observations.length > 0) {
+                syncedObsCount = this.mergeCloudObservations(json.observations);
               }
             }
           }
@@ -632,12 +688,13 @@
           let msg = `☁️ ¡Sincronización con Google Sheets completada!`;
           if (syncedCount > 0) msg += ` Se cargaron ${syncedCount} solicitudes/tareas.`;
           if (phaseUpdatesCount > 0) msg += ` Se actualizaron ${phaseUpdatesCount} fases.`;
+          if (syncedObsCount > 0) msg += ` Se sincronizaron ${syncedObsCount} observaciones.`;
           if (typeof window.showToast === 'function') {
             window.showToast(msg);
           }
         }
 
-        return { success: true, syncedCount, phaseUpdatesCount };
+        return { success: true, syncedCount, phaseUpdatesCount, syncedObsCount };
       } catch (err) {
         this.setSyncingState(false);
         console.warn('[SheetsSync] Error en pullCloudData:', err);
@@ -729,6 +786,82 @@
         window.saveData(state);
       }
       return count;
+    },
+
+    /**
+     * Fusionar observaciones desde la hoja HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+     * Estructura: FECHA | APLICATIVO | DESARROLLADOR | TAREA | NIVEL DE IMPACTO | OBSERVACION
+     */
+    mergeCloudObservations(cloudObs) {
+      if (!Array.isArray(cloudObs) || cloudObs.length === 0 || !window.appState) return 0;
+      const state = window.appState;
+      if (!Array.isArray(state.integrations)) state.integrations = [];
+
+      let mergedCount = 0;
+      cloudObs.forEach(co => {
+        const tName = String(co.taskName || co.TAREA || '').trim();
+        const obsText = String(co.observation || co.OBSERVACION || '').trim();
+        if (!obsText) return;
+
+        const appName = String(co.appName || co.APLICATIVO || '').trim();
+        const devName = String(co.developer || co.DESARROLLADOR || '').trim();
+        const rawImpact = String(co.impact || co['NIVEL DE IMPACTO'] || 'NORMAL').trim().toLowerCase();
+        const dateStr = String(co.date || co.FECHA || '').trim();
+
+        // Mapear severidad
+        let severity = 'normal';
+        if (rawImpact.includes('crit') || rawImpact.includes('crít')) severity = 'critico';
+        else if (rawImpact.includes('alt')) severity = 'alto';
+        else if (rawImpact.includes('baj')) severity = 'bajo';
+
+        // Buscar tarea destino por nombre
+        let targetTask = state.integrations.find(t =>
+          (tName && t.name.trim().toLowerCase() === tName.toLowerCase()) ||
+          (tName && t.name.trim().toLowerCase().includes(tName.toLowerCase())) ||
+          (tName && tName.toLowerCase().includes(t.name.trim().toLowerCase()))
+        );
+
+        // Fallback por Aplicativo + Desarrollador
+        if (!targetTask && appName) {
+          const appObj = this.findApp(appName);
+          const devObj = devName ? this.findDev(devName) : null;
+          if (appObj) {
+            targetTask = state.integrations.find(t =>
+              t.appId === appObj.id && (!devObj || t.devId === devObj.id)
+            );
+          }
+        }
+
+        if (targetTask) {
+          if (!Array.isArray(targetTask.observations)) {
+            targetTask.observations = [];
+          }
+
+          // Evitar duplicar observaciones idénticas
+          const exists = targetTask.observations.some(o =>
+            (o.text && o.text.trim().toLowerCase() === obsText.toLowerCase()) ||
+            (o.date && o.date === dateStr && o.text.includes(obsText.substring(0, 20)))
+          );
+
+          if (!exists) {
+            targetTask.observations.push({
+              id: 'obs_cloud_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+              date: dateStr || new Date().toISOString().slice(0, 16).replace('T', ' '),
+              timestamp: Date.now(),
+              type: severity === 'critico' ? 'bloqueo' : (severity === 'alto' ? 'ajuste' : 'avance'),
+              severity: severity,
+              author: devName || 'Desarrollador',
+              text: obsText
+            });
+            mergedCount++;
+          }
+        }
+      });
+
+      if (mergedCount > 0 && typeof window.saveData === 'function') {
+        window.saveData(state);
+      }
+      return mergedCount;
     },
 
     /**
@@ -1260,6 +1393,9 @@
       } else if (item.action === 'log_audit') {
         tagClass = 'tag-audit';
         tagLabel = 'AUDITORÍA';
+      } else if (item.action === 'log_observation') {
+        tagClass = 'tag-audit';
+        tagLabel = 'OBSERVACIÓN';
       } else if (item.action === 'sync_full_state') {
         tagClass = 'tag-sync';
         tagLabel = 'SYNC TOTAL';
