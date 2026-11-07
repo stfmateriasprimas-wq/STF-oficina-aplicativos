@@ -5618,11 +5618,8 @@ function renderIntegrationsList(filter = activeIntFilter) {
         `;
       }
 
-      // Action button or evaluated pill
+      // Action button or evaluated pill (sin botones de redireccionamiento externo por requerimiento)
       let actionHtml = '';
-      const appRawUrl = app.webUrl || (appState.applications.find(a => a.id === item.appId) || {}).webUrl || '';
-      const linkInfo = formatWebLinkInfo(appRawUrl, app.name);
-      const appShortName = app.shortName || app.name.split(' ')[0];
 
       if (isEvaluated) {
         actionHtml = `
@@ -5636,15 +5633,6 @@ function renderIntegrationsList(filter = activeIntFilter) {
             </div>
             <i data-lucide="chevron-right" class="eval-action-arrow"></i>
           </div>
-          ${linkInfo.isValid ? `
-            <div style="width: 100%;">
-              <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="${linkInfo.label}" onclick="event.stopPropagation()">
-                <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 13.5px; height: 13.5px;"></i>
-                <span>${linkInfo.isSharepoint ? 'Abrir SharePoint' : `Ver Sistema Web (${appShortName})`}</span>
-                <i data-lucide="external-link" style="width: 12px; height: 12px; margin-left: auto;"></i>
-              </a>
-            </div>
-          ` : ''}
         `;
       } else if (isAdmin) {
         actionHtml = `
@@ -5653,32 +5641,11 @@ function renderIntegrationsList(filter = activeIntFilter) {
               <i data-lucide="award" style="width: 15px; height: 15px;"></i>
               <span>Calificar Efectividad</span>
             </button>
-            ${linkInfo.isValid ? `
-              <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" title="${linkInfo.label}" onclick="event.stopPropagation()">
-                <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 14px; height: 14px;"></i>
-                <span>${linkInfo.shortLabel}</span>
-              </a>
-            ` : ''}
           </div>
         `;
       } else {
-        // En perfil de desarrollador: Botón directo para abrir el Sistema Publicado Web
-        if (linkInfo.isValid) {
-          actionHtml = `
-            <a href="${linkInfo.url}" target="_blank" rel="noopener noreferrer" class="btn-card-web-link" title="${linkInfo.label}" onclick="event.stopPropagation()">
-              <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 14px; height: 14px;"></i>
-              <span>${linkInfo.isSharepoint ? 'Abrir SharePoint' : `Ir al Sistema Web Publicado (${appShortName})`}</span>
-              <i data-lucide="external-link" style="width: 13px; height: 13px; margin-left: auto;"></i>
-            </a>
-          `;
-        } else {
-          actionHtml = `
-            <div class="btn-card-web-link" style="opacity: 0.7; cursor: default; background: #F1F5F9; color: #64748B; border-color: #E2E8F0;" title="El despliegue web aún no ha sido publicado en SISTEMAS_WEB">
-              <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
-              <span>Despliegue Web Pendiente (${appShortName})</span>
-            </div>
-          `;
-        }
+        // En perfil de desarrollador: No mostrar botones de redireccionamiento web en las tarjetas
+        actionHtml = '';
       }
 
       return `
