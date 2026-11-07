@@ -9445,14 +9445,23 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
     deadlineDisplay = formatShortDate(app.deadline);
   }
 
-  // Nombres cortos para los 6 pasos del stepper horizontal
-  const stepLabels = ['Req', 'UI/UX', 'Dev', 'QA', 'Planta', 'En Vivo'];
+  // Extracción dinámica del nombre corto de cada fase definida libremente por el Admin para este aplicativo
+  function getDynamicPhaseLabel(phase, idx) {
+    if (!phase || !phase.name) return `F${idx + 1}`;
+    let clean = phase.name.replace(/^(fase\s*\d+[\s\:\-\.]*|\d+[\.\-\)]\s*)/i, '').trim();
+    if (!clean) clean = phase.name.trim();
+    if (clean.length <= 11) return clean;
+    const words = clean.split(/\s+/);
+    if (words.length === 1) return clean.slice(0, 10);
+    if (words[0].length >= 4) return words[0].slice(0, 9);
+    return (words[0] + ' ' + (words[1] || '')).trim().slice(0, 10);
+  }
 
-  // 6 Nodos interactivos del Stepper Horizontal
+  // Nodos dinámicos del Stepper Horizontal (configurados a medida por el Admin para este sistema)
   const stepperStepsHtml = (app.phases || []).map((p, idx) => {
     const isCompleted = p.completed;
     const isActive = idx === activePhaseIndex;
-    const shortLabel = stepLabels[idx] || `F${idx + 1}`;
+    const shortLabel = getDynamicPhaseLabel(p, idx);
     const stateText = isCompleted ? 'Completada ✅' : (isActive ? 'En Curso ⏳' : 'Pendiente');
     const nodeClass = isCompleted ? 'completed' : (isActive ? 'active' : 'pending');
 
@@ -9461,7 +9470,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
         <div class="h-step-circle">
           ${isCompleted ? '<i data-lucide="check" class="h-step-check"></i>' : `<span>${idx + 1}</span>`}
         </div>
-        <span class="h-step-caption">${shortLabel}</span>
+        <span class="h-step-caption" title="${p.name}">${shortLabel}</span>
       </div>
     `;
   }).join('');
@@ -9511,7 +9520,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
         </div>
       </div>
 
-      <!-- Columna 2: Pipeline Horizontal de 6 Fases & Stepper -->
+      <!-- Columna 2: Pipeline Horizontal de Fases Dinámicas (Configuradas por el Admin) -->
       <div class="h-sys-timeline">
         <div class="h-timeline-top">
           <div class="h-active-phase-tag">
@@ -9534,27 +9543,13 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
         </div>
       </div>
 
-      <!-- Columna 3: KPIs y Métricas de Planta -->
+      <!-- Columna 3: Fecha Límite Comprometida de Entrega -->
       <div class="h-col-metrics">
-        <div class="h-metric-badge" title="Entregables e Integraciones">
-          <i data-lucide="check-square"></i>
-          <div class="h-m-body">
-            <strong>${completedTasksCount}/${totalTasksCount}</strong>
-            <span>Listos</span>
-          </div>
-        </div>
-        <div class="h-metric-badge" title="Calidad QA Auditada">
-          <i data-lucide="shield-check" style="color: ${ind.qaColor};"></i>
-          <div class="h-m-body">
-            <strong style="color: ${ind.qaColor};">${ind.qaScore}</strong>
-            <span>Calidad</span>
-          </div>
-        </div>
-        <div class="h-metric-badge ${isOverdue ? 'metric-alert' : ''}" title="Fecha Límite / Cronograma">
+        <div class="h-metric-badge h-deadline-badge ${isOverdue ? 'metric-alert' : ''}" title="Fecha Límite Comprometida: ${deadlineDisplay}">
           <i data-lucide="calendar"></i>
-          <div class="h-m-body">
-            <strong>${deadlineDisplay}</strong>
-            <span>${isProd ? 'En Planta' : (isOverdue ? 'Retraso' : 'Plazo')}</span>
+          <div class="h-deadline-body">
+            <span class="h-deadline-label">${isProd ? 'Estado en Planta' : (isOverdue ? 'Retraso Crítico' : 'Fecha Límite')}</span>
+            <strong class="h-deadline-val">${deadlineDisplay}</strong>
           </div>
         </div>
       </div>
