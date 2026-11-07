@@ -429,6 +429,80 @@ function getNotificationsData() {
       }
     });
 
+    // 3. Observaciones reportadas en tareas por los Desarrolladores (Notificaciones al Administrador)
+    const taskObsNotifs = [];
+    allInts.forEach(task => {
+      if (Array.isArray(task.observations) && task.observations.length > 0) {
+        const app = allApps.find(a => a.id === task.appId);
+        const appName = app ? app.name : 'Sistema';
+        const dev = getDeveloperById(task.devId);
+        const devName = dev ? dev.name : 'Desarrollador';
+
+        task.observations.forEach(obs => {
+          const isBlock = obs.type === 'bloqueo';
+          const isAdjustment = obs.type === 'ajuste';
+
+          let iconName = 'message-square';
+          let iconBg = '#EFF6FF';
+          let iconColor = '#2563EB';
+          let tagText = 'Observación en Tarea';
+          let tagBg = '#DBEAFE';
+          let tagColor = '#1D4ED8';
+
+          if (isBlock) {
+            iconName = 'alert-octagon';
+            iconBg = '#FEE2E2';
+            iconColor = '#DC2626';
+            tagText = '⚠️ Bloqueo Reportado';
+            tagBg = '#FECACA';
+            tagColor = '#B91C1C';
+          } else if (isAdjustment) {
+            iconName = 'wrench';
+            iconBg = '#FEF3C7';
+            iconColor = '#D97706';
+            tagText = '🛠️ Ajuste Técnico';
+            tagBg = '#FDE68A';
+            tagColor = '#92400E';
+          } else if (obs.type === 'avance') {
+            iconName = 'sparkles';
+            iconBg = '#ECFDF5';
+            iconColor = '#059669';
+            tagText = '🚀 Novedad / Avance';
+            tagBg = '#D1FAE5';
+            tagColor = '#065F46';
+          }
+
+          const obsTimestamp = obs.timestamp || (obs.date ? new Date(obs.date.replace(' ', 'T')).getTime() : 0);
+
+          taskObsNotifs.push({
+            id: `notif_task_obs_${obs.id}`,
+            type: 'task_observation',
+            icon: iconName,
+            iconBg: iconBg,
+            iconColor: iconColor,
+            tag: tagText,
+            tagColor: tagColor,
+            tagBg: tagBg,
+            title: `Observación de ${obs.author || devName} · ${task.name}`,
+            sub: `"${obs.text}" (${appName})`,
+            time: obs.date || 'Reciente',
+            timestamp: obsTimestamp,
+            action: () => {
+              if (typeof switchMainTab === 'function') switchMainTab('view-tasks');
+              if (typeof scrollToIntegrationTask === 'function') {
+                scrollToIntegrationTask(task.id);
+              }
+            }
+          });
+        });
+      }
+    });
+
+    // Ordenar observaciones para mostrar las más recientes arriba
+    taskObsNotifs.sort((a, b) => b.timestamp - a.timestamp);
+    // Colocar las observaciones de tareas en la posición prioritaria superior
+    notifications.unshift(...taskObsNotifs);
+
   } else {
     // =========================================================================
     // VISTA DESARROLLADOR: Nuevas Tareas Asignadas & Observaciones del Admin
@@ -439,6 +513,31 @@ function getNotificationsData() {
     devTasks.forEach(task => {
       const app = allApps.find(a => a.id === task.appId);
       const appName = app ? app.name : 'Sistema';
+
+      // Observaciones de la bitácora de la tarea para el desarrollador
+      if (Array.isArray(task.observations) && task.observations.length > 0) {
+        task.observations.forEach(obs => {
+          notifications.unshift({
+            id: `notif_dev_obs_${obs.id}`,
+            type: 'task_obs_dev',
+            icon: obs.type === 'bloqueo' ? 'alert-octagon' : 'message-square',
+            iconBg: obs.type === 'bloqueo' ? '#FEE2E2' : '#EFF6FF',
+            iconColor: obs.type === 'bloqueo' ? '#DC2626' : '#2563EB',
+            tag: obs.type === 'bloqueo' ? '⚠️ Bloqueo en Tarea' : 'Observación en Tarea',
+            tagColor: obs.type === 'bloqueo' ? '#B91C1C' : '#1D4ED8',
+            tagBg: obs.type === 'bloqueo' ? '#FECACA' : '#DBEAFE',
+            title: `Observación: ${task.name}`,
+            sub: `${obs.author || 'Equipo'}: "${obs.text}"`,
+            time: obs.date || 'Reciente',
+            action: () => {
+              if (typeof switchMainTab === 'function') switchMainTab('view-tasks');
+              if (typeof scrollToIntegrationTask === 'function') {
+                scrollToIntegrationTask(task.id);
+              }
+            }
+          });
+        });
+      }
 
       // 1. Observaciones y dictámenes del Super Admin ante cualquier desarrollo
       if (task.evaluation && task.evaluation.notes) {
@@ -5618,8 +5717,9 @@ function renderIntegrationsList(filter = activeIntFilter) {
         `;
       }
 
-      // Action button or evaluated pill (sin botones de redireccionamiento externo por requerimiento)
+      // Action button or evaluated pill con botón para Registrar Observación
       let actionHtml = '';
+      const obsCount = Array.isArray(item.observations) ? item.observations.length : 0;
 
       if (isEvaluated) {
         actionHtml = `
@@ -5633,6 +5733,11 @@ function renderIntegrationsList(filter = activeIntFilter) {
             </div>
             <i data-lucide="chevron-right" class="eval-action-arrow"></i>
           </div>
+          <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación en esta tarea">
+            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
+            <span>Registrar observación</span>
+            ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
+          </button>
         `;
       } else if (isAdmin) {
         actionHtml = `
@@ -5642,14 +5747,25 @@ function renderIntegrationsList(filter = activeIntFilter) {
               <span>Calificar Efectividad</span>
             </button>
           </div>
+          <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación o novedad en esta tarea">
+            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
+            <span>Registrar observación</span>
+            ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
+          </button>
         `;
       } else {
-        // En perfil de desarrollador: No mostrar botones de redireccionamiento web en las tarjetas
-        actionHtml = '';
+        // En perfil de desarrollador: Botón prominente de Registrar Observación
+        actionHtml = `
+          <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación de avance o bloqueo en esta tarea">
+            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
+            <span>Registrar observación</span>
+            ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
+          </button>
+        `;
       }
 
       return `
-        <div class="integration-item-card level-${cardLevel}" style="--int-accent: ${appColor};">
+        <div class="integration-item-card level-${cardLevel}" id="intCard_${item.id}" data-task-id="${item.id}" style="--int-accent: ${appColor};">
           <div class="int-card-accent-strip"></div>
 
           <!-- Prominent Superior Corner Badge -->
@@ -6598,7 +6714,7 @@ function scrollToIntegrationTask(taskId) {
 /**
  * Modal para registrar una nueva observación
  */
-function openNewObservationModal() {
+function openNewObservationModal(preselectedTaskId) {
   const select = document.getElementById('newObsTaskSelect');
   if (!select) return;
 
@@ -6606,8 +6722,8 @@ function openNewObservationModal() {
   const loggedDevId = getLoggedDevId();
 
   let tasks = appState.integrations || [];
-  if (!isAdmin) {
-    tasks = tasks.filter(t => t.devId === loggedDevId);
+  if (!isAdmin && loggedDevId) {
+    tasks = tasks.filter(t => resolveCanonicalDevId(t.devId) === loggedDevId || t.id === preselectedTaskId);
   }
 
   if (tasks.length === 0) {
@@ -6615,15 +6731,43 @@ function openNewObservationModal() {
     return;
   }
 
+  // Si se envió un preselectedTaskId que no estaba en tasks, agregarlo
+  if (preselectedTaskId && !tasks.some(t => t.id === preselectedTaskId)) {
+    const specificTask = (appState.integrations || []).find(t => t.id === preselectedTaskId);
+    if (specificTask) tasks.unshift(specificTask);
+  }
+
   select.innerHTML = tasks.map(t => {
     const app = getApplicationById(t.appId) || { name: 'App', code: 'STF' };
     const dev = getDeveloperById(t.devId) || { name: 'Dev' };
-    return `<option value="${t.id}">[${app.code}] ${t.name} — ${dev.name}</option>`;
+    const isSelected = (preselectedTaskId && t.id === preselectedTaskId) ? 'selected' : '';
+    return `<option value="${t.id}" ${isSelected}>[${app.code}] ${t.name} — ${dev.name}</option>`;
   }).join('');
+
+  if (preselectedTaskId && tasks.some(t => t.id === preselectedTaskId)) {
+    select.value = preselectedTaskId;
+  }
 
   handleObsTaskSelectChange(select.value);
 
-  document.getElementById('modalNewObservation')?.classList.add('show');
+  // Limpiar campos del formulario
+  const textInput = document.getElementById('newObsText');
+  if (textInput) textInput.value = '';
+  const typeSelect = document.getElementById('newObsTypeSelect');
+  if (typeSelect) typeSelect.value = 'avance';
+  const sevSelect = document.getElementById('newObsSeveritySelect');
+  if (sevSelect) sevSelect.value = 'normal';
+
+  const modalEl = document.getElementById('modalNewObservation');
+  if (modalEl) {
+    modalEl.classList.add('show');
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+    setTimeout(() => {
+      if (textInput) textInput.focus();
+    }, 120);
+  }
 }
 
 function closeNewObservationModal() {
@@ -6643,12 +6787,15 @@ function handleObsTaskSelectChange(taskId) {
 
   const app = getApplicationById(task.appId) || { name: 'Aplicativo', code: 'STF' };
   const dev = getDeveloperById(task.devId) || { name: 'Desarrollador' };
+  const obsCount = Array.isArray(task.observations) ? task.observations.length : 0;
 
   preview.innerHTML = `
     <i data-lucide="info"></i>
-    <span>Tarea asignada a <strong>${dev.name}</strong> para el sistema <strong>${app.name} (${app.code})</strong>. Plazo límite: ${task.deadline || 'Pendiente'}.</span>
+    <span>Tarea asignada a <strong>${dev.name}</strong> para el sistema <strong>${app.name} (${app.code})</strong>. Plazo límite: ${task.deadline || 'Pendiente'}.${obsCount > 0 ? ` Ya cuenta con <strong>${obsCount}</strong> observación(es) registrada(s).` : ''}</span>
   `;
-  lucide.createIcons();
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
 }
 
 /**
@@ -6695,9 +6842,11 @@ function handleSaveObservation(event) {
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
 
+  const obsId = 'obs_' + Date.now();
   const newObs = {
-    id: 'obs_' + Date.now(),
+    id: obsId,
     date: formattedDate,
+    timestamp: now.getTime(),
     type: type,
     severity: severity,
     author: authorName,
@@ -6706,6 +6855,15 @@ function handleSaveObservation(event) {
 
   // Agregar al inicio del array de observaciones de la tarea
   task.observations.unshift(newObs);
+
+  // Asegurar que la notificación aparezca como pendiente / no leída para el Administrador
+  const notifId = `notif_task_obs_${obsId}`;
+  if (typeof readNotificationsSet !== 'undefined' && readNotificationsSet.has(notifId)) {
+    readNotificationsSet.delete(notifId);
+    try {
+      localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
+    } catch (e) {}
+  }
 
   // Guardar en almacenamiento
   saveData(appState);
@@ -6725,8 +6883,16 @@ function handleSaveObservation(event) {
   }
 
   closeNewObservationModal();
-  renderTaskObservationsFeed();
-  showToast('¡Observación registrada con éxito en la Bitácora!');
+  if (typeof renderIntegrationsList === 'function') {
+    renderIntegrationsList(activeIntFilter);
+  }
+  if (typeof renderTaskObservationsFeed === 'function') {
+    renderTaskObservationsFeed();
+  }
+  if (typeof renderNotificationsDropdown === 'function') {
+    renderNotificationsDropdown();
+  }
+  showToast('✓ Observación registrada con éxito. Notificación enviada al Administrador.', 'success');
 }
 
 /**

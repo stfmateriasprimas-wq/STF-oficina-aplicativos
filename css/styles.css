@@ -5840,6 +5840,64 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
 }
 
+/* Botón Registrar Observación en Tarjetas de Tarea */
+.btn-card-obs-action {
+  width: 100%;
+  padding: 8.5px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #E2E8F0;
+  cursor: pointer;
+  background: #FFFFFF;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.btn-card-obs-action:hover {
+  background: #F0F4FF;
+  border-color: #6366F1;
+  color: #4F46E5;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.16);
+}
+
+.btn-card-obs-action:active {
+  transform: translateY(0);
+}
+
+.btn-card-obs-action i,
+.btn-card-obs-action svg {
+  color: #6366F1;
+  transition: transform 0.2s ease;
+}
+
+.btn-card-obs-action:hover i,
+.btn-card-obs-action:hover svg {
+  transform: scale(1.15);
+}
+
+.btn-card-obs-action.full-width {
+  width: 100%;
+}
+
+.btn-obs-count-badge {
+  background: #EEF2FF;
+  color: #4338CA;
+  border: 1px solid #C7D2FE;
+  font-size: 10.5px;
+  font-weight: 750;
+  padding: 1px 6.5px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
 /* Botones para Abrir Sistema Web Publicado */
 .btn-card-web-link {
   width: 100%;
