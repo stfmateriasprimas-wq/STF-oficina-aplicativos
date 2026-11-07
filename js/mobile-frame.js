@@ -193,14 +193,6 @@
   function buildUI() {
     injectStyles();
 
-    // Botón flotante para abrir el marco móvil sin mover la ventana
-    const trigger = document.createElement('button');
-    trigger.className = 'stf-mf-trigger';
-    trigger.id = 'stfMobileFrameTrigger';
-    trigger.innerHTML = '<span>📱 Vista Móvil por Marca</span>';
-    trigger.onclick = () => toggleOverlay(true);
-    document.body.appendChild(trigger);
-
     // Overlay con el dispositivo centrado
     const overlay = document.createElement('div');
     overlay.className = 'stf-mf-overlay';
