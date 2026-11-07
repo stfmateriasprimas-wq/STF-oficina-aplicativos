@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=50">
+  <link rel="stylesheet" href="css/styles.css?v=51">
 </head>
 
 <body>
@@ -2678,6 +2678,58 @@
     </div>
   </div>
 
+  <!-- MODAL: Historial de Observaciones de Tarea (Ventana Flotante Grande para Admin) -->
+  <div class="modal-backdrop" id="modalTaskObservations" onclick="if(event.target === this) closeTaskObservationsModal()">
+    <div class="modal-card modal-card-large" style="max-width: 840px; width: 92%; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="super-admin-shield-pill">
+            <i data-lucide="shield-check"></i>
+            <span>Super Admin TI · Bitácora & Novedades de Tarea</span>
+          </div>
+          <h2 class="modal-title" id="taskObsModalTitle" style="margin-top: 6px;">Historial de Observaciones</h2>
+          <p class="modal-subtitle" id="taskObsModalSubtitle">Trazabilidad de acuerdos, avances y bloqueos notificados por el desarrollador durante el proceso de esta tarea.</p>
+        </div>
+        <button class="modal-close-btn" id="btnCloseTaskObsModal" onclick="closeTaskObservationsModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+        <!-- Hero summary card of the task -->
+        <div class="task-obs-modal-hero" id="taskObsModalHero">
+          <!-- Dynamic task summary populated via JS -->
+        </div>
+
+        <!-- Filter/Counter toolbar inside modal -->
+        <div class="task-obs-modal-toolbar">
+          <div class="task-obs-modal-counts" id="taskObsModalCounts">
+            <!-- Dynamic pills: Total, Bloqueos, Avances -->
+          </div>
+          <div class="task-obs-modal-actions">
+            <button type="button" class="pill-btn secondary-btn small-btn" id="btnTaskObsAddNote" onclick="openAddNoteFromTaskObsModal()">
+              <i data-lucide="message-square-plus"></i>
+              <span>+ Añadir Nota Admin</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Observations Timeline / Feed -->
+        <div class="task-obs-timeline" id="taskObsModalTimeline">
+          <!-- Dynamic observations list populated via JS -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-top: 1px solid #EDF1F7;">
+        <div style="font-size: 11.5px; color: #64748B; display: flex; align-items: center; gap: 6px;">
+          <span class="live-dot-pulse"></span>
+          <span id="taskObsModalFooterStatus">Actualizado en tiempo real</span>
+        </div>
+        <button type="button" class="pill-btn secondary-btn" onclick="closeTaskObservationsModal()">Cerrar Ventana</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: Sistemas Web Publicados del Desarrollador (Sincronizado con SISTEMAS_WEB) -->
   <div class="modal-backdrop" id="modalDevWebSystems">
     <div class="modal-card" style="max-width: 640px;">
@@ -2724,7 +2776,7 @@
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=40"></script>
   <script src="js/sheets-sync.js?v=40"></script>
-  <script src="js/app.js?v=43"></script>
+  <script src="js/app.js?v=44"></script>
   <script src="js/mobile-frame.js?v=5"></script>
 </body>
 

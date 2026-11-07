@@ -5898,6 +5898,70 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   line-height: 1.2;
 }
 
+.btn-obs-count-badge.empty {
+  background: #F1F5F9;
+  color: #64748B;
+  border-color: #CBD5E1;
+  opacity: 0.75;
+}
+
+.btn-obs-count-badge.has-obs {
+  background: #EEF2FF;
+  color: #4338CA;
+  border-color: #C7D2FE;
+  font-weight: 800;
+}
+
+.btn-obs-count-badge.has-block {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #FECACA;
+  font-weight: 800;
+}
+
+/* Botón Ver Observaciones en Tarjetas de Tarea (Super Admin) */
+.btn-card-view-obs {
+  width: 100%;
+  padding: 8.5px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #CBD5E1;
+  cursor: pointer;
+  background: #FFFFFF;
+  color: #1E293B;
+  font-size: 12px;
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.btn-card-view-obs:hover {
+  background: #EEF2FF;
+  border-color: #6366F1;
+  color: #4F46E5;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.16);
+}
+
+.btn-card-view-obs:active {
+  transform: translateY(0);
+}
+
+.btn-card-view-obs i,
+.btn-card-view-obs svg {
+  color: #4F46E5;
+  transition: transform 0.2s ease;
+}
+
+.btn-card-view-obs:hover i,
+.btn-card-view-obs:hover svg {
+  transform: scale(1.15);
+}
+
 /* Botones para Abrir Sistema Web Publicado */
 .btn-card-web-link {
   width: 100%;
@@ -11542,6 +11606,372 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ==========================================================================
+   MODAL FLOTANTE GRANDE: Historial de Observaciones por Tarea (Admin)
+   ========================================================================== */
+.task-obs-modal-hero {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.task-obs-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.task-obs-hero-dev {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-obs-hero-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #E2E8F0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.task-obs-hero-info h4 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 750;
+  color: #0F172A;
+}
+
+.task-obs-hero-info p {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.task-obs-hero-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-obs-hero-dates {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E8F0;
+  font-size: 12px;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.task-obs-modal-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.task-obs-modal-counts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-obs-count-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+.task-obs-count-chip.bloqueo {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.task-obs-count-chip.avance {
+  background: #ECFDF5;
+  color: #059669;
+  border-color: #A7F3D0;
+}
+
+.task-obs-count-chip.ajuste {
+  background: #FEF3C7;
+  color: #B45309;
+  border-color: #FDE68A;
+}
+
+.task-obs-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.task-obs-item-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.task-obs-item-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.task-obs-item-card.type-bloqueo {
+  border-left: 5px solid #EF4444;
+  background: #FFFAF9;
+}
+
+.task-obs-item-card.type-avance {
+  border-left: 5px solid #10B981;
+}
+
+.task-obs-item-card.type-ajuste {
+  border-left: 5px solid #F59E0B;
+}
+
+.task-obs-item-card.type-auditoria {
+  border-left: 5px solid #8B5CF6;
+}
+
+.task-obs-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.task-obs-item-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-obs-author-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #EFF6FF;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-obs-item-card.type-bloqueo .task-obs-author-icon {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.task-obs-item-card.type-avance .task-obs-author-icon {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.task-obs-author-icon i,
+.task-obs-author-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.task-obs-author-name {
+  font-size: 13px;
+  font-weight: 750;
+  color: #0F172A;
+  display: block;
+  line-height: 1.2;
+}
+
+.task-obs-author-role {
+  font-size: 11px;
+  color: #64748B;
+  display: block;
+}
+
+.task-obs-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-obs-pill-type {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.task-obs-pill-type.bloqueo {
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.task-obs-pill-type.avance {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.task-obs-pill-type.ajuste {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.task-obs-pill-type.auditoria {
+  background: #F3E8FF;
+  color: #7E22CE;
+  border: 1px solid #E9D5FF;
+}
+
+.task-obs-pill-sev {
+  padding: 2.5px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.task-obs-pill-sev.sev-alta {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.task-obs-pill-sev.sev-normal {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.task-obs-pill-sev.sev-baja {
+  background: #F8FAFC;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+.task-obs-date-badge {
+  font-size: 11px;
+  color: #64748B;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-obs-item-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1E293B;
+  background: #F8FAFC;
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid #EDF2F7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.task-obs-item-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.btn-del-obs-mini {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 11.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-del-obs-mini:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.task-obs-empty-box {
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 16px;
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-obs-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #EEF2FF;
+  color: #4E65FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.task-obs-empty-icon i,
+.task-obs-empty-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.task-obs-empty-box h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 750;
+  color: #1E293B;
+}
+
+.task-obs-empty-box p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64748B;
+  max-width: 500px;
+  line-height: 1.5;
 }
 
 

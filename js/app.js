@@ -492,6 +492,11 @@ function getNotificationsData() {
               if (typeof scrollToIntegrationTask === 'function') {
                 scrollToIntegrationTask(task.id);
               }
+              setTimeout(() => {
+                if (typeof openTaskObservationsModal === 'function') {
+                  openTaskObservationsModal(task.id);
+                }
+              }, 250);
             }
           });
         });
@@ -534,6 +539,11 @@ function getNotificationsData() {
               if (typeof scrollToIntegrationTask === 'function') {
                 scrollToIntegrationTask(task.id);
               }
+              setTimeout(() => {
+                if (typeof openTaskObservationsModal === 'function') {
+                  openTaskObservationsModal(task.id);
+                }
+              }, 250);
             }
           });
         });
@@ -5717,14 +5727,25 @@ function renderIntegrationsList(filter = activeIntFilter) {
         `;
       }
 
-      // Action button or evaluated pill (El botón Registrar Observación es EXCLUSIVO para perfiles de desarrollador)
+      // Action button or evaluated pill (El botón Registrar Observación es EXCLUSIVO para desarrollador, Ver Observaciones para Admin)
       let actionHtml = '';
       const obsCount = Array.isArray(item.observations) ? item.observations.length : 0;
+      const hasBlock = Array.isArray(item.observations) && item.observations.some(o => o.type === 'bloqueo');
 
       if (isAdmin) {
-        // PERFIL SUPER ADMIN: Solo calificar o ver dictamen técnico (sin botón de registrar observación)
+        // PERFIL SUPER ADMIN: Botón "Ver Observaciones" arriba de Calificar Efectividad o Dictamen
+        const obsCountClass = hasBlock ? 'has-block' : (obsCount > 0 ? 'has-obs' : 'empty');
+        const viewObsBtnHtml = `
+          <button type="button" class="btn-card-view-obs full-width" onclick="openTaskObservationsModal('${item.id}'); event.stopPropagation();" title="Ver historial y observaciones reportadas para esta tarea">
+            <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+            <span>Ver Observaciones</span>
+            <span class="btn-obs-count-badge ${obsCountClass}" title="${obsCount} observaciones registradas">${obsCount}</span>
+          </button>
+        `;
+
         if (isEvaluated) {
           actionHtml = `
+            ${viewObsBtnHtml}
             <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
               <div class="eval-action-badge">
                 <i data-lucide="check" style="width: 13px; height: 13px;"></i>
@@ -5738,6 +5759,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
           `;
         } else {
           actionHtml = `
+            ${viewObsBtnHtml}
             <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
               <button class="btn-friendly-eval" onclick="openEvaluateIntegrationModal('${item.id}')" title="Calificar calidad técnica y aplicar a estadísticas" style="flex: 1;">
                 <i data-lucide="award" style="width: 15px; height: 15px;"></i>
@@ -6925,6 +6947,224 @@ function deleteTaskObservation(taskId, obsId) {
   showToast('Observación eliminada.');
 }
 
+// ==========================================================================
+// VENTANA FLOTANTE GRANDE: HISTORIAL DE OBSERVACIONES POR TAREA (ADMIN)
+// ==========================================================================
+
+let currentViewTaskObsId = null;
+
+function openTaskObservationsModal(taskId) {
+  const task = (appState.integrations || []).find(t => t.id === taskId);
+  if (!task) {
+    showToast('No se encontró la tarea seleccionada.', 'error');
+    return;
+  }
+
+  currentViewTaskObsId = taskId;
+
+  const app = getApplicationById(task.appId) || { name: 'Aplicativo', code: 'STF', color: '#4E65FF' };
+  const dev = getDeveloperById(task.devId) || {
+    name: 'Desarrollador',
+    role: 'Desarrollador',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+  };
+  const diag = calculateIntegrationTimeProgress(task);
+
+  // Título y Subtítulo del Modal
+  const titleEl = document.getElementById('taskObsModalTitle');
+  const subEl = document.getElementById('taskObsModalSubtitle');
+  if (titleEl) titleEl.textContent = `[${app.code}] ${task.name}`;
+  if (subEl) subEl.textContent = `Sistema ${app.name} · Desarrollador: ${dev.name} · Plazo límite: ${formatShortDate(task.deadline)}`;
+
+  // Hero Card con resumen de la tarea
+  const heroEl = document.getElementById('taskObsModalHero');
+  if (heroEl) {
+    heroEl.innerHTML = `
+      <div class="task-obs-hero-top">
+        <div class="task-obs-hero-dev">
+          <img src="${dev.avatar}" alt="${dev.name}" class="task-obs-hero-avatar">
+          <div class="task-obs-hero-info">
+            <h4>${dev.name}</h4>
+            <p>${dev.role} · Responsable asignado</p>
+          </div>
+        </div>
+        <div class="task-obs-hero-badges">
+          <div class="int-app-badge" style="background-color: ${app.color}15; color: ${app.color}; border: 1px solid ${app.color}35;">
+            <span class="int-app-dot" style="background-color: ${app.color};"></span>
+            <span class="int-app-name">${app.name} (${app.code})</span>
+          </div>
+          <div class="int-weight-badge">
+            <i data-lucide="sparkles" style="width: 11px; height: 11px;"></i>
+            <span>Peso ${task.weight}%</span>
+          </div>
+          <span class="friendly-deadline-pill ${diag.badgeClass}">
+            <i data-lucide="${diag.isOverdue ? 'alert-triangle' : (task.status === 'evaluated' ? 'check-check' : 'clock')}" style="width: 12px; height: 12px;"></i>
+            <span>${diag.countdownText || diag.statusText}</span>
+          </span>
+        </div>
+      </div>
+      <div class="task-obs-hero-dates">
+        <span><strong>Plazo programado:</strong> ${formatShortDate(task.startDate)} → ${formatShortDate(task.deadline)}</span>
+        <span><strong>Estado actual:</strong> ${task.status === 'evaluated' ? 'Auditada & Aprobada' : (task.status === 'in_progress' ? 'En Desarrollo' : 'Pendiente')}</span>
+      </div>
+    `;
+  }
+
+  // Cálculos de métricas de observaciones
+  const observations = Array.isArray(task.observations) ? task.observations : [];
+  const totalObs = observations.length;
+  const bloqueosCount = observations.filter(o => o.type === 'bloqueo').length;
+  const avancesCount = observations.filter(o => o.type === 'avance').length;
+  const ajustesCount = observations.filter(o => o.type === 'ajuste').length;
+
+  // Toolbar de contadores
+  const countsEl = document.getElementById('taskObsModalCounts');
+  if (countsEl) {
+    countsEl.innerHTML = `
+      <span class="task-obs-count-chip">
+        <i data-lucide="layers" style="width: 12px; height: 12px;"></i>
+        <span>Total: <strong>${totalObs}</strong></span>
+      </span>
+      <span class="task-obs-count-chip bloqueo" style="${bloqueosCount > 0 ? '' : 'opacity: 0.65;'}">
+        <i data-lucide="alert-octagon" style="width: 12px; height: 12px;"></i>
+        <span>Bloqueos: <strong>${bloqueosCount}</strong></span>
+      </span>
+      <span class="task-obs-count-chip avance" style="${avancesCount > 0 ? '' : 'opacity: 0.65;'}">
+        <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i>
+        <span>Avances: <strong>${avancesCount}</strong></span>
+      </span>
+      <span class="task-obs-count-chip ajuste" style="${ajustesCount > 0 ? '' : 'opacity: 0.65;'}">
+        <i data-lucide="wrench" style="width: 12px; height: 12px;"></i>
+        <span>Ajustes: <strong>${ajustesCount}</strong></span>
+      </span>
+    `;
+  }
+
+  // Timeline / Feed de Observaciones
+  const timelineEl = document.getElementById('taskObsModalTimeline');
+  if (timelineEl) {
+    if (totalObs === 0) {
+      timelineEl.innerHTML = `
+        <div class="task-obs-empty-box">
+          <div class="task-obs-empty-icon">
+            <i data-lucide="message-square-dashed"></i>
+          </div>
+          <h4>Sin observaciones reportadas para esta tarea</h4>
+          <p>El desarrollador no ha reportado bloqueos, novedades técnicas ni acuerdos en esta tarea aún.<br>Cuando se registre una observación durante el proceso, podrás verla aquí en tiempo real y te llegará una alerta a la campana de notificaciones.</p>
+          <button type="button" class="pill-btn primary-glow-btn small-btn" onclick="openAddNoteFromTaskObsModal()">
+            <i data-lucide="plus"></i>
+            <span>Registrar Primera Observación</span>
+          </button>
+        </div>
+      `;
+    } else {
+      timelineEl.innerHTML = observations.map((obs, idx) => {
+        const isBlock = obs.type === 'bloqueo';
+        const isAvance = obs.type === 'avance';
+        const isAjuste = obs.type === 'ajuste';
+        const isAuditoria = obs.type === 'auditoria';
+
+        let typePillText = '🚀 Avance';
+        let typeClass = 'avance';
+        if (isBlock) {
+          typePillText = '⚠️ Bloqueo / Retraso';
+          typeClass = 'bloqueo';
+        } else if (isAjuste) {
+          typePillText = '🛠️ Ajuste Técnico';
+          typeClass = 'ajuste';
+        } else if (isAuditoria) {
+          typePillText = '📋 Dictamen / Auditoría';
+          typeClass = 'auditoria';
+        }
+
+        const sevClass = obs.severity === 'alta' ? 'sev-alta' : (obs.severity === 'baja' ? 'sev-baja' : 'sev-normal');
+        const sevText = obs.severity === 'alta' ? 'Alta / Urgente' : (obs.severity === 'baja' ? 'Baja / Informativa' : 'Normal');
+
+        return `
+          <div class="task-obs-item-card type-${typeClass}">
+            <div class="task-obs-item-header">
+              <div class="task-obs-item-author">
+                <div class="task-obs-author-icon">
+                  <i data-lucide="${isBlock ? 'alert-triangle' : (isAvance ? 'trending-up' : 'message-square')}"></i>
+                </div>
+                <div>
+                  <span class="task-obs-author-name">${obs.author || dev.name}</span>
+                  <span class="task-obs-author-role">${obs.author?.includes('Admin') ? 'Super Admin (Jefe TI)' : 'Desarrollador'}</span>
+                </div>
+              </div>
+              <div class="task-obs-item-meta">
+                <span class="task-obs-pill-type ${typeClass}">${typePillText}</span>
+                <span class="task-obs-pill-sev ${sevClass}">${sevText}</span>
+                <span class="task-obs-date-badge">
+                  <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>
+                  ${obs.date || 'Reciente'}
+                </span>
+              </div>
+            </div>
+
+            <div class="task-obs-item-body">
+              ${escapeHtml(obs.text || '')}
+            </div>
+
+            <div class="task-obs-item-footer">
+              <button type="button" class="btn-del-obs-mini" onclick="deleteTaskObservationFromModal('${task.id}', '${obs.id}')" title="Eliminar observación de la bitácora">
+                <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                <span>Eliminar de bitácora</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Footer sync text
+  const footerStatusEl = document.getElementById('taskObsModalFooterStatus');
+  if (footerStatusEl) {
+    footerStatusEl.textContent = `${totalObs} observación(es) en historial de esta tarea · Sincronizado en tiempo real`;
+  }
+
+  document.getElementById('modalTaskObservations')?.classList.add('show');
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+function closeTaskObservationsModal() {
+  document.getElementById('modalTaskObservations')?.classList.remove('show');
+  currentViewTaskObsId = null;
+}
+
+function openAddNoteFromTaskObsModal() {
+  const taskId = currentViewTaskObsId;
+  closeTaskObservationsModal();
+  if (taskId && typeof openNewObservationModal === 'function') {
+    openNewObservationModal(taskId);
+  }
+}
+
+function deleteTaskObservationFromModal(taskId, obsId) {
+  if (!confirm('¿Estás seguro de que deseas eliminar esta observación del historial de la tarea?')) {
+    return;
+  }
+
+  const task = (appState.integrations || []).find(t => t.id === taskId);
+  if (!task || !Array.isArray(task.observations)) return;
+
+  task.observations = task.observations.filter(o => o.id !== obsId);
+  saveData(appState);
+
+  // Refrescar modal, lista y notificaciones
+  openTaskObservationsModal(taskId);
+  if (typeof renderIntegrationsList === 'function') {
+    renderIntegrationsList(activeIntFilter);
+  }
+  if (typeof renderNotificationsDropdown === 'function') {
+    renderNotificationsDropdown();
+  }
+  showToast('Observación eliminada con éxito.');
+}
+
 // Exponer funciones en window para listeners inline
 window.openNewObservationModal = openNewObservationModal;
 window.closeNewObservationModal = closeNewObservationModal;
@@ -6937,6 +7177,10 @@ window.clearObservationsSearch = clearObservationsSearch;
 window.scrollToIntegrationTask = scrollToIntegrationTask;
 window.deleteTaskObservation = deleteTaskObservation;
 window.renderTaskObservationsFeed = renderTaskObservationsFeed;
+window.openTaskObservationsModal = openTaskObservationsModal;
+window.closeTaskObservationsModal = closeTaskObservationsModal;
+window.deleteTaskObservationFromModal = deleteTaskObservationFromModal;
+window.openAddNoteFromTaskObsModal = openAddNoteFromTaskObsModal;
 
 // ==========================================================================
 // EVENT LISTENERS & BOOTSTRAP
