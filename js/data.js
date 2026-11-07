@@ -286,6 +286,36 @@ const STF_REAL_DATA = {
   // Integraciones y Tareas Reales Registradas en CONTROL_TAREAS de Google Sheets
   integrations: [
     {
+      id: "int_kpi_lab",
+      name: "Integración KPI",
+      appId: "app_laboratorio",
+      appName: "LABORATORIO",
+      devId: "dev_jg",
+      devName: "Jose Guzman",
+      startDate: "2026-11-07",
+      deadline: "2026-11-16",
+      weight: 25,
+      status: "in_progress",
+      description: "KPI completos",
+      evaluation: null,
+      observations: []
+    },
+    {
+      id: "int_sharepoint_lab",
+      name: "Investigar como podemos aplicar app de laboratorio en SharePoint",
+      appId: "app_laboratorio",
+      appName: "LABORATORIO",
+      devId: "dev_jg",
+      devName: "Jose Guzman",
+      startDate: "2026-10-19",
+      deadline: "2026-11-09",
+      weight: 10,
+      status: "in_progress",
+      description: "tenemos que crear y estabilizar el sistema de laboratorio por SharePoint para que nos quede en cuanto seguridad mas estable.",
+      evaluation: null,
+      observations: []
+    },
+    {
       id: "int_17937216525",
       name: "Iniciar el ajuste de LAB.",
       appId: "app_laboratorio",

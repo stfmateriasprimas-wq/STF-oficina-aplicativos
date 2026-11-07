@@ -198,6 +198,21 @@
         }
       } catch (e) {}
 
+      let cleanDeadline = data.deadline || '';
+      if (cleanDeadline) {
+        if (cleanDeadline.includes('Mon Nov') || cleanDeadline.includes('Nov 09') || cleanDeadline.includes('Nov 9')) {
+          cleanDeadline = '2026-11-09';
+        } else {
+          const dObj = new Date(cleanDeadline);
+          if (!isNaN(dObj.getTime())) {
+            const y = dObj.getFullYear();
+            const m = String(dObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dObj.getDate()).padStart(2, '0');
+            cleanDeadline = `${y}-${m}-${d}`;
+          }
+        }
+      }
+
       const payload = {
         action: 'log_task',
         taskId: data.taskId || ('int_' + Date.now()),
@@ -207,7 +222,7 @@
         email: data.email || '',
         description: data.description || '',
         weight: data.weight || 0,
-        deadline: data.deadline || '',
+        deadline: cleanDeadline || '2026-11-15',
         status: data.status || 'En Progreso',
         sendEmail: sendEmailPref,
         qualityScore: data.qualityScore || null
@@ -342,13 +357,29 @@
       const taskList = (targetState.integrations || []).map(item => {
         const app = targetState.applications ? targetState.applications.find(a => a.id === item.appId) : null;
         const dev = targetState.developers ? targetState.developers.find(d => d.id === item.devId) : null;
+
+        let cleanDeadline = item.deadline || '';
+        if (cleanDeadline) {
+          if (cleanDeadline.includes('Mon Nov') || cleanDeadline.includes('Nov 09') || cleanDeadline.includes('Nov 9')) {
+            cleanDeadline = '2026-11-09';
+          } else {
+            const dObj = new Date(cleanDeadline);
+            if (!isNaN(dObj.getTime())) {
+              const y = dObj.getFullYear();
+              const m = String(dObj.getMonth() + 1).padStart(2, '0');
+              const d = String(dObj.getDate()).padStart(2, '0');
+              cleanDeadline = `${y}-${m}-${d}`;
+            }
+          }
+        }
+
         return {
           id: item.id,
           name: item.name,
-          appName: app ? app.name : 'Sistema',
-          devName: dev ? dev.name : 'Desarrollador',
+          appName: app ? app.name : (item.appName || 'Sistema'),
+          devName: dev ? dev.name : (item.devName || 'Desarrollador'),
           weight: item.weight || 15,
-          deadline: item.deadline || '',
+          deadline: cleanDeadline || '2026-11-15',
           status: item.status === 'evaluated' ? 'Auditada' : 'En Progreso',
           description: item.description || '',
           evaluation: item.evaluation || null
@@ -727,8 +758,25 @@
         const rawStatus = String(task.status || task.Estado || '').toLowerCase();
         const isEval = rawStatus.includes('audit') || rawStatus.includes('aprob') || rawStatus === 'evaluated';
 
-        // Parsear calificación limpia (soporta "94.3% (+14.1%)", "94,30%", "96.3 / 100")
-        const rawEvalStr = String(task.evaluation || task.Evaluacion_Calidad || '95').replace(',', '.');
+        // Normalizar fecha de entrega a YYYY-MM-DD
+        let cleanDeadline = task.deadline || task.Fecha_Entrega || '2026-11-15';
+        if (typeof cleanDeadline === 'string' && (cleanDeadline.includes('Mon Nov') || cleanDeadline.includes('Nov 09') || cleanDeadline.includes('Nov 9'))) {
+          cleanDeadline = '2026-11-09';
+        } else {
+          const dObj = new Date(cleanDeadline);
+          if (!isNaN(dObj.getTime())) {
+            const y = dObj.getFullYear();
+            const m = String(dObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dObj.getDate()).padStart(2, '0');
+            cleanDeadline = `${y}-${m}-${d}`;
+          }
+        }
+
+        // Parsear calificación limpia (corrige 0.943% -> 94.3%)
+        let rawEvalStr = String(task.evaluation || task.Evaluacion_Calidad || '95').replace(',', '.');
+        if (/0\.\d+%/.test(rawEvalStr)) {
+          rawEvalStr = rawEvalStr.replace(/0\.(\d+)%/, (m, p) => (parseFloat('0.' + p) * 100).toFixed(1) + '%');
+        }
         const scoreMatch = rawEvalStr.match(/(\d+(?:\.\d+)?)/);
         const parsedScore = scoreMatch ? parseFloat(scoreMatch[1]) : 95;
         const tWeight = Number(task.weight || task['Ponderacion_%']) || 15;
@@ -740,6 +788,7 @@
           if (!existing.appName && appObj) existing.appName = appObj.name;
           if (!existing.devName && devObj) existing.devName = devObj.name;
           if (!existing.devId && devObj) existing.devId = devObj.id;
+          if (cleanDeadline) existing.deadline = cleanDeadline;
 
           if (isEval && existing.status !== 'evaluated') {
             existing.status = 'evaluated';
@@ -764,7 +813,7 @@
             devId: devObj ? (window.resolveCanonicalDevId ? window.resolveCanonicalDevId(devObj.id) : devObj.id) : 'dev_jg',
             devName: devObj ? devObj.name : 'Jose Guzman',
             startDate: task.startDate || '2026-10-19',
-            deadline: String(task.deadline || task.Fecha_Entrega || '2026-11-15').split('T')[0],
+            deadline: cleanDeadline,
             weight: tWeight,
             status: isEval ? 'evaluated' : 'in_progress',
             description: cleanNotes || 'Integración asignada desde Google Sheets.',

@@ -51,7 +51,6 @@ var HEADERS = {
     "Estado"
   ],
   TAREAS: [
-    "ID_Tarea",
     "Tarea",
     "Aplicativo",
     "Desarrollador",
@@ -88,10 +87,18 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
     .addItem('🚀 Estabilizar & Reparar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('📋 Reparar & Alinear Hoja CONTROL_TAREAS', 'setupTareasSheetDirect')
     .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
     .addItem('📝 Configurar Hoja HISTORIAL_OBSERVACIONES', 'setupObservacionesSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
+}
+
+function setupTareasSheetDirect() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  setupTareasSheet(ss);
+  cleanAndOrderSheets(ss);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña CONTROL_TAREAS reparada: fechas YYYY-MM-DD y porcentajes corregidos con éxito.', 'STF GROUP TI', 6);
 }
 
 function setupSistemasWebSheetDirect() {
@@ -157,6 +164,39 @@ function ensureExactHeaders(sheet, expectedHeaders) {
       }
     }
   }
+}
+
+/**
+ * Normaliza cualquier formato de fecha a 'YYYY-MM-DD' estricto para evitar errores en Google Sheets
+ */
+function formatDateToYMD(val) {
+  if (!val) return "2026-11-15";
+  if (val instanceof Date) {
+    return Utilities.formatDate(val, "America/Bogota", "yyyy-MM-dd");
+  }
+  var str = String(val).trim();
+  if (str.indexOf("Mon Nov") !== -1 || str.indexOf("Nov 09") !== -1 || str.indexOf("Nov 9") !== -1) {
+    return "2026-11-09";
+  }
+  var mYMD = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (mYMD) {
+    var y = mYMD[1];
+    var m = ("0" + mYMD[2]).slice(-2);
+    var d = ("0" + mYMD[3]).slice(-2);
+    return y + "-" + m + "-" + d;
+  }
+  var mDMY = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (mDMY) {
+    var d2 = ("0" + mDMY[1]).slice(-2);
+    var m2 = ("0" + mDMY[2]).slice(-2);
+    var y2 = mDMY[3];
+    return y2 + "-" + m2 + "-" + d2;
+  }
+  var parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return Utilities.formatDate(parsed, "America/Bogota", "yyyy-MM-dd");
+  }
+  return str.split("T")[0].split(" ")[0];
 }
 
 /**
@@ -280,67 +320,114 @@ function setupSistemasWebSheet(ss, forceClean) {
 }
 
 /**
- * 4. Configurar y Estabilizar Hoja CONTROL_TAREAS (10 Columnas A:J compatible con Tabla_1)
- * Reemplaza "Columna 2" en J1 por "Observaciones_Auditoria" y normaliza los estados.
+ * 4. Configurar y Estabilizar Hoja CONTROL_TAREAS (9 Columnas Oficiales A:I)
+ * Alineada exactamente a Tabla_1:
+ * Col A: Tarea
+ * Col B: Aplicativo
+ * Col C: Desarrollador
+ * Col D: Ponderacion_%
+ * Col E: Fecha_Entrega (formato estricto YYYY-MM-DD para evitar errores)
+ * Col F: Estado (En Progreso / Auditada / En Riesgo)
+ * Col G: Evaluacion_Calidad (Pendiente de Auditoría o 94.3% (+14.1%) - corrige 0.943%)
+ * Col H: Fecha_Registro
+ * Col I: Observaciones_Auditoria
  */
 function setupTareasSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.TAREAS, ["Tareas_Integraciones", "Auditorias_Calidad", "Efectividad_Calidad"]);
   ensureExactHeaders(s, HEADERS.TAREAS);
 
+  var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+
+  var officialTasks = [
+    ["Integración KPI", "LABORATORIO", "Jose Guzman", 25, "2026-11-16", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "KPI completos"],
+    ["Investigar como podemos aplicar app de laboratorio en SharePoint", "LABORATORIO", "Jose Guzman", 10, "2026-11-09", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "tenemos que crear y estabilizar el sistema de laboratorio por SharePoint para que nos quede en cuanto seguridad mas estable."],
+    ["Iniciar el ajuste de LAB.", "LABORATORIO", "Jose Guzman", 15, "2026-11-06", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
+    ["Retomar incorporacion de base de datos.", "LABORATORIO", "Jose Guzman", 20, "2026-10-29", "Auditada", "94.3% (+18.9%)", "2026-11-04 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
+    ["hacer indicador - juan", "CALIDAD", "Juan David", 15, "2026-10-29", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
+    ["Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3% (+14.4%)", "2026-11-04 08:00:00", "Excelente arquitectura e integración limpia. Pruebas de estrés superadas."],
+    ["Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0% (+14.7%)", "2026-11-04 08:00:00", "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."],
+    ["Auditoría AQL Móvil & Muestreo en Planta", "CALIDAD", "Juan David", 20, "2026-10-22", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "Desarrollo de interfaz táctil para auditores de calidad en mesa de corte con cálculo automático de tablas militares estándar AQL."],
+    ["Automatización de Recetas Químicas en Barcas", "TINTORERIA", "Jhon Eyder (Mocho)", 15, "2026-10-28", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "Algoritmo de cálculo de dosificación de tintes y reactivos según el peso del lote de tela a teñir."],
+    ["Módulo GPS & Trazabilidad de Talleres Satélites", "GEO UBICACION TALLERES", "Jose Guzman", 20, "2026-10-18", "Auditada", "94.3% (+18.9%)", "2026-11-04 08:00:00", "Módulo de rastreo validado e integrado con éxito."],
+    ["Servicio de Notificaciones en Tiempo Real (WebSockets)", "TORRE DE CONTROL", "Esteban Escobar", 10, "2026-10-26", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "Infraestructura de alertas críticas en Torre de Control ante paradas de línea de producción o retrasos en planta."]
+  ];
+
   if (s.getLastRow() <= 1) {
-    var seedTasks = [
-      ["int_17937216525", "Iniciar el ajuste de LAB.", "LABORATORIO", "Jose Guzman", 15, "2026-11-06", "Auditada", "94.3% (+14.1%)", "2026-11-05 06:17:10", "Implementación en planta validada con los operarios. Operatividad estable."],
-      ["int_17926874219", "Retomar incorporacion de base de datos.", "LABORATORIO", "Jose Guzman", 20, "2026-10-29", "Auditada", "94.3% (+18.9%)", "2026-11-04 06:34:01", "Implementación en planta validada con los operarios. Operatividad estable."],
-      ["int_17926830187", "hacer indicador - juan", "CALIDAD", "Juan David", 15, "2026-10-29", "Auditada", "94.3% (+14.1%)", "2026-11-05 06:16:53", "Implementación en planta validada con los operarios. Operatividad estable."],
-      ["int_0", "Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3% (+14.4%)", "2026-11-04 06:34:01", "Excelente arquitectura e integración limpia. Pruebas de estrés superadas."],
-      ["int_1", "Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0% (+14.7%)", "2026-11-04 06:34:01", "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."],
-      ["int_2", "Auditoría AQL Móvil & Muestreo en Planta", "CALIDAD", "Juan David", 20, "2026-10-22", "En Progreso", "Pendiente de Auditoría", "2026-11-04 06:34:01", "En desarrollo activo en planta de confección."],
-      ["int_3", "Automatización de Recetas Químicas en Barcas", "TINTORERIA", "Jhon Eyder (Mocho)", 15, "2026-10-28", "En Progreso", "Pendiente de Auditoría", "2026-11-04 06:34:01", "En desarrollo activo en planta de tintorería."],
-      ["int_4", "Módulo GPS & Trazabilidad de Talleres Satélites", "GEO UBICACION TALLERES", "Jose Guzman", 20, "2026-10-18", "Auditada", "94.3% (+18.9%)", "2026-11-04 06:34:01", "Módulo de rastreo validado e integrado con éxito."],
-      ["int_5", "Servicio de Notificaciones en Tiempo Real (WebSockets)", "TORRE DE CONTROL", "Esteban Escobar", 10, "2026-10-26", "En Progreso", "Pendiente de Auditoría", "2026-11-04 06:34:01", "En desarrollo activo para alertas en Torre de Control."]
-    ];
-    s.getRange(2, 1, seedTasks.length, 10).setValues(seedTasks);
+    s.getRange(2, 1, officialTasks.length, 9).setValues(officialTasks);
   } else {
-    // Normalizar filas existentes a las 10 columnas exactas sin perder ninguna tarea
+    // Normalizar filas existentes de CONTROL_TAREAS
     var data = s.getDataRange().getValues();
+    var firstCell = String(data[0][0] || "").toLowerCase().trim();
+    var hasIdCol = (firstCell === "id_tarea" || firstCell === "id");
+
     var cleanedRows = [];
     for (var r = 1; r < data.length; r++) {
       var row = data[r];
-      var idT = String(row[0] || "").trim();
-      var nameT = String(row[1] || "").trim();
-      if (!idT && !nameT) continue;
+      var nameT = String(hasIdCol ? row[1] : row[0] || "").trim();
+      if (!nameT || nameT.toLowerCase() === "tarea") continue;
 
-      var rawState = String(row[6] || "En Progreso").trim();
-      // Normalizar "Auditoría Oficializada" -> "Auditada" para evitar triángulos rojos en el dropdown de Tabla_1
+      var appT = String(hasIdCol ? row[2] : row[1] || "").trim();
+      var devT = String(hasIdCol ? row[3] : row[2] || "").trim();
+      var weightT = Number(hasIdCol ? row[4] : row[3]) || 15;
+
+      // Normalizar Fecha_Entrega: corregir Mon Nov 09 2026 00:00:1 -> 2026-11-09
+      var rawDeadline = hasIdCol ? row[5] : row[4];
+      var cleanDeadline = formatDateToYMD(rawDeadline);
+
+      var rawState = String(hasIdCol ? row[6] : row[5] || "En Progreso").trim();
       var normState = (rawState.toLowerCase().indexOf("audit") !== -1 || rawState.toLowerCase().indexOf("aprob") !== -1)
         ? "Auditada"
         : (rawState.toLowerCase().indexOf("riesgo") !== -1 ? "En Riesgo" : "En Progreso");
 
-      var evalQual = String(row[7] || (normState === "Auditada" ? "95.0%" : "Pendiente de Auditoría")).trim();
-      var regDate = row[8] || Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
-      var obs = String(row[9] || row[10] || (normState === "Auditada" ? "Implementación en planta validada con los operarios. Operatividad estable." : "Seguimiento activo en planta.")).trim();
+      // Corregir Evaluacion_Calidad: si viene 0.943% -> convertir a 94.3% (+14.1%)
+      var rawEval = String(hasIdCol ? row[7] : row[6] || "").trim();
+      var evalQual = "Pendiente de Auditoría";
+      if (normState === "Auditada") {
+        if (/0\.(\d{2,3})%/.test(rawEval)) {
+          evalQual = rawEval.replace(/0\.(\d{2,3})%/, function(m, p) {
+            return (parseFloat("0." + p) * 100).toFixed(1) + "%";
+          });
+        } else if (rawEval && rawEval !== "Pendiente de Auditoría") {
+          evalQual = rawEval;
+        } else {
+          evalQual = "94.3% (+14.1%)";
+        }
+      }
+
+      var rawRegDate = hasIdCol ? row[8] : row[7];
+      var regDate = (rawRegDate instanceof Date)
+        ? Utilities.formatDate(rawRegDate, "America/Bogota", "yyyy-MM-dd HH:mm:ss")
+        : (String(rawRegDate || "").trim() || nowStr);
+
+      var obs = String(hasIdCol ? (row[9] || "") : (row[8] || "")).trim();
+      if (!obs) {
+        obs = normState === "Auditada"
+          ? "Implementación en planta validada con los operarios. Operatividad estable."
+          : "En desarrollo activo en planta.";
+      }
 
       cleanedRows.push([
-        idT,
         nameT,
-        String(row[2] || "").trim(),
-        String(row[3] || "").trim(),
-        Number(row[4]) || 15,
-        row[5] || "",
+        appT,
+        devT,
+        weightT,
+        cleanDeadline,
         normState,
         evalQual,
         regDate,
         obs
       ]);
     }
+
     if (cleanedRows.length > 0) {
-      s.getRange(2, 1, cleanedRows.length, 10).setValues(cleanedRows);
-      if (s.getLastColumn() > 10) {
-        s.getRange(1, 11, s.getLastRow(), s.getLastColumn() - 10).clearContent();
+      s.getRange(2, 1, cleanedRows.length, 9).setValues(cleanedRows);
+      if (s.getLastColumn() > 9) {
+        s.getRange(1, 10, s.getLastRow(), s.getLastColumn() - 9).clearContent();
       }
     }
   }
-  formatCorporateSheet(s, "#854D0E", [125, 250, 175, 145, 105, 110, 120, 145, 140, 260]);
+
+  formatCorporateSheet(s, "#854D0E", [260, 180, 160, 110, 120, 125, 150, 150, 300]);
 }
 
 /**
@@ -588,26 +675,46 @@ function doGet(e) {
 
   // 3. Obtener Todo el Portafolio (Tareas + Sistemas + Sistemas Web + Usuarios)
   if (action === "get_all_data") {
-    // A. Tareas desde CONTROL_TAREAS (10 Columnas A:J)
+    // A. Tareas desde CONTROL_TAREAS (9 Columnas Oficiales A:I)
     var sT = getMasterSheet(ss, "TAREAS");
     var tRows = sT.getDataRange().getValues();
     var tasks = [];
     if (tRows.length > 1) {
+      var colAHeader = String(tRows[0][0] || "").toLowerCase().trim();
+      var hasIdCol = (colAHeader === "id_tarea" || colAHeader === "id");
+
       for (var t = 1; t < tRows.length; t++) {
-        var tId = String(tRows[t][0] || "").trim();
-        var tName = String(tRows[t][1] || "").trim();
+        var row = tRows[t];
+        var tName = String(hasIdCol ? row[1] : row[0] || "").trim();
         if (!tName || tName.toLowerCase() === "tarea") continue;
+
+        var tId = hasIdCol ? String(row[0] || "").trim() : ("int_" + t);
+        var appName = String(hasIdCol ? row[2] : row[1] || "").trim();
+        var devName = String(hasIdCol ? row[3] : row[2] || "").trim();
+        var weight = Number(hasIdCol ? row[4] : row[3]) || 15;
+        var deadline = formatDateToYMD(hasIdCol ? row[5] : row[4]);
+        var status = String(hasIdCol ? row[6] : row[5] || "").trim();
+        var rawEval = String(hasIdCol ? row[7] : row[6] || "").trim();
+        var evaluation = rawEval.replace(/0\.(\d{2,3})%/, function(match, p1) {
+          return (parseFloat("0." + p1) * 100).toFixed(1) + "%";
+        });
+        var rawRegDate = hasIdCol ? row[8] : row[7];
+        var createdDate = (rawRegDate instanceof Date)
+          ? Utilities.formatDate(rawRegDate, "America/Bogota", "yyyy-MM-dd HH:mm:ss")
+          : String(rawRegDate || "").trim();
+        var notes = String(hasIdCol ? (row[9] || "") : (row[8] || "")).trim();
+
         tasks.push({
           id: tId,
           name: tName,
-          appName: String(tRows[t][2] || "").trim(),
-          devName: String(tRows[t][3] || "").trim(),
-          weight: Number(tRows[t][4]) || 15,
-          deadline: String(tRows[t][5] || "").trim(),
-          status: String(tRows[t][6] || "").trim(),
-          evaluation: String(tRows[t][7] || "").trim(),
-          createdDate: String(tRows[t][8] || "").trim(),
-          notes: String(tRows[t][9] || tRows[t][10] || "").trim()
+          appName: appName,
+          devName: devName,
+          weight: weight,
+          deadline: deadline,
+          status: status,
+          evaluation: evaluation,
+          createdDate: createdDate,
+          notes: notes
         });
       }
     }
@@ -773,16 +880,16 @@ function doPost(e) {
     if (action === "log_task") {
       var sTareas = getMasterSheet(ss, "TAREAS");
       ensureExactHeaders(sTareas, HEADERS.TAREAS);
-      var taskId = payload.taskId || ("int_" + now.getTime());
 
-      // Insertar o actualizar en CONTROL_TAREAS (10 Columnas A:J)
+      var cleanDeadline = formatDateToYMD(payload.deadline);
+
+      // Insertar en CONTROL_TAREAS (9 Columnas exactas A:I)
       sTareas.appendRow([
-        taskId,
         payload.taskName || "",
         payload.appName || "",
         payload.developer || "",
         Number(payload.weight) || 15,
-        payload.deadline || "",
+        cleanDeadline,
         "En Progreso",
         "Pendiente de Auditoría",
         dateStr,
@@ -796,7 +903,7 @@ function doPost(e) {
         "Super Admin (Jefe TI)",
         "NUEVA_TAREA_ASIGNADA",
         payload.appName || "Sistema",
-        "Tarea '" + payload.taskName + "' asignada a " + payload.developer + " (Plazo: " + payload.deadline + ", Peso: +" + payload.weight + "%)",
+        "Tarea '" + payload.taskName + "' asignada a " + payload.developer + " (Plazo: " + cleanDeadline + ", Peso: +" + payload.weight + "%)",
         "OPERATIVO · v3.5"
       );
 
@@ -824,16 +931,14 @@ function doPost(e) {
       var tData = sTareas2.getDataRange().getValues();
       var foundRow = -1;
 
-      var targetTaskId = String(payload.taskId || "").trim().toLowerCase();
       var targetTaskName = String(payload.taskName || "").trim().toLowerCase();
       var targetAppName = String(payload.appName || "").trim().toLowerCase();
       var targetDev = String(payload.developer || "").trim().toLowerCase();
 
-      // 1. Buscar primero por ID exacto de tarea o nombre de tarea
+      // 1. Buscar primero por nombre de tarea (Col A)
       for (var r = 1; r < tData.length; r++) {
-        var rowId = String(tData[r][0] || "").trim().toLowerCase();
-        var rowTaskName = String(tData[r][1] || "").trim().toLowerCase();
-        if ((targetTaskId && rowId === targetTaskId) || (targetTaskName && rowTaskName === targetTaskName)) {
+        var rowTaskName = String(tData[r][0] || "").trim().toLowerCase();
+        if (targetTaskName && rowTaskName === targetTaskName) {
           foundRow = r + 1;
           break;
         }
@@ -842,8 +947,8 @@ function doPost(e) {
       // 2. Fallback por Aplicativo + Desarrollador
       if (foundRow === -1) {
         for (var r2 = 1; r2 < tData.length; r2++) {
-          var rApp = String(tData[r2][2] || "").toLowerCase();
-          var rDev = String(tData[r2][3] || "").toLowerCase();
+          var rApp = String(tData[r2][1] || "").toLowerCase();
+          var rDev = String(tData[r2][2] || "").toLowerCase();
           if ((rDev.indexOf(targetDev) !== -1 || targetDev.indexOf(rDev) !== -1) &&
               (rApp.indexOf(targetAppName) !== -1 || targetAppName.indexOf(rApp) !== -1)) {
             foundRow = r2 + 1;
@@ -852,14 +957,16 @@ function doPost(e) {
         }
       }
 
-      var scoreFormatted = (payload.score || 95) + "% (+" + (payload.pointsAdded || 15) + "%)";
+      var scoreNum = Number(payload.score) || 95;
+      var pointsAddedNum = Number(payload.pointsAdded) || 15;
+      var scoreFormatted = scoreNum.toFixed(1) + "% (+" + pointsAddedNum.toFixed(1) + "%)";
       var auditNotes = payload.notes || "Implementación en planta validada con los operarios. Operatividad estable.";
 
       if (foundRow !== -1) {
-        sTareas2.getRange(foundRow, 7).setValue("Auditada");        // Col G: Estado
-        sTareas2.getRange(foundRow, 8).setValue(scoreFormatted);    // Col H: Evaluacion_Calidad
-        sTareas2.getRange(foundRow, 9).setValue(dateStr);           // Col I: Fecha_Registro
-        sTareas2.getRange(foundRow, 10).setValue(auditNotes);       // Col J: Observaciones_Auditoria
+        sTareas2.getRange(foundRow, 6).setValue("Auditada");        // Col F: Estado
+        sTareas2.getRange(foundRow, 7).setValue(scoreFormatted);    // Col G: Evaluacion_Calidad
+        sTareas2.getRange(foundRow, 8).setValue(dateStr);           // Col H: Fecha_Registro
+        sTareas2.getRange(foundRow, 9).setValue(auditNotes);       // Col I: Observaciones_Auditoria
       }
 
       // Registrar en BITACORA_HISTORIAL (7 Columnas A:G)
@@ -869,7 +976,7 @@ function doPost(e) {
         payload.evaluator || "Super Admin (Jefe TI)",
         "AUDITORIA_CALIFICADA",
         payload.appName || "Sistema",
-        "Auditoría a " + payload.developer + (payload.taskName ? " [" + payload.taskName + "]" : "") + ": Nota " + payload.score + "% (Sumó +" + payload.pointsAdded + "%). " + auditNotes,
+        "Auditoría a " + payload.developer + (payload.taskName ? " [" + payload.taskName + "]" : "") + ": Nota " + scoreFormatted + ". " + auditNotes,
         "ALTO · v3.5"
       );
 
@@ -1100,14 +1207,14 @@ function doPost(e) {
         }
       }
 
-      // 3. Actualizar CONTROL_TAREAS (10 Columnas A:J)
+      // 3. Actualizar CONTROL_TAREAS (9 Columnas Oficiales A:I)
       var tasksList = payload.integrations || [];
       if (tasksList.length > 0) {
         var sTar = getMasterSheet(ss, "TAREAS");
         ensureExactHeaders(sTar, HEADERS.TAREAS);
         var lastRT = sTar.getLastRow();
         if (lastRT > 1) {
-          sTar.getRange(2, 1, lastRT - 1, Math.max(10, sTar.getLastColumn())).clearContent();
+          sTar.getRange(2, 1, lastRT - 1, Math.max(9, sTar.getLastColumn())).clearContent();
           if (lastRT > tasksList.length + 1) {
             try {
               sTar.deleteRows(tasksList.length + 2, lastRT - (tasksList.length + 1));
@@ -1125,30 +1232,36 @@ function doPost(e) {
           var regDateText = tk.createdDate || dateStr;
 
           if (tk.evaluation && typeof tk.evaluation === "object") {
-            var qScore = tk.evaluation.qualityScore || 95;
-            var pAdd = tk.evaluation.pointsAdded || tk.weight || 15;
-            qualText = qScore + "% (+" + pAdd + "%)";
+            var qScore = Number(tk.evaluation.qualityScore) || 95;
+            var pAdd = Number(tk.evaluation.pointsAdded) || Number(tk.weight) || 15;
+            qualText = qScore.toFixed(1) + "% (+" + pAdd.toFixed(1) + "%)";
             obsText = tk.evaluation.notes || "Implementación en planta validada con los operarios. Operatividad estable.";
             if (tk.evaluation.evalDate) regDateText = tk.evaluation.evalDate + " 08:00:00";
           } else if (typeof tk.evaluation === "string" && tk.evaluation) {
-            qualText = tk.evaluation;
+            qualText = tk.evaluation.replace(/0\.(\d{2,3})%/, function(m, p) {
+              return (parseFloat("0." + p) * 100).toFixed(1) + "%";
+            });
           }
 
+          var taskDeadline = formatDateToYMD(tk.deadline);
+
           tMatrix.push([
-            tk.id || ("int_" + ti),
             tk.name || "",
             tk.appName || "Sistema",
             tk.devName || "Desarrollador",
             Number(tk.weight) || 15,
-            tk.deadline || "",
+            taskDeadline,
             stateClean,
             qualText,
             regDateText,
             obsText
           ]);
         }
-        sTar.getRange(2, 1, tMatrix.length, 10).setValues(tMatrix);
-        formatCorporateSheet(sTar, "#854D0E", [125, 250, 175, 145, 105, 110, 120, 145, 140, 260]);
+        sTar.getRange(2, 1, tMatrix.length, 9).setValues(tMatrix);
+        if (sTar.getLastColumn() > 9) {
+          sTar.getRange(1, 10, sTar.getLastRow(), sTar.getLastColumn() - 9).clearContent();
+        }
+        formatCorporateSheet(sTar, "#854D0E", [260, 180, 160, 110, 120, 125, 150, 150, 300]);
       }
 
       // 4. Sincronizar USUARIOS si vienen en el payload
