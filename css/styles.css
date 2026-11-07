@@ -5343,15 +5343,18 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   background: linear-gradient(90deg, #10B981 0%, rgba(16, 185, 129, 0.35) 100%) !important;
 }
 
-.integration-item-card.level-orange {
+.integration-item-card.level-orange,
+.integration-item-card.level-yellow {
   border: 2px solid #F59E0B !important;
   box-shadow: 0 6px 22px -3px rgba(245, 158, 11, 0.22), 0 2px 6px -1px rgba(245, 158, 11, 0.08);
 }
-.integration-item-card.level-orange:hover {
+.integration-item-card.level-orange:hover,
+.integration-item-card.level-yellow:hover {
   border-color: #D97706 !important;
   box-shadow: 0 16px 36px -6px rgba(245, 158, 11, 0.30), 0 4px 12px rgba(245, 158, 11, 0.14);
 }
-.integration-item-card.level-orange .int-card-accent-strip {
+.integration-item-card.level-orange .int-card-accent-strip,
+.integration-item-card.level-yellow .int-card-accent-strip {
   background: linear-gradient(90deg, #F59E0B 0%, rgba(245, 158, 11, 0.35) 100%) !important;
 }
 

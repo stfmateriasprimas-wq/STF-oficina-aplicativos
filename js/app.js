@@ -5456,6 +5456,14 @@ function renderIntegrationsList(filter = activeIntFilter) {
     });
     if (devTasks.length > 0) {
       devTasks.sort((a, b) => {
+        // 1. Tareas asignadas / en proceso van DE PRIMERAS
+        const isEvalA = a.status === 'evaluated' ? 1 : 0;
+        const isEvalB = b.status === 'evaluated' ? 1 : 0;
+        if (isEvalA !== isEvalB) {
+          return isEvalA - isEvalB; // 0 (en proceso) va antes que 1 (auditada)
+        }
+
+        // 2. Entre tareas del mismo estado, la más recientemente asignada va primero
         const da = new Date(a.startDate || a.deadline || '2026-01-01').getTime();
         const db = new Date(b.startDate || b.deadline || '2026-01-01').getTime();
         if (db !== da) return db - da; // Más reciente en la parte de arriba
@@ -5477,6 +5485,9 @@ function renderIntegrationsList(filter = activeIntFilter) {
       if (!group.tasks.some(t => t.id === item.id)) {
         group.tasks.push(item);
         group.tasks.sort((a, b) => {
+          const isEvalA = a.status === 'evaluated' ? 1 : 0;
+          const isEvalB = b.status === 'evaluated' ? 1 : 0;
+          if (isEvalA !== isEvalB) return isEvalA - isEvalB;
           const da = new Date(a.startDate || a.deadline || '2026-01-01').getTime();
           const db = new Date(b.startDate || b.deadline || '2026-01-01').getTime();
           if (db !== da) return db - da; // Más reciente en la parte de arriba
@@ -5549,11 +5560,8 @@ function renderIntegrationsList(filter = activeIntFilter) {
       const appColor = app.iconColor || '#4E65FF';
       const consecutiveNum = devConsecutiveMap.get(item.id) || 1;
 
-      // Dynamic Level (Verde -> Naranja -> Rojo):
-      // Verde: Tarea más reciente / óptima o ya solucionada (auditada)
-      // Naranja medio: Tarea en proceso con tiempo medio transcurrido (consumo >= 60% o <= 2 días restantes)
-      // Rojo antiguo: Tarea sin solucionar antigua, vencida o desfasada
-      let cardLevel = 'green';
+      // Dynamic Level & Borde (Amarillo: Asignada/En Proceso, Verde: Auditada, Rojo: Vencida):
+      let cardLevel = 'yellow';
       let cornerBadgeClass = '';
       let cornerBadgeContent = '';
       let cornerBadgeTitle = '';
@@ -5568,17 +5576,13 @@ function renderIntegrationsList(filter = activeIntFilter) {
         cornerBadgeClass = 'badge-overdue';
         cornerBadgeContent = '<i data-lucide="x" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
         const overdueDays = Math.abs(diag.daysRemaining);
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · Antigua Sin Solucionar (Desfase de ${overdueDays} d)`;
-      } else if (diag.daysRemaining <= 2 || diag.timeBurnRate >= 60) {
-        cardLevel = 'orange';
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Vencida / Desfase (${overdueDays} d)`;
+      } else {
+        // Tarea asignada en desarrollo / recién asignada -> Borde AMARILLO y de primera
+        cardLevel = 'yellow';
         cornerBadgeClass = 'badge-process';
         cornerBadgeContent = `<span>${consecutiveNum}</span>`;
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · En Desarrollo (Plazo Medio)`;
-      } else {
-        cardLevel = 'green';
-        cornerBadgeClass = 'badge-recent';
-        cornerBadgeContent = `<span>${consecutiveNum}</span>`;
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · Reciente / En Tiempo Óptimo`;
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · Asignada / En Desarrollo`;
       }
 
       // Countdown Badge on Timeline

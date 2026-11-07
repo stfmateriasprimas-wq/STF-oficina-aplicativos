@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STF GROUP · Sistema de Control de Desarrollo y Rendimiento</title>
-  
+
   <!-- Google Fonts: Plus Jakarta Sans (Modern Geometric SaaS Typography) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  
+
   <!-- Chart.js for Smooth Curves & Glow Bars -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=48">
+  <link rel="stylesheet" href="css/styles.css?v=49">
 </head>
+
 <body>
 
   <!-- App Wrapper with subtle background tone -->
   <div class="app-container">
-    
+
     <!-- Floating Minimalist Sidebar (Exact to Design) -->
     <aside class="floating-sidebar">
       <div class="sidebar-logo">
@@ -54,7 +57,8 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="nav-btn logout-btn" id="btnLogout" onclick="logoutApp()" title="Cerrar Sesión (Cambiar de Usuario)">
+        <button class="nav-btn logout-btn" id="btnLogout" onclick="logoutApp()"
+          title="Cerrar Sesión (Cambiar de Usuario)">
           <i data-lucide="log-out"></i>
         </button>
       </div>
@@ -78,7 +82,7 @@
             <i data-lucide="plus"></i>
             <span>Nuevo Aplicativo</span>
           </button>
-          
+
           <button class="pill-btn secondary-btn" id="btnAssignTask">
             <i data-lucide="check-square"></i>
             <span>Asignar Tarea</span>
@@ -90,27 +94,36 @@
           </button>
 
           <!-- Google Sheets Database Live Sync Pill -->
-          <button class="pill-btn secondary-btn sheets-sync-pill" id="btnOpenSheetsModal" onclick="openSheetsModal()" title="Base de Datos Google Sheets">
+          <button class="pill-btn secondary-btn sheets-sync-pill" id="btnOpenSheetsModal" onclick="openSheetsModal()"
+            title="Base de Datos Google Sheets">
             <i data-lucide="table"></i>
             <span id="sheetsStatusLabel">Google Sheets</span>
             <span class="sheets-live-dot offline" id="sheetsLiveDot"></span>
           </button>
 
           <div class="header-notifications-wrapper" style="position: relative;">
-            <button class="icon-circle-btn notification-btn" id="btnNotifications" title="Centro de Notificaciones en Tiempo Real">
+            <button class="icon-circle-btn notification-btn" id="btnNotifications"
+              title="Centro de Notificaciones en Tiempo Real">
               <i data-lucide="bell"></i>
               <span class="notification-badge" id="notificationBadgeCount" style="display: none;">0</span>
             </button>
-            <div class="header-dev-dropdown notif-center-dropdown" id="notificationsDropdown" style="width: 380px; right: 0;">
-              <div class="dropdown-session-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px;">
+            <div class="header-dev-dropdown notif-center-dropdown" id="notificationsDropdown"
+              style="width: 380px; right: 0;">
+              <div class="dropdown-session-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="font-size: 13px; font-weight: 800; color: #1E293B;">🔔 Notificaciones</span>
-                  <span class="badge" id="notifRoleBadge" style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #EEF2FF; color: #4E65FF;">Super Admin</span>
+                  <span class="badge" id="notifRoleBadge"
+                    style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #EEF2FF; color: #4E65FF;">Super
+                    Admin</span>
                 </div>
-                <button type="button" class="text-link-btn" onclick="markAllNotificationsRead()" style="font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none; cursor: pointer; text-decoration: underline;" title="Marcar todas como leídas">Marcar leídas</button>
+                <button type="button" class="text-link-btn" onclick="markAllNotificationsRead()"
+                  style="font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none; cursor: pointer; text-decoration: underline;"
+                  title="Marcar todas como leídas">Marcar leídas</button>
               </div>
               <div class="dev-drop-divider" style="margin: 4px 0 8px 0;"></div>
-              <div id="notificationsListContainer" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px;">
+              <div id="notificationsListContainer"
+                style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px;">
                 <!-- Populated dynamically via JS -->
               </div>
             </div>
@@ -190,7 +203,8 @@
               </div>
               <div class="dev-drop-divider"></div>
               <div class="dev-drop-item" onclick="logoutApp()" style="color: #EF4444;">
-                <div class="global-icon-circle" style="background: rgba(239, 68, 68, 0.1); color: #EF4444;"><i data-lucide="log-out" style="width: 14px; height: 14px;"></i></div>
+                <div class="global-icon-circle" style="background: rgba(239, 68, 68, 0.1); color: #EF4444;"><i
+                    data-lucide="log-out" style="width: 14px; height: 14px;"></i></div>
                 <div>
                   <strong style="color: #EF4444;">Cerrar Sesión</strong>
                   <span>Cambiar de usuario e ir a login</span>
@@ -204,8 +218,10 @@
       <!-- Welcome Banner & Page Title -->
       <section class="welcome-section">
         <div class="welcome-text">
-          <h1 class="welcome-title" id="mainWelcomeTitle">Estado de Desarrollo · <span class="text-gradient">STF GROUP</span></h1>
-          <p class="welcome-subtitle" id="mainWelcomeSubtitle">Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.</p>
+          <h1 class="welcome-title" id="mainWelcomeTitle">Estado de Desarrollo · <span class="text-gradient">STF
+              GROUP</span></h1>
+          <p class="welcome-subtitle" id="mainWelcomeSubtitle">Supervisión en tiempo real del progreso de software,
+            fases de desarrollo y rendimiento de ingeniería.</p>
         </div>
         <div class="quick-stats-pills" id="mainQuickStatsPills">
           <div class="stat-chip">
@@ -245,10 +261,12 @@
                 </div>
                 <div class="chart-badges">
                   <span class="chart-badge-item">
-                    <span class="dot-indicator dot-purple"></span> <span id="overviewRealBadgeLabel">Avance Real STF:</span> <strong id="chartCurrentMetric">76.4%</strong>
+                    <span class="dot-indicator dot-purple"></span> <span id="overviewRealBadgeLabel">Avance Real
+                      STF:</span> <strong id="chartCurrentMetric">76.4%</strong>
                   </span>
                   <span class="chart-badge-item">
-                    <span class="dot-indicator dot-orange"></span> <span id="overviewTargetBadgeLabel">Meta Proyectada:</span> <strong id="chartTargetMetric">70.0%</strong>
+                    <span class="dot-indicator dot-orange"></span> <span id="overviewTargetBadgeLabel">Meta
+                      Proyectada:</span> <strong id="chartTargetMetric">70.0%</strong>
                   </span>
                 </div>
               </div>
@@ -277,7 +295,8 @@
                 <span class="card-period-label" id="capsulePeriodLabel">Periodo: Q4 (Octubre - Diciembre)</span>
               </div>
               <div class="header-right">
-                <button class="icon-bubble interactive-bubble" id="btnQuarterlyGoal" onclick="openQuarterlyGoalModal()" title="Configurar y auditar objetivo trimestral" aria-label="Configurar objetivo trimestral">
+                <button class="icon-bubble interactive-bubble" id="btnQuarterlyGoal" onclick="openQuarterlyGoalModal()"
+                  title="Configurar y auditar objetivo trimestral" aria-label="Configurar objetivo trimestral">
                   <i data-lucide="calendar"></i>
                 </button>
               </div>
@@ -315,10 +334,12 @@
                   </span>
                 </div>
                 <h2 class="card-title">Equipo de Desarrollo</h2>
-                <span class="card-subtext">Haz clic en un programador para filtrar métricas, baraja y sistemas auditados</span>
+                <span class="card-subtext">Haz clic en un programador para filtrar métricas, baraja y sistemas
+                  auditados</span>
               </div>
               <div class="header-right">
-                <button class="pill-btn secondary-btn small-btn" id="btnAddDeveloper" title="Registrar nuevo programador">
+                <button class="pill-btn secondary-btn small-btn" id="btnAddDeveloper"
+                  title="Registrar nuevo programador">
                   <i data-lucide="user-plus"></i>
                   <span>Nuevo Dev</span>
                 </button>
@@ -335,11 +356,13 @@
               <div class="tfs-header-row">
                 <div class="tfs-indicator">
                   <span class="pulse-online-dot"></span>
-                  <span class="tfs-text">Programador Activo: <strong id="activeDevName">Jose Guzman</strong> (<span id="activeDevRole">Senior Fullstack</span>)</span>
+                  <span class="tfs-text">Programador Activo: <strong id="activeDevName">Jose Guzman</strong> (<span
+                      id="activeDevRole">Senior Fullstack</span>)</span>
                   <span class="tfs-score-pill" id="activeDevScore">⭐ 95% Eficiencia</span>
                 </div>
                 <div class="tfs-right">
-                  <button class="pill-btn primary-glow-btn small-glow" id="btnOpenDevDetail" title="Ver ficha técnica, métricas de calidad y score de rendimiento">
+                  <button class="pill-btn primary-glow-btn small-glow" id="btnOpenDevDetail"
+                    title="Ver ficha técnica, métricas de calidad y score de rendimiento">
                     <i data-lucide="external-link"></i>
                     <span>Ver Ficha Dev</span>
                   </button>
@@ -363,12 +386,14 @@
                   </span>
                 </div>
                 <h2 class="card-title">Velocidad de Entrega (Sprints)</h2>
-                <span class="card-subtext">Historias y módulos culminados por semana con seguimiento a la meta comprometida</span>
+                <span class="card-subtext">Historias y módulos culminados por semana con seguimiento a la meta
+                  comprometida</span>
               </div>
               <div class="header-right velocity-header-actions">
                 <div class="velocity-target-legend" id="velocityTargetLegend">
                   <span class="legend-target-line"></span>
-                  <span class="legend-target-label" id="velocityLegendLabel">Meta Benchmark: <strong>25 Mods / Mes</strong></span>
+                  <span class="legend-target-label" id="velocityLegendLabel">Meta Benchmark: <strong>25 Mods /
+                      Mes</strong></span>
                 </div>
 
                 <!-- Selector de Desarrollador para medir su velocidad -->
@@ -402,7 +427,8 @@
                 </div>
 
                 <!-- Botón de Calendario interactivo -->
-                <button type="button" class="velocity-cal-btn" id="btnOpenVelocityCalendar" title="Abrir calendario para señalar fechas">
+                <button type="button" class="velocity-cal-btn" id="btnOpenVelocityCalendar"
+                  title="Abrir calendario para señalar fechas">
                   <i data-lucide="calendar-days"></i>
                   <span id="velocityCalBtnLabel">Calendario</span>
                 </button>
@@ -411,7 +437,8 @@
                 <div class="velocity-active-range-pill" id="velocityActiveRangeBadge" style="display: none;">
                   <i data-lucide="calendar-range"></i>
                   <span id="velocityActiveRangeText">01 Oct - 28 Oct</span>
-                  <button type="button" id="btnClearVelocityRange" class="btn-clear-range" title="Quitar rango personalizado">✕</button>
+                  <button type="button" id="btnClearVelocityRange" class="btn-clear-range"
+                    title="Quitar rango personalizado">✕</button>
                 </div>
               </div>
             </div>
@@ -513,7 +540,7 @@
 
       <!-- VIEW 2: APLICATIVOS Y MÓDULOS (PORTAFOLIO DE SISTEMAS INDUSTRIALES) -->
       <section class="view-panel" id="view-projects">
-        
+
         <!-- Industrial Executive KPI Summary (Cockpit de Efectividad) -->
         <div class="industrial-kpi-bar" id="industrialKpiBar">
           <div class="ind-kpi-card">
@@ -534,7 +561,8 @@
             <div class="ind-kpi-info">
               <span class="ind-kpi-label">Despliegue Productivo</span>
               <h3 class="ind-kpi-value" id="kpiProdSystemsCount">3 en Producción</h3>
-              <span class="ind-kpi-sub"><strong style="color: #059669;">SLA 99.8%</strong> · CALIDAD, TINTORERÍA & COLCHAS</span>
+              <span class="ind-kpi-sub"><strong style="color: #059669;">SLA 99.8%</strong> · CALIDAD, TINTORERÍA &
+                COLCHAS</span>
             </div>
           </div>
 
@@ -575,8 +603,10 @@
           <div class="toolbar-right-actions">
             <div class="project-search-box">
               <i data-lucide="search"></i>
-              <input type="text" id="projectSearchInput" placeholder="Buscar por sistema, código o responsable..." oninput="handleProjectSearch(this.value)">
-              <button type="button" class="btn-clear-search" id="btnClearProjectSearch" onclick="clearProjectSearch()" style="display: none;" title="Limpiar búsqueda">✕</button>
+              <input type="text" id="projectSearchInput" placeholder="Buscar por sistema, código o responsable..."
+                oninput="handleProjectSearch(this.value)">
+              <button type="button" class="btn-clear-search" id="btnClearProjectSearch" onclick="clearProjectSearch()"
+                style="display: none;" title="Limpiar búsqueda">✕</button>
             </div>
 
             <div class="view-switch-btns">
@@ -650,19 +680,22 @@
               <i data-lucide="users"></i>
               <span>Gestión de Usuarios & Desarrolladores (<strong id="devsCountLabel">5</strong>)</span>
             </div>
-            <div class="sheets-live-pill" id="sheetsUsersSyncStatus" title="Anclado en tiempo real con la pestaña 'Usuarios' de Google Sheets">
+            <div class="sheets-live-pill" id="sheetsUsersSyncStatus"
+              title="Anclado en tiempo real con la pestaña 'Usuarios' de Google Sheets">
               <span class="live-dot-pulse"></span>
               <span>Hoja Sheets: <strong>Usuarios</strong> (Sincronizado)</span>
             </div>
           </div>
 
           <div class="devs-toolbar-actions">
-            <button class="pill-btn secondary-btn" id="btnSyncUsersSheets" title="Traer y sincronizar usuarios desde la hoja de Google Sheets">
+            <button class="pill-btn secondary-btn" id="btnSyncUsersSheets"
+              title="Traer y sincronizar usuarios desde la hoja de Google Sheets">
               <i data-lucide="refresh-cw" id="iconSyncUsersSpin"></i>
               <span class="btn-text-desktop">Sincronizar con Sheets</span>
               <span class="btn-text-mobile">Sincronizar</span>
             </button>
-            <button class="pill-btn primary-btn" id="btnOpenNewDevModal" title="Crear un nuevo usuario de desarrollador">
+            <button class="pill-btn primary-btn" id="btnOpenNewDevModal"
+              title="Crear un nuevo usuario de desarrollador">
               <i data-lucide="user-plus"></i>
               <span class="btn-text-desktop">+ Nuevo Desarrollador</span>
               <span class="btn-text-mobile">+ Desarrollador</span>
@@ -678,7 +711,7 @@
 
       <!-- VIEW 4: MÉTRICAS Y QA (ANALYTICS & REPORTES) -->
       <section class="view-panel" id="view-analytics">
-        
+
         <!-- Filter Toolbar for Analytics (Visible to Admin, Contextual for Devs) -->
         <div class="analytics-filter-toolbar">
           <div class="analytics-toolbar-left">
@@ -686,8 +719,10 @@
               <i data-lucide="bar-chart-3"></i>
             </div>
             <div class="analytics-toolbar-meta">
-              <strong class="analytics-toolbar-title" id="analyticsScopeTitle">Dashboard Analítico de Calidad & QA</strong>
-              <span class="analytics-toolbar-subtitle" id="analyticsScopeSubtitle">Visualiza la efectividad, avance y calidad por programador o de toda la compañía</span>
+              <strong class="analytics-toolbar-title" id="analyticsScopeTitle">Dashboard Analítico de Calidad &
+                QA</strong>
+              <span class="analytics-toolbar-subtitle" id="analyticsScopeSubtitle">Visualiza la efectividad, avance y
+                calidad por programador o de toda la compañía</span>
             </div>
           </div>
 
@@ -695,7 +730,8 @@
             <div class="analytics-dev-selector-card" id="analyticsDevFilterWrap">
               <div class="analytics-dev-selector-inner">
                 <i data-lucide="users" class="analytics-select-icon"></i>
-                <select id="analyticsDevFilter" class="analytics-dev-select" aria-label="Filtrar analítica por desarrollador">
+                <select id="analyticsDevFilter" class="analytics-dev-select"
+                  aria-label="Filtrar analítica por desarrollador">
                   <option value="all">Todo el Equipo (Consolidado STF)</option>
                   <option value="dev_jg">Jose Guzman (Dev)</option>
                   <option value="dev_jd">Juan David (Dev)</option>
@@ -706,56 +742,82 @@
                 <i data-lucide="chevron-down" class="analytics-select-arrow"></i>
               </div>
             </div>
-            
-            <div class="status-pill status-ontime" id="analyticsActiveDevBadge" style="display: none; padding: 6px 14px; font-size: 12px; font-weight: 700;">
+
+            <div class="status-pill status-ontime" id="analyticsActiveDevBadge"
+              style="display: none; padding: 6px 14px; font-size: 12px; font-weight: 700;">
               <span>👤 Jose Guzman (4 Sistemas)</span>
             </div>
           </div>
         </div>
 
         <!-- 4 Macro KPI Summary Cards for Executive Analytics -->
-        <div class="analytics-kpi-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
-          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
-            <div style="width: 44px; height: 44px; border-radius: 12px; background: #4E65FF15; color: #4E65FF; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+        <div class="analytics-kpi-summary-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="grid-card"
+            style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div
+              style="width: 44px; height: 44px; border-radius: 12px; background: #4E65FF15; color: #4E65FF; display: flex; align-items: center; justify-content: center; font-size: 20px;">
               <i data-lucide="layers"></i>
             </div>
             <div>
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Sistemas Auditados</span>
-              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiTotalApps">6 Macro-Sistemas</h3>
-              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiScopeHint">Consolidado General</span>
+              <span
+                style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Sistemas
+                Auditados</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiTotalApps">6
+                Macro-Sistemas</h3>
+              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiScopeHint">Consolidado
+                General</span>
             </div>
           </div>
 
-          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
-            <div style="width: 44px; height: 44px; border-radius: 12px; background: #10B98115; color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+          <div class="grid-card"
+            style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div
+              style="width: 44px; height: 44px; border-radius: 12px; background: #10B98115; color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 20px;">
               <i data-lucide="trending-up"></i>
             </div>
             <div>
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Avance Ponderado</span>
-              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiAvgProgress">60.0%</h3>
-              <span style="font-size: 11.5px; color: #4E65FF; font-weight: 600;" id="analyticsKpiProdCount">1 en Producción</span>
+              <span
+                style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Avance
+                Ponderado</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;"
+                id="analyticsKpiAvgProgress">60.0%</h3>
+              <span style="font-size: 11.5px; color: #4E65FF; font-weight: 600;" id="analyticsKpiProdCount">1 en
+                Producción</span>
             </div>
           </div>
 
-          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
-            <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFA04315; color: #FFA043; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+          <div class="grid-card"
+            style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div
+              style="width: 44px; height: 44px; border-radius: 12px; background: #FFA04315; color: #FFA043; display: flex; align-items: center; justify-content: center; font-size: 20px;">
               <i data-lucide="shield-alert"></i>
             </div>
             <div>
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Incidencias QA</span>
-              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiTotalBugs">81 Detectadas</h3>
-              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiResolvedBugs">68 Subsanadas (84%)</span>
+              <span
+                style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Incidencias
+                QA</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiTotalBugs">
+                81 Detectadas</h3>
+              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiResolvedBugs">68
+                Subsanadas (84%)</span>
             </div>
           </div>
 
-          <div class="grid-card" style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
-            <div style="width: 44px; height: 44px; border-radius: 12px; background: #8B5CF615; color: #8B5CF6; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+          <div class="grid-card"
+            style="padding: 16px 18px; display: flex; align-items: center; gap: 14px; background: #FFFFFF; border-radius: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);">
+            <div
+              style="width: 44px; height: 44px; border-radius: 12px; background: #8B5CF615; color: #8B5CF6; display: flex; align-items: center; justify-content: center; font-size: 20px;">
               <i data-lucide="award"></i>
             </div>
             <div>
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Índice de Eficiencia</span>
-              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;" id="analyticsKpiEfficiencyScore">93.5% SLA</h3>
-              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiOnTimeRate">100% en tiempo</span>
+              <span
+                style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Índice
+                de Eficiencia</span>
+              <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 2px 0;"
+                id="analyticsKpiEfficiencyScore">93.5% SLA</h3>
+              <span style="font-size: 11.5px; color: #10B981; font-weight: 600;" id="analyticsKpiOnTimeRate">100% en
+                tiempo</span>
             </div>
           </div>
         </div>
@@ -808,7 +870,8 @@
             <div class="ind-kpi-info">
               <span class="ind-kpi-label">ESTÁNDAR SDLC AUDITADO</span>
               <h3 class="ind-kpi-val" id="settingsKpiSdlcTitle">6 Fases (100%)</h3>
-              <span class="ind-kpi-sub" id="settingsKpiSdlcSub"><strong class="text-emerald">Calidad mín. 95% AQL</strong> · Ciclo oficial STF</span>
+              <span class="ind-kpi-sub" id="settingsKpiSdlcSub"><strong class="text-emerald">Calidad mín. 95%
+                  AQL</strong> · Ciclo oficial STF</span>
             </div>
           </div>
 
@@ -819,7 +882,8 @@
             <div class="ind-kpi-info">
               <span class="ind-kpi-label">SINCRONIZACIÓN CLOUD</span>
               <h3 class="ind-kpi-val" id="settingsKpiCloudTitle">5 Hojas Maestras</h3>
-              <span class="ind-kpi-sub" id="settingsKpiCloudSub"><strong class="text-emerald">Google Sheets Activo</strong> · Bidireccional</span>
+              <span class="ind-kpi-sub" id="settingsKpiCloudSub"><strong class="text-emerald">Google Sheets
+                  Activo</strong> · Bidireccional</span>
             </div>
           </div>
 
@@ -830,7 +894,8 @@
             <div class="ind-kpi-info">
               <span class="ind-kpi-label">BENCHMARK DE INGENIERÍA</span>
               <h3 class="ind-kpi-val" id="settingsKpiSprintGoal">25 Módulos / Mes</h3>
-              <span class="ind-kpi-sub" id="settingsKpiQ4Goal"><strong class="text-indigo">Meta Trimestral: 85%</strong> · 8 Mods/Sem</span>
+              <span class="ind-kpi-sub" id="settingsKpiQ4Goal"><strong class="text-indigo">Meta Trimestral: 85%</strong>
+                · 8 Mods/Sem</span>
             </div>
           </div>
 
@@ -841,14 +906,15 @@
             <div class="ind-kpi-info">
               <span class="ind-kpi-label">MOTOR PREVENTIVO SLA & CORREOS</span>
               <h3 class="ind-kpi-val" id="settingsKpiSlaDays">Alerta a 5 Días</h3>
-              <span class="ind-kpi-sub" id="settingsKpiMailStatus"><strong class="text-emerald">Notificaciones MailApp ON</strong> · Campana activa</span>
+              <span class="ind-kpi-sub" id="settingsKpiMailStatus"><strong class="text-emerald">Notificaciones MailApp
+                  ON</strong> · Campana activa</span>
             </div>
           </div>
         </div>
 
         <!-- Cuadrícula Simétrica 2x2 de los 4 Paneles Ejecutivos -->
         <div class="settings-governance-grid">
-          
+
           <!-- PANEL 1: GOBERNANZA DE FASES & ESTÁNDAR DE AUDITORÍA SDLC -->
           <div class="grid-card settings-quadrant-card">
             <div class="settings-quad-header">
@@ -861,15 +927,18 @@
                     <h2 class="card-title">1. Gobernanza de Fases & Estándar SDLC</h2>
                     <span class="settings-status-chip chip-valid" id="settingsPhasesSumBadge">✓ Suma: 100%</span>
                   </div>
-                  <span class="card-subtext">Ponderación porcentual auditada por etapa para el cálculo automático de avance</span>
+                  <span class="card-subtext">Ponderación porcentual auditada por etapa para el cálculo automático de
+                    avance</span>
                 </div>
               </div>
               <div class="settings-quad-actions">
-                <button type="button" class="settings-mini-btn" onclick="resetOfficialPhaseWeights()" title="Restaurar distribución oficial (10/15/30/25/15/5)">
+                <button type="button" class="settings-mini-btn" onclick="resetOfficialPhaseWeights()"
+                  title="Restaurar distribución oficial (10/15/30/25/15/5)">
                   <i data-lucide="rotate-ccw"></i>
                   <span>Oficial</span>
                 </button>
-                <button type="button" class="settings-mini-btn primary" onclick="saveGovernancePhaseWeights()" title="Aplicar ponderación a los 7 sistemas">
+                <button type="button" class="settings-mini-btn primary" onclick="saveGovernancePhaseWeights()"
+                  title="Aplicar ponderación a los 7 sistemas">
                   <i data-lucide="check"></i>
                   <span>Aplicar</span>
                 </button>
@@ -905,7 +974,8 @@
                     <h2 class="card-title">2. Motor Cloud Google Sheets & Correos</h2>
                     <span class="settings-status-chip chip-online" id="settingsSheetsLiveBadge">● Conectado</span>
                   </div>
-                  <span class="card-subtext">Sincronización en vivo de las 5 hojas maestras y alertas automáticas por correo</span>
+                  <span class="card-subtext">Sincronización en vivo de las 5 hojas maestras y alertas automáticas por
+                    correo</span>
                 </div>
               </div>
               <div class="settings-quad-actions">
@@ -961,11 +1031,13 @@
               </div>
 
               <div class="settings-cloud-btn-row">
-                <button type="button" class="pill-btn primary-glow-btn settings-action-btn" onclick="triggerSettingsFullCloudPush()">
+                <button type="button" class="pill-btn primary-glow-btn settings-action-btn"
+                  onclick="triggerSettingsFullCloudPush()">
                   <i data-lucide="upload-cloud"></i>
                   <span>Sincronizar Todo hacia Sheets</span>
                 </button>
-                <button type="button" class="pill-btn secondary-btn settings-action-btn" onclick="triggerSettingsCloudPull()">
+                <button type="button" class="pill-btn secondary-btn settings-action-btn"
+                  onclick="triggerSettingsCloudPull()">
                   <i data-lucide="download-cloud"></i>
                   <span>Traer Datos de la Nube</span>
                 </button>
@@ -1021,7 +1093,8 @@
                     <h2 class="card-title">3. Metas de Sprints, Benchmarks & Reglas SLA</h2>
                     <span class="settings-status-chip chip-info">Impacto en Vivo</span>
                   </div>
-                  <span class="card-subtext">Umbrales oficiales que alimentan las gráficas de Velocidad, Meta Q4 y alertas de retraso</span>
+                  <span class="card-subtext">Umbrales oficiales que alimentan las gráficas de Velocidad, Meta Q4 y
+                    alertas de retraso</span>
                 </div>
               </div>
               <div class="settings-quad-actions">
@@ -1113,7 +1186,8 @@
                     <h2 class="card-title">4. Bóveda de Respaldo, Exportación & Mantenimiento</h2>
                     <span class="settings-status-chip chip-secure">🛡️ Protegido</span>
                   </div>
-                  <span class="card-subtext">Copias de seguridad JSON, restauración instantánea, exportación a Excel y limpieza de caché</span>
+                  <span class="card-subtext">Copias de seguridad JSON, restauración instantánea, exportación a Excel y
+                    limpieza de caché</span>
                 </div>
               </div>
             </div>
@@ -1149,7 +1223,8 @@
                 </div>
               </button>
 
-              <button type="button" class="vault-action-card indigo-vault" id="btnImportBackupTrigger" onclick="document.getElementById('inputImportBackupJson').click()">
+              <button type="button" class="vault-action-card indigo-vault" id="btnImportBackupTrigger"
+                onclick="document.getElementById('inputImportBackupJson').click()">
                 <div class="vault-card-icon">
                   <i data-lucide="upload"></i>
                 </div>
@@ -1158,9 +1233,11 @@
                   <span>Cargar copia de seguridad desde tu equipo</span>
                 </div>
               </button>
-              <input type="file" id="inputImportBackupJson" accept=".json,application/json" style="display: none;" onchange="handleImportBackupJSON(event)">
+              <input type="file" id="inputImportBackupJson" accept=".json,application/json" style="display: none;"
+                onchange="handleImportBackupJSON(event)">
 
-              <button type="button" class="vault-action-card emerald-vault" id="btnExportPortfolioCsv" onclick="exportPortfolioSystemsCSV()">
+              <button type="button" class="vault-action-card emerald-vault" id="btnExportPortfolioCsv"
+                onclick="exportPortfolioSystemsCSV()">
                 <div class="vault-card-icon">
                   <i data-lucide="file-spreadsheet"></i>
                 </div>
@@ -1184,7 +1261,8 @@
             <!-- Nota de Seguridad Corporativa -->
             <div class="settings-security-footer">
               <i data-lucide="shield-check"></i>
-              <span>Los respaldos incluyen la configuración de fases, historial de calificaciones, usuarios y vínculos de SharePoint/Web de <strong>STF GROUP</strong>.</span>
+              <span>Los respaldos incluyen la configuración de fases, historial de calificaciones, usuarios y vínculos
+                de SharePoint/Web de <strong>STF GROUP</strong>.</span>
             </div>
           </div>
 
@@ -1209,9 +1287,10 @@
                   </span>
                 </div>
                 <h2 class="card-title">Integraciones Operativas & Tiempos en Vivo</h2>
-                <span class="card-subtext">Cálculo dinámico de días transcurridos vs deadline y proyección del avance esperado por desarrollador</span>
+                <span class="card-subtext">Cálculo dinámico de días transcurridos vs deadline y proyección del avance
+                  esperado por desarrollador</span>
               </div>
-              
+
               <div class="header-right integrations-header-actions">
                 <button class="pill-btn primary-glow-btn small-glow" id="btnOpenNewIntegrationModal">
                   <i data-lucide="plus"></i>
@@ -1242,14 +1321,19 @@
               </div>
 
               <div class="int-legend-hints">
-                <span class="friendly-legend-chip badge-hint-done" title="Verde: Tarea más reciente en tiempo óptimo o cumplida/solucionada">
-                  <span class="mini-corner-badge green"><i data-lucide="check" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Verde: Reciente / Cumplida
+                <span class="friendly-legend-chip badge-hint-process"
+                  title="Amarillo: Tarea asignada en desarrollo / recién asignada">
+                  <span class="mini-corner-badge yellow">#</span> Amarillo: Asignada / En Proceso
                 </span>
-                <span class="friendly-legend-chip badge-hint-process" title="Naranja: Plazo medio en desarrollo sin solucionar">
-                  <span class="mini-corner-badge yellow">#</span> Naranja: Plazo Medio
+                <span class="friendly-legend-chip badge-hint-done"
+                  title="Verde: Tarea auditada y calificada exitosamente">
+                  <span class="mini-corner-badge green"><i data-lucide="check"
+                      style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Verde: Auditada / Cumplida
                 </span>
-                <span class="friendly-legend-chip badge-hint-overdue" title="Rojo: Tarea antigua sin solucionar o vencida">
-                  <span class="mini-corner-badge red"><i data-lucide="x" style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Rojo: Antigua / Sin solucionar
+                <span class="friendly-legend-chip badge-hint-overdue"
+                  title="Rojo: Tarea antigua con desfase o vencida">
+                  <span class="mini-corner-badge red"><i data-lucide="x"
+                      style="width: 11px; height: 11px; stroke-width: 3.5;"></i></span> Rojo: En Riesgo / Vencida
                 </span>
               </div>
             </div>
@@ -1269,16 +1353,20 @@
                     <i data-lucide="clipboard-list"></i>
                     <span id="obsSectionBadgeLabel">Bitácora Operativa & Trazabilidad TI</span>
                   </span>
-                  <div class="sheets-live-pill" id="sheetsBitacoraSyncStatus" title="Anclado en tiempo real con la pestaña 'BITACORA_HISTORIAL' de Google Sheets">
+                  <div class="sheets-live-pill" id="sheetsBitacoraSyncStatus"
+                    title="Anclado en tiempo real con la pestaña 'BITACORA_HISTORIAL' de Google Sheets">
                     <span class="live-dot-pulse"></span>
                     <span>Hoja Sheets: <strong>BITACORA_HISTORIAL</strong> (Sincronizado)</span>
                   </div>
                 </div>
                 <h2 class="card-title" id="obsSectionTitle">Observaciones de Tareas en Proceso por Desarrollador</h2>
-                <span class="card-subtext" id="obsSectionSubtitle">Seguimiento cronológico y detallado de notas, bloqueos, avances y acuerdos técnicos ocurridos durante la asignación y desarrollo de cada tarea.</span>
+                <span class="card-subtext" id="obsSectionSubtitle">Seguimiento cronológico y detallado de notas,
+                  bloqueos, avances y acuerdos técnicos ocurridos durante la asignación y desarrollo de cada
+                  tarea.</span>
               </div>
               <div class="header-right task-obs-header-actions">
-                <button type="button" class="pill-btn primary-glow-btn small-glow" id="btnOpenNewObservationModal" onclick="openNewObservationModal()">
+                <button type="button" class="pill-btn primary-glow-btn small-glow" id="btnOpenNewObservationModal"
+                  onclick="openNewObservationModal()">
                   <i data-lucide="message-square-plus"></i>
                   <span>+ Registrar Observación</span>
                 </button>
@@ -1288,27 +1376,32 @@
             <!-- Toolbar de Filtros: Categorías rápidas, Filtro por Programador y Búsqueda en vivo -->
             <div class="task-obs-toolbar">
               <div class="obs-quick-chips-row" id="obsQuickChipsRow">
-                <button type="button" class="obs-quick-chip active" data-obs-type="all" onclick="filterObservationsByType('all')">
+                <button type="button" class="obs-quick-chip active" data-obs-type="all"
+                  onclick="filterObservationsByType('all')">
                   <i data-lucide="layers"></i>
                   <span>Todas</span>
                   <span class="obs-chip-counter" id="obsCountAll">0</span>
                 </button>
-                <button type="button" class="obs-quick-chip chip-bloqueo" data-obs-type="bloqueo" onclick="filterObservationsByType('bloqueo')">
+                <button type="button" class="obs-quick-chip chip-bloqueo" data-obs-type="bloqueo"
+                  onclick="filterObservationsByType('bloqueo')">
                   <i data-lucide="alert-triangle"></i>
                   <span>Bloqueos & Retrasos</span>
                   <span class="obs-chip-counter" id="obsCountBloqueo">0</span>
                 </button>
-                <button type="button" class="obs-quick-chip chip-ajuste" data-obs-type="ajuste" onclick="filterObservationsByType('ajuste')">
+                <button type="button" class="obs-quick-chip chip-ajuste" data-obs-type="ajuste"
+                  onclick="filterObservationsByType('ajuste')">
                   <i data-lucide="wrench"></i>
                   <span>Ajustes Técnicos</span>
                   <span class="obs-chip-counter" id="obsCountAjuste">0</span>
                 </button>
-                <button type="button" class="obs-quick-chip chip-avance" data-obs-type="avance" onclick="filterObservationsByType('avance')">
+                <button type="button" class="obs-quick-chip chip-avance" data-obs-type="avance"
+                  onclick="filterObservationsByType('avance')">
                   <i data-lucide="trending-up"></i>
                   <span>Avances & Hitos</span>
                   <span class="obs-chip-counter" id="obsCountAvance">0</span>
                 </button>
-                <button type="button" class="obs-quick-chip chip-auditoria" data-obs-type="auditoria" onclick="filterObservationsByType('auditoria')">
+                <button type="button" class="obs-quick-chip chip-auditoria" data-obs-type="auditoria"
+                  onclick="filterObservationsByType('auditoria')">
                   <i data-lucide="award"></i>
                   <span>Auditorías & Dictámenes</span>
                   <span class="obs-chip-counter" id="obsCountAuditoria">0</span>
@@ -1326,8 +1419,10 @@
 
                 <div class="obs-search-group">
                   <i data-lucide="search"></i>
-                  <input type="text" id="obsSearchInput" placeholder="Buscar en notas o tareas..." oninput="handleObservationsSearch(this.value)">
-                  <button type="button" class="btn-clear-search" id="btnClearObsSearch" onclick="clearObservationsSearch()" style="display: none;" title="Limpiar búsqueda">✕</button>
+                  <input type="text" id="obsSearchInput" placeholder="Buscar en notas o tareas..."
+                    oninput="handleObservationsSearch(this.value)">
+                  <button type="button" class="btn-clear-search" id="btnClearObsSearch"
+                    onclick="clearObservationsSearch()" style="display: none;" title="Limpiar búsqueda">✕</button>
                 </div>
               </div>
             </div>
@@ -1355,7 +1450,8 @@
             <div class="sys-audit-tags-row">
               <span class="modal-tag" id="modalSysCode" style="margin-bottom: 0;">STF-APP-01</span>
               <span class="sys-audit-cat-pill" id="modalSysCategory">Desarrollo Grupal</span>
-              <a id="modalSysWebLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini" style="display: none;" title="Abrir sistema web en nueva pestaña">
+              <a id="modalSysWebLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-card-web-mini"
+                style="display: none;" title="Abrir sistema web en nueva pestaña">
                 <i data-lucide="globe" style="width: 12px; height: 12px;"></i>
                 <span>Abrir Sistema Web Publicado ↗</span>
               </a>
@@ -1415,7 +1511,8 @@
         <!-- 6 Phases Checklist (2-Column Interactive Grid) -->
         <div class="phases-accordion-section">
           <div class="phases-section-header-bar">
-            <h3 class="section-heading" style="margin-bottom: 0;">Fases de Desarrollo (Marca para recalcular el % en tiempo real):</h3>
+            <h3 class="section-heading" style="margin-bottom: 0;">Fases de Desarrollo (Marca para recalcular el % en
+              tiempo real):</h3>
             <span class="phases-weight-total-pill">Ponderación Total: 100%</span>
           </div>
           <div class="phases-list phases-grid-2col" id="modalPhasesList">
@@ -1504,7 +1601,8 @@
             </div>
             <div>
               <h2 class="modal-title" style="font-size: 20px;">Registrar Nuevo Desarrollador</h2>
-              <p class="modal-subtitle" style="font-size: 13px;">Se anclará en tiempo real con la pestaña <strong>'Usuarios'</strong> de Google Sheets.</p>
+              <p class="modal-subtitle" style="font-size: 13px;">Se anclará en tiempo real con la pestaña
+                <strong>'Usuarios'</strong> de Google Sheets.</p>
             </div>
           </div>
         </div>
@@ -1516,56 +1614,86 @@
       <form id="formCreateDeveloper" onsubmit="handleCreateDeveloperSubmit(event)">
         <div class="modal-body" style="display: flex; flex-direction: column; gap: 18px;">
           <div class="form-group">
-            <label for="newDevName" style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Nombre Completo del Desarrollador *</label>
-            <input type="text" id="newDevName" class="form-input" placeholder="Ej: Carlos Méndez" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
+            <label for="newDevName"
+              style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Nombre
+              Completo del Desarrollador *</label>
+            <input type="text" id="newDevName" class="form-input" placeholder="Ej: Carlos Méndez" required
+              style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="newDevUsername" style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Usuario de Logueo *</label>
-              <input type="text" id="newDevUsername" class="form-input" placeholder="Ej: carlos@mendez" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
+              <label for="newDevUsername"
+                style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Usuario
+                de Logueo *</label>
+              <input type="text" id="newDevUsername" class="form-input" placeholder="Ej: carlos@mendez" required
+                style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
             </div>
             <div class="form-group">
-              <label for="newDevPassword" style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">ID / Contraseña (Sheets) *</label>
-              <input type="text" id="newDevPassword" class="form-input" placeholder="Ej: 1085293812" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
+              <label for="newDevPassword"
+                style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">ID /
+                Contraseña (Sheets) *</label>
+              <input type="text" id="newDevPassword" class="form-input" placeholder="Ej: 1085293812" required
+                style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="newDevRole" style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Rol de Permisos *</label>
-              <select id="newDevRole" class="form-select" required style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px; background: #FFF;">
+              <label for="newDevRole"
+                style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Rol de
+                Permisos *</label>
+              <select id="newDevRole" class="form-select" required
+                style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px; background: #FFF;">
                 <option value="desarrollador">Desarrollador (Ingeniero)</option>
                 <option value="Admin">Administrador (Líder TI)</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="newDevEmail" style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Correo Corporativo</label>
-              <input type="email" id="newDevEmail" class="form-input" placeholder="carlos.mendez@studiof.com.co" style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
+              <label for="newDevEmail"
+                style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Correo
+                Corporativo</label>
+              <input type="email" id="newDevEmail" class="form-input" placeholder="carlos.mendez@studiof.com.co"
+                style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
             </div>
           </div>
 
           <div class="form-group">
-            <label for="newDevRoleTitle" style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Cargo / Especialidad Técnica</label>
-            <input type="text" id="newDevRoleTitle" class="form-input" placeholder="Ej: Desarrollador Backend & Integraciones" style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
+            <label for="newDevRoleTitle"
+              style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Cargo /
+              Especialidad Técnica</label>
+            <input type="text" id="newDevRoleTitle" class="form-input"
+              placeholder="Ej: Desarrollador Backend & Integraciones"
+              style="width: 100%; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border-light); font-size: 13.5px;">
           </div>
 
           <div class="form-group">
-            <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Seleccionar Avatar del Desarrollador</label>
+            <label
+              style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Seleccionar
+              Avatar del Desarrollador</label>
             <div class="avatar-picker-row" id="avatarPickerRow" style="display: flex; gap: 12px; align-items: center;">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120" class="avatar-option selected" onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120" class="avatar-option" onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120"
+                class="avatar-option selected" onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="avatar-option"
+                onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120" class="avatar-option"
+                onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="avatar-option"
+                onclick="selectNewDevAvatar(this, this.src)">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120" class="avatar-option"
+                onclick="selectNewDevAvatar(this, this.src)">
             </div>
-            <input type="hidden" id="newDevAvatarUrl" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120">
+            <input type="hidden" id="newDevAvatarUrl"
+              value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120">
           </div>
 
-          <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px; padding: 13px 16px; display: flex; align-items: flex-start; gap: 12px;">
-            <i data-lucide="cloud" style="width: 18px; height: 18px; color: #16A34A; flex-shrink: 0; margin-top: 2px;"></i>
+          <div
+            style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 14px; padding: 13px 16px; display: flex; align-items: flex-start; gap: 12px;">
+            <i data-lucide="cloud"
+              style="width: 18px; height: 18px; color: #16A34A; flex-shrink: 0; margin-top: 2px;"></i>
             <span style="font-size: 12px; color: #15803D; line-height: 1.5;">
-              <strong>Sincronización Bidireccional:</strong> Al crear este usuario, se guardará en el sistema y se transmitirá inmediatamente a la hoja <strong>'Usuarios'</strong> de tu documento en Google Sheets.
+              <strong>Sincronización Bidireccional:</strong> Al crear este usuario, se guardará en el sistema y se
+              transmitirá inmediatamente a la hoja <strong>'Usuarios'</strong> de tu documento en Google Sheets.
             </span>
           </div>
         </div>
@@ -1587,7 +1715,8 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <h2 class="modal-title">Registrar Nuevo Aplicativo</h2>
-          <p class="modal-subtitle">Añade un nuevo sistema al portafolio de STF GROUP para comenzar a medir su avance.</p>
+          <p class="modal-subtitle">Añade un nuevo sistema al portafolio de STF GROUP para comenzar a medir su avance.
+          </p>
         </div>
         <button class="modal-close-btn" id="btnCloseNewProjModal">
           <i data-lucide="x"></i>
@@ -1598,7 +1727,8 @@
         <div class="modal-body">
           <div class="form-group">
             <label for="newSysName">Nombre del Aplicativo / Sistema *</label>
-            <input type="text" id="newSysName" required placeholder="Ej: App Móvil Fidelización Studio F" class="form-input">
+            <input type="text" id="newSysName" required placeholder="Ej: App Móvil Fidelización Studio F"
+              class="form-input">
           </div>
 
           <div class="form-row">
@@ -1638,22 +1768,27 @@
 
           <div class="form-group">
             <label for="newSysDesc">Objetivo y Alcance del Sistema</label>
-            <textarea id="newSysDesc" rows="2" placeholder="Describe brevemente el propósito de este aplicativo..." class="form-input"></textarea>
+            <textarea id="newSysDesc" rows="2" placeholder="Describe brevemente el propósito de este aplicativo..."
+              class="form-input"></textarea>
           </div>
 
           <div class="form-group">
             <label for="newSysWebUrl">URL del Sistema Web Publicado (Vercel, Dominio STF, etc.)</label>
             <div style="position: relative; display: flex; align-items: center;">
-              <i data-lucide="globe" style="position: absolute; left: 12px; width: 15px; height: 15px; color: #64748B;"></i>
-              <input type="url" id="newSysWebUrl" placeholder="https://stf-mi-aplicativo.vercel.app" class="form-input" style="padding-left: 36px;">
+              <i data-lucide="globe"
+                style="position: absolute; left: 12px; width: 15px; height: 15px; color: #64748B;"></i>
+              <input type="url" id="newSysWebUrl" placeholder="https://stf-mi-aplicativo.vercel.app" class="form-input"
+                style="padding-left: 36px;">
             </div>
           </div>
 
           <!-- Constructor Dinámico de Fases del Ciclo de Vida -->
           <div class="form-group phase-builder-section" style="margin-top: 22px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
               <div>
-                <label style="font-weight: 700; color: #1E293B; font-size: 13.5px; display: flex; align-items: center; gap: 6px; margin: 0;">
+                <label
+                  style="font-weight: 700; color: #1E293B; font-size: 13.5px; display: flex; align-items: center; gap: 6px; margin: 0;">
                   <i data-lucide="layers" style="width: 16px; height: 16px; color: #4F46E5;"></i>
                   Fases Personalizadas de Desarrollo del Aplicativo *
                 </label>
@@ -1670,7 +1805,8 @@
             <!-- Plantillas / Presets rápidos -->
             <div class="phase-presets-bar">
               <span class="preset-label">Plantillas:</span>
-              <button type="button" class="btn-phase-preset active" id="btnPresetStd6" onclick="applyPhasePreset('standard6')">
+              <button type="button" class="btn-phase-preset active" id="btnPresetStd6"
+                onclick="applyPhasePreset('standard6')">
                 <i data-lucide="factory" style="width: 12px; height: 12px;"></i> Estándar Industrial (6)
               </button>
               <button type="button" class="btn-phase-preset" id="btnPresetAgile4" onclick="applyPhasePreset('agile4')">
@@ -1690,12 +1826,14 @@
             </div>
 
             <!-- Barra inferior de acciones del constructor -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
               <button type="button" class="btn-add-phase-row" onclick="addNewProjectPhaseRow()">
                 <i data-lucide="plus" style="width: 13px; height: 13px;"></i>
                 <span>Añadir Otra Fase</span>
               </button>
-              <button type="button" class="btn-auto-balance" onclick="autoBalancePhaseWeights()" title="Distribuye el 100% equitativamente entre todas las fases">
+              <button type="button" class="btn-auto-balance" onclick="autoBalancePhaseWeights()"
+                title="Distribuye el 100% equitativamente entre todas las fases">
                 <i data-lucide="scale" style="width: 13px; height: 13px;"></i>
                 <span>Auto-equilibrar a 100%</span>
               </button>
@@ -1724,7 +1862,8 @@
             <span>Super Admin TI · Asignación Operativa</span>
           </div>
           <h2 class="modal-title" style="margin-top: 6px;">Asignar Integración en Planta</h2>
-          <p class="modal-subtitle">Establece el módulo, fecha límite y ponderación para cálculo 100% automático del ritmo de desarrollo.</p>
+          <p class="modal-subtitle">Establece el módulo, fecha límite y ponderación para cálculo 100% automático del
+            ritmo de desarrollo.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseAssignModal">
           <i data-lucide="x"></i>
@@ -1735,7 +1874,8 @@
         <div class="modal-body">
           <div class="form-group">
             <label for="assignIntName">Nombre de la Integración / Módulo Operativo *</label>
-            <input type="text" id="assignIntName" required placeholder="Ej: Conexión Báscula Digital en Mesa de Corte" class="form-input">
+            <input type="text" id="assignIntName" required placeholder="Ej: Conexión Báscula Digital en Mesa de Corte"
+              class="form-input">
           </div>
 
           <div class="form-row">
@@ -1770,12 +1910,15 @@
               <span class="weight-badge-val" id="assignIntWeightVal">15%</span>
             </div>
             <input type="range" id="assignIntWeight" min="5" max="30" step="5" value="15" class="range-slider">
-            <small class="input-helper">Porcentaje que aportará esta entrega al avance global del sistema al ser auditada por el Jefe.</small>
+            <small class="input-helper">Porcentaje que aportará esta entrega al avance global del sistema al ser
+              auditada por el Jefe.</small>
           </div>
 
           <div class="form-group">
             <label for="assignIntDesc">Objetivo Operativo & Utilidad para Operarios</label>
-            <textarea id="assignIntDesc" rows="3" placeholder="Describe qué problema operativo resuelve en planta y qué requerimientos debe cumplir..." class="form-input"></textarea>
+            <textarea id="assignIntDesc" rows="3"
+              placeholder="Describe qué problema operativo resuelve en planta y qué requerimientos debe cumplir..."
+              class="form-input"></textarea>
           </div>
 
           <!-- Dynamic Live Calculation Estimate Card -->
@@ -1816,7 +1959,8 @@
             <span>Dictamen de Calidad · Super Admin (Jefe TI)</span>
           </div>
           <h2 class="modal-title" id="evalTaskName" style="margin-top: 6px;">Auditoría de Integración</h2>
-          <p class="modal-subtitle">Calificación técnica del Jefe. El sistema calculará matemáticamente los puntos sumados al aplicativo y a la efectividad del desarrollador.</p>
+          <p class="modal-subtitle">Calificación técnica del Jefe. El sistema calculará matemáticamente los puntos
+            sumados al aplicativo y a la efectividad del desarrollador.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseEvalModal">
           <i data-lucide="x"></i>
@@ -1833,7 +1977,7 @@
               <span id="evalAppName" class="eval-app-tag">COLCHAS</span>
             </div>
           </div>
-          
+
           <div class="eval-time-verdict" id="evalTimeVerdict">
             <!-- Populated via JS: e.g. "✓ Entregada a tiempo (1 día antes)" or "⚠️ Entregada con retraso" -->
           </div>
@@ -1858,7 +2002,8 @@
               <strong class="eval-param-score" id="valScoreUsability">92%</strong>
             </div>
             <input type="range" id="sliderUsability" min="0" max="100" value="92" class="range-slider">
-            <span class="eval-param-hint">Facilidad de interfaz en planta de producción, rapidez y feedback claro.</span>
+            <span class="eval-param-hint">Facilidad de interfaz en planta de producción, rapidez y feedback
+              claro.</span>
           </div>
 
           <div class="eval-slider-row">
@@ -1897,7 +2042,8 @@
         <!-- Super Admin Notes -->
         <div class="form-group" style="margin-top: 18px;">
           <label for="evalNotes">Observaciones & Dictamen Oficial del Jefe de Desarrollo:</label>
-          <textarea id="evalNotes" rows="3" class="form-input" placeholder="Ej: Implementación aprobada con felicitaciones. Se validó pesaje en vivo con 40 rollos de tela sin error."></textarea>
+          <textarea id="evalNotes" rows="3" class="form-input"
+            placeholder="Ej: Implementación aprobada con felicitaciones. Se validó pesaje en vivo con 40 rollos de tela sin error."></textarea>
         </div>
       </div>
 
@@ -1917,10 +2063,12 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-tag" style="background: rgba(77, 109, 255, 0.12); color: var(--primary-blue);">
-            <i data-lucide="calendar" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i> Planificación Estratégica TI
+            <i data-lucide="calendar" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i>
+            Planificación Estratégica TI
           </span>
           <h2 class="modal-title" style="margin-top: 4px;">Objetivo de Entrega Trimestral</h2>
-          <p class="modal-subtitle">Configura las metas de entrega del trimestre, ajusta el periodo y gestiona la medición del avance global.</p>
+          <p class="modal-subtitle">Configura las metas de entrega del trimestre, ajusta el periodo y gestiona la
+            medición del avance global.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseQuarterlyModal" onclick="closeQuarterlyGoalModal()">
           <i data-lucide="x"></i>
@@ -1940,19 +2088,25 @@
           </div>
           <div class="summary-box">
             <span class="s-label">Fase Dominante</span>
-            <span id="modalQDominantPhase" class="status-pill status-ontime" style="font-size: 11px; white-space: normal; text-align: center;">Backend & Integraciones</span>
+            <span id="modalQDominantPhase" class="status-pill status-ontime"
+              style="font-size: 11px; white-space: normal; text-align: center;">Backend & Integraciones</span>
           </div>
         </div>
 
         <!-- Formulario de Configuración del Periodo y Meta -->
-        <div class="quarterly-form-card" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; margin-bottom: 20px;">
-          <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-            <i data-lucide="sliders" style="width: 15px; height: 15px; color: var(--primary-blue);"></i> Parámetros de Medición del Trimestre
+        <div class="quarterly-form-card"
+          style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; margin-bottom: 20px;">
+          <h4
+            style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="sliders" style="width: 15px; height: 15px; color: var(--primary-blue);"></i> Parámetros de
+            Medición del Trimestre
           </h4>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
             <div class="form-group">
-              <label for="inputQuarterPeriod" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Periodo / Trimestre:</label>
+              <label for="inputQuarterPeriod"
+                style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Periodo
+                / Trimestre:</label>
               <select id="inputQuarterPeriod" class="form-input" onchange="toggleCustomPeriodInput(this.value)">
                 <option value="Q4 (Octubre - Diciembre)">Q4 (Octubre - Diciembre) - Periodo Activo</option>
                 <option value="Q1 (Enero - Marzo)">Q1 (Enero - Marzo)</option>
@@ -1960,20 +2114,27 @@
                 <option value="Q3 (Julio - Septiembre)">Q3 (Julio - Septiembre)</option>
                 <option value="custom">Periodo Personalizado...</option>
               </select>
-              <input type="text" id="inputCustomPeriod" class="form-input" placeholder="Ej: Especial Cierre Año 2026" style="display: none; margin-top: 6px;">
+              <input type="text" id="inputCustomPeriod" class="form-input" placeholder="Ej: Especial Cierre Año 2026"
+                style="display: none; margin-top: 6px;">
             </div>
 
             <div class="form-group">
-              <label for="inputTargetPercentage" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Meta Proyectada (% Hito Naranja):</label>
+              <label for="inputTargetPercentage"
+                style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Meta
+                Proyectada (% Hito Naranja):</label>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="number" id="inputTargetPercentage" class="form-input" min="10" max="100" step="5" value="70">
+                <input type="number" id="inputTargetPercentage" class="form-input" min="10" max="100" step="5"
+                  value="70">
                 <span style="font-weight: 700; color: var(--text-muted); font-size: 14px;">%</span>
               </div>
-              <small style="font-size: 11px; color: var(--text-muted);">Posiciona la cápsula naranja de meta en la barra.</small>
+              <small style="font-size: 11px; color: var(--text-muted);">Posiciona la cápsula naranja de meta en la
+                barra.</small>
             </div>
 
             <div class="form-group">
-              <label for="inputComplianceStatus" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Estado de Cumplimiento:</label>
+              <label for="inputComplianceStatus"
+                style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Estado
+                de Cumplimiento:</label>
               <select id="inputComplianceStatus" class="form-input">
                 <option value="En Tiempo (+4d)">🟢 En Tiempo (+4 días)</option>
                 <option value="En Tiempo (Al día)">🟢 En Tiempo (Al día)</option>
@@ -1984,22 +2145,30 @@
             </div>
 
             <div class="form-group">
-              <label for="inputQuarterDeadline" style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Fecha Límite Trimestral:</label>
+              <label for="inputQuarterDeadline"
+                style="font-size: 12px; font-weight: 600; color: var(--text-body); margin-bottom: 4px; display: block;">Fecha
+                Límite Trimestral:</label>
               <input type="date" id="inputQuarterDeadline" class="form-input" value="2026-12-31">
             </div>
           </div>
         </div>
 
         <!-- Explicación & Auditoría Directa de Medición -->
-        <div class="measurement-audit-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
-          <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-            <i data-lucide="activity" style="width: 15px; height: 15px; color: var(--accent-green);"></i> ¿Cómo agregar o cambiar los datos de medición?
+        <div class="measurement-audit-card"
+          style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
+          <h4
+            style="font-size: 13.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="activity" style="width: 15px; height: 15px; color: var(--accent-green);"></i> ¿Cómo agregar
+            o cambiar los datos de medición?
           </h4>
           <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
-            Los datos de medición se calculan automáticamente a partir de las <strong>fases de desarrollo</strong> de cada aplicativo. Haz clic en <strong>"Auditar Fases"</strong> en cualquiera de los sistemas para marcar módulos completados y ver cómo el avance trimestral sube en tiempo real:
+            Los datos de medición se calculan automáticamente a partir de las <strong>fases de desarrollo</strong> de
+            cada aplicativo. Haz clic en <strong>"Auditar Fases"</strong> en cualquiera de los sistemas para marcar
+            módulos completados y ver cómo el avance trimestral sube en tiempo real:
           </p>
 
-          <div class="quick-apps-audit-list" id="modalQuarterlyAppsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+          <div class="quick-apps-audit-list" id="modalQuarterlyAppsList"
+            style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
             <!-- Renderizado dinámico de los aplicativos con barra y botón auditar -->
           </div>
         </div>
@@ -2021,10 +2190,12 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-tag" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
-            <i data-lucide="database" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i> Base de Datos en Tiempo Real
+            <i data-lucide="database" style="width: 12px; height: 12px; margin-right: 4px; display: inline-block;"></i>
+            Base de Datos en Tiempo Real
           </span>
           <h2 class="modal-title" style="margin-top: 4px;">Sincronización con Google Sheets</h2>
-          <p class="modal-subtitle">Conecta un documento Sheets para almacenar automáticamente auditorías, cambios de fases y bitácora del sistema.</p>
+          <p class="modal-subtitle">Conecta un documento Sheets para almacenar automáticamente auditorías, cambios de
+            fases y bitácora del sistema.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseSheetsModal" onclick="closeSheetsModal()">
           <i data-lucide="x"></i>
@@ -2036,37 +2207,49 @@
         <div class="sys-summary-row" style="margin-bottom: 0;">
           <div class="summary-box">
             <span class="s-label">Estado de la Nube</span>
-            <span id="modalSheetsStatusBadge" class="status-pill status-risk" style="margin-top: 4px; display: inline-block;">⚪ Desconectado</span>
+            <span id="modalSheetsStatusBadge" class="status-pill status-risk"
+              style="margin-top: 4px; display: inline-block;">⚪ Desconectado</span>
           </div>
           <div class="summary-box">
             <span class="s-label">Última Sincronización</span>
-            <strong id="modalSheetsLastSync" style="font-size: 13.5px; color: var(--text-dark); margin-top: 4px; display: block;">Sin sincronizaciones</strong>
+            <strong id="modalSheetsLastSync"
+              style="font-size: 13.5px; color: var(--text-dark); margin-top: 4px; display: block;">Sin
+              sincronizaciones</strong>
           </div>
           <div class="summary-box">
             <span class="s-label">Tablas Gestionadas</span>
-            <span class="status-pill status-ontime" style="font-size: 11px; margin-top: 4px; display: inline-block;">5 Hojas Automáticas</span>
+            <span class="status-pill status-ontime" style="font-size: 11px; margin-top: 4px; display: inline-block;">5
+              Hojas Automáticas</span>
           </div>
         </div>
 
         <!-- Formulario de Configuración URL Web App -->
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
-          <label for="inputSheetsWebAppUrl" style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <label for="inputSheetsWebAppUrl"
+            style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
             <span>URL de la Aplicación Web (Google Apps Script):</span>
             <span style="font-size: 11px; font-weight: 500; color: #64748B;">Método Web App seguro</span>
           </label>
           <div style="display: flex; gap: 8px;">
-            <input type="url" id="inputSheetsWebAppUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="flex: 1; font-family: monospace; font-size: 12px;">
-            <button type="button" class="pill-btn primary-glow-btn" id="btnSaveSheetsUrl" onclick="saveSheetsUrl()" style="white-space: nowrap;">
+            <input type="url" id="inputSheetsWebAppUrl" class="form-input"
+              placeholder="https://script.google.com/macros/s/.../exec"
+              style="flex: 1; font-family: monospace; font-size: 12px;">
+            <button type="button" class="pill-btn primary-glow-btn" id="btnSaveSheetsUrl" onclick="saveSheetsUrl()"
+              style="white-space: nowrap;">
               <i data-lucide="check"></i>
               <span>Guardar</span>
             </button>
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
-            <button type="button" class="pill-btn secondary-btn" id="btnTestSheetsConnection" onclick="testSheetsConnection()" style="font-size: 12px; padding: 6px 12px;">
+          <div
+            style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+            <button type="button" class="pill-btn secondary-btn" id="btnTestSheetsConnection"
+              onclick="testSheetsConnection()" style="font-size: 12px; padding: 6px 12px;">
               <i data-lucide="wifi"></i>
               <span>Probar Conexión</span>
             </button>
-            <button type="button" class="pill-btn secondary-btn" id="btnSyncFullDatabase" onclick="triggerFullSheetsSync()" style="font-size: 12px; padding: 6px 12px; background: #ECFDF5; color: #047857; border-color: #A7F3D0;">
+            <button type="button" class="pill-btn secondary-btn" id="btnSyncFullDatabase"
+              onclick="triggerFullSheetsSync()"
+              style="font-size: 12px; padding: 6px 12px; background: #ECFDF5; color: #047857; border-color: #A7F3D0;">
               <i data-lucide="refresh-cw"></i>
               <span>Sincronizar Portafolio Completo Ahora</span>
             </button>
@@ -2076,31 +2259,42 @@
         <!-- Instrucciones Desplegables de Instalación en 3 Pasos -->
         <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-            <h4 style="font-size: 13px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px;">
-              <i data-lucide="book-open" style="width: 15px; height: 15px; color: var(--primary-blue);"></i> Guía Rápida para Conectar tu Google Sheet
+            <h4
+              style="font-size: 13px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="book-open" style="width: 15px; height: 15px; color: var(--primary-blue);"></i> Guía Rápida
+              para Conectar tu Google Sheet
             </h4>
-            <button type="button" class="pill-btn secondary-btn" onclick="copyAppsScriptCode()" style="font-size: 11px; padding: 4px 10px;" title="Copiar código Apps Script al portapapeles">
+            <button type="button" class="pill-btn secondary-btn" onclick="copyAppsScriptCode()"
+              style="font-size: 11px; padding: 4px 10px;" title="Copiar código Apps Script al portapapeles">
               <i data-lucide="copy"></i>
               <span id="btnCopyScriptText">Copiar Código Apps Script</span>
             </button>
           </div>
 
-          <ol style="font-size: 12px; color: var(--text-body); line-height: 1.6; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
-            <li>Crea una hoja en blanco en <a href="https://sheets.new" target="_blank" style="color: var(--primary-blue); font-weight: 600; text-decoration: underline;">sheets.new</a> (ej: <em>"STF GROUP - Control Aplicativos"</em>).</li>
-            <li>En la hoja ve al menú <strong>Extensiones > Apps Script</strong>, pega el código que copiaste y guárdalo.</li>
-            <li>Haz clic en <strong>Implementar > Nueva implementación > Aplicación web</strong>. Selecciona acceso: <em>"Cualquier usuario"</em>, implementa y copia la URL resultante aquí.</li>
+          <ol
+            style="font-size: 12px; color: var(--text-body); line-height: 1.6; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+            <li>Crea una hoja en blanco en <a href="https://sheets.new" target="_blank"
+                style="color: var(--primary-blue); font-weight: 600; text-decoration: underline;">sheets.new</a> (ej:
+              <em>"STF GROUP - Control Aplicativos"</em>).</li>
+            <li>En la hoja ve al menú <strong>Extensiones > Apps Script</strong>, pega el código que copiaste y
+              guárdalo.</li>
+            <li>Haz clic en <strong>Implementar > Nueva implementación > Aplicación web</strong>. Selecciona acceso:
+              <em>"Cualquier usuario"</em>, implementa y copia la URL resultante aquí.</li>
           </ol>
         </div>
 
         <!-- Bitácora de Cambios Recientes (Live Feed) -->
         <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <h4 style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px;">
-              <i data-lucide="history" style="width: 14px; height: 14px; color: #64748B;"></i> Últimas Operaciones Registradas
+            <h4
+              style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="history" style="width: 14px; height: 14px; color: #64748B;"></i> Últimas Operaciones
+              Registradas
             </h4>
             <span style="font-size: 11px; color: #94A3B8;">Historial en vivo</span>
           </div>
-          <div id="sheetsRecentLogsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;">
+          <div id="sheetsRecentLogsContainer"
+            style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;">
             <!-- Renderizado dinámico de logs -->
           </div>
         </div>
@@ -2118,10 +2312,13 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-tag" style="background: rgba(79, 70, 229, 0.1); color: #4338CA;">
-            <i data-lucide="file-check" style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Emisión Oficial STF GROUP
+            <i data-lucide="file-check"
+              style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Emisión Oficial STF
+            GROUP
           </span>
           <h2 class="modal-title" style="margin-top: 4px;">Reporte Ejecutivo de Rendimiento & Auditoría TI</h2>
-          <p class="modal-subtitle">Genera un dictamen formal en formato PDF con métricas auditadas de desempeño y efectividad, marca de agua corporativa y firma digital certificada.</p>
+          <p class="modal-subtitle">Genera un dictamen formal en formato PDF con métricas auditadas de desempeño y
+            efectividad, marca de agua corporativa y firma digital certificada.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseExecutiveReportModal" onclick="closeExecutiveReportModal()">
           <i data-lucide="x"></i>
@@ -2136,10 +2333,14 @@
               <i data-lucide="calendar"></i> 1. Período y Rango de Fechas
             </h4>
             <div class="report-quick-periods">
-              <button type="button" class="report-period-chip active" data-period="30d" onclick="setReportPeriodPreset('30d')">Últimos 30 días</button>
-              <button type="button" class="report-period-chip" data-period="month" onclick="setReportPeriodPreset('month')">Este Mes</button>
-              <button type="button" class="report-period-chip" data-period="q4" onclick="setReportPeriodPreset('q4')">Trimestre Q4</button>
-              <button type="button" class="report-period-chip" data-period="all" onclick="setReportPeriodPreset('all')">Histórico</button>
+              <button type="button" class="report-period-chip active" data-period="30d"
+                onclick="setReportPeriodPreset('30d')">Últimos 30 días</button>
+              <button type="button" class="report-period-chip" data-period="month"
+                onclick="setReportPeriodPreset('month')">Este Mes</button>
+              <button type="button" class="report-period-chip" data-period="q4"
+                onclick="setReportPeriodPreset('q4')">Trimestre Q4</button>
+              <button type="button" class="report-period-chip" data-period="all"
+                onclick="setReportPeriodPreset('all')">Histórico</button>
             </div>
             <div class="report-date-inputs-row">
               <div class="report-input-group">
@@ -2202,34 +2403,40 @@
               <span id="repSigStatusBadge" class="sig-status-badge badge-empty">Sin firma</span>
             </div>
             <p class="signature-instruction-text">
-              Dibuja tu firma en el recuadro con mouse o dispositivo táctil. Pulsa <strong>Guardar Firma Fija</strong> para almacenarla en el sistema y que quede predeterminada en todos los reportes.
+              Dibuja tu firma en el recuadro con mouse o dispositivo táctil. Pulsa <strong>Guardar Firma Fija</strong>
+              para almacenarla en el sistema y que quede predeterminada en todos los reportes.
             </p>
-            
+
             <div class="signature-pad-container">
               <canvas id="repSignatureCanvas" width="340" height="95"></canvas>
             </div>
 
             <div class="signature-actions-row">
-              <button type="button" class="sig-btn sig-btn-clear" onclick="clearReportSignature()" title="Borrar trazo actual">
+              <button type="button" class="sig-btn sig-btn-clear" onclick="clearReportSignature()"
+                title="Borrar trazo actual">
                 <i data-lucide="trash-2"></i> Limpiar
               </button>
-              <button type="button" class="sig-btn sig-btn-save" onclick="saveFixedReportSignature()" title="Guardar firma fija en el navegador">
+              <button type="button" class="sig-btn sig-btn-save" onclick="saveFixedReportSignature()"
+                title="Guardar firma fija en el navegador">
                 <i data-lucide="bookmark-check"></i> Guardar Firma Fija
               </button>
               <label class="sig-btn sig-btn-upload" title="Subir imagen de firma digital">
                 <i data-lucide="upload"></i> Subir
-                <input type="file" id="repSignatureFileInput" accept="image/*" style="display: none;" onchange="handleSignatureFileUpload(event)">
+                <input type="file" id="repSignatureFileInput" accept="image/*" style="display: none;"
+                  onchange="handleSignatureFileUpload(event)">
               </label>
             </div>
 
             <div class="signature-signer-meta">
               <div class="report-input-group" style="margin-bottom: 6px;">
                 <label for="repSignerName">Nombre del Firmante:</label>
-                <input type="text" id="repSignerName" value="Ing. Edwin Díaz" class="form-input" oninput="updateExecutiveReportPreview()">
+                <input type="text" id="repSignerName" value="Ing. Edwin Díaz" class="form-input"
+                  oninput="updateExecutiveReportPreview()">
               </div>
               <div class="report-input-group">
                 <label for="repSignerRole">Cargo / Dependencia:</label>
-                <input type="text" id="repSignerRole" value="Director de TI & Proyectos Tecnológicos · STF GROUP S.A." class="form-input" oninput="updateExecutiveReportPreview()">
+                <input type="text" id="repSignerRole" value="Director de TI & Proyectos Tecnológicos · STF GROUP S.A."
+                  class="form-input" oninput="updateExecutiveReportPreview()">
               </div>
             </div>
           </div>
@@ -2262,7 +2469,8 @@
         <div class="report-footer-left">
           <span style="font-size: 12px; color: #64748B; display: flex; align-items: center; gap: 6px;">
             <i data-lucide="shield-check" style="width: 15px; height: 15px; color: #10B981;"></i>
-            <span>Documento oficial con verificación de integridad, marca de agua corporativa y firma electrónica.</span>
+            <span>Documento oficial con verificación de integridad, marca de agua corporativa y firma
+              electrónica.</span>
           </span>
         </div>
         <div class="report-footer-right">
@@ -2271,7 +2479,8 @@
             <i data-lucide="printer"></i>
             <span>Imprimir / Guardar como PDF</span>
           </button>
-          <button type="button" class="pill-btn primary-glow-btn" id="btnDownloadReportPdf" onclick="downloadExecutiveReportDoc()">
+          <button type="button" class="pill-btn primary-glow-btn" id="btnDownloadReportPdf"
+            onclick="downloadExecutiveReportDoc()">
             <i data-lucide="download"></i>
             <span>Descargar Reporte en PDF Oficial</span>
           </button>
@@ -2286,10 +2495,12 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-tag" style="background: rgba(78, 101, 255, 0.1); color: #4E65FF;">
-            <i data-lucide="calendar-check" style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Auditoría Ágil & Sprints
+            <i data-lucide="calendar-check"
+              style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Auditoría Ágil & Sprints
           </span>
           <h2 class="modal-title" style="margin-top: 4px;">Calendario de Medición de Velocidad</h2>
-          <p class="modal-subtitle">Señala directamente las fechas en el calendario para calcular la velocidad de entregas, horas y cumplimiento del desarrollador.</p>
+          <p class="modal-subtitle">Señala directamente las fechas en el calendario para calcular la velocidad de
+            entregas, horas y cumplimiento del desarrollador.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseVelocityCalendarModal" onclick="closeVelocityCalendarModal()">
           <i data-lucide="x"></i>
@@ -2315,9 +2526,12 @@
           <div class="vcal-presets-chips">
             <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('15d')">Últimos 15 días</button>
             <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('30d')">Últimos 30 días</button>
-            <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('month')">Este Mes (Octubre)</button>
-            <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('prev_month')">Mes Anterior (Septiembre)</button>
-            <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('8w')">Últimas 8 semanas</button>
+            <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('month')">Este Mes
+              (Octubre)</button>
+            <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('prev_month')">Mes Anterior
+              (Septiembre)</button>
+            <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('8w')">Últimas 8
+              semanas</button>
             <button type="button" class="vcal-preset-chip" onclick="applyVelocityPreset('90d')">Últimos 3 meses</button>
           </div>
         </div>
@@ -2326,11 +2540,13 @@
         <div class="vcal-visual-container">
           <!-- Cabecera de navegación de mes -->
           <div class="vcal-month-header">
-            <button type="button" class="vcal-nav-btn" id="btnVCalPrevMonth" onclick="navigateVelocityCalendar(-1)" title="Mes anterior">
+            <button type="button" class="vcal-nav-btn" id="btnVCalPrevMonth" onclick="navigateVelocityCalendar(-1)"
+              title="Mes anterior">
               <i data-lucide="chevron-left"></i>
             </button>
             <span class="vcal-month-label" id="vcalMonthLabel">Octubre 2026</span>
-            <button type="button" class="vcal-nav-btn" id="btnVCalNextMonth" onclick="navigateVelocityCalendar(1)" title="Mes siguiente">
+            <button type="button" class="vcal-nav-btn" id="btnVCalNextMonth" onclick="navigateVelocityCalendar(1)"
+              title="Mes siguiente">
               <i data-lucide="chevron-right"></i>
             </button>
           </div>
@@ -2384,7 +2600,8 @@
           <i data-lucide="rotate-ccw"></i>
           <span>Restablecer a Por Mes</span>
         </button>
-        <button type="button" class="pill-btn primary-glow-btn" id="btnApplyVelocityRange" onclick="confirmVelocityDateRange()">
+        <button type="button" class="pill-btn primary-glow-btn" id="btnApplyVelocityRange"
+          onclick="confirmVelocityDateRange()">
           <i data-lucide="check"></i>
           <span>Aplicar Fechas a Velocidad</span>
         </button>
@@ -2402,7 +2619,8 @@
             <span>Bitácora Operativa · Registro en Vivo</span>
           </div>
           <h2 class="modal-title" style="margin-top: 6px;">Registrar Observación de Tarea</h2>
-          <p class="modal-subtitle">Documenta hallazgos, cuellos de botella, acuerdos técnicos o avances clave generados durante el desarrollo de la tarea.</p>
+          <p class="modal-subtitle">Documenta hallazgos, cuellos de botella, acuerdos técnicos o avances clave generados
+            durante el desarrollo de la tarea.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseNewObsModal" onclick="closeNewObservationModal()">
           <i data-lucide="x"></i>
@@ -2440,7 +2658,8 @@
 
           <div class="form-group">
             <label for="newObsText">Detalle de la Observación & Acuerdos *</label>
-            <textarea id="newObsText" rows="4" required class="form-input" placeholder="Describe claramente qué ocurrió durante el desarrollo, qué se ajustó, si existió algún bloqueo con operarios o APIs de planta, o qué solución técnica se aplicó..."></textarea>
+            <textarea id="newObsText" rows="4" required class="form-input"
+              placeholder="Describe claramente qué ocurrió durante el desarrollo, qué se ajustó, si existió algún bloqueo con operarios o APIs de planta, o qué solución técnica se aplicó..."></textarea>
           </div>
 
           <div class="obs-modal-preview-box" id="obsModalDevPreview">
@@ -2465,10 +2684,12 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-tag" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
-            <i data-lucide="globe" style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i> Sistemas Web & Despliegues Vercel
+            <i data-lucide="globe" style="width: 13px; height: 13px; margin-right: 4px; display: inline-block;"></i>
+            Sistemas Web & Despliegues Vercel
           </span>
           <h2 class="modal-title" id="devWebModalTitle" style="margin-top: 4px;">Sistemas Web a Cargo</h2>
-          <p class="modal-subtitle" id="devWebModalSubtitle">Enlaces en vivo configurados en la pestaña SISTEMAS_WEB de Google Sheets.</p>
+          <p class="modal-subtitle" id="devWebModalSubtitle">Enlaces en vivo configurados en la pestaña SISTEMAS_WEB de
+            Google Sheets.</p>
         </div>
         <button class="modal-close-btn" id="btnCloseDevWebModal" onclick="closeDeveloperWebSystemsModal()">
           <i data-lucide="x"></i>
@@ -2501,9 +2722,10 @@
 
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=39"></script>
-  <script src="js/sheets-sync.js?v=39"></script>
-  <script src="js/app.js?v=39"></script>
+  <script src="js/data.js?v=40"></script>
+  <script src="js/sheets-sync.js?v=40"></script>
+  <script src="js/app.js?v=40"></script>
   <script src="js/mobile-frame.js?v=5"></script>
 </body>
+
 </html>
