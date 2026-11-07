@@ -105,7 +105,7 @@ function removePortafolioSistemasSheet() {
         ss.deleteSheet(sheet);
         SpreadsheetApp.getActiveSpreadsheet().toast('🗑️ Pestaña PORTAFOLIO_SISTEMAS eliminada con éxito.', 'STF GROUP TI', 6);
       } catch (e) {
-        try { sheet.hideSheet(); } catch (e2) {}
+        try { sheet.hideSheet(); } catch (e2) { }
       }
     } else {
       SpreadsheetApp.getActiveSpreadsheet().toast('⚠️ No se puede eliminar la única pestaña de la hoja.', 'STF GROUP TI', 6);
@@ -309,7 +309,7 @@ function setupSistemasWebSheet(ss, forceClean) {
     if (lastR > officialWebRows.length + 1) {
       try {
         s.deleteRows(officialWebRows.length + 2, lastR - (officialWebRows.length + 1));
-      } catch (e) {}
+      } catch (e) { }
     }
   }
   s.getRange(2, 1, officialWebRows.length, 4).setValues(officialWebRows);
@@ -381,7 +381,7 @@ function setupTareasSheet(ss) {
       var evalQual = "Pendiente de Auditoría";
       if (normState === "Auditada") {
         if (/0\.(\d{2,3})%/.test(rawEval)) {
-          evalQual = rawEval.replace(/0\.(\d{2,3})%/, function(m, p) {
+          evalQual = rawEval.replace(/0\.(\d{2,3})%/, function (m, p) {
             return (parseFloat("0." + p) * 100).toFixed(1) + "%";
           });
         } else if (rawEval && rawEval !== "Pendiente de Auditoría") {
@@ -549,7 +549,7 @@ function cleanAndOrderSheets(ss) {
     try {
       ss.deleteSheet(portSheet);
     } catch (e) {
-      try { portSheet.hideSheet(); } catch (e2) {}
+      try { portSheet.hideSheet(); } catch (e2) { }
     }
   }
 
@@ -573,7 +573,7 @@ function cleanAndOrderSheets(ss) {
     "Ingresos_Cambios",
     "Tareas_Integraciones"
   ];
-  obsoleteSheets.forEach(function(name) {
+  obsoleteSheets.forEach(function (name) {
     var obs = ss.getSheetByName(name);
     if (obs && orderedTabs.indexOf(name) === -1) {
       try {
@@ -583,7 +583,7 @@ function cleanAndOrderSheets(ss) {
           obs.hideSheet();
         }
       } catch (e) {
-        try { obs.hideSheet(); } catch (e2) {}
+        try { obs.hideSheet(); } catch (e2) { }
       }
     }
   });
@@ -709,7 +709,7 @@ function doGet(e) {
         var deadline = formatDateToYMD(hasIdCol ? row[5] : row[4]);
         var status = String(hasIdCol ? row[6] : row[5] || "").trim();
         var rawEval = String(hasIdCol ? row[7] : row[6] || "").trim();
-        var evaluation = rawEval.replace(/0\.(\d{2,3})%/, function(match, p1) {
+        var evaluation = rawEval.replace(/0\.(\d{2,3})%/, function (match, p1) {
           return (parseFloat("0." + p1) * 100).toFixed(1) + "%";
         });
         var rawRegDate = hasIdCol ? row[8] : row[7];
@@ -964,7 +964,7 @@ function doPost(e) {
           var rApp = String(tData[r2][1] || "").toLowerCase();
           var rDev = String(tData[r2][2] || "").toLowerCase();
           if ((rDev.indexOf(targetDev) !== -1 || targetDev.indexOf(rDev) !== -1) &&
-              (rApp.indexOf(targetAppName) !== -1 || targetAppName.indexOf(rApp) !== -1)) {
+            (rApp.indexOf(targetAppName) !== -1 || targetAppName.indexOf(rApp) !== -1)) {
             foundRow = r2 + 1;
             break;
           }
@@ -1131,7 +1131,7 @@ function doPost(e) {
     // Sincroniza SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, USUARIOS y BITACORA_HISTORIAL
     // =========================================================================
     if (action === "sync_full_state") {
-      var apps = (payload.applications || []).filter(function(a) {
+      var apps = (payload.applications || []).filter(function (a) {
         var n = String(a.name || "").toLowerCase().trim();
         return n !== "" && n !== "sistema_a_cargo" && n !== "nombre_aplicativo" && a.code !== "STF-SIS-99";
       });
@@ -1139,7 +1139,7 @@ function doPost(e) {
       // 0. Eliminar definitivamente la pestaña obsoleta/vacía PORTAFOLIO_SISTEMAS si existe
       var sPortObs = ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.getSheetByName("Avances_Fases");
       if (sPortObs && ss.getSheets().length > 1) {
-        try { ss.deleteSheet(sPortObs); } catch (e) { try { sPortObs.hideSheet(); } catch (e2) {} }
+        try { ss.deleteSheet(sPortObs); } catch (e) { try { sPortObs.hideSheet(); } catch (e2) { } }
       }
 
       // 1. Actualizar SISTEMAS_WEB (4 Columnas A:D) eliminando "Columna 1..4" y filas duplicadas
@@ -1166,7 +1166,7 @@ function doPost(e) {
             if (lastRW > apps.length + 1) {
               try {
                 sWeb.deleteRows(apps.length + 2, lastRW - (apps.length + 1));
-              } catch (e) {}
+              } catch (e) { }
             }
           }
 
@@ -1176,7 +1176,7 @@ function doPost(e) {
             var uKey = String(wp.name || "").trim().toUpperCase();
             var finalUrl = wp.webUrl || existingUrls[uKey] || "";
             var isProdApp = (wp.stageId === "stage_prod") || (String(wp.slaStatus || "").indexOf("Producción") !== -1) ||
-                            (uKey === "CALIDAD" || uKey === "TINTORERIA" || uKey === "COLCHAS");
+              (uKey === "CALIDAD" || uKey === "TINTORERIA" || uKey === "COLCHAS");
             webMatrix.push([
               wp.devName || "Equipo STF",
               wp.name || "",
@@ -1200,7 +1200,7 @@ function doPost(e) {
           if (lastRT > tasksList.length + 1) {
             try {
               sTar.deleteRows(tasksList.length + 2, lastRT - (tasksList.length + 1));
-            } catch (e) {}
+            } catch (e) { }
           }
         }
 
@@ -1220,7 +1220,7 @@ function doPost(e) {
             obsText = tk.evaluation.notes || "Implementación en planta validada con los operarios. Operatividad estable.";
             if (tk.evaluation.evalDate) regDateText = tk.evaluation.evalDate + " 08:00:00";
           } else if (typeof tk.evaluation === "string" && tk.evaluation) {
-            qualText = tk.evaluation.replace(/0\.(\d{2,3})%/, function(m, p) {
+            qualText = tk.evaluation.replace(/0\.(\d{2,3})%/, function (m, p) {
               return (parseFloat("0." + p) * 100).toFixed(1) + "%";
             });
           }
@@ -1254,7 +1254,7 @@ function doPost(e) {
         if (lastRUsr > 1) {
           sUsr.getRange(2, 1, lastRUsr - 1, Math.max(6, sUsr.getLastColumn())).clearContent();
         }
-        var usrRows = payload.users.map(function(u) {
+        var usrRows = payload.users.map(function (u) {
           var r = u.role || "desarrollador";
           return [
             u.idPassword || u.id || "123456",
@@ -1280,10 +1280,10 @@ function doPost(e) {
           if (lastRObsFull > obsList.length + 1) {
             try {
               sObsFull.deleteRows(obsList.length + 2, lastRObsFull - (obsList.length + 1));
-            } catch (e) {}
+            } catch (e) { }
           }
         }
-        var obsFullMatrix = obsList.map(function(o) {
+        var obsFullMatrix = obsList.map(function (o) {
           return [
             o.date || dateStr,
             o.appName || "Sistema",
@@ -1366,8 +1366,8 @@ function sendTaskAssignmentEmail(ss, payload) {
       var rName = String(uValues[u][4] || "").toLowerCase().trim();
 
       if (rName.indexOf(search) !== -1 || search.indexOf(rName) !== -1 ||
-          rUser.indexOf(search) !== -1 || search.indexOf(rUser) !== -1 ||
-          (search.indexOf("jose") !== -1 && rUser.indexOf("jose") !== -1)) {
+        rUser.indexOf(search) !== -1 || search.indexOf(rUser) !== -1 ||
+        (search.indexOf("jose") !== -1 && rUser.indexOf("jose") !== -1)) {
         if (rEmail && rEmail.indexOf("@") !== -1) {
           targetEmail = rEmail;
           break;
@@ -1389,28 +1389,28 @@ function sendTaskAssignmentEmail(ss, payload) {
       var subject = "⚡ Nueva Tarea Asignada: " + (payload.taskName || "Módulo") + " · STF GROUP";
       var html = "" +
         "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);\">" +
-          "<div style=\"background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 24px; color: #FFFFFF; text-align: left;\">" +
-            "<div style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; margin-bottom: 8px;\">STF GROUP · CONTROL TI</div>" +
-            "<h2 style=\"margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF;\">Nueva Tarea / Integración Asignada</h2>" +
-            "<p style=\"margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;\">El Administrador te ha cargado una nueva responsabilidad en planta.</p>" +
-          "</div>" +
-          "<div style=\"padding: 24px;\">" +
-            "<p style=\"font-size: 15px; color: #1E293B; margin-top: 0;\">Hola <strong>" + devName + "</strong>,</p>" +
-            "<p style=\"font-size: 13.5px; color: #475569; line-height: 1.5;\">Se te ha asignado una nueva integración en la plataforma:</p>" +
-            "<div style=\"background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; margin: 20px 0;\">" +
-              "<div style=\"font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;\">Nombre de la Tarea</div>" +
-              "<div style=\"font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 14px;\">" + (payload.taskName || "Módulo") + "</div>" +
-              "<table style=\"width: 100%; border-collapse: collapse; font-size: 13px;\">" +
-                "<tr><td style=\"padding: 6px 0; color: #64748B;\">📁 <strong>Aplicativo:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #1E293B;\">" + (payload.appName || "Sistema") + "</td></tr>" +
-                "<tr><td style=\"padding: 6px 0; color: #64748B;\">⚖️ <strong>Ponderación:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #4E65FF;\">+" + (payload.weight || 15) + "% al avance del sistema</td></tr>" +
-                "<tr><td style=\"padding: 6px 0; color: #64748B;\">📅 <strong>Fecha Límite:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #EF4444;\">" + (payload.deadline || "Próximamente") + "</td></tr>" +
-              "</table>" +
-            "</div>" +
-            "<div style=\"text-align: center; margin: 24px 0;\">" +
-              "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35);\">Ingresar a la Plataforma STF</a>" +
-            "</div>" +
-            "<p style=\"font-size: 12px; color: #94A3B8; text-align: center; margin: 0;\">Este es un correo automático generado por el Sistema de Supervisión STF GROUP.</p>" +
-          "</div>" +
+        "<div style=\"background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 24px; color: #FFFFFF; text-align: left;\">" +
+        "<div style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; margin-bottom: 8px;\">STF GROUP · CONTROL TI</div>" +
+        "<h2 style=\"margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF;\">Nueva Tarea / Integración Asignada</h2>" +
+        "<p style=\"margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;\">El Administrador te ha cargado una nueva responsabilidad en planta.</p>" +
+        "</div>" +
+        "<div style=\"padding: 24px;\">" +
+        "<p style=\"font-size: 15px; color: #1E293B; margin-top: 0;\">Hola <strong>" + devName + "</strong>,</p>" +
+        "<p style=\"font-size: 13.5px; color: #475569; line-height: 1.5;\">Se te ha asignado una nueva integración en la plataforma:</p>" +
+        "<div style=\"background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px; margin: 20px 0;\">" +
+        "<div style=\"font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 4px;\">Nombre de la Tarea</div>" +
+        "<div style=\"font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 14px;\">" + (payload.taskName || "Módulo") + "</div>" +
+        "<table style=\"width: 100%; border-collapse: collapse; font-size: 13px;\">" +
+        "<tr><td style=\"padding: 6px 0; color: #64748B;\">📁 <strong>Aplicativo:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #1E293B;\">" + (payload.appName || "Sistema") + "</td></tr>" +
+        "<tr><td style=\"padding: 6px 0; color: #64748B;\">⚖️ <strong>Ponderación:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #4E65FF;\">+" + (payload.weight || 15) + "% al avance del sistema</td></tr>" +
+        "<tr><td style=\"padding: 6px 0; color: #64748B;\">📅 <strong>Fecha Límite:</strong></td><td style=\"padding: 6px 0; font-weight: 700; color: #EF4444;\">" + (payload.deadline || "Próximamente") + "</td></tr>" +
+        "</table>" +
+        "</div>" +
+        "<div style=\"text-align: center; margin: 24px 0;\">" +
+        "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4E65FF; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35);\">Ingresar a la Plataforma STF</a>" +
+        "</div>" +
+        "<p style=\"font-size: 12px; color: #94A3B8; text-align: center; margin: 0;\">Este es un correo automático generado por el Sistema de Supervisión STF GROUP.</p>" +
+        "</div>" +
         "</div>";
 
       MailApp.sendEmail({

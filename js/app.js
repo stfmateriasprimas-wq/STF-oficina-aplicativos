@@ -9231,6 +9231,15 @@ window.getDeveloperById = getDeveloperById;
 // OPCIÓN 1: PIPELINE VISUAL POR ETAPAS DE PRODUCCIÓN INDUSTRIAL
 // ==========================================================================
 
+let currentHorizontalStageFilter = 'all';
+
+function setProjectsHorizontalStage(stageId) {
+  currentHorizontalStageFilter = stageId;
+  const apps = getFilteredApplications(activeBrandFilter);
+  renderPipelineView(apps);
+}
+window.setProjectsHorizontalStage = setProjectsHorizontalStage;
+
 function renderPipelineView(apps) {
   const container = document.getElementById('projectsPipelineView');
   if (!container) return;
@@ -9238,83 +9247,163 @@ function renderPipelineView(apps) {
   const isAdmin = isCurrentSessionAdmin();
   const refDate = getSystemReferenceDate();
 
-  const stages = [
-    {
-      id: 'stage_core',
-      title: '1. En Construcción',
-      sub: 'Arquitectura, backend y desarrollo activo',
-      badgeText: 'En Construcción',
-      badgeBg: '#EEF2FF',
-      badgeColor: '#4F46E5',
-      accentColor: '#6366F1',
-      icon: 'code-2',
-      filter: (app) => getAppPipelineStageInfo(app).stageId === 'stage_core'
-    },
-    {
-      id: 'stage_qa',
-      title: '2. Puesta en Planta',
-      sub: 'Validación en campo y pruebas de conectividad',
-      badgeText: 'Puesta en Planta',
-      badgeBg: '#FEF3C7',
-      badgeColor: '#D97706',
-      accentColor: '#F59E0B',
-      icon: 'flask-conical',
-      filter: (app) => getAppPipelineStageInfo(app).stageId === 'stage_qa'
-    },
-    {
-      id: 'stage_prod',
-      title: '3. En Producción (En Vivo)',
-      sub: 'Sistemas operativos en planta en producción',
-      badgeText: 'Desplegado',
-      badgeBg: '#D1FAE5',
-      badgeColor: '#059669',
-      accentColor: '#10B981',
-      icon: 'rocket',
-      filter: (app) => getAppPipelineStageInfo(app).stageId === 'stage_prod'
-    }
-  ];
+  // Filtrado y clasificación en las 3 etapas de ciclo industrial
+  const coreApps = apps
+    .filter(a => getAppPipelineStageInfo(a).stageId === 'stage_core')
+    .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
 
-  container.innerHTML = stages.map(stage => {
-    const stageApps = apps
-      .filter(stage.filter)
-      .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
-    const countLabel = stageApps.length === 1 ? '1 Sistema' : `${stageApps.length} Sistemas`;
+  const qaApps = apps
+    .filter(a => getAppPipelineStageInfo(a).stageId === 'stage_qa')
+    .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
 
-    const cardsHtml = stageApps.length > 0
-      ? stageApps.map(app => renderPipelineCardHtml(app, refDate, isAdmin)).join('')
-      : `
-        <div class="pipeline-empty-column">
-          <i data-lucide="inbox"></i>
-          <span>Sin sistemas en esta etapa</span>
+  const prodApps = apps
+    .filter(a => getAppPipelineStageInfo(a).stageId === 'stage_prod')
+    .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
+
+  const totalAppsCount = apps.length;
+  const avgProgress = totalAppsCount > 0
+    ? Math.round(apps.reduce((sum, a) => sum + calculateAppProgress(a), 0) / totalAppsCount)
+    : 0;
+
+  // 1. Barra de Navegación Horizontal de Etapas (Executive Stage Navigator)
+  const navBarHtml = `
+    <div class="h-stage-nav-bar">
+      <div class="h-stage-tabs">
+        <button type="button" class="h-stage-tab-btn ${currentHorizontalStageFilter === 'all' ? 'active' : ''}" onclick="setProjectsHorizontalStage('all')">
+          <span class="h-tab-dot dot-all"></span>
+          <span class="h-tab-name">Todos los Sistemas</span>
+          <span class="h-tab-count">${totalAppsCount}</span>
+        </button>
+        <button type="button" class="h-stage-tab-btn ${currentHorizontalStageFilter === 'stage_core' ? 'active' : ''}" onclick="setProjectsHorizontalStage('stage_core')">
+          <span class="h-tab-dot dot-core"></span>
+          <span class="h-tab-name">1. En Construcción</span>
+          <span class="h-tab-count">${coreApps.length}</span>
+        </button>
+        <button type="button" class="h-stage-tab-btn ${currentHorizontalStageFilter === 'stage_qa' ? 'active' : ''}" onclick="setProjectsHorizontalStage('stage_qa')">
+          <span class="h-tab-dot dot-qa"></span>
+          <span class="h-tab-name">2. Puesta en Planta</span>
+          <span class="h-tab-count">${qaApps.length}</span>
+        </button>
+        <button type="button" class="h-stage-tab-btn ${currentHorizontalStageFilter === 'stage_prod' ? 'active' : ''}" onclick="setProjectsHorizontalStage('stage_prod')">
+          <span class="h-tab-dot dot-prod"></span>
+          <span class="h-tab-name">3. En Producción</span>
+          <span class="h-tab-count">${prodApps.length}</span>
+        </button>
+      </div>
+      <div class="h-stage-stat-summary">
+        <div class="h-stat-progress-pill">
+          <span class="h-stat-label">Avance Promedio:</span>
+          <strong>${avgProgress}%</strong>
         </div>
-      `;
-
-    return `
-      <div class="pipeline-column" id="col_${stage.id}" style="border-top: 4px solid ${stage.accentColor};">
-        <div class="pipeline-col-header">
-          <div class="pipeline-col-header-top">
-            <div class="pipeline-stage-title-wrap">
-              <div class="pipeline-stage-icon-badge" style="background: ${stage.badgeBg}; color: ${stage.badgeColor};">
-                <i data-lucide="${stage.icon}"></i>
-              </div>
-              <h3 class="pipeline-stage-title">${stage.title}</h3>
-            </div>
-            <span class="pipeline-stage-count-badge" style="background: ${stage.badgeBg}; color: ${stage.badgeColor};">
-              ${countLabel}
-            </span>
-          </div>
-          <p class="pipeline-stage-sub">${stage.sub}</p>
-        </div>
-
-        <div class="pipeline-cards-list">
-          ${cardsHtml}
+        <div class="h-stat-bar-track">
+          <div class="h-stat-bar-fill" style="width: ${avgProgress}%;"></div>
         </div>
       </div>
-    `;
-  }).join('');
+    </div>
+  `;
+
+  // 2. Construcción de los Sistemas según el filtro horizontal activo
+  let streamContentHtml = '';
+
+  if (currentHorizontalStageFilter === 'stage_core') {
+    if (coreApps.length > 0) {
+      streamContentHtml = coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('');
+    } else {
+      streamContentHtml = `
+        <div class="h-stage-empty-strip">
+          <i data-lucide="code-2"></i>
+          <span>No hay sistemas en la etapa de <strong>Construcción / Desarrollo Activo</strong>.</span>
+        </div>
+      `;
+    }
+  } else if (currentHorizontalStageFilter === 'stage_qa') {
+    if (qaApps.length > 0) {
+      streamContentHtml = qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('');
+    } else {
+      streamContentHtml = `
+        <div class="h-stage-empty-strip">
+          <i data-lucide="flask-conical"></i>
+          <span>No hay sistemas en la etapa de <strong>Puesta en Planta / Validación</strong>.</span>
+        </div>
+      `;
+    }
+  } else if (currentHorizontalStageFilter === 'stage_prod') {
+    if (prodApps.length > 0) {
+      streamContentHtml = prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('');
+    } else {
+      streamContentHtml = `
+        <div class="h-stage-empty-strip">
+          <i data-lucide="rocket"></i>
+          <span>No hay sistemas en la etapa de <strong>Producción Activa (En Vivo)</strong>.</span>
+        </div>
+      `;
+    }
+  } else {
+    // Modo "all": Agrupado elegante por etapas con separadores horizontales limpios
+    let groupsHtml = [];
+
+    if (coreApps.length > 0) {
+      groupsHtml.push(`
+        <div class="h-stage-section-divider">
+          <div class="h-divider-left">
+            <span class="h-divider-badge core">1. EN CONSTRUCCIÓN</span>
+            <h4 class="h-divider-title">${coreApps.length} Sistemas</h4>
+          </div>
+          <span class="h-divider-sub">Arquitectura, backend, integraciones y desarrollo activo</span>
+        </div>
+        ${coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
+      `);
+    }
+
+    if (qaApps.length > 0) {
+      groupsHtml.push(`
+        <div class="h-stage-section-divider">
+          <div class="h-divider-left">
+            <span class="h-divider-badge qa">2. PUESTA EN PLANTA</span>
+            <h4 class="h-divider-title">${qaApps.length} Sistemas</h4>
+          </div>
+          <span class="h-divider-sub">Validación en campo, pruebas de operarios y conectividad</span>
+        </div>
+        ${qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
+      `);
+    } else {
+      groupsHtml.push(`
+        <div class="h-stage-empty-strip">
+          <i data-lucide="flask-conical"></i>
+          <span><strong>2. Puesta en Planta:</strong> No hay sistemas pendientes de validación en planta en este momento (0 Sistemas).</span>
+        </div>
+      `);
+    }
+
+    if (prodApps.length > 0) {
+      groupsHtml.push(`
+        <div class="h-stage-section-divider">
+          <div class="h-divider-left">
+            <span class="h-divider-badge prod">3. EN PRODUCCIÓN</span>
+            <h4 class="h-divider-title">${prodApps.length} Sistema${prodApps.length > 1 ? 's' : ''}</h4>
+          </div>
+          <span class="h-divider-sub">Sistemas operativos en planta en producción continua</span>
+        </div>
+        ${prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
+      `);
+    }
+
+    streamContentHtml = groupsHtml.join('');
+  }
+
+  container.innerHTML = `
+    ${navBarHtml}
+    <div class="h-systems-stream">
+      ${streamContentHtml}
+    </div>
+  `;
+
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
 }
 
-function renderPipelineCardHtml(app, refDate, isAdmin) {
+function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
   const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
   const progress = calculateAppProgress(app);
   const isProd = isAppInLiveProduction(app);
@@ -9356,12 +9445,25 @@ function renderPipelineCardHtml(app, refDate, isAdmin) {
     deadlineDisplay = formatShortDate(app.deadline);
   }
 
-  // 6 Mini-Dots para el ciclo de vida
-  const dotsHtml = (app.phases || []).map((p, idx) => {
-    let dotClass = 'pending';
-    if (p.completed) dotClass = 'done';
-    else if (idx === activePhaseIndex) dotClass = 'active';
-    return `<div class="pipeline-stepper-dot ${dotClass}" title="Fase ${idx + 1}: ${p.name}"></div>`;
+  // Nombres cortos para los 6 pasos del stepper horizontal
+  const stepLabels = ['Req', 'UI/UX', 'Dev', 'QA', 'Planta', 'En Vivo'];
+
+  // 6 Nodos interactivos del Stepper Horizontal
+  const stepperStepsHtml = (app.phases || []).map((p, idx) => {
+    const isCompleted = p.completed;
+    const isActive = idx === activePhaseIndex;
+    const shortLabel = stepLabels[idx] || `F${idx + 1}`;
+    const stateText = isCompleted ? 'Completada ✅' : (isActive ? 'En Curso ⏳' : 'Pendiente');
+    const nodeClass = isCompleted ? 'completed' : (isActive ? 'active' : 'pending');
+
+    return `
+      <div class="h-step-node ${nodeClass}" title="Fase ${idx + 1}: ${p.name} (${p.weight}%) · ${stateText}">
+        <div class="h-step-circle">
+          ${isCompleted ? '<i data-lucide="check" class="h-step-check"></i>' : `<span>${idx + 1}</span>`}
+        </div>
+        <span class="h-step-caption">${shortLabel}</span>
+      </div>
+    `;
   }).join('');
 
   // Web / SharePoint link
@@ -9369,106 +9471,134 @@ function renderPipelineCardHtml(app, refDate, isAdmin) {
   const sysLink = formatWebLinkInfo(app.webUrl, app.name);
   if (sysLink.isValid) {
     webBtnHtml = `
-      <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="pipeline-web-btn" title="${sysLink.label}" onclick="event.stopPropagation();">
+      <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="h-web-action-btn ${sysLink.isSharepoint ? 'is-sharepoint' : 'is-web'}" title="${sysLink.label}" onclick="event.stopPropagation();">
         <i data-lucide="${sysLink.isSharepoint ? 'folder' : 'external-link'}"></i>
         <span>${sysLink.isSharepoint ? 'SharePoint' : 'Web ↗'}</span>
       </a>
     `;
   } else {
     webBtnHtml = `
-      <span class="pipeline-web-btn" style="opacity: 0.6; cursor: not-allowed;" title="Pendiente de Despliegue" onclick="event.stopPropagation();">
+      <span class="h-web-action-btn is-disabled" title="Pendiente de Despliegue en Planta" onclick="event.stopPropagation();">
         <i data-lucide="clock"></i>
         <span>Pendiente</span>
       </span>
     `;
   }
 
+  const statusClass = isProd ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime');
+  const statusText = isProd ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo');
+
   return `
-    <div class="pipeline-card ${(!isProd && app.status === 'risk') ? 'is-risk' : ''}" style="--app-accent: ${app.iconColor};" onclick="openSystemDetailModal('${app.id}')">
-      <div class="pipeline-card-accent-bar" style="background: ${app.iconColor};"></div>
+    <div class="h-system-row-card ${(!isProd && app.status === 'risk') ? 'is-risk' : ''} ${isProd ? 'is-prod' : ''}" style="--app-accent: ${app.iconColor};" onclick="openSystemDetailModal('${app.id}')">
+      <!-- Borde ambiental de acento de marca -->
+      <div class="h-card-accent-rail" style="background: ${app.iconColor};"></div>
 
-      <div class="pipeline-card-header">
-        <div class="pipeline-identity-left">
-          <div class="pipeline-app-avatar" style="background: ${app.iconColor}18; color: ${app.iconColor}; border: 1.5px solid ${app.iconColor}38;">
-            ${app.iconInitial}
-          </div>
-          <div class="pipeline-meta">
-            <div class="pipeline-tags-row">
-              <span class="pipeline-code-badge">${app.code}</span>
-              <span class="pipeline-category-badge">${app.category}</span>
-            </div>
-            <h4 class="pipeline-system-title">${app.name}</h4>
-          </div>
+      <!-- Columna 1: Identidad del Sistema -->
+      <div class="h-sys-identity">
+        <div class="h-sys-avatar" style="background: ${app.iconColor}18; color: ${app.iconColor}; border: 1.5px solid ${app.iconColor}38;">
+          ${app.iconInitial}
         </div>
-        <div class="pipeline-status-col">
-          <span class="pipeline-status-pill ${isProd ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime')}">
-            <span class="status-pulse-dot"></span>
-            ${isProd ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo')}
-          </span>
+        <div class="h-sys-meta">
+          <div class="h-sys-tags">
+            <span class="h-code-tag">${app.code}</span>
+            <span class="h-cat-tag" title="${app.category}">${app.category}</span>
+          </div>
+          <h3 class="h-sys-title" title="${app.name}">${app.name}</h3>
+          <div class="h-sys-status ${statusClass}">
+            <span class="h-pulse-dot"></span>
+            <span>${statusText}</span>
+          </div>
         </div>
       </div>
 
-      <div class="pipeline-phase-box">
-        <div class="pipeline-phase-info">
-          <span class="pipeline-phase-step">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
-          <strong class="pipeline-phase-name">${activePhase.name}</strong>
-        </div>
-        <div class="pipeline-progress-wrapper">
-          <div class="pipeline-progress-bar-track">
-            <div class="pipeline-progress-bar-fill" style="width: ${progress}%; background: linear-gradient(90deg, ${app.iconColor}, ${app.iconColor}DD);"></div>
+      <!-- Columna 2: Pipeline Horizontal de 6 Fases & Stepper -->
+      <div class="h-sys-timeline">
+        <div class="h-timeline-top">
+          <div class="h-active-phase-tag">
+            <span class="h-phase-pill-num">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
+            <strong class="h-phase-name-text" title="${activePhase.name}">${activePhase.name}</strong>
           </div>
-          <span class="pipeline-progress-num" style="color: ${app.iconColor};">${progress}%</span>
+          <div class="h-progress-metric">
+            <span class="h-progress-percent" style="color: ${app.iconColor};">${progress}%</span>
+            <span class="h-progress-sub">Avance</span>
+          </div>
         </div>
-        <div class="pipeline-stepper-dots">
-          ${dotsHtml}
+
+        <div class="h-stepper-container">
+          <div class="h-stepper-line-track">
+            <div class="h-stepper-line-fill" style="width: ${progress}%; background: linear-gradient(90deg, ${app.iconColor}, ${app.iconColor}EE);"></div>
+          </div>
+          <div class="h-stepper-steps">
+            ${stepperStepsHtml}
+          </div>
         </div>
       </div>
 
-      <div class="pipeline-metrics-row">
-        <div class="pipeline-metric-chip" title="Entregables e Integraciones">
+      <!-- Columna 3: KPIs y Métricas de Planta -->
+      <div class="h-col-metrics">
+        <div class="h-metric-badge" title="Entregables e Integraciones">
           <i data-lucide="check-square"></i>
-          <span><strong>${completedTasksCount}/${totalTasksCount}</strong> Listos</span>
+          <div class="h-m-body">
+            <strong>${completedTasksCount}/${totalTasksCount}</strong>
+            <span>Listos</span>
+          </div>
         </div>
-        <div class="pipeline-metric-chip" title="Calidad Técnica Auditada">
-          <i data-lucide="shield-check"></i>
-          <span><strong style="color: ${ind.qaColor};">${ind.qaScore}</strong></span>
+        <div class="h-metric-badge" title="Calidad QA Auditada">
+          <i data-lucide="shield-check" style="color: ${ind.qaColor};"></i>
+          <div class="h-m-body">
+            <strong style="color: ${ind.qaColor};">${ind.qaScore}</strong>
+            <span>Calidad</span>
+          </div>
         </div>
-        <div class="pipeline-metric-chip ${isOverdue ? 'chip-danger' : ''}" title="Fecha Límite / Cronograma">
+        <div class="h-metric-badge ${isOverdue ? 'metric-alert' : ''}" title="Fecha Límite / Cronograma">
           <i data-lucide="calendar"></i>
-          <span>${deadlineDisplay}</span>
+          <div class="h-m-body">
+            <strong>${deadlineDisplay}</strong>
+            <span>${isProd ? 'En Planta' : (isOverdue ? 'Retraso' : 'Plazo')}</span>
+          </div>
         </div>
       </div>
 
-      <div class="pipeline-card-footer" onclick="event.stopPropagation();">
-        <div class="pipeline-dev-info">
-          ${app.isGroupProject ? `
-            <div class="stacked-team-avatars" style="margin-right: 4px;" title="Desarrollo colaborativo grupal (4 devs)">
+      <!-- Columna 4: Responsable Asignado -->
+      <div class="h-col-team">
+        ${app.isGroupProject ? `
+          <div class="h-team-group-wrap" title="Desarrollo colaborativo grupal (4 devs)">
+            <div class="stacked-team-avatars">
               ${(app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']).map(dId => {
                 const d = getDeveloperById(dId);
                 return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
               }).join('')}
             </div>
-            <span class="pipeline-dev-name" style="font-size: 11.5px;">Equipo Grupal</span>
-          ` : `
-            <img src="${dev.avatar}" alt="${dev.name}" class="pipeline-dev-av" title="${dev.name}">
-            <span class="pipeline-dev-name">${dev.name}</span>
-          `}
-        </div>
+            <div class="h-team-labels">
+              <strong class="h-dev-title">Equipo Grupal</strong>
+              <span class="h-dev-sub">4 Desarrolladores</span>
+            </div>
+          </div>
+        ` : `
+          <div class="h-team-single-wrap" title="Responsable Asignado">
+            <img src="${dev.avatar}" alt="${dev.name}" class="h-dev-avatar" title="${dev.name}">
+            <div class="h-team-labels">
+              <strong class="h-dev-title">${dev.name}</strong>
+              <span class="h-dev-sub">${dev.role || 'Desarrollador'}</span>
+            </div>
+          </div>
+        `}
+      </div>
 
-        <div class="pipeline-actions-group">
-          ${webBtnHtml}
-          ${isAdmin ? `
-            <button class="pipeline-audit-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar fases de ${app.name}">
-              <i data-lucide="clipboard-check"></i>
-              <span>Auditar</span>
-            </button>
-          ` : `
-            <button class="pipeline-audit-btn" style="background: #E2E8F0; color: #334155;" onclick="openSystemDetailModal('${app.id}')" title="Ver fases de ${app.name}">
-              <i data-lucide="eye"></i>
-              <span>Ver Fases</span>
-            </button>
-          `}
-        </div>
+      <!-- Columna 5: Acciones -->
+      <div class="h-col-actions" onclick="event.stopPropagation();">
+        ${webBtnHtml}
+        ${isAdmin ? `
+          <button class="h-audit-action-btn admin-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar fases de ${app.name}">
+            <i data-lucide="clipboard-check"></i>
+            <span>Auditar</span>
+          </button>
+        ` : `
+          <button class="h-audit-action-btn dev-btn" onclick="openSystemDetailModal('${app.id}')" title="Ver fases de ${app.name}">
+            <i data-lucide="eye"></i>
+            <span>Ver Fases</span>
+          </button>
+        `}
       </div>
     </div>
   `;
