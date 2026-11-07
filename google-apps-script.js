@@ -1,27 +1,25 @@
 /**
  * ============================================================================
  * STF GROUP · BASE DE DATOS EJECUTIVA EN GOOGLE SHEETS (v3.5 PRODUCTION)
- * Arquitectura Estabilizada en 6 Hojas Maestras Conectadas en Tiempo Real
+ * Arquitectura Estabilizada en 5 Hojas Maestras Oficiales Conectadas en Tiempo Real
  * ============================================================================
  *
- * ESTRUCTURA OFICIAL DE LAS 6 HOJAS MAESTRAS (100% ALINEADA A TABLAS NATIVAS):
+ * ESTRUCTURA OFICIAL DE LAS 5 HOJAS MAESTRAS (100% ALINEADA A TABLAS NATIVAS):
  * 1. 👥 USUARIOS                (6 Columnas A:F) -> Credenciales, Roles, Correos y Acceso
- * 2. 📊 PORTAFOLIO_SISTEMAS     (9 Columnas A:I) -> Los 7 Sistemas Reales, Fases, Avance % y SLA
- * 3. 🌐 SISTEMAS_WEB            (4 Columnas A:D) -> Enlaces Web / SharePoint y Estado en Planta
- * 4. 📋 CONTROL_TAREAS          (10 Columnas A:J)-> Integraciones, Tiempos, Calidad QA y Dictamen
- * 5. 📝 HISTORIAL_OBSERVACIONES (6 Columnas A:F) -> Bloqueos, Avances, Ajustes y Novedades por Tarea
- * 6. 📜 BITACORA_HISTORIAL      (7 Columnas A:G) -> Trazabilidad Completa de Todos los Procesos
+ * 2. 🌐 SISTEMAS_WEB            (4 Columnas A:D) -> Enlaces Web / SharePoint y Estado en Planta
+ * 3. 📋 CONTROL_TAREAS          (9 Columnas A:I) -> Integraciones, Tiempos, Calidad QA y Dictamen
+ * 4. 📝 HISTORIAL_OBSERVACIONES (6 Columnas A:F) -> Bloqueos, Avances, Ajustes y Novedades por Tarea
+ * 5. 📜 BITACORA_HISTORIAL      (7 Columnas A:G) -> Trazabilidad Completa de Todos los Procesos
  *
  * ============================================================================
  */
 
 var TABS = {
   USUARIOS: "USUARIOS",
-  SISTEMAS: "PORTAFOLIO_SISTEMAS",
   SISTEMAS_WEB: "SISTEMAS_WEB",
   TAREAS: "CONTROL_TAREAS",
-  BITACORA: "BITACORA_HISTORIAL",
-  OBSERVACIONES: "HISTORIAL_OBSERVACIONES"
+  OBSERVACIONES: "HISTORIAL_OBSERVACIONES",
+  BITACORA: "BITACORA_HISTORIAL"
 };
 
 var HEADERS = {
@@ -86,12 +84,36 @@ var HEADERS = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
-    .addItem('🚀 Estabilizar & Reparar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('🚀 Estabilizar Base de Datos (5 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('🗑️ Eliminar Hoja PORTAFOLIO_SISTEMAS', 'removePortafolioSistemasSheet')
     .addItem('📋 Reparar & Alinear Hoja CONTROL_TAREAS', 'setupTareasSheetDirect')
     .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
     .addItem('📝 Configurar Hoja HISTORIAL_OBSERVACIONES', 'setupObservacionesSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
+}
+
+/**
+ * Elimina definitivamente la hoja vacía/redundante PORTAFOLIO_SISTEMAS
+ */
+function removePortafolioSistemasSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.getSheetByName("Avances_Fases");
+  if (sheet) {
+    if (ss.getSheets().length > 1) {
+      try {
+        ss.deleteSheet(sheet);
+        SpreadsheetApp.getActiveSpreadsheet().toast('🗑️ Pestaña PORTAFOLIO_SISTEMAS eliminada con éxito.', 'STF GROUP TI', 6);
+      } catch (e) {
+        try { sheet.hideSheet(); } catch (e2) {}
+      }
+    } else {
+      SpreadsheetApp.getActiveSpreadsheet().toast('⚠️ No se puede eliminar la única pestaña de la hoja.', 'STF GROUP TI', 6);
+    }
+  } else {
+    SpreadsheetApp.getActiveSpreadsheet().toast('ℹ️ La pestaña PORTAFOLIO_SISTEMAS ya no existe en el archivo.', 'STF GROUP TI', 6);
+  }
+  cleanAndOrderSheets(ss);
 }
 
 function setupTareasSheetDirect() {
@@ -116,35 +138,34 @@ function setupObservacionesSheetDirect() {
 }
 
 /**
- * ESTABILIZADOR MAESTRO: Repara encabezados corridos (Columna 1 / Columna 2),
- * corrige filas desplazadas en BITACORA_HISTORIAL y sincroniza los 7 sistemas reales
- * junto con el nuevo HISTORIAL_OBSERVACIONES.
+ * ESTABILIZADOR MAESTRO: Estabiliza la arquitectura oficial en las 5 hojas maestras:
+ * USUARIOS, SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, BITACORA_HISTORIAL
  */
 function setupProfessionalDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
+  // 0. Eliminar pestaña obsoleta/vacía PORTAFOLIO_SISTEMAS
+  removePortafolioSistemasSheet();
+
   // 1. Pestaña USUARIOS (6 Columnas A:F)
   setupUsuariosSheet(ss);
 
-  // 2. Pestaña PORTAFOLIO_SISTEMAS (9 Columnas A:I)
-  setupSistemasSheet(ss, true);
-
-  // 3. Pestaña SISTEMAS_WEB (4 Columnas A:D)
+  // 2. Pestaña SISTEMAS_WEB (4 Columnas A:D)
   setupSistemasWebSheet(ss, true);
 
-  // 4. Pestaña CONTROL_TAREAS (10 Columnas A:J)
+  // 3. Pestaña CONTROL_TAREAS (9 Columnas A:I)
   setupTareasSheet(ss);
 
-  // 5. Pestaña HISTORIAL_OBSERVACIONES (6 Columnas A:F)
+  // 4. Pestaña HISTORIAL_OBSERVACIONES (6 Columnas A:F)
   setupObservacionesSheet(ss);
 
-  // 6. Pestaña BITACORA_HISTORIAL (7 Columnas A:G con auto-reparación de filas)
+  // 5. Pestaña BITACORA_HISTORIAL (7 Columnas A:G con auto-reparación de filas)
   setupBitacoraSheet(ss);
 
-  // 7. Ordenar las 6 pestañas al frente
+  // 6. Ordenar las 5 pestañas oficiales al frente
   cleanAndOrderSheets(ss);
 
-  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 6 hojas maestras (7 Sistemas Oficiales & Historial de Observaciones).', 'STF GROUP TI', 7);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 5 hojas maestras oficiales.', 'STF GROUP TI', 7);
 }
 
 /**
@@ -242,34 +263,10 @@ function setupUsuariosSheet(ss) {
 }
 
 /**
- * 2. Configurar y Estabilizar Hoja PORTAFOLIO_SISTEMAS (9 Columnas A:I)
- * Orden Oficial:
- * - En Construcción (4): TORRE DE CONTROL, LABORATORIO, GEO UBICACION TALLERES, OFICINA - APLICATIVOS
- * - En Producción (3): CALIDAD, TINTORERIA, COLCHAS
+ * 2. Función de eliminación de compatibilidad para PORTAFOLIO_SISTEMAS (Hoja retirada)
  */
 function setupSistemasSheet(ss, forceRealData) {
-  var s = getOrCreateSheetByName(ss, TABS.SISTEMAS, ["Estado_Sistemas", "Avances_Fases"]);
-  ensureExactHeaders(s, HEADERS.SISTEMAS);
-
-  var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
-  var officialSystems = [
-    ["STF-TC-01", "TORRE DE CONTROL", "Desarrollo Grupal", "Equipo Grupal (4 Devs)", "2. Arquitectura & Diseño UI/UX", 10, "En Construcción", "2026-12-15", nowStr],
-    ["STF-LAB-03", "LABORATORIO", "Control Textil", "Jose Guzman", "2. Arquitectura & Diseño UI/UX", 10, "En Construcción", "2026-11-30", nowStr],
-    ["STF-GEO-04", "GEO UBICACION TALLERES", "Logística & Talleres", "Jose Guzman", "5. Pruebas QA de Conectividad", 80, "En Riesgo", "2026-11-15", nowStr],
-    ["STF-OF-00", "OFICINA - APLICATIVOS", "Gestión TI & Control", "Jose Guzman", "6. Salida en Vivo", 95, "En Construcción", "2026-12-30", nowStr],
-    ["STF-CAL-05", "CALIDAD", "Aseguramiento de Calidad", "Juan David", "6. Salida en Vivo", 95, "En Producción", "2026-11-25", nowStr],
-    ["STF-TIN-06", "TINTORERIA", "Planta Textil", "Jhon Eyder (Mocho)", "4. Frontend para Operarios de Planta", 55, "En Producción", "2026-12-05", nowStr],
-    ["STF-COL-02", "COLCHAS", "Manufactura & Producción", "Jose Guzman", "6. Salida en Vivo", 100, "En Producción", "2026-11-20", nowStr]
-  ];
-
-  if (forceRealData || s.getLastRow() <= 1) {
-    var lastR = s.getLastRow();
-    if (lastR > 1) {
-      s.getRange(2, 1, lastR - 1, Math.max(9, s.getLastColumn())).clearContent();
-    }
-    s.getRange(2, 1, officialSystems.length, 9).setValues(officialSystems);
-  }
-  formatCorporateSheet(s, "#1E1B4B", [110, 210, 175, 175, 250, 95, 130, 115, 155]);
+  removePortafolioSistemasSheet();
 }
 
 /**
@@ -543,10 +540,20 @@ function formatCorporateSheet(sheet, headerHexColor, columnWidths) {
 }
 
 /**
- * Organiza las pestañas colocando las 6 maestras de primero y ocultando las obsoletas
+ * Organiza las pestañas colocando las 5 oficiales de primero y eliminando las obsoletas
  */
 function cleanAndOrderSheets(ss) {
-  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.OBSERVACIONES, TABS.BITACORA];
+  // Eliminar definitivamente la pestaña PORTAFOLIO_SISTEMAS si todavía existe
+  var portSheet = ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.getSheetByName("Avances_Fases");
+  if (portSheet && ss.getSheets().length > 1) {
+    try {
+      ss.deleteSheet(portSheet);
+    } catch (e) {
+      try { portSheet.hideSheet(); } catch (e2) {}
+    }
+  }
+
+  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.OBSERVACIONES, TABS.BITACORA];
   for (var i = 0; i < orderedTabs.length; i++) {
     var tabSheet = ss.getSheetByName(orderedTabs[i]);
     if (tabSheet) {
@@ -556,11 +563,12 @@ function cleanAndOrderSheets(ss) {
   }
 
   var obsoleteSheets = [
-    "Respuestas de formulario 1",
+    "PORTAFOLIO_SISTEMAS",
+    "Estado_Sistemas",
     "Avances_Fases",
+    "Respuestas de formulario 1",
     "Auditorias_Calidad",
     "Efectividad_Calidad",
-    "Estado_Sistemas",
     "Bitacora_Cambios",
     "Ingresos_Cambios",
     "Tareas_Integraciones"
@@ -569,8 +577,14 @@ function cleanAndOrderSheets(ss) {
     var obs = ss.getSheetByName(name);
     if (obs && orderedTabs.indexOf(name) === -1) {
       try {
-        obs.hideSheet();
-      } catch (e) {}
+        if (ss.getSheets().length > 1) {
+          ss.deleteSheet(obs);
+        } else {
+          obs.hideSheet();
+        }
+      } catch (e) {
+        try { obs.hideSheet(); } catch (e2) {}
+      }
     }
   });
 
@@ -603,7 +617,7 @@ function getMasterSheet(ss, tabKey) {
   if (tabKey === "USUARIOS") {
     return ss.getSheetByName("USUARIOS") || ss.getSheetByName("Usuarios") || ss.insertSheet(TABS.USUARIOS);
   } else if (tabKey === "SISTEMAS") {
-    return ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.insertSheet(TABS.SISTEMAS);
+    return ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas");
   } else if (tabKey === "SISTEMAS_WEB") {
     return ss.getSheetByName("SISTEMAS_WEB") || ss.getSheetByName("Sistemas_Web") || ss.getSheetByName("Urls_Web") || ss.insertSheet(TABS.SISTEMAS_WEB);
   } else if (tabKey === "TAREAS") {
@@ -613,7 +627,7 @@ function getMasterSheet(ss, tabKey) {
   } else if (tabKey === "BITACORA") {
     return ss.getSheetByName("BITACORA_HISTORIAL") || ss.getSheetByName("Bitacora_Cambios") || ss.getSheetByName("Ingresos_Cambios") || ss.insertSheet(TABS.BITACORA);
   }
-  return ss.getSheetByName(preferredName) || ss.insertSheet(preferredName);
+  return ss.getSheetByName(preferredName) || (preferredName ? ss.insertSheet(preferredName) : null);
 }
 
 /**
@@ -719,9 +733,9 @@ function doGet(e) {
       }
     }
 
-    // B. Sistemas desde PORTAFOLIO_SISTEMAS (9 Columnas A:I)
-    var sS = getMasterSheet(ss, "SISTEMAS");
-    var sysRows = sS.getDataRange().getValues();
+    // B. Sistemas desde SISTEMAS_WEB (o PORTAFOLIO_SISTEMAS si existe)
+    var sS = ss.getSheetByName("PORTAFOLIO_SISTEMAS");
+    var sysRows = sS ? sS.getDataRange().getValues() : [];
     var systems = [];
     if (sysRows.length > 1) {
       for (var s = 1; s < sysRows.length; s++) {
@@ -1033,24 +1047,19 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 3: Registrar Avance en Fases de Desarrollo (PORTAFOLIO_SISTEMAS + SISTEMAS_WEB + BITACORA)
+    // ACCIÓN 3: Registrar Avance en Fases de Desarrollo (SISTEMAS_WEB + BITACORA)
     // =========================================================================
     if (action === "log_phase") {
-      var sSistemas = getMasterSheet(ss, "SISTEMAS");
-      ensureExactHeaders(sSistemas, HEADERS.SISTEMAS);
-      var sysData = sSistemas.getDataRange().getValues();
-      var targetApp = String(payload.appName || "").toLowerCase().trim();
-
-      for (var s = 1; s < sysData.length; s++) {
-        var curName = String(sysData[s][1] || "").toLowerCase().trim();
-        if (curName === targetApp || curName.indexOf(targetApp) !== -1 || targetApp.indexOf(curName) !== -1) {
-          sSistemas.getRange(s + 1, 5).setValue(payload.phaseName || "Fase Actualizada");
-          sSistemas.getRange(s + 1, 6).setValue(Number(payload.progress) || 0);
-          if (payload.slaStatus) {
-            sSistemas.getRange(s + 1, 7).setValue(payload.slaStatus);
+      var sWebPh = getMasterSheet(ss, "SISTEMAS_WEB");
+      if (sWebPh && payload.slaStatus) {
+        var wData = sWebPh.getDataRange().getValues();
+        var targetAppW = String(payload.appName || "").toLowerCase().trim();
+        for (var w = 1; w < wData.length; w++) {
+          var wSysName = String(wData[w][1] || "").toLowerCase().trim();
+          if (wSysName === targetAppW || wSysName.indexOf(targetAppW) !== -1 || targetAppW.indexOf(wSysName) !== -1) {
+            sWebPh.getRange(w + 1, 4).setValue(payload.slaStatus);
+            break;
           }
-          sSistemas.getRange(s + 1, 9).setValue(dateStr);
-          break;
         }
       }
 
@@ -1066,7 +1075,7 @@ function doPost(e) {
 
       return createJsonResponse({
         status: "success",
-        message: "Avance de fase actualizado en PORTAFOLIO_SISTEMAS",
+        message: "Avance de fase registrado exitosamente",
         date: dateStr
       });
     }
@@ -1118,8 +1127,8 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 5: Sincronización Maestra de las 5 Hojas (sync_full_state)
-    // Repara encabezados, limpia filas fantasma y sincroniza Sistemas, Web, Tareas, Usuarios y Bitácora
+    // ACCIÓN 5: Sincronización Maestra de las 5 Hojas Oficiales (sync_full_state)
+    // Sincroniza SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, USUARIOS y BITACORA_HISTORIAL
     // =========================================================================
     if (action === "sync_full_state") {
       var apps = (payload.applications || []).filter(function(a) {
@@ -1127,40 +1136,13 @@ function doPost(e) {
         return n !== "" && n !== "sistema_a_cargo" && n !== "nombre_aplicativo" && a.code !== "STF-SIS-99";
       });
 
-      // 1. Actualizar PORTAFOLIO_SISTEMAS (9 Columnas A:I)
-      if (apps.length > 0) {
-        var sSis = getMasterSheet(ss, "SISTEMAS");
-        ensureExactHeaders(sSis, HEADERS.SISTEMAS);
-        var lastR = sSis.getLastRow();
-        if (lastR > 1) {
-          sSis.getRange(2, 1, lastR - 1, Math.max(9, sSis.getLastColumn())).clearContent();
-          if (lastR > apps.length + 1) {
-            try {
-              sSis.deleteRows(apps.length + 2, lastR - (apps.length + 1));
-            } catch (e) {}
-          }
-        }
-
-        var sysMatrix = [];
-        for (var a = 0; a < apps.length; a++) {
-          var ap = apps[a];
-          sysMatrix.push([
-            ap.code || ("STF-APP-" + (a + 1)),
-            ap.name || "",
-            ap.category || "General",
-            ap.devName || "Equipo STF",
-            ap.currentPhase || "En Desarrollo",
-            Number(ap.progress) || 0,
-            ap.slaStatus || "En Construcción",
-            ap.deadline || "2026-12-31",
-            dateStr
-          ]);
-        }
-        sSis.getRange(2, 1, sysMatrix.length, 9).setValues(sysMatrix);
-        formatCorporateSheet(sSis, "#1E1B4B", [110, 210, 175, 175, 250, 95, 130, 115, 155]);
+      // 0. Eliminar definitivamente la pestaña obsoleta/vacía PORTAFOLIO_SISTEMAS si existe
+      var sPortObs = ss.getSheetByName("PORTAFOLIO_SISTEMAS") || ss.getSheetByName("Estado_Sistemas") || ss.getSheetByName("Avances_Fases");
+      if (sPortObs && ss.getSheets().length > 1) {
+        try { ss.deleteSheet(sPortObs); } catch (e) { try { sPortObs.hideSheet(); } catch (e2) {} }
       }
 
-      // 2. Actualizar SISTEMAS_WEB (4 Columnas A:D) eliminando "Columna 1..4" y filas duplicadas
+      // 1. Actualizar SISTEMAS_WEB (4 Columnas A:D) eliminando "Columna 1..4" y filas duplicadas
       if (apps.length > 0) {
         var sWeb = getMasterSheet(ss, "SISTEMAS_WEB");
         if (sWeb) {
@@ -1315,7 +1297,7 @@ function doPost(e) {
         formatCorporateSheet(sObsFull, "#312E81", [150, 190, 175, 230, 150, 380]);
       }
 
-      // 6. Reparar y registrar en BITACORA_HISTORIAL
+      // 5. Reparar y registrar en BITACORA_HISTORIAL
       setupBitacoraSheet(ss);
       appendBitacoraRow(
         ss,
@@ -1323,13 +1305,13 @@ function doPost(e) {
         payload.user || "Super Admin (Jefe TI)",
         "SINCRONIZACION_MAESTRA",
         "Portafolio STF GROUP",
-        "Sincronización integral de las 6 hojas maestras (" + apps.length + " sistemas, " + tasksList.length + " tareas y " + obsList.length + " observaciones verificadas).",
+        "Sincronización integral de las 5 hojas maestras (" + apps.length + " sistemas, " + tasksList.length + " tareas y " + obsList.length + " observaciones verificadas).",
         "ALTO · v3.5"
       );
 
       return createJsonResponse({
         status: "success",
-        message: "Las 6 hojas maestras (USUARIOS, PORTAFOLIO_SISTEMAS, SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, BITACORA_HISTORIAL) han sido estabilizadas y sincronizadas.",
+        message: "Las 5 hojas maestras oficiales (USUARIOS, SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, BITACORA_HISTORIAL) han sido estabilizadas y sincronizadas.",
         date: dateStr
       });
     }
