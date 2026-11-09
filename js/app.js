@@ -986,7 +986,7 @@ function renderNotificationsDropdown() {
         const notif = notifications[i];
         if (notif) {
           markSingleNotificationRead(notif.id);
-          document.getElementById('notificationsDropdown')?.classList.remove('show');
+          closeNotificationsDropdown();
           if (typeof notif.action === 'function') {
             notif.action();
           }
@@ -7388,20 +7388,75 @@ function initApp() {
   const btnNotifications = document.getElementById('btnNotifications');
   const notificationsDropdown = document.getElementById('notificationsDropdown');
 
+  // Control Maestro del Centro de Notificaciones (Teleport a body para evitar problemas de capas WebKit en iPhone)
+  function openNotificationsDropdown() {
+    const notifEl = document.getElementById('notificationsDropdown');
+    const backdrop = document.getElementById('notifDropdownBackdrop');
+    const headerDropdown = document.getElementById('headerDevDropdown');
+    const btn = document.getElementById('btnNotifications');
+    if (!notifEl) return;
+
+    if (headerDropdown) headerDropdown.classList.remove('show');
+
+    // Si ya está abierto, lo cerramos ("guardar / recoger")
+    if (notifEl.classList.contains('show')) {
+      closeNotificationsDropdown();
+      return;
+    }
+
+    // Teleport directo a document.body para evitar que contenedores con overflow, scroll o 3D transforms
+    // (como los tabs de la baraja en Safari iOS) se dibujen por encima
+    if (notifEl.parentElement !== document.body) {
+      document.body.appendChild(notifEl);
+    }
+
+    renderNotificationsDropdown();
+    notifEl.classList.add('show');
+    if (backdrop) backdrop.classList.add('show');
+
+    // Posicionamiento responsivo exacto
+    if (window.innerWidth > 768 && btn) {
+      const rect = btn.getBoundingClientRect();
+      notifEl.style.position = 'fixed';
+      notifEl.style.top = `${rect.bottom + 8}px`;
+      notifEl.style.right = `${Math.max(14, window.innerWidth - rect.right)}px`;
+      notifEl.style.left = 'auto';
+      notifEl.style.width = '380px';
+    } else {
+      notifEl.style.position = 'fixed';
+      notifEl.style.top = '56px';
+      notifEl.style.left = '10px';
+      notifEl.style.right = '10px';
+      notifEl.style.width = 'auto';
+    }
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  function closeNotificationsDropdown() {
+    const notifEl = document.getElementById('notificationsDropdown');
+    const backdrop = document.getElementById('notifDropdownBackdrop');
+    if (notifEl) notifEl.classList.remove('show');
+    if (backdrop) backdrop.classList.remove('show');
+  }
+
+  window.openNotificationsDropdown = openNotificationsDropdown;
+  window.closeNotificationsDropdown = closeNotificationsDropdown;
+
   if (btnHeaderUser && headerDropdown) {
     btnHeaderUser.addEventListener('click', (e) => {
       e.stopPropagation();
-      notificationsDropdown?.classList.remove('show');
+      closeNotificationsDropdown();
       headerDropdown.classList.toggle('show');
     });
   }
 
-  if (btnNotifications && notificationsDropdown) {
+  if (btnNotifications) {
     btnNotifications.addEventListener('click', (e) => {
       e.stopPropagation();
-      headerDropdown?.classList.remove('show');
-      renderNotificationsDropdown();
-      notificationsDropdown.classList.toggle('show');
+      openNotificationsDropdown();
     });
   }
 
@@ -7409,8 +7464,30 @@ function initApp() {
     if (headerDropdown && btnHeaderUser && !headerDropdown.contains(e.target) && !btnHeaderUser.contains(e.target)) {
       headerDropdown.classList.remove('show');
     }
-    if (notificationsDropdown && btnNotifications && !notificationsDropdown.contains(e.target) && !btnNotifications.contains(e.target)) {
-      notificationsDropdown.classList.remove('show');
+    const notifEl = document.getElementById('notificationsDropdown');
+    if (notifEl && btnNotifications && notifEl.classList.contains('show')) {
+      if (!notifEl.contains(e.target) && !btnNotifications.contains(e.target)) {
+        closeNotificationsDropdown();
+      }
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    const notifEl = document.getElementById('notificationsDropdown');
+    const btn = document.getElementById('btnNotifications');
+    if (notifEl && notifEl.classList.contains('show')) {
+      if (window.innerWidth > 768 && btn) {
+        const rect = btn.getBoundingClientRect();
+        notifEl.style.top = `${rect.bottom + 8}px`;
+        notifEl.style.right = `${Math.max(14, window.innerWidth - rect.right)}px`;
+        notifEl.style.left = 'auto';
+        notifEl.style.width = '380px';
+      } else {
+        notifEl.style.top = '56px';
+        notifEl.style.left = '10px';
+        notifEl.style.right = '10px';
+        notifEl.style.width = 'auto';
+      }
     }
   });
 

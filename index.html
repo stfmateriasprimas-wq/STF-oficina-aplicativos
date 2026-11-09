@@ -39,6 +39,9 @@
 
 <body>
 
+  <!-- Backdrop desenfocado para cerrar menú de notificaciones en móvil y desktop -->
+  <div class="notif-dropdown-backdrop" id="notifDropdownBackdrop" onclick="closeNotificationsDropdown()"></div>
+
   <!-- App Wrapper with subtle background tone -->
   <div class="app-container">
 
@@ -132,9 +135,15 @@
                     style="font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #EEF2FF; color: #4E65FF;">Super
                     Admin</span>
                 </div>
-                <button type="button" class="text-link-btn" onclick="markAllNotificationsRead()"
-                  style="font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none; cursor: pointer; text-decoration: underline;"
-                  title="Marcar todas como leídas">Marcar leídas</button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button type="button" class="text-link-btn" onclick="markAllNotificationsRead()"
+                    style="font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none; cursor: pointer; text-decoration: underline;"
+                    title="Marcar todas como leídas">Marcar leídas</button>
+                  <button type="button" class="btn-close-notif-dropdown" onclick="closeNotificationsDropdown()"
+                    title="Cerrar panel de notificaciones">
+                    <i data-lucide="x"></i>
+                  </button>
+                </div>
               </div>
               <div class="notif-controls-bar">
                 <button type="button" class="notif-ctrl-btn" onclick="testNotificationAlert()" title="Probar sonido y alerta visual">
@@ -154,6 +163,12 @@
               <div id="notificationsListContainer"
                 style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px;">
                 <!-- Populated dynamically via JS -->
+              </div>
+              <div class="notif-dropdown-footer">
+                <button type="button" class="btn-close-notif-footer" onclick="closeNotificationsDropdown()" title="Guardar y cerrar notificaciones">
+                  <i data-lucide="chevron-up"></i>
+                  <span>Cerrar / Plegar Notificaciones</span>
+                </button>
               </div>
             </div>
           </div>
