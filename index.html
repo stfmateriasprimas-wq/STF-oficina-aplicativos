@@ -34,7 +34,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=51">
+  <link rel="stylesheet" href="css/styles.css?v=52">
 </head>
 
 <body>
@@ -1525,80 +1525,142 @@
         </div>
       </section>
 
-      <!-- VIEW: CRONOGRAMA & CALENDARIO FUTURISTA DE ENTREGAS (Estilo Cron / Amie / Notion Calendar) -->
+      <!-- VIEW: CALENDARIO EJECUTIVO DE ENTREGAS (Estilo Oripio / Notion Calendar) -->
       <section class="view-panel" id="view-calendar">
         <div class="calendar-view-wrapper">
-          <div class="fut-cal-main-card">
-            <!-- Cal Top Navigation & Controls Bar -->
-            <div class="fut-cal-top-bar">
-              <div class="fut-cal-month-wrap">
-                <div class="fut-cal-title-row">
-                  <h1 class="fut-cal-month-heading" id="futCalMonthHeading">Noviembre <span class="fut-cal-year" id="futCalYearHeading">2026</span></h1>
-                  <span class="fut-cal-range-pill" id="futCalRangePill">Semana 46 · 09 - 15 nov</span>
-                  <span class="fut-cal-live-badge"><span class="fut-pulse-dot"></span> STF Laboral Activo</span>
+          <div class="oripio-calendar-container">
+            
+            <!-- Left Projects & Team Sidebar -->
+            <aside class="oripio-cal-sidebar">
+              <div class="oripio-sidebar-section">
+                <div class="oripio-section-header">
+                  <span>Proyectos & Sistemas</span>
+                  <button type="button" class="oripio-btn-add-mini" onclick="openNewProjectModal()" title="Nuevo Aplicativo">+</button>
                 </div>
-                <div class="fut-cal-meta-sub">
-                  <span>Jornada Oficial STF: <strong>Lun-Sáb 6:00am - 1:00pm (7h/día)</strong></span>
-                  <span class="fut-cal-dot-sep">·</span>
-                  <span>Domingos y Festivos Ley Emiliani no computan en SLA</span>
-                  <span class="fut-cal-dot-sep">·</span>
-                  <span id="futCalStatsSummary" style="color: #4F46E5; font-weight: 700;">Cargando entregas...</span>
+                <div class="oripio-projects-nav" id="oripioProjectsNav">
+                  <!-- Populated dynamically via JS -->
                 </div>
               </div>
 
-              <!-- Center Interactive Legend / Color Tags Bar -->
-              <div class="fut-cal-legend-bar" id="futCalLegendBar">
-                <!-- Populated dynamically via JS with glowing pills -->
+              <div class="oripio-sidebar-section" style="margin-top: 18px;">
+                <div class="oripio-section-header">
+                  <span>Equipo de Desarrollo</span>
+                </div>
+                <div class="oripio-team-nav" id="oripioTeamNav">
+                  <!-- Populated dynamically via JS -->
+                </div>
               </div>
 
-              <!-- Right Actions: Nav Arrows, Hoy, View Switch, Dev Filter, + Nueva Tarea -->
-              <div class="fut-cal-actions-bar">
-                <div class="fut-cal-nav-group">
-                  <button type="button" class="fut-cal-nav-btn" id="btnFutCalPrev" onclick="navigateDeliveryCalendar(-1)" title="Período Anterior">
-                    <i data-lucide="chevron-left"></i>
+              <div class="oripio-sidebar-stf-banner">
+                <div class="stf-shift-icon">⏱️</div>
+                <div class="stf-shift-meta">
+                  <strong>Jornada STF Oficial</strong>
+                  <span>Lun - Sáb: 6:00am - 1:00pm</span>
+                  <span class="stf-shift-tag">7h/día · Sin festivos</span>
+                </div>
+              </div>
+            </aside>
+
+            <!-- Main Calendar Workspace -->
+            <main class="oripio-cal-workspace">
+              <!-- Top Row: Breadcrumb, Project Title, Avatars, Actions -->
+              <div class="oripio-top-header">
+                <div class="oripio-breadcrumb">
+                  <span>Proyectos</span>
+                  <span class="oripio-sep">/</span>
+                  <strong id="oripioBreadcrumbTitle">Todos los Sistemas STF</strong>
+                </div>
+
+                <div class="oripio-title-actions-row">
+                  <div class="oripio-title-wrap">
+                    <div class="oripio-project-icon" id="oripioProjectIcon">STF</div>
+                    <div class="oripio-project-meta">
+                      <h2 class="oripio-project-name" id="oripioProjectName">Portafolio General de Entregas 2026</h2>
+                      <p class="oripio-project-sub" id="oripioProjectSub">Supervisión en tiempo real de software, plazos laborales y entregables.</p>
+                    </div>
+                  </div>
+
+                  <div class="oripio-header-actions">
+                    <div class="oripio-team-avatars-stacked" id="oripioStackedAvatars">
+                      <!-- Rendered via JS -->
+                    </div>
+                    
+                    <div class="oripio-search-box">
+                      <i data-lucide="search"></i>
+                      <input type="text" id="oripioSearchInput" placeholder="Buscar tarea... ⌘K" oninput="handleCalendarSearch(this.value)">
+                    </div>
+
+                    <button type="button" class="oripio-pill-btn" id="oripioFilterBtn" onclick="toggleCalendarQuickFilters()">
+                      <i data-lucide="filter"></i>
+                      <span>Filtro</span>
+                    </button>
+
+                    <button type="button" class="pill-btn primary-btn oripio-create-task-btn" onclick="openAssignIntegrationModal()">
+                      <i data-lucide="plus"></i>
+                      <span>+ Nueva Tarea</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Sub-nav Tabs: Kanban / List / Calendar -->
+                <div class="oripio-subnav-tabs">
+                  <button type="button" class="oripio-tab-btn" onclick="switchView('tasks')" title="Ver en lista de tareas">
+                    <i data-lucide="list"></i>
+                    <span>Lista de Tareas</span>
                   </button>
-                  <button type="button" class="fut-cal-today-btn" id="btnFutCalToday" onclick="goToDeliveryCalendarToday()" title="Ir al día de hoy">
-                    Hoy
-                  </button>
-                  <button type="button" class="fut-cal-nav-btn" id="btnFutCalNext" onclick="navigateDeliveryCalendar(1)" title="Período Siguiente">
-                    <i data-lucide="chevron-right"></i>
+                  <button type="button" class="oripio-tab-btn active" title="Vista de Calendario y Cronograma">
+                    <i data-lucide="calendar"></i>
+                    <span>Calendario de Entregas</span>
                   </button>
                 </div>
+              </div>
 
-                <div class="fut-cal-mode-group">
-                  <button type="button" class="fut-cal-mode-btn active" id="btnModeWeek" onclick="setDeliveryCalendarMode('week')">Semana</button>
-                  <button type="button" class="fut-cal-mode-btn" id="btnModeMonth" onclick="setDeliveryCalendarMode('month')">Mes</button>
+              <!-- Calendar Controls Row: Month, Today, Nav Arrows, Day/Week/Month, Date Range -->
+              <div class="oripio-cal-controls-bar">
+                <div class="oripio-controls-left">
+                  <h3 class="oripio-cal-month-label" id="futCalMonthHeading">Nov 2026</h3>
+                  <button type="button" class="oripio-today-pill" onclick="goToDeliveryCalendarToday()">Hoy</button>
+                  <div class="oripio-arrows-wrap">
+                    <button type="button" class="oripio-arrow-btn" onclick="navigateDeliveryCalendar(-1)" title="Anterior">
+                      <i data-lucide="chevron-left"></i>
+                    </button>
+                    <button type="button" class="oripio-arrow-btn" onclick="navigateDeliveryCalendar(1)" title="Siguiente">
+                      <i data-lucide="chevron-right"></i>
+                    </button>
+                  </div>
                 </div>
 
-                <select id="futCalDevSelect" class="fut-cal-select" onchange="filterDeliveryCalendarByDev(this.value)" title="Filtrar por desarrollador">
-                  <option value="all">👥 Todo el Equipo</option>
-                  <!-- Populated dynamically -->
-                </select>
+                <div class="oripio-controls-right">
+                  <div class="oripio-mode-toggle">
+                    <button type="button" class="oripio-mode-btn" id="btnModeDay" onclick="setDeliveryCalendarMode('day')">Día</button>
+                    <button type="button" class="oripio-mode-btn active" id="btnModeWeek" onclick="setDeliveryCalendarMode('week')">Semana</button>
+                    <button type="button" class="oripio-mode-btn" id="btnModeMonth" onclick="setDeliveryCalendarMode('month')">Mes</button>
+                  </div>
 
-                <button type="button" class="pill-btn primary-btn fut-cal-new-btn" onclick="openAssignIntegrationModal()" title="Asignar y programar nueva tarea">
-                  <i data-lucide="plus"></i>
-                  <span>+ Nueva Tarea</span>
-                </button>
+                  <div class="oripio-range-badge" id="futCalRangePill">
+                    <i data-lucide="calendar-range" style="width: 13px; height: 13px;"></i>
+                    <span id="futCalRangeText">09 Nov - 15 Nov, 2026</span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <!-- Drag & Drop Calendar Grid Container -->
-            <div class="fut-cal-grid-outer" id="futCalGridOuter">
-              <!-- Rendered dynamically: Weekly time grid or Month view with dropzones -->
-            </div>
+              <!-- Main Calendar Grid Area (Dropzone) -->
+              <div class="oripio-grid-container" id="futCalGridOuter">
+                <!-- Rendered dynamically via JS: Week View by default! -->
+              </div>
 
-            <!-- Bottom Interactive Helper & Quick Stats Footer -->
-            <div class="fut-cal-footer-bar">
-              <div class="fut-cal-footer-left">
-                <i data-lucide="sparkles" class="fut-cal-hint-icon"></i>
-                <span class="fut-cal-hint-text">
-                  <strong>Arrastra y suelta</strong> cualquier tarjeta a otro día para reprogramar su fecha de entrega oficial en tiempo real. También puedes tocar <strong>📅 Reprogramar</strong> desde tu móvil.
-                </span>
+              <!-- Bottom Bar with Hints and SLA Summary -->
+              <div class="oripio-cal-footer">
+                <div class="oripio-footer-hint">
+                  <i data-lucide="sparkles" style="width: 15px; height: 15px; color: #4F46E5;"></i>
+                  <span><strong>Arrastra y suelta</strong> las etiquetas para cambiar la fecha de entrega oficial. Calculado según el turno STF (6am-1pm).</span>
+                </div>
+                <div class="oripio-footer-stats" id="futCalFooterStats">
+                  <!-- Dynamic counters -->
+                </div>
               </div>
-              <div class="fut-cal-footer-stats" id="futCalFooterStats">
-                <!-- Dynamic counters: Entregas, En Riesgo, Efectividad -->
-              </div>
-            </div>
+
+            </main>
           </div>
         </div>
       </section>

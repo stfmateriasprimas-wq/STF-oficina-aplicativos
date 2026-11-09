@@ -13242,851 +13242,937 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   line-height: 1.5;
 }
 
-
-
-
 /* ==========================================================================
-   VIEW: CRONOGRAMA & CALENDARIO FUTURISTA DE ENTREGAS (Estilo Cron / Amie / Notion)
+   VIEW: CALENDARIO EJECUTIVO DE ENTREGAS (Diseño Compacto SaaS Estilo Oripio)
    ========================================================================== */
 
 .calendar-view-wrapper {
   width: 100%;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.25s ease;
 }
 
-.fut-cal-main-card {
+.oripio-calendar-container {
+  display: flex;
   background: #FFFFFF;
-  border-radius: 26px;
   border: 1px solid #E2E8F0;
-  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.07);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  min-height: 720px;
 }
 
-.fut-cal-top-bar {
-  padding: 22px 26px 18px 26px;
+/* ==========================================================================
+   Left Panel: Projects & Team Sidebar
+   ========================================================================== */
+.oripio-cal-sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  border-right: 1px solid #EEF2F6;
+  background: #F8FAFC;
+  padding: 20px 14px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 16px;
-  border-bottom: 1px solid #EEF2F7;
-  background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%);
 }
 
-.fut-cal-month-wrap {
+.oripio-sidebar-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
-.fut-cal-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.fut-cal-month-heading {
-  font-size: 26px;
-  font-weight: 850;
-  color: #0F172A;
-  margin: 0;
-  letter-spacing: -0.02em;
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.fut-cal-year {
-  color: #64748B;
-  font-weight: 500;
-  font-size: 20px;
-  margin-left: 6px;
-}
-
-.fut-cal-range-pill {
-  font-size: 11.5px;
-  font-weight: 750;
-  color: #4338CA;
-  background: #EEF2FF;
-  padding: 3px 12px;
-  border-radius: 999px;
-  border: 1px solid #C7D2FE;
-  display: inline-flex;
-  align-items: center;
-}
-
-.fut-cal-live-badge {
+.oripio-section-header {
   font-size: 11px;
   font-weight: 700;
-  color: #047857;
-  background: #ECFDF5;
-  border: 1px solid #A7F3D0;
-  padding: 3px 10px;
-  border-radius: 999px;
-  display: inline-flex;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
+  padding: 0 8px 8px 8px;
 }
 
-.fut-pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10B981;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  animation: pulseGreen 2s infinite;
-}
-
-.fut-cal-meta-sub {
-  font-size: 12px;
+.oripio-btn-add-mini {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
   color: #64748B;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.fut-cal-dot-sep {
-  color: #CBD5E1;
-  font-weight: 800;
-}
-
-.fut-cal-legend-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.fut-legend-pill {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 700;
-  color: #475569;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  padding: 4px 12px;
-  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.oripio-btn-add-mini:hover {
+  background: #EEF2F6;
+  color: #0F172A;
+  border-color: #94A3B8;
+}
+
+.oripio-projects-nav,
+.oripio-team-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.oripio-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
   user-select: none;
 }
 
-.fut-legend-pill:hover {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
+.oripio-nav-item:hover {
+  background: #EEF2F6;
   color: #0F172A;
 }
 
-.fut-legend-pill.active {
+.oripio-nav-item.active {
   background: #EEF2FF;
-  border-color: #818CF8;
   color: #4338CA;
-  font-weight: 800;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+  font-weight: 600;
 }
 
-.fut-dot {
+.oripio-nav-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.fut-cal-actions-bar {
+.oripio-nav-icon {
+  font-size: 13px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.oripio-nav-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oripio-nav-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #E2E8F0;
+  color: #475569;
+  margin-left: auto;
+}
+.oripio-nav-item.active .oripio-nav-badge {
+  background: #C7D2FE;
+  color: #3730A3;
+}
+
+.oripio-nav-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.oripio-sidebar-stf-banner {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: auto;
+}
+
+.stf-shift-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.stf-shift-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stf-shift-meta strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1E40AF;
+}
+
+.stf-shift-meta span {
+  font-size: 10.5px;
+  color: #3B82F6;
+}
+
+.stf-shift-tag {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 600;
+  background: #DBEAFE;
+  color: #1D4ED8;
+  padding: 1px 6px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   Main Workspace: Header & Controls
+   ========================================================================== */
+.oripio-cal-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #FFFFFF;
+}
+
+.oripio-top-header {
+  padding: 20px 24px 14px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.oripio-breadcrumb {
+  font-size: 11.5px;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.oripio-sep {
+  color: #CBD5E1;
+}
+
+.oripio-title-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.oripio-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.oripio-project-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  flex-shrink: 0;
+}
+
+.oripio-project-name {
+  font-size: 19px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.oripio-project-sub {
+  font-size: 12px;
+  color: #64748B;
+  margin: 2px 0 0 0;
+}
+
+.oripio-header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.fut-cal-nav-group {
+.oripio-team-avatars-stacked {
   display: flex;
   align-items: center;
-  background: #F1F5F9;
-  border-radius: 12px;
-  padding: 3px;
-  border: 1px solid #E2E8F0;
+  padding-right: 4px;
 }
 
-.fut-cal-nav-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  border: none;
-  background: transparent;
-  color: #475569;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.fut-cal-nav-btn:hover {
-  background: #FFFFFF;
-  color: #0F172A;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.fut-cal-today-btn {
-  padding: 4px 12px;
-  border-radius: 9px;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 750;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.fut-cal-today-btn:hover {
-  background: #FFFFFF;
-  color: #0F172A;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.fut-cal-mode-group {
-  display: flex;
-  align-items: center;
-  background: #F1F5F9;
-  border-radius: 12px;
-  padding: 3px;
-  border: 1px solid #E2E8F0;
-}
-
-.fut-cal-mode-btn {
-  padding: 4px 12px;
-  border-radius: 9px;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748B;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.fut-cal-mode-btn.active {
-  background: #FFFFFF;
-  color: #0F172A;
-  font-weight: 800;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.fut-cal-select {
-  padding: 7px 12px;
-  border-radius: 12px;
-  border: 1.5px solid #CBD5E1;
-  background: #FFFFFF;
-  font-size: 12px;
-  font-weight: 700;
-  color: #1E293B;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.fut-cal-select:focus {
-  outline: none;
-  border-color: #4F46E5;
-}
-
-.fut-cal-new-btn {
-  padding: 7px 16px;
-  font-size: 12px;
-  font-weight: 800;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fut-cal-grid-outer {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  min-height: 580px;
-  position: relative;
-  background: #FFFFFF;
-}
-
-/* WEEK VIEW GRID */
-.fut-cal-week-grid {
-  display: grid;
-  grid-template-columns: 62px repeat(7, minmax(150px, 1fr));
-  min-width: 1100px;
-  position: relative;
-}
-
-.fut-cal-corner-cell {
-  background: #FAFCFF;
-  border-right: 1.5px solid #EEF2F7;
-  border-bottom: 1.5px solid #EEF2F7;
-  padding: 10px 4px;
-  text-align: center;
-  font-size: 10px;
-  font-weight: 800;
-  color: #94A3B8;
-  text-transform: uppercase;
-  position: sticky;
-  left: 0;
-  top: 0;
-  z-index: 25;
-}
-
-.fut-day-header {
-  padding: 12px 10px 10px 10px;
-  text-align: center;
-  border-bottom: 1.5px solid #EEF2F7;
-  border-right: 1px solid #F1F5F9;
-  background: #FFFFFF;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  transition: background 0.2s ease;
-}
-
-.fut-day-name {
-  font-size: 11px;
-  font-weight: 800;
-  color: #64748B;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.fut-day-num {
-  font-size: 17px;
-  font-weight: 850;
-  color: #0F172A;
-  width: 32px;
-  height: 32px;
-  line-height: 32px;
+.stacked-av {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  margin: 4px auto 0 auto;
-  transition: all 0.2s ease;
-}
-
-.fut-day-header.is-today .fut-day-name {
-  color: #EA580C;
-}
-
-.fut-day-header.is-today .fut-day-num {
-  background: #F97316;
-  color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
-}
-
-.fut-day-stf-badge {
-  font-size: 9.5px;
-  font-weight: 750;
-  padding: 2px 7px;
-  border-radius: 999px;
-  margin-top: 4px;
-  display: inline-block;
-  line-height: 1.2;
-}
-
-.badge-stf-work {
-  color: #0284C7;
-  background: #F0F9FF;
-  border: 1px solid #BAE6FD;
-}
-
-.badge-stf-half {
-  color: #D97706;
-  background: #FEF3C7;
-  border: 1px solid #FDE68A;
-}
-
-.badge-stf-rest {
-  color: #94A3B8;
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-}
-
-.badge-stf-holiday {
-  color: #DC2626;
-  background: #FEE2E2;
-  border: 1px solid #FECACA;
-}
-
-.fut-cal-time-col {
-  border-right: 1.5px solid #EEF2F7;
-  background: #FAFCFF;
-  position: sticky;
-  left: 0;
-  z-index: 15;
-}
-
-.fut-time-slot {
-  height: 64px;
-  font-size: 10.5px;
-  font-weight: 750;
-  color: #94A3B8;
-  text-align: center;
-  padding-top: 6px;
-  border-bottom: 1px solid #F1F5F9;
-  box-sizing: border-box;
-}
-
-.fut-time-slot.shift-end {
-  background: rgba(245, 158, 11, 0.05);
-  color: #D97706;
-  font-weight: 800;
-  border-bottom: 2px dashed #FCD34D;
-}
-
-.fut-cal-day-col {
-  border-right: 1px solid #F1F5F9;
-  position: relative;
-  padding: 8px 6px;
-  min-height: 540px;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-sizing: border-box;
-}
-
-.fut-cal-day-col.is-today {
-  background: rgba(249, 115, 22, 0.015);
-}
-
-.fut-cal-day-col.is-non-working {
-  background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F5F5F5 10px, #F5F5F5 20px) !important;
-}
-
-.fut-cal-day-col.drag-over {
-  background: rgba(79, 70, 229, 0.08) !important;
-  outline: 2px dashed #4F46E5 !important;
-  outline-offset: -3px !important;
-  border-radius: 8px !important;
-}
-
-/* LIVE CURRENT TIME INDICATOR */
-.fut-time-now-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #F97316;
-  z-index: 18;
-  pointer-events: none;
-}
-
-.fut-time-now-pill {
-  position: absolute;
-  left: -2px;
-  top: -10px;
-  background: #F97316;
-  color: #FFFFFF;
-  font-size: 9.5px;
-  font-weight: 850;
-  padding: 2px 7px;
-  border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4);
-}
-
-/* FUTURISTIC TASK EVENT CARD */
-.fut-task-card {
-  border-radius: 14px;
-  padding: 10px 11px;
-  cursor: grab;
-  user-select: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  border: 1.5px solid transparent;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  box-sizing: border-box;
-}
-
-.fut-task-card:active {
-  cursor: grabbing;
-}
-
-.fut-task-card.is-dragging {
-  opacity: 0.35;
-  transform: scale(0.96);
-}
-
-.fut-task-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
-}
-
-/* THEMES BASED ON APPLICATION / STATUS */
-.theme-blue {
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-  color: #1E40AF;
-}
-.theme-orange {
-  background: #FFF7ED;
-  border-color: #FED7AA;
-  color: #9A3412;
-}
-.theme-purple {
-  background: #F5F3FF;
-  border-color: #DDD6FE;
-  color: #5B21B6;
-}
-.theme-green {
-  background: #F0FDF4;
-  border-color: #BBF7D0;
-  color: #166534;
-}
-.theme-rose {
-  background: #FFF1F2;
-  border-color: #FECDD3;
-  color: #9F1239;
-}
-.theme-amber {
-  background: #FFFBEB;
-  border-color: #FDE68A;
-  color: #92400E;
-}
-
-.fut-card-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.fut-app-tag {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  letter-spacing: 0.02em;
-}
-
-.fut-sla-tag {
-  font-size: 9.5px;
-  font-weight: 750;
-  padding: 2px 7px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  line-height: 1.2;
-}
-
-.sla-ontime {
-  background: #DCFCE7;
-  color: #15803D;
-  border: 1px solid #BBF7D0;
-}
-
-.sla-risk {
-  background: #FEE2E2;
-  color: #B91C1C;
-  border: 1px solid #FECACA;
-}
-
-.sla-today {
-  background: #FFEDD5;
-  color: #C2410C;
-  border: 1px solid #FED7AA;
-}
-
-.sla-done {
-  background: #E0E7FF;
-  color: #4338CA;
-  border: 1px solid #C7D2FE;
-}
-
-.fut-task-title {
-  font-size: 12px;
-  font-weight: 750;
-  line-height: 1.35;
-  color: #1E293B;
-  word-break: break-word;
-  margin: 0;
-}
-
-.fut-card-bottom-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding-top: 4px;
-  border-top: 1px dashed rgba(0, 0, 0, 0.08);
-}
-
-.fut-dev-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #334155;
-}
-
-.fut-dev-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  border: 2px solid #FFFFFF;
+  margin-left: -8px;
   object-fit: cover;
-  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  transition: transform 0.15s ease;
+}
+.stacked-av:first-child {
+  margin-left: 0;
+}
+.stacked-av:hover {
+  transform: translateY(-2px);
+  z-index: 2;
 }
 
-.fut-card-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn-fut-reschedule {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: 750;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.btn-fut-reschedule:hover {
-  background: #FFFFFF;
-  color: #4F46E5;
-  border-color: #818CF8;
-}
-
-.fut-drag-handle {
-  color: #94A3B8;
-  cursor: grab;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* MONTH VIEW GRID */
-.fut-cal-month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  min-width: 850px;
-}
-
-.fut-month-header {
-  padding: 12px 8px;
-  text-align: center;
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #64748B;
-  text-transform: uppercase;
-  background: #FAFCFF;
-  border-bottom: 1.5px solid #EEF2F7;
-  border-right: 1px solid #F1F5F9;
-}
-
-.fut-month-cell {
-  min-height: 110px;
-  border-right: 1px solid #F1F5F9;
-  border-bottom: 1px solid #F1F5F9;
-  padding: 8px 6px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-}
-
-.fut-month-cell.is-other-month {
-  background: #FAFCFF;
-  opacity: 0.6;
-}
-
-.fut-month-cell.is-today {
-  background: rgba(249, 115, 22, 0.03);
-}
-
-.fut-month-cell.is-non-working {
-  background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F5F5F5 10px, #F5F5F5 20px) !important;
-}
-
-.fut-month-cell.drag-over {
-  background: rgba(79, 70, 229, 0.08) !important;
-  outline: 2px dashed #4F46E5 !important;
-  outline-offset: -3px !important;
-}
-
-.fut-month-cell-header {
+.oripio-search-box {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 3px;
-}
-
-.fut-month-cell-num {
-  font-size: 13px;
-  font-weight: 800;
-  color: #334155;
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  text-align: center;
-  border-radius: 50%;
-}
-
-.fut-month-cell.is-today .fut-month-cell-num {
-  background: #F97316;
-  color: #FFFFFF;
-}
-
-.fut-month-task-pill {
-  padding: 4px 7px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 750;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  cursor: grab;
-  user-select: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
-
-.fut-month-task-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* FOOTER BAR */
-.fut-cal-footer-bar {
-  padding: 14px 26px;
+  gap: 7px;
   background: #F8FAFC;
-  border-top: 1px solid #EEF2F7;
-  display: flex;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 6px 11px;
+  color: #64748B;
+  transition: all 0.15s ease;
+}
+.oripio-search-box:focus-within {
+  border-color: #3B82F6;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.oripio-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 12px;
+  color: #1E293B;
+  width: 140px;
+}
+
+.oripio-pill-btn {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.oripio-pill-btn:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+.oripio-create-task-btn {
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 7px 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+  transition: all 0.15s ease !important;
+}
+.oripio-create-task-btn:hover {
+  background: #1D4ED8 !important;
+  transform: translateY(-1px);
+}
+
+.oripio-subnav-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.oripio-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748B;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -15px;
+  transition: all 0.15s ease;
+}
+.oripio-tab-btn:hover {
+  color: #0F172A;
+}
+.oripio-tab-btn.active {
+  color: #2563EB;
+  font-weight: 600;
+  border-bottom: 2px solid #2563EB;
+}
+
+/* ==========================================================================
+   Calendar Controls Row: Month, Arrows, Day/Week/Month Toggle, Range Pill
+   ========================================================================== */
+.oripio-cal-controls-bar {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #FAFAFC;
+  border-bottom: 1px solid #F1F5F9;
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.fut-cal-footer-left {
+.oripio-controls-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
-.fut-cal-hint-icon {
-  width: 17px;
-  height: 17px;
-  color: #4F46E5;
-  flex-shrink: 0;
+.oripio-cal-month-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.fut-cal-hint-text {
-  font-size: 12px;
+.oripio-today-pill {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 7px;
+  padding: 4px 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.oripio-today-pill:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+.oripio-arrows-wrap {
+  display: flex;
+  gap: 4px;
+}
+
+.oripio-arrow-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.15s ease;
+}
+.oripio-arrow-btn:hover {
+  background: #F8FAFC;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+.oripio-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.oripio-mode-toggle {
+  display: inline-flex;
+  background: #EEF2F6;
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.oripio-mode-btn {
+  padding: 4px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.oripio-mode-btn.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.oripio-range-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* ==========================================================================
+   Main Grid Container (Week, Month & Day Views)
+   ========================================================================== */
+.oripio-grid-container {
+  flex: 1;
+  min-height: 520px;
+  overflow-x: auto;
+  overflow-y: auto;
+  background: #FFFFFF;
+}
+
+/* Week View Table */
+.oripio-week-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 820px;
+}
+
+.o-time-th {
+  width: 72px;
+  border-right: 1px solid #EEF2F6;
+  border-bottom: 1px solid #E2E8F0;
+  background: #FAFAFC;
+}
+
+.o-day-th {
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #F1F5F9;
+  background: #FAFAFC;
+}
+
+.o-day-th.today {
+  background: #EFF6FF;
+}
+
+.o-day-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.o-day-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+}
+
+.o-day-num {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.o-day-th.today .o-day-num {
+  background: #2563EB;
+  color: #FFFFFF;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.o-stf-badge {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  margin-top: 3px;
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.o-badge-work {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.o-badge-half {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.o-badge-holiday {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.o-badge-rest {
+  background: #F8FAFC;
+  color: #94A3B8;
+}
+
+/* Time & Cell Rows */
+.o-time-td {
+  text-align: right;
+  padding-right: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  vertical-align: top;
+  padding-top: 6px;
+  border-right: 1px solid #EEF2F6;
+  border-bottom: 1px solid #F1F5F9;
+  height: 52px;
+  background: #FAFAFC;
+  user-select: none;
+}
+
+.o-time-td.shift-finish {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.o-cell-td {
+  border-right: 1px solid #F1F5F9;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: top;
+  padding: 4px;
+  position: relative;
+  transition: background 0.15s ease;
+  min-height: 52px;
+}
+
+.o-cell-td.drag-over {
+  background: #EFF6FF !important;
+  outline: 2px dashed #3B82F6;
+  outline-offset: -2px;
+}
+
+.o-cell-td.non-working {
+  background-image: repeating-linear-gradient(45deg, #F8FAFC, #F8FAFC 8px, #F1F5F9 8px, #F1F5F9 16px);
+  opacity: 0.65;
+}
+
+.o-cell-td.holiday-bg {
+  background-image: repeating-linear-gradient(45deg, #FEF2F2, #FEF2F2 8px, #FEE2E2 8px, #FEE2E2 16px);
+  opacity: 0.75;
+}
+
+/* ==========================================================================
+   Oripio Event Cards (Pastel Tones, Time Pill, Clean Title)
+   ========================================================================== */
+.oripio-event-card {
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  cursor: grab;
+  font-family: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.oripio-event-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.oripio-event-card:active {
+  cursor: grabbing;
+}
+
+.oripio-event-card.is-dragging {
+  opacity: 0.4;
+  transform: scale(0.96);
+}
+
+/* Pastel Card Themes */
+.card-theme-purple {
+  background: #F3E8FF;
+  border-left: 3.5px solid #A855F7;
+  color: #581C87;
+}
+
+.card-theme-blue {
+  background: #E0F2FE;
+  border-left: 3.5px solid #0284C7;
+  color: #0369A1;
+}
+
+.card-theme-green {
+  background: #DCFCE7;
+  border-left: 3.5px solid #16A34A;
+  color: #15803D;
+}
+
+.card-theme-orange {
+  background: #FFEDD5;
+  border-left: 3.5px solid #EA580C;
+  color: #C2410C;
+}
+
+.card-theme-rose {
+  background: #FFE4E6;
+  border-left: 3.5px solid #E11D48;
+  color: #9F1239;
+}
+
+.card-theme-indigo {
+  background: #EEF2FF;
+  border-left: 3.5px solid #6366F1;
+  color: #3730A3;
+}
+
+/* Event Card Inner Elements */
+.oec-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.oec-time-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.75);
+  display: inline-flex;
+  letter-spacing: -0.01em;
+}
+
+.oec-status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.oec-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+  word-break: break-word;
+}
+
+.oec-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.oec-dev-tag {
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.oec-avatar {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.oec-progress {
+  font-size: 9.5px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* ==========================================================================
+   Month & Day View Grids
+   ========================================================================== */
+.oripio-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+  min-width: 780px;
+}
+
+.o-month-header {
+  padding: 10px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748B;
+  background: #FAFAFC;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #F1F5F9;
+  text-transform: uppercase;
+}
+
+.o-month-cell {
+  min-height: 105px;
+  border-right: 1px solid #F1F5F9;
+  border-bottom: 1px solid #F1F5F9;
+  padding: 6px;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background 0.15s ease;
+}
+
+.o-month-cell.is-other-month {
+  background: #FAFAFC;
+  opacity: 0.5;
+}
+
+.o-month-cell.is-today {
+  background: #F8FAFC;
+}
+
+.o-month-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.o-month-cell-num {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.o-month-cell.is-today .o-month-cell-num {
+  background: #2563EB;
+  color: #FFFFFF;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.o-month-task-pill {
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  cursor: grab;
+  transition: transform 0.15s ease;
+  user-select: none;
+}
+.o-month-task-pill:hover {
+  transform: translateY(-1px);
+}
+
+/* Footer Hint & Stats Bar */
+.oripio-cal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: #FAFAFC;
+  border-top: 1px solid #F1F5F9;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.oripio-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
   color: #64748B;
 }
 
-.fut-cal-footer-stats {
+.oripio-footer-stats {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.fut-stat-chip {
-  font-size: 11.5px;
-  font-weight: 750;
-  padding: 4px 10px;
-  border-radius: 999px;
+.o-stat-pill {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   color: #475569;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
 }
 
-/* QUICK RESCHEDULE MODAL */
-.reschedule-quick-pills {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.reschedule-quick-btn {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1.5px solid #E2E8F0;
-  background: #F8FAFC;
-  font-size: 12px;
-  font-weight: 750;
-  color: #1E293B;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  text-align: left;
-}
-
-.reschedule-quick-btn:hover {
-  background: #EEF2FF;
-  border-color: #818CF8;
-  color: #4338CA;
-}
-
-.reschedule-quick-btn span.rq-sub {
-  font-size: 10px;
-  font-weight: 600;
-  color: #64748B;
-}
-
-/* RESPONSIVE OPTIMIZATIONS FOR SMARTPHONES */
-@media (max-width: 768px) {
-  .fut-cal-top-bar {
-    padding: 14px 14px 12px 14px;
-    gap: 12px;
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 992px) {
+  .oripio-calendar-container {
+    flex-direction: column;
   }
-
-  .fut-cal-month-heading {
-    font-size: 20px;
-  }
-
-  .fut-cal-actions-bar {
+  .oripio-cal-sidebar {
     width: 100%;
-    justify-content: space-between;
+    border-right: none;
+    border-bottom: 1px solid #EEF2F6;
+    padding: 14px;
   }
-
-  .fut-cal-select {
-    width: 100%;
+  .oripio-projects-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
-
-  .fut-cal-new-btn {
-    width: 100%;
-    justify-content: center;
+  .oripio-team-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
-
-  .fut-cal-week-grid {
-    min-width: 900px;
+  .oripio-nav-item {
+    white-space: nowrap;
+    width: auto;
   }
-
-  .reschedule-quick-pills {
-    grid-template-columns: 1fr;
+  .oripio-sidebar-stf-banner {
+    display: none;
   }
 }

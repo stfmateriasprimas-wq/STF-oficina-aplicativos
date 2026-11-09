@@ -10655,11 +10655,12 @@ window.renderNewProjectPhases = renderNewProjectPhases;
 // Sincronizado reactivamente con Motor Laboral STF & LocalStorage & Google Sheets
 // ==========================================================================
 
-let calDeliveryCurrentDate = getSystemReferenceDate();
-let calDeliveryViewMode = 'week'; // 'week' | 'month'
+let calDeliveryCurrentDate = null;
+let calDeliveryViewMode = 'week'; // Default to compact Week view as requested!
 let calDeliveryDevFilter = 'all';
 let calDeliveryAppFilter = 'all';
 let calDeliveryStatusFilter = 'all';
+let calDeliverySearchQuery = '';
 let draggedTaskId = null;
 
 function getMondayOfWeek(d) {
@@ -10713,6 +10714,16 @@ function getScopedCalendarIntegrations() {
     list = list.filter(i => i.appId === calDeliveryAppFilter);
   }
 
+  // Filter by Search Query
+  if (calDeliverySearchQuery && calDeliverySearchQuery.trim()) {
+    const q = calDeliverySearchQuery.trim().toLowerCase();
+    list = list.filter(i => 
+      (i.name && i.name.toLowerCase().includes(q)) || 
+      (i.appName && i.appName.toLowerCase().includes(q)) || 
+      (i.devName && i.devName.toLowerCase().includes(q))
+    );
+  }
+
   // Filter by Status
   if (calDeliveryStatusFilter === 'risk') {
     list = list.filter(i => {
@@ -10737,100 +10748,196 @@ function renderCalendarDeliveryView() {
   const current = calDeliveryCurrentDate || refDate;
   const my = formatMonthYearEs(current);
 
-  // Update Month Title & Year
+  // Update Month Title
   const titleEl = document.getElementById('futCalMonthHeading');
   if (titleEl) {
-    titleEl.innerHTML = `${my.month} <span class="fut-cal-year" id="futCalYearHeading">${my.year}</span>`;
+    titleEl.textContent = `${my.month} ${my.year}`;
   }
 
-  // Populate Developer Dropdown
-  const devSelect = document.getElementById('futCalDevSelect');
-  if (devSelect && appState.developers) {
-    const prevVal = devSelect.value || calDeliveryDevFilter;
-    const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz' && d.role !== 'Admin');
-    devSelect.innerHTML = `
-      <option value="all" ${calDeliveryDevFilter === 'all' ? 'selected' : ''}>👥 Todo el Equipo (${teamDevs.length} Devs)</option>
-      ${teamDevs.map(d => `
-        <option value="${d.id}" ${calDeliveryDevFilter === d.id ? 'selected' : ''}>💻 ${d.name}</option>
-      `).join('')}
-    `;
-    if (prevVal) devSelect.value = prevVal;
-  }
+  // Render Left Panels (Projects & Team Navigation)
+  renderOripioSidebar();
 
-  // Render Legend Bar with glowing pills
-  renderCalendarLegendBar();
+  // Render Top Header Workspace Details (Breadcrumbs, Title, Avatars)
+  renderOripioHeader();
 
   // Mode buttons active state
+  const btnDay = document.getElementById('btnModeDay');
   const btnWeek = document.getElementById('btnModeWeek');
   const btnMonth = document.getElementById('btnModeMonth');
+  if (btnDay) btnDay.classList.toggle('active', calDeliveryViewMode === 'day');
   if (btnWeek) btnWeek.classList.toggle('active', calDeliveryViewMode === 'week');
   if (btnMonth) btnMonth.classList.toggle('active', calDeliveryViewMode === 'month');
 
-  // Render based on mode
+  // Render according to active view mode
   if (calDeliveryViewMode === 'week') {
     renderCalendarWeekGrid(container, current, refDate);
+  } else if (calDeliveryViewMode === 'day') {
+    renderCalendarDayGrid(container, current, refDate);
   } else {
     renderCalendarMonthGrid(container, current, refDate);
   }
 
-  // Re-create icons if Lucide is available
+  // Re-create icons if Lucide is loaded
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
   }
 }
 
-function renderCalendarLegendBar() {
-  const bar = document.getElementById('futCalLegendBar');
-  if (!bar) return;
+function renderOripioSidebar() {
+  const projectsNav = document.getElementById('oripioProjectsNav');
+  const teamNav = document.getElementById('oripioTeamNav');
 
-  const legendItems = [
-    { id: 'all', label: 'Todos', color: '#6366F1' },
-    { id: 'app_torre', label: 'Torre Control', color: '#8B5CF6' },
-    { id: 'app_geo', label: 'Geo Talleres', color: '#F97316' },
-    { id: 'app_colchas', label: 'Colchas', color: '#10B981' },
-    { id: 'app_laboratorio', label: 'Laboratorio', color: '#3B82F6' },
-    { id: 'risk', label: 'En Riesgo / SLA', color: '#EF4444' },
-    { id: 'done', label: 'Auditadas', color: '#059669' }
-  ];
-
-  bar.innerHTML = legendItems.map(item => {
-    let isActive = false;
-    if (item.id === 'all') isActive = calDeliveryAppFilter === 'all' && calDeliveryStatusFilter === 'all';
-    else if (item.id === 'risk') isActive = calDeliveryStatusFilter === 'risk';
-    else if (item.id === 'done') isActive = calDeliveryStatusFilter === 'done';
-    else isActive = calDeliveryAppFilter === item.id;
-
-    return `
-      <div class="fut-legend-pill ${isActive ? 'active' : ''}" onclick="handleCalendarLegendClick('${item.id}')">
-        <span class="fut-dot" style="background: ${item.color};"></span>
-        <span>${item.label}</span>
-      </div>
+  // 1. Projects Navigation
+  if (projectsNav && Array.isArray(appState.applications)) {
+    const allTasksCount = (appState.integrations || []).length;
+    let projHtml = `
+      <button type="button" 
+              class="oripio-nav-item ${calDeliveryAppFilter === 'all' ? 'active' : ''}" 
+              onclick="selectCalendarProject('all')" 
+              title="Todos los Sistemas">
+        <span class="oripio-nav-icon">📁</span>
+        <span class="oripio-nav-text">Todos los Sistemas</span>
+        <span class="oripio-nav-badge">${allTasksCount}</span>
+      </button>
     `;
-  }).join('');
+
+    appState.applications.forEach(app => {
+      const taskCount = (appState.integrations || []).filter(i => i.appId === app.id).length;
+      const isActive = calDeliveryAppFilter === app.id;
+      const appColor = app.iconColor || '#3B82F6';
+      
+      let icon = '🔹';
+      if (app.id.includes('colchas')) icon = '🛏️';
+      else if (app.id.includes('laboratorio')) icon = '🧪';
+      else if (app.id.includes('geo')) icon = '📍';
+      else if (app.id.includes('torre')) icon = '🗼';
+      else if (app.id.includes('oficina')) icon = '🏢';
+
+      projHtml += `
+        <button type="button" 
+                class="oripio-nav-item ${isActive ? 'active' : ''}" 
+                onclick="selectCalendarProject('${app.id}')"
+                title="${app.name}">
+          <span class="oripio-nav-dot" style="background: ${appColor};"></span>
+          <span class="oripio-nav-text">${app.name}</span>
+          <span class="oripio-nav-badge">${taskCount}</span>
+        </button>
+      `;
+    });
+
+    projectsNav.innerHTML = projHtml;
+  }
+
+  // 2. Team Navigation
+  if (teamNav && Array.isArray(appState.developers)) {
+    const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz' && d.role !== 'Admin');
+    
+    let teamHtml = `
+      <button type="button" 
+              class="oripio-nav-item ${calDeliveryDevFilter === 'all' ? 'active' : ''}" 
+              onclick="selectCalendarDev('all')" 
+              title="Todo el Equipo">
+        <span class="oripio-nav-icon">👥</span>
+        <span class="oripio-nav-text">Todo el Equipo</span>
+        <span class="oripio-nav-badge">${teamDevs.length}</span>
+      </button>
+    `;
+
+    teamDevs.forEach(dev => {
+      const devTasks = (appState.integrations || []).filter(i => i.devId === dev.id);
+      const isActive = calDeliveryDevFilter === dev.id;
+      teamHtml += `
+        <button type="button" 
+                class="oripio-nav-item ${isActive ? 'active' : ''}" 
+                onclick="selectCalendarDev('${dev.id}')"
+                title="${dev.name}">
+          <img src="${dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}" alt="${dev.name}" class="oripio-nav-avatar">
+          <span class="oripio-nav-text">${dev.name}</span>
+          <span class="oripio-nav-badge">${devTasks.length}</span>
+        </button>
+      `;
+    });
+
+    teamNav.innerHTML = teamHtml;
+  }
 }
 
-function handleCalendarLegendClick(id) {
-  if (id === 'all') {
-    calDeliveryAppFilter = 'all';
-    calDeliveryStatusFilter = 'all';
-  } else if (id === 'risk') {
-    calDeliveryStatusFilter = calDeliveryStatusFilter === 'risk' ? 'all' : 'risk';
-    calDeliveryAppFilter = 'all';
-  } else if (id === 'done') {
-    calDeliveryStatusFilter = calDeliveryStatusFilter === 'done' ? 'all' : 'done';
-    calDeliveryAppFilter = 'all';
+function renderOripioHeader() {
+  const breadcrumbTitle = document.getElementById('oripioBreadcrumbTitle');
+  const projNameEl = document.getElementById('oripioProjectName');
+  const projSubEl = document.getElementById('oripioProjectSub');
+  const projIconEl = document.getElementById('oripioProjectIcon');
+  const stackedAvatarsEl = document.getElementById('oripioStackedAvatars');
+
+  let title = 'Portafolio General de Entregas 2026';
+  let sub = 'Supervisión en tiempo real de software, plazos laborales y entregables.';
+  let iconText = 'STF';
+  let breadcrumb = 'Todos los Sistemas STF';
+
+  if (calDeliveryAppFilter !== 'all' && Array.isArray(appState.applications)) {
+    const selectedApp = appState.applications.find(a => a.id === calDeliveryAppFilter);
+    if (selectedApp) {
+      title = selectedApp.name;
+      sub = selectedApp.description || 'Cronograma oficial de desarrollo y entregas auditadas.';
+      breadcrumb = selectedApp.name;
+      iconText = selectedApp.name.substring(0, 3).toUpperCase();
+    }
+  }
+
+  if (breadcrumbTitle) breadcrumbTitle.textContent = breadcrumb;
+  if (projNameEl) projNameEl.textContent = title;
+  if (projSubEl) projSubEl.textContent = sub;
+  if (projIconEl) projIconEl.textContent = iconText;
+
+  // Stacked Team Avatars
+  if (stackedAvatarsEl && Array.isArray(appState.developers)) {
+    const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz');
+    stackedAvatarsEl.innerHTML = teamDevs.map(dev => `
+      <img src="${dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}" 
+           alt="${dev.name}" 
+           class="stacked-av" 
+           title="${dev.name} (${dev.role || 'Desarrollador'})">
+    `).join('');
+  }
+}
+
+function selectCalendarProject(appId) {
+  calDeliveryAppFilter = appId;
+  renderCalendarDeliveryView();
+}
+
+function selectCalendarDev(devId) {
+  calDeliveryDevFilter = devId;
+  renderCalendarDeliveryView();
+}
+
+function handleCalendarSearch(query) {
+  calDeliverySearchQuery = query;
+  renderCalendarDeliveryView();
+}
+
+function toggleCalendarQuickFilters() {
+  if (calDeliveryStatusFilter === 'all') {
+    calDeliveryStatusFilter = 'risk';
+    showToast('🔍 Filtro aplicado: Tareas en Riesgo / SLA');
+  } else if (calDeliveryStatusFilter === 'risk') {
+    calDeliveryStatusFilter = 'done';
+    showToast('🔍 Filtro aplicado: Tareas Auditadas');
   } else {
-    calDeliveryAppFilter = calDeliveryAppFilter === id ? 'all' : id;
     calDeliveryStatusFilter = 'all';
+    showToast('🔍 Filtro restablecido: Todas las entregas');
   }
   renderCalendarDeliveryView();
 }
 
+/* ==========================================================================
+   Week Grid Rendering (Oripio Compact SaaS View)
+   ========================================================================== */
 function renderCalendarWeekGrid(container, currentDate, refDate) {
   const monday = getMondayOfWeek(currentDate);
   const weekNum = getWeekNumber(monday);
 
-  // Generate 7 days of this week
+  // Generate 7 days (Lun - Dom)
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
@@ -10841,27 +10948,35 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
   const endStr = formatShortDate(formatIsoDate(weekDays[6]));
   const rangePill = document.getElementById('futCalRangePill');
   if (rangePill) {
-    rangePill.textContent = `Semana ${weekNum} · ${startStr} - ${endStr}`;
+    rangePill.innerHTML = `<i data-lucide="calendar-range" style="width: 13px; height: 13px;"></i> <span>${startStr} - ${endStr}</span>`;
   }
 
   const todayIso = formatIsoDate(refDate);
   const scopedIntegrations = getScopedCalendarIntegrations();
 
-  // Day names abbreviations in Spanish (LUN, MAR, MIÉ, JUE, VIE, SÁB, DOM)
+  // STF Shift Hours: 6:00 to 13:00 (Fin turno STF) + 14:00 (Soporte)
+  const timeSlots = [
+    { hour: 6, label: '06:00 AM' },
+    { hour: 7, label: '07:00 AM' },
+    { hour: 8, label: '08:00 AM' },
+    { hour: 9, label: '09:00 AM' },
+    { hour: 10, label: '10:00 AM' },
+    { hour: 11, label: '11:00 AM' },
+    { hour: 12, label: '12:00 PM' },
+    { hour: 13, label: '01:00 PM', isShiftEnd: true },
+    { hour: 14, label: '02:00 PM' }
+  ];
+
   const dayNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
-  // Time slots from 6:00 to 18:00
-  const timeHours = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-
   let html = `
-    <div class="fut-cal-week-grid">
-      <!-- Top-left corner -->
-      <div class="fut-cal-corner-cell">
-        <span>Hora</span>
-      </div>
+    <table class="oripio-week-table">
+      <thead>
+        <tr>
+          <th class="o-time-th"></th>
   `;
 
-  // 7 Header Columns
+  // Headers for the 7 days
   weekDays.forEach((d, idx) => {
     const iso = formatIsoDate(d);
     const isToday = iso === todayIso;
@@ -10869,177 +10984,271 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
     const isSaturday = d.getDay() === 6;
     const hol = checkColombianHoliday(iso);
 
-    let badgeClass = 'badge-stf-work';
-    let badgeText = 'Turno 7h (6-1)';
+    let badgeClass = 'o-badge-work';
+    let badgeText = '6am - 1pm';
     if (hol.isHoliday) {
-      badgeClass = 'badge-stf-holiday';
-      badgeText = hol.name ? hol.name.substring(0, 14) : 'Festivo STF';
+      badgeClass = 'o-badge-holiday';
+      badgeText = hol.name ? hol.name.substring(0, 11) : 'Festivo';
     } else if (isSunday) {
-      badgeClass = 'badge-stf-rest';
+      badgeClass = 'o-badge-rest';
       badgeText = 'Descanso';
     } else if (isSaturday) {
-      badgeClass = 'badge-stf-half';
-      badgeText = 'STF (6am - 1pm)';
+      badgeClass = 'o-badge-half';
+      badgeText = 'STF (6-1)';
     }
 
     html += `
-      <div class="fut-day-header ${isToday ? 'is-today' : ''}" data-day-iso="${iso}">
-        <div class="fut-day-name">${dayNames[idx]}</div>
-        <div class="fut-day-num">${d.getDate()}</div>
-        <span class="fut-day-stf-badge ${badgeClass}" title="${hol.isHoliday ? 'Día festivo nacional Ley Emiliani - No laboral en planta STF' : (isSunday ? 'Domingo no laboral STF' : 'Jornada laboral ordinaria STF')}">${badgeText}</span>
-      </div>
+      <th class="o-day-th ${isToday ? 'today' : ''}" data-day-iso="${iso}">
+        <div class="o-day-title-wrap">
+          <span class="o-day-name">${dayNames[idx]}</span>
+          <span class="o-day-num">${d.getDate()}</span>
+        </div>
+        <span class="o-stf-badge ${badgeClass}">${badgeText}</span>
+      </th>
     `;
   });
 
-  // Time axis column
   html += `
-    <div class="fut-cal-time-col">
-      ${timeHours.map(h => `
-        <div class="fut-time-slot ${h === 13 ? 'shift-end' : ''}">
-          <span>${String(h).padStart(2, '0')}:00</span>
-          ${h === 13 ? '<div style="font-size: 8.5px; line-height: 1;">Fin Turno</div>' : ''}
-        </div>
-      `).join('')}
-    </div>
+        </tr>
+      </thead>
+      <tbody>
   `;
 
-  // 7 Day Columns with Tasks and Dropzone
-  weekDays.forEach((d, idx) => {
+  // Group tasks by day
+  const tasksByDay = {};
+  weekDays.forEach(d => {
     const iso = formatIsoDate(d);
-    const isToday = iso === todayIso;
-    const isSunday = d.getDay() === 0;
-    const hol = checkColombianHoliday(iso);
-    const isNonWorking = isSunday || hol.isHoliday;
-
-    // Filter tasks for this date
-    const dayTasks = scopedIntegrations.filter(item => {
-      if (!item.deadline) return false;
-      const dIso = item.deadline.substring(0, 10);
-      return dIso === iso;
-    });
-
-    html += `
-      <div class="fut-cal-day-col ${isToday ? 'is-today' : ''} ${isNonWorking ? 'is-non-working' : ''}" 
-           data-drop-date="${iso}"
-           ondragover="handleCalendarDragOver(event)"
-           ondragleave="handleCalendarDragLeave(event)"
-           ondrop="handleCalendarDrop(event, '${iso}')">
-    `;
-
-    // If today, show current time indicator line
-    if (isToday) {
-      const now = new Date();
-      const currentH = now.getHours();
-      const currentM = now.getMinutes();
-      if (currentH >= 6 && currentH <= 18) {
-        const topPx = ((currentH - 6) * 64) + ((currentM / 60) * 64);
-        const timeFormatted = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
-        html += `
-          <div class="fut-time-now-line" style="top: ${topPx}px;">
-            <span class="fut-time-now-pill">${timeFormatted}</span>
-          </div>
-        `;
-      }
-    }
-
-    // Render task cards in this day column
-    if (dayTasks.length > 0) {
-      dayTasks.forEach(task => {
-        html += renderFuturisticTaskCard(task, iso);
-      });
-    } else {
-      html += `
-        <div class="fut-cal-empty-slot" style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 120px; opacity: 0.35; font-size: 11px; color: #94A3B8; text-align: center; border: 1px dashed transparent; border-radius: 12px; pointer-events: none;">
-          ${isNonWorking ? '<span>Día no laboral STF</span>' : '<span>Sin entregas fijadas</span>'}
-        </div>
-      `;
-    }
-
-    html += `</div>`; // Close day column
+    tasksByDay[iso] = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
   });
 
-  html += `</div>`; // Close grid
-  container.innerHTML = html;
+  // Render Time Slot Rows
+  timeSlots.forEach((slot, slotIdx) => {
+    html += `
+      <tr>
+        <td class="o-time-td ${slot.isShiftEnd ? 'shift-finish' : ''}" title="${slot.isShiftEnd ? 'Fin Turno Oficial STF (1:00 PM)' : ''}">
+          ${slot.label}
+          ${slot.isShiftEnd ? '<div style="font-size: 8px; color: #D97706; font-weight: 700;">Fin STF</div>' : ''}
+        </td>
+    `;
 
-  // Update footer statistics
+    weekDays.forEach((d) => {
+      const iso = formatIsoDate(d);
+      const isSunday = d.getDay() === 0;
+      const hol = checkColombianHoliday(iso);
+      const isNonWorking = isSunday || hol.isHoliday;
+
+      // Distribute tasks across reasonable slots (e.g. 9 AM, 11 AM, 12 PM, 1 PM)
+      const dayTasks = tasksByDay[iso] || [];
+      const cellTasks = dayTasks.filter((_, tIdx) => {
+        // Map first task to 9 AM (slotIdx 3), second to 11 AM (slotIdx 5), third to 12 PM (slotIdx 6), others to 1 PM
+        if (tIdx === 0 && slot.hour === 9) return true;
+        if (tIdx === 1 && slot.hour === 11) return true;
+        if (tIdx === 2 && slot.hour === 12) return true;
+        if (tIdx >= 3 && slot.hour === 13) return true;
+        // If only 1 task on this day and we're at 10 AM, show it
+        if (dayTasks.length === 1 && slot.hour === 10) return true;
+        return false;
+      });
+
+      html += `
+        <td class="o-cell-td ${isNonWorking ? 'non-working' : ''} ${hol.isHoliday ? 'holiday-bg' : ''}"
+            data-drop-date="${iso}"
+            ondragover="handleCalendarDragOver(event)"
+            ondragleave="handleCalendarDragLeave(event)"
+            ondrop="handleCalendarDrop(event, '${iso}')">
+      `;
+
+      if (cellTasks.length > 0) {
+        cellTasks.forEach(task => {
+          html += renderOripioEventCard(task, iso, slot.label);
+        });
+      }
+
+      html += `</td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
   updateCalendarFooterStats(scopedIntegrations, weekDays);
 }
 
-function renderFuturisticTaskCard(task, dayIso) {
-  const app = getApplicationById(task.appId) || { name: task.appName || 'Aplicativo', iconColor: '#4E65FF' };
+/* ==========================================================================
+   Render Event Card in Oripio SaaS Pastel Style
+   ========================================================================== */
+function renderOripioEventCard(task, dayIso, timeSlotLabel) {
+  const app = getApplicationById(task.appId) || { name: task.appName || 'Aplicativo', iconColor: '#3B82F6' };
   const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
   const diag = getSTFDeadlineDiagnosis(task.deadline);
-  
-  // Theme based on app and status
-  let themeClass = 'theme-blue';
+
+  // Determine pastel theme matching reference image
+  let themeClass = 'card-theme-blue';
   if (task.status === 'evaluated') {
-    themeClass = 'theme-green';
+    themeClass = 'card-theme-green';
   } else if (diag.isOverdue || diag.status === 'risk') {
-    themeClass = 'theme-rose';
-  } else if (task.appId === 'app_geo') {
-    themeClass = 'theme-orange';
+    themeClass = 'card-theme-rose';
   } else if (task.appId === 'app_torre') {
-    themeClass = 'theme-purple';
+    themeClass = 'card-theme-purple';
+  } else if (task.appId === 'app_geo') {
+    themeClass = 'card-theme-orange';
   } else if (task.appId === 'app_colchas') {
-    themeClass = 'theme-green';
+    themeClass = 'card-theme-green';
   } else if (task.appId === 'app_laboratorio') {
-    themeClass = 'theme-amber';
+    themeClass = 'card-theme-indigo';
   }
 
-  // SLA pill
-  let slaClass = 'sla-ontime';
-  let slaText = diag.countdownText || 'En plazo';
-  if (task.status === 'evaluated') {
-    slaClass = 'sla-done';
-    slaText = '✅ Auditada';
-  } else if (diag.isOverdue) {
-    slaClass = 'sla-risk';
-    slaText = `🚨 ${Math.abs(diag.workdaysDiff)}d retraso`;
-  } else if (diag.workdaysDiff === 1) {
-    slaClass = 'sla-today';
-    slaText = '⚡ Vence Hoy';
-  }
+  // Time pill range (e.g. 09:00 AM - 11:00 AM)
+  const timePillText = timeSlotLabel ? `${timeSlotLabel} - STF` : '06:00 AM - 01:00 PM';
 
   return `
-    <div class="fut-task-card ${themeClass}" 
+    <div class="oripio-event-card ${themeClass}"
          id="futCard_${task.id}"
          draggable="true"
          ondragstart="handleCalendarDragStart(event, '${task.id}')"
          ondragend="handleCalendarDragEnd(event)"
          onclick="openTaskObservationsModal('${task.id}')"
-         title="Clic para ver bitácora y observaciones · Arrastra para reprogramar entrega">
+         title="${task.name} · Asignado a ${dev.name} · Arrastra para reprogramar entrega">
       
-      <div class="fut-card-top-row">
-        <span class="fut-app-tag" style="border-left: 2.5px solid ${app.iconColor || '#4E65FF'};">
-          ${app.name}
-        </span>
-        <span class="fut-sla-tag ${slaClass}">
-          ${slaText}
-        </span>
+      <div class="oec-top-row">
+        <span class="oec-time-pill">${timePillText}</span>
+        ${diag.isOverdue ? '<span class="oec-status-badge" style="background:#FEE2E2; color:#B91C1C;">Retraso</span>' : ''}
+        ${task.status === 'evaluated' ? '<span class="oec-status-badge" style="background:#DCFCE7; color:#15803D;">Auditada</span>' : ''}
       </div>
 
-      <h4 class="fut-task-title">${task.name}</h4>
+      <h4 class="oec-title">${task.name}</h4>
 
-      <div class="fut-card-bottom-row">
-        <div class="fut-dev-pill" title="Asignado a ${dev.name}">
-          <img src="${dev.avatar}" alt="${dev.name}" class="fut-dev-avatar" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'">
+      <div class="oec-meta">
+        <div class="oec-dev-tag">
+          <img src="${dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}" alt="${dev.name}" class="oec-avatar">
           <span>${dev.name.split(' ')[0]}</span>
         </div>
-
-        <div class="fut-card-actions" onclick="event.stopPropagation();">
-          <button type="button" class="btn-fut-reschedule" onclick="openQuickRescheduleModal('${task.id}');" title="Reprogramar fecha de entrega">
-            <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>
-            <span>Mover</span>
-          </button>
-          <span class="fut-drag-handle" title="Arrastra la tarea a otro día">
-            <i data-lucide="grip-vertical" style="width: 13px; height: 13px;"></i>
-          </span>
-        </div>
+        <span class="oec-progress">${task.weight || 10}%</span>
       </div>
     </div>
   `;
 }
 
+/* ==========================================================================
+   Month & Day Grids
+   ========================================================================== */
+function renderCalendarMonthGrid(container, currentDate, refDate) {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+
+  const rangePill = document.getElementById('futCalRangePill');
+  if (rangePill) {
+    const my = formatMonthYearEs(currentDate);
+    rangePill.innerHTML = `<i data-lucide="calendar" style="width: 13px; height: 13px;"></i> <span>${my.month} ${my.year}</span>`;
+  }
+
+  const todayIso = formatIsoDate(refDate);
+  const scopedIntegrations = getScopedCalendarIntegrations();
+  const dayNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+
+  let html = `
+    <div class="oripio-month-grid">
+      ${dayNames.map(d => `<div class="o-month-header">${d}</div>`).join('')}
+  `;
+
+  const startMonday = getMondayOfWeek(firstDay);
+  const currentCell = new Date(startMonday);
+
+  for (let i = 0; i < 35; i++) {
+    const iso = formatIsoDate(currentCell);
+    const isOtherMonth = currentCell.getMonth() !== month;
+    const isToday = iso === todayIso;
+    const isSunday = currentCell.getDay() === 0;
+    const hol = checkColombianHoliday(iso);
+    const isNonWorking = isSunday || hol.isHoliday;
+
+    const cellTasks = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+
+    html += `
+      <div class="o-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${isNonWorking ? 'non-working' : ''}"
+           data-drop-date="${iso}"
+           ondragover="handleCalendarDragOver(event)"
+           ondragleave="handleCalendarDragLeave(event)"
+           ondrop="handleCalendarDrop(event, '${iso}')">
+        
+        <div class="o-month-cell-header">
+          <span class="o-month-cell-num">${currentCell.getDate()}</span>
+          ${hol.isHoliday ? '<span style="font-size: 8.5px; color: #DC2626; font-weight: 800;">Festivo</span>' : (isSunday ? '<span style="font-size: 8.5px; color: #94A3B8;">Descanso</span>' : '')}
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 85px;">
+          ${cellTasks.map(t => {
+            const diag = getSTFDeadlineDiagnosis(t.deadline);
+            let pillBg = '#EFF6FF';
+            let pillColor = '#1E40AF';
+            if (t.status === 'evaluated') { pillBg = '#DCFCE7'; pillColor = '#15803D'; }
+            else if (diag.isOverdue) { pillBg = '#FEE2E2'; pillColor = '#B91C1C'; }
+
+            return `
+              <div class="o-month-task-pill" 
+                   style="background: ${pillBg}; color: ${pillColor};"
+                   id="futCard_${t.id}"
+                   draggable="true"
+                   ondragstart="handleCalendarDragStart(event, '${t.id}')"
+                   ondragend="handleCalendarDragEnd(event)"
+                   onclick="openTaskObservationsModal('${t.id}')"
+                   title="${t.name} · Arrastra para reprogramar">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px;">${t.name}</span>
+                <span style="font-size: 9px; opacity: 0.8; flex-shrink: 0;">${t.weight}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    currentCell.setDate(currentCell.getDate() + 1);
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function renderCalendarDayGrid(container, currentDate, refDate) {
+  // Day view renders a single focused day with hourly breakdown
+  const iso = formatIsoDate(currentDate);
+  const scopedIntegrations = getScopedCalendarIntegrations();
+  const dayTasks = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+  const hol = checkColombianHoliday(iso);
+
+  const rangePill = document.getElementById('futCalRangePill');
+  if (rangePill) {
+    rangePill.innerHTML = `<i data-lucide="clock" style="width: 13px; height: 13px;"></i> <span>${formatShortDate(iso)}</span>`;
+  }
+
+  let html = `
+    <div style="padding: 18px; max-width: 700px; margin: 0 auto;">
+      <div style="margin-bottom: 16px; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin: 0; font-size: 15px; font-weight: 700;">Jornada Diaria: ${formatShortDate(iso)}</h3>
+          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Horario laboral STF: 6:00 AM - 1:00 PM</p>
+        </div>
+        ${hol.isHoliday ? '<span style="background: #FEE2E2; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">Festivo Nacional</span>' : ''}
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        ${dayTasks.length > 0 ? dayTasks.map(t => renderOripioEventCard(t, iso, '06:00 AM - 01:00 PM')).join('') : '<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px;">No hay entregas fijadas para este día.</div>'}
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+/* ==========================================================================
+   Drag & Drop Handlers
+   ========================================================================== */
 function handleCalendarDragStart(e, taskId) {
   draggedTaskId = taskId;
   e.dataTransfer.setData('text/plain', taskId);
@@ -11050,8 +11259,8 @@ function handleCalendarDragStart(e, taskId) {
 
 function handleCalendarDragEnd(e) {
   draggedTaskId = null;
-  document.querySelectorAll('.fut-task-card').forEach(c => c.classList.remove('is-dragging'));
-  document.querySelectorAll('.fut-cal-day-col, .fut-month-cell').forEach(c => c.classList.remove('drag-over'));
+  document.querySelectorAll('.oripio-event-card').forEach(c => c.classList.remove('is-dragging'));
+  document.querySelectorAll('.o-cell-td, .o-month-cell').forEach(c => c.classList.remove('drag-over'));
 }
 
 function handleCalendarDragOver(e) {
@@ -11107,7 +11316,7 @@ function handleMoveTaskToDate(taskId, targetDateStr) {
     author: session.name || 'Jefe TI',
     role: session.role || 'Admin',
     date: timestampStr,
-    text: `📅 Fecha límite de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(targetDateStr)}.`,
+    text: `📅 Fecha de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(targetDateStr)}.`,
     type: 'reschedule',
     isAutoGenerated: true
   });
@@ -11125,7 +11334,7 @@ function handleMoveTaskToDate(taskId, targetDateStr) {
     playNotificationSound();
   }
 
-  // Trigger feedback
+  // Feedback message
   let hintMsg = '';
   if (hol.isHoliday) {
     hintMsg = ` (Nota: ${hol.name || 'Festivo'} es descanso en STF)`;
@@ -11147,88 +11356,9 @@ function handleMoveTaskToDate(taskId, targetDateStr) {
   }
 }
 
-function renderCalendarMonthGrid(container, currentDate, refDate) {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-
-  // First day of month
-  const firstDay = new Date(year, month, 1);
-
-  // Month header label
-  const rangePill = document.getElementById('futCalRangePill');
-  if (rangePill) {
-    const my = formatMonthYearEs(currentDate);
-    rangePill.textContent = `Mes Completo · ${my.month} ${my.year}`;
-  }
-
-  const todayIso = formatIsoDate(refDate);
-  const scopedIntegrations = getScopedCalendarIntegrations();
-  const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-  let html = `
-    <div class="fut-cal-month-grid">
-      ${dayNames.map(d => `<div class="fut-month-header">${d}</div>`).join('')}
-  `;
-
-  // Start from Monday of the first week
-  const startMonday = getMondayOfWeek(firstDay);
-  const currentCell = new Date(startMonday);
-
-  for (let i = 0; i < 35; i++) {
-    const iso = formatIsoDate(currentCell);
-    const isOtherMonth = currentCell.getMonth() !== month;
-    const isToday = iso === todayIso;
-    const isSunday = currentCell.getDay() === 0;
-    const hol = checkColombianHoliday(iso);
-    const isNonWorking = isSunday || hol.isHoliday;
-
-    const cellTasks = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
-
-    html += `
-      <div class="fut-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${isNonWorking ? 'is-non-working' : ''}"
-           data-drop-date="${iso}"
-           ondragover="handleCalendarDragOver(event)"
-           ondragleave="handleCalendarDragLeave(event)"
-           ondrop="handleCalendarDrop(event, '${iso}')">
-        
-        <div class="fut-month-cell-header">
-          <span class="fut-month-cell-num">${currentCell.getDate()}</span>
-          ${hol.isHoliday ? '<span style="font-size: 8.5px; color: #DC2626; font-weight: 800;">Festivo</span>' : (isSunday ? '<span style="font-size: 8.5px; color: #94A3B8;">Descanso</span>' : '')}
-        </div>
-
-        <div class="fut-month-tasks-list" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 80px;">
-          ${cellTasks.map(t => {
-            const diag = getSTFDeadlineDiagnosis(t.deadline);
-            let pillBg = '#EFF6FF';
-            let pillColor = '#1E40AF';
-            if (t.status === 'evaluated') { pillBg = '#DCFCE7'; pillColor = '#15803D'; }
-            else if (diag.isOverdue) { pillBg = '#FEE2E2'; pillColor = '#B91C1C'; }
-
-            return `
-              <div class="fut-month-task-pill" 
-                   style="background: ${pillBg}; color: ${pillColor};"
-                   id="futCard_${t.id}"
-                   draggable="true"
-                   ondragstart="handleCalendarDragStart(event, '${t.id}')"
-                   ondragend="handleCalendarDragEnd(event)"
-                   onclick="openTaskObservationsModal('${t.id}')"
-                   title="${t.name} · Arrastra para reprogramar">
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px;">${t.name}</span>
-                <span style="font-size: 9px; opacity: 0.8; flex-shrink: 0;">${t.weight}%</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-
-    currentCell.setDate(currentCell.getDate() + 1);
-  }
-
-  html += `</div>`;
-  container.innerHTML = html;
-}
-
+/* ==========================================================================
+   Quick Reschedule Modal Handlers
+   ========================================================================== */
 function openQuickRescheduleModal(taskId) {
   const modal = document.getElementById('modalQuickReschedule');
   if (!modal) return;
@@ -11243,7 +11373,6 @@ function openQuickRescheduleModal(taskId) {
   const customInput = document.getElementById('rescheduleCustomDate');
   if (customInput) customInput.value = task.deadline || formatIsoDate(new Date());
 
-  // Render quick 1-tap buttons
   const pillsContainer = document.getElementById('rescheduleQuickPills');
   if (pillsContainer) {
     const ref = getSystemReferenceDate();
@@ -11318,10 +11447,15 @@ function confirmQuickRescheduleSubmit() {
   handleMoveTaskToDate(taskId, targetDate);
 }
 
+/* ==========================================================================
+   Navigation & Controls
+   ========================================================================== */
 function navigateDeliveryCalendar(direction) {
   const d = new Date(calDeliveryCurrentDate || getSystemReferenceDate());
   if (calDeliveryViewMode === 'week') {
     d.setDate(d.getDate() + (direction * 7));
+  } else if (calDeliveryViewMode === 'day') {
+    d.setDate(d.getDate() + direction);
   } else {
     d.setMonth(d.getMonth() + direction);
   }
@@ -11339,14 +11473,8 @@ function setDeliveryCalendarMode(mode) {
   renderCalendarDeliveryView();
 }
 
-function filterDeliveryCalendarByDev(devId) {
-  calDeliveryDevFilter = devId;
-  renderCalendarDeliveryView();
-}
-
 function updateCalendarFooterStats(integrations, weekDays) {
   const statsEl = document.getElementById('futCalFooterStats');
-  const summaryEl = document.getElementById('futCalStatsSummary');
   if (!statsEl) return;
 
   const total = integrations.length;
@@ -11358,26 +11486,23 @@ function updateCalendarFooterStats(integrations, weekDays) {
   }).length;
   const active = total - done;
 
-  const html = `
-    <span class="fut-stat-chip">📋 <strong>${total}</strong> Entregas</span>
-    <span class="fut-stat-chip" style="color: #047857; background: #ECFDF5; border-color: #A7F3D0;">✅ <strong>${done}</strong> Auditadas</span>
-    <span class="fut-stat-chip" style="color: ${risk > 0 ? '#B91C1C' : '#64748B'}; background: ${risk > 0 ? '#FEF2F2' : '#FFFFFF'};">⚠️ <strong>${risk}</strong> En Riesgo</span>
-    <span class="fut-stat-chip" style="color: #4338CA; background: #EEF2FF; border-color: #C7D2FE;">⚡ <strong>${active}</strong> En Proceso</span>
+  statsEl.innerHTML = `
+    <span class="o-stat-pill">📋 <strong>${total}</strong> Entregas</span>
+    <span class="o-stat-pill" style="color: #047857; background: #ECFDF5; border-color: #A7F3D0;">✅ <strong>${done}</strong> Auditadas</span>
+    <span class="o-stat-pill" style="color: ${risk > 0 ? '#B91C1C' : '#64748B'}; background: ${risk > 0 ? '#FEF2F2' : '#FFFFFF'};">⚠️ <strong>${risk}</strong> En Riesgo</span>
+    <span class="o-stat-pill" style="color: #4338CA; background: #EEF2FF; border-color: #C7D2FE;">⚡ <strong>${active}</strong> En Proceso</span>
   `;
-  statsEl.innerHTML = html;
-
-  if (summaryEl) {
-    summaryEl.textContent = `${total} entregas activas (${risk > 0 ? `${risk} en riesgo` : 'todas en cronograma'})`;
-  }
 }
 
-// Window Global Exports for Futuristic Calendar
+// Window Global Exports for Calendar
 window.renderCalendarDeliveryView = renderCalendarDeliveryView;
 window.navigateDeliveryCalendar = navigateDeliveryCalendar;
 window.goToDeliveryCalendarToday = goToDeliveryCalendarToday;
 window.setDeliveryCalendarMode = setDeliveryCalendarMode;
-window.filterDeliveryCalendarByDev = filterDeliveryCalendarByDev;
-window.handleCalendarLegendClick = handleCalendarLegendClick;
+window.selectCalendarProject = selectCalendarProject;
+window.selectCalendarDev = selectCalendarDev;
+window.handleCalendarSearch = handleCalendarSearch;
+window.toggleCalendarQuickFilters = toggleCalendarQuickFilters;
 window.handleCalendarDragStart = handleCalendarDragStart;
 window.handleCalendarDragEnd = handleCalendarDragEnd;
 window.handleCalendarDragOver = handleCalendarDragOver;
