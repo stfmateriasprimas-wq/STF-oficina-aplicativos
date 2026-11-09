@@ -63,6 +63,9 @@
         <button class="nav-btn" data-view="tasks" title="Integraciones Operativas & Tareas en Vivo">
           <i data-lucide="check-square"></i>
         </button>
+        <button class="nav-btn" data-view="calendar" title="Cronograma & Calendario de Entregas STF">
+          <i data-lucide="calendar"></i>
+        </button>
         <button class="nav-btn" data-view="developers" title="Rendimiento del Equipo">
           <i data-lucide="users"></i>
         </button>
@@ -1522,6 +1525,84 @@
         </div>
       </section>
 
+      <!-- VIEW: CRONOGRAMA & CALENDARIO FUTURISTA DE ENTREGAS (Estilo Cron / Amie / Notion Calendar) -->
+      <section class="view-panel" id="view-calendar">
+        <div class="calendar-view-wrapper">
+          <div class="fut-cal-main-card">
+            <!-- Cal Top Navigation & Controls Bar -->
+            <div class="fut-cal-top-bar">
+              <div class="fut-cal-month-wrap">
+                <div class="fut-cal-title-row">
+                  <h1 class="fut-cal-month-heading" id="futCalMonthHeading">Noviembre <span class="fut-cal-year" id="futCalYearHeading">2026</span></h1>
+                  <span class="fut-cal-range-pill" id="futCalRangePill">Semana 46 · 09 - 15 nov</span>
+                  <span class="fut-cal-live-badge"><span class="fut-pulse-dot"></span> STF Laboral Activo</span>
+                </div>
+                <div class="fut-cal-meta-sub">
+                  <span>Jornada Oficial STF: <strong>Lun-Sáb 6:00am - 1:00pm (7h/día)</strong></span>
+                  <span class="fut-cal-dot-sep">·</span>
+                  <span>Domingos y Festivos Ley Emiliani no computan en SLA</span>
+                  <span class="fut-cal-dot-sep">·</span>
+                  <span id="futCalStatsSummary" style="color: #4F46E5; font-weight: 700;">Cargando entregas...</span>
+                </div>
+              </div>
+
+              <!-- Center Interactive Legend / Color Tags Bar -->
+              <div class="fut-cal-legend-bar" id="futCalLegendBar">
+                <!-- Populated dynamically via JS with glowing pills -->
+              </div>
+
+              <!-- Right Actions: Nav Arrows, Hoy, View Switch, Dev Filter, + Nueva Tarea -->
+              <div class="fut-cal-actions-bar">
+                <div class="fut-cal-nav-group">
+                  <button type="button" class="fut-cal-nav-btn" id="btnFutCalPrev" onclick="navigateDeliveryCalendar(-1)" title="Período Anterior">
+                    <i data-lucide="chevron-left"></i>
+                  </button>
+                  <button type="button" class="fut-cal-today-btn" id="btnFutCalToday" onclick="goToDeliveryCalendarToday()" title="Ir al día de hoy">
+                    Hoy
+                  </button>
+                  <button type="button" class="fut-cal-nav-btn" id="btnFutCalNext" onclick="navigateDeliveryCalendar(1)" title="Período Siguiente">
+                    <i data-lucide="chevron-right"></i>
+                  </button>
+                </div>
+
+                <div class="fut-cal-mode-group">
+                  <button type="button" class="fut-cal-mode-btn active" id="btnModeWeek" onclick="setDeliveryCalendarMode('week')">Semana</button>
+                  <button type="button" class="fut-cal-mode-btn" id="btnModeMonth" onclick="setDeliveryCalendarMode('month')">Mes</button>
+                </div>
+
+                <select id="futCalDevSelect" class="fut-cal-select" onchange="filterDeliveryCalendarByDev(this.value)" title="Filtrar por desarrollador">
+                  <option value="all">👥 Todo el Equipo</option>
+                  <!-- Populated dynamically -->
+                </select>
+
+                <button type="button" class="pill-btn primary-btn fut-cal-new-btn" onclick="openAssignIntegrationModal()" title="Asignar y programar nueva tarea">
+                  <i data-lucide="plus"></i>
+                  <span>+ Nueva Tarea</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Calendar Grid Container -->
+            <div class="fut-cal-grid-outer" id="futCalGridOuter">
+              <!-- Rendered dynamically: Weekly time grid or Month view with dropzones -->
+            </div>
+
+            <!-- Bottom Interactive Helper & Quick Stats Footer -->
+            <div class="fut-cal-footer-bar">
+              <div class="fut-cal-footer-left">
+                <i data-lucide="sparkles" class="fut-cal-hint-icon"></i>
+                <span class="fut-cal-hint-text">
+                  <strong>Arrastra y suelta</strong> cualquier tarjeta a otro día para reprogramar su fecha de entrega oficial en tiempo real. También puedes tocar <strong>📅 Reprogramar</strong> desde tu móvil.
+                </span>
+              </div>
+              <div class="fut-cal-footer-stats" id="futCalFooterStats">
+                <!-- Dynamic counters: Entregas, En Riesgo, Efectividad -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
     </main>
   </div>
@@ -2861,6 +2942,44 @@
         </button>
         <button type="button" class="pill-btn primary-btn" onclick="closeDeveloperWebSystemsModal()">
           <span>Cerrar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Reprogramación Rápida de Entrega (Móvil y Escritorio) -->
+  <div class="modal-backdrop" id="modalQuickReschedule">
+    <div class="modal-card modal-card-medium" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-tag" style="background: #EEF2FF; color: #4F46E5;">📅 Reprogramar Entrega</span>
+          <h2 class="modal-title" id="rescheduleTaskTitle">Reprogramar Tarea</h2>
+          <p class="modal-subtitle" id="rescheduleTaskSub">Selecciona la nueva fecha de entrega oficial según la jornada STF.</p>
+        </div>
+        <button class="modal-close-btn" onclick="closeQuickRescheduleModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <input type="hidden" id="rescheduleTaskId" value="">
+        <div class="reschedule-quick-pills" id="rescheduleQuickPills">
+          <!-- Rendered dynamically with 1-click days -->
+        </div>
+        <div style="margin-top: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+            O escoge una fecha específica en el calendario:
+          </label>
+          <input type="date" id="rescheduleCustomDate" class="form-input" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1.5px solid #CBD5E1; font-weight: 600;">
+        </div>
+        <div id="rescheduleSlaPreview" style="margin-top: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px; font-size: 11.5px; color: #64748B;">
+          <!-- Preview of SLA -->
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="pill-btn secondary-btn" onclick="closeQuickRescheduleModal()">Cancelar</button>
+        <button type="button" class="pill-btn primary-btn" onclick="confirmQuickRescheduleSubmit()">
+          <i data-lucide="check"></i>
+          <span>Guardar Nueva Entrega</span>
         </button>
       </div>
     </div>

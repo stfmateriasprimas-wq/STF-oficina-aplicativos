@@ -13243,3 +13243,850 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 
+
+
+/* ==========================================================================
+   VIEW: CRONOGRAMA & CALENDARIO FUTURISTA DE ENTREGAS (Estilo Cron / Amie / Notion)
+   ========================================================================== */
+
+.calendar-view-wrapper {
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.fut-cal-main-card {
+  background: #FFFFFF;
+  border-radius: 26px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fut-cal-top-bar {
+  padding: 22px 26px 18px 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #EEF2F7;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%);
+}
+
+.fut-cal-month-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fut-cal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fut-cal-month-heading {
+  font-size: 26px;
+  font-weight: 850;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.fut-cal-year {
+  color: #64748B;
+  font-weight: 500;
+  font-size: 20px;
+  margin-left: 6px;
+}
+
+.fut-cal-range-pill {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #4338CA;
+  background: #EEF2FF;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid #C7D2FE;
+  display: inline-flex;
+  align-items: center;
+}
+
+.fut-cal-live-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fut-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseGreen 2s infinite;
+}
+
+.fut-cal-meta-sub {
+  font-size: 12px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fut-cal-dot-sep {
+  color: #CBD5E1;
+  font-weight: 800;
+}
+
+.fut-cal-legend-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fut-legend-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.fut-legend-pill:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+.fut-legend-pill.active {
+  background: #EEF2FF;
+  border-color: #818CF8;
+  color: #4338CA;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+}
+
+.fut-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fut-cal-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fut-cal-nav-group {
+  display: flex;
+  align-items: center;
+  background: #F1F5F9;
+  border-radius: 12px;
+  padding: 3px;
+  border: 1px solid #E2E8F0;
+}
+
+.fut-cal-nav-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.fut-cal-nav-btn:hover {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.fut-cal-today-btn {
+  padding: 4px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 750;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fut-cal-today-btn:hover {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.fut-cal-mode-group {
+  display: flex;
+  align-items: center;
+  background: #F1F5F9;
+  border-radius: 12px;
+  padding: 3px;
+  border: 1px solid #E2E8F0;
+}
+
+.fut-cal-mode-btn {
+  padding: 4px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fut-cal-mode-btn.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fut-cal-select {
+  padding: 7px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #CBD5E1;
+  background: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1E293B;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.fut-cal-select:focus {
+  outline: none;
+  border-color: #4F46E5;
+}
+
+.fut-cal-new-btn {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fut-cal-grid-outer {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 580px;
+  position: relative;
+  background: #FFFFFF;
+}
+
+/* WEEK VIEW GRID */
+.fut-cal-week-grid {
+  display: grid;
+  grid-template-columns: 62px repeat(7, minmax(150px, 1fr));
+  min-width: 1100px;
+  position: relative;
+}
+
+.fut-cal-corner-cell {
+  background: #FAFCFF;
+  border-right: 1.5px solid #EEF2F7;
+  border-bottom: 1.5px solid #EEF2F7;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 25;
+}
+
+.fut-day-header {
+  padding: 12px 10px 10px 10px;
+  text-align: center;
+  border-bottom: 1.5px solid #EEF2F7;
+  border-right: 1px solid #F1F5F9;
+  background: #FFFFFF;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  transition: background 0.2s ease;
+}
+
+.fut-day-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fut-day-num {
+  font-size: 17px;
+  font-weight: 850;
+  color: #0F172A;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 50%;
+  margin: 4px auto 0 auto;
+  transition: all 0.2s ease;
+}
+
+.fut-day-header.is-today .fut-day-name {
+  color: #EA580C;
+}
+
+.fut-day-header.is-today .fut-day-num {
+  background: #F97316;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+}
+
+.fut-day-stf-badge {
+  font-size: 9.5px;
+  font-weight: 750;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-top: 4px;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.badge-stf-work {
+  color: #0284C7;
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+}
+
+.badge-stf-half {
+  color: #D97706;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+}
+
+.badge-stf-rest {
+  color: #94A3B8;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+}
+
+.badge-stf-holiday {
+  color: #DC2626;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+}
+
+.fut-cal-time-col {
+  border-right: 1.5px solid #EEF2F7;
+  background: #FAFCFF;
+  position: sticky;
+  left: 0;
+  z-index: 15;
+}
+
+.fut-time-slot {
+  height: 64px;
+  font-size: 10.5px;
+  font-weight: 750;
+  color: #94A3B8;
+  text-align: center;
+  padding-top: 6px;
+  border-bottom: 1px solid #F1F5F9;
+  box-sizing: border-box;
+}
+
+.fut-time-slot.shift-end {
+  background: rgba(245, 158, 11, 0.05);
+  color: #D97706;
+  font-weight: 800;
+  border-bottom: 2px dashed #FCD34D;
+}
+
+.fut-cal-day-col {
+  border-right: 1px solid #F1F5F9;
+  position: relative;
+  padding: 8px 6px;
+  min-height: 540px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.fut-cal-day-col.is-today {
+  background: rgba(249, 115, 22, 0.015);
+}
+
+.fut-cal-day-col.is-non-working {
+  background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F5F5F5 10px, #F5F5F5 20px) !important;
+}
+
+.fut-cal-day-col.drag-over {
+  background: rgba(79, 70, 229, 0.08) !important;
+  outline: 2px dashed #4F46E5 !important;
+  outline-offset: -3px !important;
+  border-radius: 8px !important;
+}
+
+/* LIVE CURRENT TIME INDICATOR */
+.fut-time-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #F97316;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.fut-time-now-pill {
+  position: absolute;
+  left: -2px;
+  top: -10px;
+  background: #F97316;
+  color: #FFFFFF;
+  font-size: 9.5px;
+  font-weight: 850;
+  padding: 2px 7px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4);
+}
+
+/* FUTURISTIC TASK EVENT CARD */
+.fut-task-card {
+  border-radius: 14px;
+  padding: 10px 11px;
+  cursor: grab;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  border: 1.5px solid transparent;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.fut-task-card:active {
+  cursor: grabbing;
+}
+
+.fut-task-card.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.96);
+}
+
+.fut-task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+}
+
+/* THEMES BASED ON APPLICATION / STATUS */
+.theme-blue {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1E40AF;
+}
+.theme-orange {
+  background: #FFF7ED;
+  border-color: #FED7AA;
+  color: #9A3412;
+}
+.theme-purple {
+  background: #F5F3FF;
+  border-color: #DDD6FE;
+  color: #5B21B6;
+}
+.theme-green {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+  color: #166534;
+}
+.theme-rose {
+  background: #FFF1F2;
+  border-color: #FECDD3;
+  color: #9F1239;
+}
+.theme-amber {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
+.fut-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.fut-app-tag {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  letter-spacing: 0.02em;
+}
+
+.fut-sla-tag {
+  font-size: 9.5px;
+  font-weight: 750;
+  padding: 2px 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.2;
+}
+
+.sla-ontime {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.sla-risk {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+.sla-today {
+  background: #FFEDD5;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+}
+
+.sla-done {
+  background: #E0E7FF;
+  color: #4338CA;
+  border: 1px solid #C7D2FE;
+}
+
+.fut-task-title {
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+  color: #1E293B;
+  word-break: break-word;
+  margin: 0;
+}
+
+.fut-card-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.fut-dev-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.fut-dev-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #FFFFFF;
+}
+
+.fut-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-fut-reschedule {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 750;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.btn-fut-reschedule:hover {
+  background: #FFFFFF;
+  color: #4F46E5;
+  border-color: #818CF8;
+}
+
+.fut-drag-handle {
+  color: #94A3B8;
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* MONTH VIEW GRID */
+.fut-cal-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-width: 850px;
+}
+
+.fut-month-header {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  background: #FAFCFF;
+  border-bottom: 1.5px solid #EEF2F7;
+  border-right: 1px solid #F1F5F9;
+}
+
+.fut-month-cell {
+  min-height: 110px;
+  border-right: 1px solid #F1F5F9;
+  border-bottom: 1px solid #F1F5F9;
+  padding: 8px 6px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.fut-month-cell.is-other-month {
+  background: #FAFCFF;
+  opacity: 0.6;
+}
+
+.fut-month-cell.is-today {
+  background: rgba(249, 115, 22, 0.03);
+}
+
+.fut-month-cell.is-non-working {
+  background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F5F5F5 10px, #F5F5F5 20px) !important;
+}
+
+.fut-month-cell.drag-over {
+  background: rgba(79, 70, 229, 0.08) !important;
+  outline: 2px dashed #4F46E5 !important;
+  outline-offset: -3px !important;
+}
+
+.fut-month-cell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.fut-month-cell-num {
+  font-size: 13px;
+  font-weight: 800;
+  color: #334155;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+}
+
+.fut-month-cell.is-today .fut-month-cell-num {
+  background: #F97316;
+  color: #FFFFFF;
+}
+
+.fut-month-task-pill {
+  padding: 4px 7px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.fut-month-task-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* FOOTER BAR */
+.fut-cal-footer-bar {
+  padding: 14px 26px;
+  background: #F8FAFC;
+  border-top: 1px solid #EEF2F7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fut-cal-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fut-cal-hint-icon {
+  width: 17px;
+  height: 17px;
+  color: #4F46E5;
+  flex-shrink: 0;
+}
+
+.fut-cal-hint-text {
+  font-size: 12px;
+  color: #64748B;
+}
+
+.fut-cal-footer-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fut-stat-chip {
+  font-size: 11.5px;
+  font-weight: 750;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* QUICK RESCHEDULE MODAL */
+.reschedule-quick-pills {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.reschedule-quick-btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  font-size: 12px;
+  font-weight: 750;
+  color: #1E293B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+}
+
+.reschedule-quick-btn:hover {
+  background: #EEF2FF;
+  border-color: #818CF8;
+  color: #4338CA;
+}
+
+.reschedule-quick-btn span.rq-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+/* RESPONSIVE OPTIMIZATIONS FOR SMARTPHONES */
+@media (max-width: 768px) {
+  .fut-cal-top-bar {
+    padding: 14px 14px 12px 14px;
+    gap: 12px;
+  }
+
+  .fut-cal-month-heading {
+    font-size: 20px;
+  }
+
+  .fut-cal-actions-bar {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .fut-cal-select {
+    width: 100%;
+  }
+
+  .fut-cal-new-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .fut-cal-week-grid {
+    min-width: 900px;
+  }
+
+  .reschedule-quick-pills {
+    grid-template-columns: 1fr;
+  }
+}

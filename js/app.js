@@ -1058,6 +1058,13 @@ function applyRoleBasedUI() {
   const navProjBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="projects"]');
   const navAnalyticsBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="analytics"]');
   const navTasksBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="tasks"]');
+  const navCalBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="calendar"]');
+
+  if (navCalBtn) {
+    navCalBtn.style.display = '';
+    navCalBtn.classList.remove('is-hidden');
+    navCalBtn.title = isAdmin ? 'Cronograma & Calendario de Entregas STF' : 'Mi Cronograma & Calendario de Entregas';
+  }
 
   if (navDevBtn) {
     navDevBtn.style.display = '';
@@ -1231,6 +1238,7 @@ function refreshAllViews() {
   if (typeof renderSystemsTable === 'function') renderSystemsTable();
   if (typeof renderDevelopersSection === 'function') renderDevelopersSection();
   if (typeof renderIntegrationsList === 'function') renderIntegrationsList(activeIntFilter);
+  if (typeof renderCalendarDeliveryView === 'function') renderCalendarDeliveryView();
   if (typeof renderTaskObservationsFeed === 'function') renderTaskObservationsFeed();
   if (typeof updateQuickDevStrip === 'function') updateQuickDevStrip();
   if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
@@ -8126,6 +8134,18 @@ function switchView(viewName) {
         : 'Seguimiento de tareas asignadas por el Jefe TI, plazos de entrega y dictamen de efectividad técnica.';
     }
     renderIntegrationsList();
+  } else if (viewName === 'calendar') {
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Cronograma Futurista & Calendario de Entregas · <span class="text-gradient">STF GROUP</span>'
+        : `Mi Calendario de Entregas & Plazos · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Supervisión interactiva de fechas límite de entrega, reprogramación por arrastre y sincronización con la jornada laboral STF (Lun-Sáb 6am-1pm).'
+        : 'Tus entregas programadas, plazos oficiales del Jefe TI y reprogramación interactiva de tareas asignadas.';
+    }
+    renderCalendarDeliveryView();
   } else if (viewName === 'dashboard') {
     if (titleEl) {
       titleEl.innerHTML = isAdmin
@@ -10629,3 +10649,742 @@ window.removeNewProjectPhaseRow = removeNewProjectPhaseRow;
 window.autoBalancePhaseWeights = autoBalancePhaseWeights;
 window.onPhaseBuilderChange = onPhaseBuilderChange;
 window.renderNewProjectPhases = renderNewProjectPhases;
+
+// ==========================================================================
+// CRONOGRAMA & CALENDARIO FUTURISTA DE ENTREGAS (Estilo Cron / Amie / Notion)
+// Sincronizado reactivamente con Motor Laboral STF & LocalStorage & Google Sheets
+// ==========================================================================
+
+let calDeliveryCurrentDate = getSystemReferenceDate();
+let calDeliveryViewMode = 'week'; // 'week' | 'month'
+let calDeliveryDevFilter = 'all';
+let calDeliveryAppFilter = 'all';
+let calDeliveryStatusFilter = 'all';
+let draggedTaskId = null;
+
+function getMondayOfWeek(d) {
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = date.getDay(); // 0 is Sunday, 1 is Monday...
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function getWeekNumber(d) {
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
+}
+
+function formatMonthYearEs(d) {
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  return {
+    month: months[d.getMonth()],
+    year: d.getFullYear()
+  };
+}
+
+function getScopedCalendarIntegrations() {
+  const isAdmin = isCurrentSessionAdmin();
+  let list = Array.isArray(appState.integrations) ? [...appState.integrations] : [];
+
+  // Filter by role if dev logged in
+  if (!isAdmin) {
+    const loggedId = getLoggedDevId();
+    const canon = resolveCanonicalDevId(loggedId);
+    list = list.filter(i => i.devId === loggedId || i.devId === canon);
+  }
+
+  // Filter by Developer selector
+  if (calDeliveryDevFilter !== 'all') {
+    const canonFilter = resolveCanonicalDevId(calDeliveryDevFilter);
+    list = list.filter(i => i.devId === calDeliveryDevFilter || i.devId === canonFilter);
+  }
+
+  // Filter by App selector
+  if (calDeliveryAppFilter !== 'all') {
+    list = list.filter(i => i.appId === calDeliveryAppFilter);
+  }
+
+  // Filter by Status
+  if (calDeliveryStatusFilter === 'risk') {
+    list = list.filter(i => {
+      if (i.status === 'evaluated') return false;
+      const diag = getSTFDeadlineDiagnosis(i.deadline);
+      return diag.isOverdue || diag.status === 'risk';
+    });
+  } else if (calDeliveryStatusFilter === 'done') {
+    list = list.filter(i => i.status === 'evaluated');
+  } else if (calDeliveryStatusFilter === 'active') {
+    list = list.filter(i => i.status !== 'evaluated');
+  }
+
+  return list;
+}
+
+function renderCalendarDeliveryView() {
+  const container = document.getElementById('futCalGridOuter');
+  if (!container) return;
+
+  const refDate = getSystemReferenceDate();
+  const current = calDeliveryCurrentDate || refDate;
+  const my = formatMonthYearEs(current);
+
+  // Update Month Title & Year
+  const titleEl = document.getElementById('futCalMonthHeading');
+  if (titleEl) {
+    titleEl.innerHTML = `${my.month} <span class="fut-cal-year" id="futCalYearHeading">${my.year}</span>`;
+  }
+
+  // Populate Developer Dropdown
+  const devSelect = document.getElementById('futCalDevSelect');
+  if (devSelect && appState.developers) {
+    const prevVal = devSelect.value || calDeliveryDevFilter;
+    const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz' && d.role !== 'Admin');
+    devSelect.innerHTML = `
+      <option value="all" ${calDeliveryDevFilter === 'all' ? 'selected' : ''}>👥 Todo el Equipo (${teamDevs.length} Devs)</option>
+      ${teamDevs.map(d => `
+        <option value="${d.id}" ${calDeliveryDevFilter === d.id ? 'selected' : ''}>💻 ${d.name}</option>
+      `).join('')}
+    `;
+    if (prevVal) devSelect.value = prevVal;
+  }
+
+  // Render Legend Bar with glowing pills
+  renderCalendarLegendBar();
+
+  // Mode buttons active state
+  const btnWeek = document.getElementById('btnModeWeek');
+  const btnMonth = document.getElementById('btnModeMonth');
+  if (btnWeek) btnWeek.classList.toggle('active', calDeliveryViewMode === 'week');
+  if (btnMonth) btnMonth.classList.toggle('active', calDeliveryViewMode === 'month');
+
+  // Render based on mode
+  if (calDeliveryViewMode === 'week') {
+    renderCalendarWeekGrid(container, current, refDate);
+  } else {
+    renderCalendarMonthGrid(container, current, refDate);
+  }
+
+  // Re-create icons if Lucide is available
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+function renderCalendarLegendBar() {
+  const bar = document.getElementById('futCalLegendBar');
+  if (!bar) return;
+
+  const legendItems = [
+    { id: 'all', label: 'Todos', color: '#6366F1' },
+    { id: 'app_torre', label: 'Torre Control', color: '#8B5CF6' },
+    { id: 'app_geo', label: 'Geo Talleres', color: '#F97316' },
+    { id: 'app_colchas', label: 'Colchas', color: '#10B981' },
+    { id: 'app_laboratorio', label: 'Laboratorio', color: '#3B82F6' },
+    { id: 'risk', label: 'En Riesgo / SLA', color: '#EF4444' },
+    { id: 'done', label: 'Auditadas', color: '#059669' }
+  ];
+
+  bar.innerHTML = legendItems.map(item => {
+    let isActive = false;
+    if (item.id === 'all') isActive = calDeliveryAppFilter === 'all' && calDeliveryStatusFilter === 'all';
+    else if (item.id === 'risk') isActive = calDeliveryStatusFilter === 'risk';
+    else if (item.id === 'done') isActive = calDeliveryStatusFilter === 'done';
+    else isActive = calDeliveryAppFilter === item.id;
+
+    return `
+      <div class="fut-legend-pill ${isActive ? 'active' : ''}" onclick="handleCalendarLegendClick('${item.id}')">
+        <span class="fut-dot" style="background: ${item.color};"></span>
+        <span>${item.label}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function handleCalendarLegendClick(id) {
+  if (id === 'all') {
+    calDeliveryAppFilter = 'all';
+    calDeliveryStatusFilter = 'all';
+  } else if (id === 'risk') {
+    calDeliveryStatusFilter = calDeliveryStatusFilter === 'risk' ? 'all' : 'risk';
+    calDeliveryAppFilter = 'all';
+  } else if (id === 'done') {
+    calDeliveryStatusFilter = calDeliveryStatusFilter === 'done' ? 'all' : 'done';
+    calDeliveryAppFilter = 'all';
+  } else {
+    calDeliveryAppFilter = calDeliveryAppFilter === id ? 'all' : id;
+    calDeliveryStatusFilter = 'all';
+  }
+  renderCalendarDeliveryView();
+}
+
+function renderCalendarWeekGrid(container, currentDate, refDate) {
+  const monday = getMondayOfWeek(currentDate);
+  const weekNum = getWeekNumber(monday);
+
+  // Generate 7 days of this week
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    weekDays.push(d);
+  }
+
+  const startStr = formatShortDate(formatIsoDate(weekDays[0]));
+  const endStr = formatShortDate(formatIsoDate(weekDays[6]));
+  const rangePill = document.getElementById('futCalRangePill');
+  if (rangePill) {
+    rangePill.textContent = `Semana ${weekNum} · ${startStr} - ${endStr}`;
+  }
+
+  const todayIso = formatIsoDate(refDate);
+  const scopedIntegrations = getScopedCalendarIntegrations();
+
+  // Day names abbreviations in Spanish (LUN, MAR, MIÉ, JUE, VIE, SÁB, DOM)
+  const dayNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+
+  // Time slots from 6:00 to 18:00
+  const timeHours = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+
+  let html = `
+    <div class="fut-cal-week-grid">
+      <!-- Top-left corner -->
+      <div class="fut-cal-corner-cell">
+        <span>Hora</span>
+      </div>
+  `;
+
+  // 7 Header Columns
+  weekDays.forEach((d, idx) => {
+    const iso = formatIsoDate(d);
+    const isToday = iso === todayIso;
+    const isSunday = d.getDay() === 0;
+    const isSaturday = d.getDay() === 6;
+    const hol = checkColombianHoliday(iso);
+
+    let badgeClass = 'badge-stf-work';
+    let badgeText = 'Turno 7h (6-1)';
+    if (hol.isHoliday) {
+      badgeClass = 'badge-stf-holiday';
+      badgeText = hol.name ? hol.name.substring(0, 14) : 'Festivo STF';
+    } else if (isSunday) {
+      badgeClass = 'badge-stf-rest';
+      badgeText = 'Descanso';
+    } else if (isSaturday) {
+      badgeClass = 'badge-stf-half';
+      badgeText = 'STF (6am - 1pm)';
+    }
+
+    html += `
+      <div class="fut-day-header ${isToday ? 'is-today' : ''}" data-day-iso="${iso}">
+        <div class="fut-day-name">${dayNames[idx]}</div>
+        <div class="fut-day-num">${d.getDate()}</div>
+        <span class="fut-day-stf-badge ${badgeClass}" title="${hol.isHoliday ? 'Día festivo nacional Ley Emiliani - No laboral en planta STF' : (isSunday ? 'Domingo no laboral STF' : 'Jornada laboral ordinaria STF')}">${badgeText}</span>
+      </div>
+    `;
+  });
+
+  // Time axis column
+  html += `
+    <div class="fut-cal-time-col">
+      ${timeHours.map(h => `
+        <div class="fut-time-slot ${h === 13 ? 'shift-end' : ''}">
+          <span>${String(h).padStart(2, '0')}:00</span>
+          ${h === 13 ? '<div style="font-size: 8.5px; line-height: 1;">Fin Turno</div>' : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // 7 Day Columns with Tasks and Dropzone
+  weekDays.forEach((d, idx) => {
+    const iso = formatIsoDate(d);
+    const isToday = iso === todayIso;
+    const isSunday = d.getDay() === 0;
+    const hol = checkColombianHoliday(iso);
+    const isNonWorking = isSunday || hol.isHoliday;
+
+    // Filter tasks for this date
+    const dayTasks = scopedIntegrations.filter(item => {
+      if (!item.deadline) return false;
+      const dIso = item.deadline.substring(0, 10);
+      return dIso === iso;
+    });
+
+    html += `
+      <div class="fut-cal-day-col ${isToday ? 'is-today' : ''} ${isNonWorking ? 'is-non-working' : ''}" 
+           data-drop-date="${iso}"
+           ondragover="handleCalendarDragOver(event)"
+           ondragleave="handleCalendarDragLeave(event)"
+           ondrop="handleCalendarDrop(event, '${iso}')">
+    `;
+
+    // If today, show current time indicator line
+    if (isToday) {
+      const now = new Date();
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      if (currentH >= 6 && currentH <= 18) {
+        const topPx = ((currentH - 6) * 64) + ((currentM / 60) * 64);
+        const timeFormatted = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
+        html += `
+          <div class="fut-time-now-line" style="top: ${topPx}px;">
+            <span class="fut-time-now-pill">${timeFormatted}</span>
+          </div>
+        `;
+      }
+    }
+
+    // Render task cards in this day column
+    if (dayTasks.length > 0) {
+      dayTasks.forEach(task => {
+        html += renderFuturisticTaskCard(task, iso);
+      });
+    } else {
+      html += `
+        <div class="fut-cal-empty-slot" style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 120px; opacity: 0.35; font-size: 11px; color: #94A3B8; text-align: center; border: 1px dashed transparent; border-radius: 12px; pointer-events: none;">
+          ${isNonWorking ? '<span>Día no laboral STF</span>' : '<span>Sin entregas fijadas</span>'}
+        </div>
+      `;
+    }
+
+    html += `</div>`; // Close day column
+  });
+
+  html += `</div>`; // Close grid
+  container.innerHTML = html;
+
+  // Update footer statistics
+  updateCalendarFooterStats(scopedIntegrations, weekDays);
+}
+
+function renderFuturisticTaskCard(task, dayIso) {
+  const app = getApplicationById(task.appId) || { name: task.appName || 'Aplicativo', iconColor: '#4E65FF' };
+  const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
+  const diag = getSTFDeadlineDiagnosis(task.deadline);
+  
+  // Theme based on app and status
+  let themeClass = 'theme-blue';
+  if (task.status === 'evaluated') {
+    themeClass = 'theme-green';
+  } else if (diag.isOverdue || diag.status === 'risk') {
+    themeClass = 'theme-rose';
+  } else if (task.appId === 'app_geo') {
+    themeClass = 'theme-orange';
+  } else if (task.appId === 'app_torre') {
+    themeClass = 'theme-purple';
+  } else if (task.appId === 'app_colchas') {
+    themeClass = 'theme-green';
+  } else if (task.appId === 'app_laboratorio') {
+    themeClass = 'theme-amber';
+  }
+
+  // SLA pill
+  let slaClass = 'sla-ontime';
+  let slaText = diag.countdownText || 'En plazo';
+  if (task.status === 'evaluated') {
+    slaClass = 'sla-done';
+    slaText = '✅ Auditada';
+  } else if (diag.isOverdue) {
+    slaClass = 'sla-risk';
+    slaText = `🚨 ${Math.abs(diag.workdaysDiff)}d retraso`;
+  } else if (diag.workdaysDiff === 1) {
+    slaClass = 'sla-today';
+    slaText = '⚡ Vence Hoy';
+  }
+
+  return `
+    <div class="fut-task-card ${themeClass}" 
+         id="futCard_${task.id}"
+         draggable="true"
+         ondragstart="handleCalendarDragStart(event, '${task.id}')"
+         ondragend="handleCalendarDragEnd(event)"
+         onclick="openTaskObservationsModal('${task.id}')"
+         title="Clic para ver bitácora y observaciones · Arrastra para reprogramar entrega">
+      
+      <div class="fut-card-top-row">
+        <span class="fut-app-tag" style="border-left: 2.5px solid ${app.iconColor || '#4E65FF'};">
+          ${app.name}
+        </span>
+        <span class="fut-sla-tag ${slaClass}">
+          ${slaText}
+        </span>
+      </div>
+
+      <h4 class="fut-task-title">${task.name}</h4>
+
+      <div class="fut-card-bottom-row">
+        <div class="fut-dev-pill" title="Asignado a ${dev.name}">
+          <img src="${dev.avatar}" alt="${dev.name}" class="fut-dev-avatar" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'">
+          <span>${dev.name.split(' ')[0]}</span>
+        </div>
+
+        <div class="fut-card-actions" onclick="event.stopPropagation();">
+          <button type="button" class="btn-fut-reschedule" onclick="openQuickRescheduleModal('${task.id}');" title="Reprogramar fecha de entrega">
+            <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>
+            <span>Mover</span>
+          </button>
+          <span class="fut-drag-handle" title="Arrastra la tarea a otro día">
+            <i data-lucide="grip-vertical" style="width: 13px; height: 13px;"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleCalendarDragStart(e, taskId) {
+  draggedTaskId = taskId;
+  e.dataTransfer.setData('text/plain', taskId);
+  e.dataTransfer.effectAllowed = 'move';
+  const card = document.getElementById(`futCard_${taskId}`);
+  if (card) card.classList.add('is-dragging');
+}
+
+function handleCalendarDragEnd(e) {
+  draggedTaskId = null;
+  document.querySelectorAll('.fut-task-card').forEach(c => c.classList.remove('is-dragging'));
+  document.querySelectorAll('.fut-cal-day-col, .fut-month-cell').forEach(c => c.classList.remove('drag-over'));
+}
+
+function handleCalendarDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const col = e.currentTarget;
+  if (col && !col.classList.contains('drag-over')) {
+    col.classList.add('drag-over');
+  }
+}
+
+function handleCalendarDragLeave(e) {
+  const col = e.currentTarget;
+  if (col && !col.contains(e.relatedTarget)) {
+    col.classList.remove('drag-over');
+  }
+}
+
+function handleCalendarDrop(e, targetDateStr) {
+  e.preventDefault();
+  const col = e.currentTarget;
+  if (col) col.classList.remove('drag-over');
+
+  const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+  if (!taskId || !targetDateStr) return;
+
+  handleMoveTaskToDate(taskId, targetDateStr);
+}
+
+function handleMoveTaskToDate(taskId, targetDateStr) {
+  if (!appState || !Array.isArray(appState.integrations)) return;
+
+  const task = appState.integrations.find(i => i.id === taskId);
+  if (!task) {
+    showToast('⚠️ No se encontró la tarea seleccionada.', 'warning');
+    return;
+  }
+
+  const oldDate = task.deadline;
+  task.deadline = targetDateStr;
+
+  // Add observation tracking the rescheduled date
+  if (!Array.isArray(task.observations)) task.observations = [];
+  const session = getLoggedSessionUser();
+  const now = new Date();
+  const timestampStr = now.toLocaleString('es-CO', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+  task.observations.unshift({
+    id: `obs_${Date.now()}`,
+    author: session.name || 'Jefe TI',
+    role: session.role || 'Admin',
+    date: timestampStr,
+    text: `📅 Fecha límite de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(targetDateStr)}.`,
+    type: 'reschedule',
+    isAutoGenerated: true
+  });
+
+  // Check holiday or Sunday for informative feedback
+  const hol = checkColombianHoliday(targetDateStr);
+  const targetDateObj = parseSafeDate(targetDateStr);
+  const isSunday = targetDateObj && targetDateObj.getDay() === 0;
+
+  // Save state immediately
+  saveData(appState);
+
+  // Sound alert
+  if (typeof isSoundEnabled !== 'undefined' && isSoundEnabled && typeof playNotificationSound === 'function') {
+    playNotificationSound();
+  }
+
+  // Trigger feedback
+  let hintMsg = '';
+  if (hol.isHoliday) {
+    hintMsg = ` (Nota: ${hol.name || 'Festivo'} es descanso en STF)`;
+  } else if (isSunday) {
+    hintMsg = ` (Nota: Domingo es día de descanso STF)`;
+  }
+
+  showToast(`📅 "${task.name}" reprogramada para el ${formatShortDate(targetDateStr)}${hintMsg}.`);
+
+  // Refresh reactive views
+  renderCalendarDeliveryView();
+  if (typeof renderIntegrationsList === 'function') renderIntegrationsList();
+  if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
+  if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
+
+  // Push to Sheets if connected
+  if (window.SheetsSync && typeof window.SheetsSync.pushAllToSheets === 'function') {
+    window.SheetsSync.pushAllToSheets(true);
+  }
+}
+
+function renderCalendarMonthGrid(container, currentDate, refDate) {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  // First day of month
+  const firstDay = new Date(year, month, 1);
+
+  // Month header label
+  const rangePill = document.getElementById('futCalRangePill');
+  if (rangePill) {
+    const my = formatMonthYearEs(currentDate);
+    rangePill.textContent = `Mes Completo · ${my.month} ${my.year}`;
+  }
+
+  const todayIso = formatIsoDate(refDate);
+  const scopedIntegrations = getScopedCalendarIntegrations();
+  const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+  let html = `
+    <div class="fut-cal-month-grid">
+      ${dayNames.map(d => `<div class="fut-month-header">${d}</div>`).join('')}
+  `;
+
+  // Start from Monday of the first week
+  const startMonday = getMondayOfWeek(firstDay);
+  const currentCell = new Date(startMonday);
+
+  for (let i = 0; i < 35; i++) {
+    const iso = formatIsoDate(currentCell);
+    const isOtherMonth = currentCell.getMonth() !== month;
+    const isToday = iso === todayIso;
+    const isSunday = currentCell.getDay() === 0;
+    const hol = checkColombianHoliday(iso);
+    const isNonWorking = isSunday || hol.isHoliday;
+
+    const cellTasks = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+
+    html += `
+      <div class="fut-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${isNonWorking ? 'is-non-working' : ''}"
+           data-drop-date="${iso}"
+           ondragover="handleCalendarDragOver(event)"
+           ondragleave="handleCalendarDragLeave(event)"
+           ondrop="handleCalendarDrop(event, '${iso}')">
+        
+        <div class="fut-month-cell-header">
+          <span class="fut-month-cell-num">${currentCell.getDate()}</span>
+          ${hol.isHoliday ? '<span style="font-size: 8.5px; color: #DC2626; font-weight: 800;">Festivo</span>' : (isSunday ? '<span style="font-size: 8.5px; color: #94A3B8;">Descanso</span>' : '')}
+        </div>
+
+        <div class="fut-month-tasks-list" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 80px;">
+          ${cellTasks.map(t => {
+            const diag = getSTFDeadlineDiagnosis(t.deadline);
+            let pillBg = '#EFF6FF';
+            let pillColor = '#1E40AF';
+            if (t.status === 'evaluated') { pillBg = '#DCFCE7'; pillColor = '#15803D'; }
+            else if (diag.isOverdue) { pillBg = '#FEE2E2'; pillColor = '#B91C1C'; }
+
+            return `
+              <div class="fut-month-task-pill" 
+                   style="background: ${pillBg}; color: ${pillColor};"
+                   id="futCard_${t.id}"
+                   draggable="true"
+                   ondragstart="handleCalendarDragStart(event, '${t.id}')"
+                   ondragend="handleCalendarDragEnd(event)"
+                   onclick="openTaskObservationsModal('${t.id}')"
+                   title="${t.name} · Arrastra para reprogramar">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px;">${t.name}</span>
+                <span style="font-size: 9px; opacity: 0.8; flex-shrink: 0;">${t.weight}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    currentCell.setDate(currentCell.getDate() + 1);
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function openQuickRescheduleModal(taskId) {
+  const modal = document.getElementById('modalQuickReschedule');
+  if (!modal) return;
+
+  const task = appState.integrations.find(i => i.id === taskId);
+  if (!task) return;
+
+  document.getElementById('rescheduleTaskId').value = taskId;
+  document.getElementById('rescheduleTaskTitle').textContent = task.name;
+  document.getElementById('rescheduleTaskSub').textContent = `Entrega actual: ${formatShortDate(task.deadline)} · Jornada STF Lun-Sáb 6am-1pm`;
+
+  const customInput = document.getElementById('rescheduleCustomDate');
+  if (customInput) customInput.value = task.deadline || formatIsoDate(new Date());
+
+  // Render quick 1-tap buttons
+  const pillsContainer = document.getElementById('rescheduleQuickPills');
+  if (pillsContainer) {
+    const ref = getSystemReferenceDate();
+    const today = new Date(ref);
+    const tomorrow = new Date(ref); tomorrow.setDate(tomorrow.getDate() + 1);
+    const in3Days = new Date(ref); in3Days.setDate(in3Days.getDate() + 3);
+    const nextSaturday = new Date(ref);
+    const diffSat = (6 - nextSaturday.getDay() + 7) % 7 || 7;
+    nextSaturday.setDate(nextSaturday.getDate() + diffSat);
+
+    const nextMonday = new Date(ref);
+    const diffMon = (8 - nextMonday.getDay()) % 7 || 7;
+    nextMonday.setDate(nextMonday.getDate() + diffMon);
+
+    const options = [
+      { label: 'Hoy', date: formatIsoDate(today), sub: 'Entrega prioritaria' },
+      { label: 'Mañana', date: formatIsoDate(tomorrow), sub: 'Próxima jornada' },
+      { label: 'En 3 días', date: formatIsoDate(in3Days), sub: 'Avance programado' },
+      { label: 'Sábado Laboral', date: formatIsoDate(nextSaturday), sub: 'Turno STF 6am-1pm' },
+      { label: 'Próximo Lunes', date: formatIsoDate(nextMonday), sub: 'Inicio de semana' }
+    ];
+
+    pillsContainer.innerHTML = options.map(opt => `
+      <button type="button" class="reschedule-quick-btn" onclick="selectQuickRescheduleDate('${opt.date}')">
+        <strong>${opt.label} (${formatShortDate(opt.date)})</strong>
+        <span class="rq-sub">${opt.sub}</span>
+      </button>
+    `).join('');
+  }
+
+  updateRescheduleSlaPreview(task.deadline);
+  customInput?.addEventListener('input', () => updateRescheduleSlaPreview(customInput.value));
+
+  modal.classList.add('show');
+}
+
+function selectQuickRescheduleDate(dateStr) {
+  const customInput = document.getElementById('rescheduleCustomDate');
+  if (customInput) customInput.value = dateStr;
+  updateRescheduleSlaPreview(dateStr);
+}
+
+function updateRescheduleSlaPreview(dateStr) {
+  const preview = document.getElementById('rescheduleSlaPreview');
+  if (!preview) return;
+  if (!dateStr) {
+    preview.innerHTML = 'Selecciona una fecha para calcular el SLA.';
+    return;
+  }
+  const diag = getSTFDeadlineDiagnosis(dateStr);
+  const hol = checkColombianHoliday(dateStr);
+  let holWarn = hol.isHoliday ? `<span style="color:#DC2626; font-weight:700;"> · ⚠️ Festivo (${hol.name})</span>` : '';
+  preview.innerHTML = `<strong>Pronóstico STF:</strong> ${diag.countdownText}${holWarn} · Medición oficial de cumplimiento TI.`;
+}
+
+function closeQuickRescheduleModal() {
+  const modal = document.getElementById('modalQuickReschedule');
+  if (modal) modal.classList.remove('show');
+}
+
+function confirmQuickRescheduleSubmit() {
+  const taskId = document.getElementById('rescheduleTaskId')?.value;
+  const customInput = document.getElementById('rescheduleCustomDate');
+  const targetDate = customInput ? customInput.value : null;
+
+  if (!taskId || !targetDate) {
+    showToast('⚠️ Selecciona una fecha válida.', 'warning');
+    return;
+  }
+
+  closeQuickRescheduleModal();
+  handleMoveTaskToDate(taskId, targetDate);
+}
+
+function navigateDeliveryCalendar(direction) {
+  const d = new Date(calDeliveryCurrentDate || getSystemReferenceDate());
+  if (calDeliveryViewMode === 'week') {
+    d.setDate(d.getDate() + (direction * 7));
+  } else {
+    d.setMonth(d.getMonth() + direction);
+  }
+  calDeliveryCurrentDate = d;
+  renderCalendarDeliveryView();
+}
+
+function goToDeliveryCalendarToday() {
+  calDeliveryCurrentDate = getSystemReferenceDate();
+  renderCalendarDeliveryView();
+}
+
+function setDeliveryCalendarMode(mode) {
+  calDeliveryViewMode = mode;
+  renderCalendarDeliveryView();
+}
+
+function filterDeliveryCalendarByDev(devId) {
+  calDeliveryDevFilter = devId;
+  renderCalendarDeliveryView();
+}
+
+function updateCalendarFooterStats(integrations, weekDays) {
+  const statsEl = document.getElementById('futCalFooterStats');
+  const summaryEl = document.getElementById('futCalStatsSummary');
+  if (!statsEl) return;
+
+  const total = integrations.length;
+  const done = integrations.filter(i => i.status === 'evaluated').length;
+  const risk = integrations.filter(i => {
+    if (i.status === 'evaluated') return false;
+    const diag = getSTFDeadlineDiagnosis(i.deadline);
+    return diag.isOverdue || diag.status === 'risk';
+  }).length;
+  const active = total - done;
+
+  const html = `
+    <span class="fut-stat-chip">📋 <strong>${total}</strong> Entregas</span>
+    <span class="fut-stat-chip" style="color: #047857; background: #ECFDF5; border-color: #A7F3D0;">✅ <strong>${done}</strong> Auditadas</span>
+    <span class="fut-stat-chip" style="color: ${risk > 0 ? '#B91C1C' : '#64748B'}; background: ${risk > 0 ? '#FEF2F2' : '#FFFFFF'};">⚠️ <strong>${risk}</strong> En Riesgo</span>
+    <span class="fut-stat-chip" style="color: #4338CA; background: #EEF2FF; border-color: #C7D2FE;">⚡ <strong>${active}</strong> En Proceso</span>
+  `;
+  statsEl.innerHTML = html;
+
+  if (summaryEl) {
+    summaryEl.textContent = `${total} entregas activas (${risk > 0 ? `${risk} en riesgo` : 'todas en cronograma'})`;
+  }
+}
+
+// Window Global Exports for Futuristic Calendar
+window.renderCalendarDeliveryView = renderCalendarDeliveryView;
+window.navigateDeliveryCalendar = navigateDeliveryCalendar;
+window.goToDeliveryCalendarToday = goToDeliveryCalendarToday;
+window.setDeliveryCalendarMode = setDeliveryCalendarMode;
+window.filterDeliveryCalendarByDev = filterDeliveryCalendarByDev;
+window.handleCalendarLegendClick = handleCalendarLegendClick;
+window.handleCalendarDragStart = handleCalendarDragStart;
+window.handleCalendarDragEnd = handleCalendarDragEnd;
+window.handleCalendarDragOver = handleCalendarDragOver;
+window.handleCalendarDragLeave = handleCalendarDragLeave;
+window.handleCalendarDrop = handleCalendarDrop;
+window.handleMoveTaskToDate = handleMoveTaskToDate;
+window.openQuickRescheduleModal = openQuickRescheduleModal;
+window.closeQuickRescheduleModal = closeQuickRescheduleModal;
+window.confirmQuickRescheduleSubmit = confirmQuickRescheduleSubmit;
+window.selectQuickRescheduleDate = selectQuickRescheduleDate;
