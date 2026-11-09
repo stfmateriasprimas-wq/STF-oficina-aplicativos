@@ -1441,7 +1441,7 @@ function renderDeckFromList(appsList) {
             <img src="${dev0.avatar}" alt="${dev0.name}">
             <span>${dev0.name}</span>
           </div>
-          <span class="delivery-date-pill">Límite: ${formatShortDate(app0.deadline)}</span>
+          <span class="delivery-date-pill" title="Plazo laboral STF: ${getSTFDeadlineDiagnosis(app0.deadline).countdownText} (Lun-Sáb 6am-1pm)">Límite: ${formatShortDate(app0.deadline)}</span>
         </div>
       </div>
     </div>
@@ -2763,6 +2763,224 @@ function initOverviewChart() {
 }
 
 // ==========================================================================
+// MOTOR DE CALENDARIO LABORAL STF GROUP (COLOMBIA)
+// Horario Oficial: Lunes a Sábados de 6:00 AM a 1:00 PM (7 horas laborables/día).
+// Días No Laborables: Domingos y Festivos Oficiales de Colombia (Ley 51 de 1983 / Emiliani).
+// ==========================================================================
+
+const STF_WORK_HOURS_PER_DAY = 7; // 6:00am a 1:00pm (7 horas hábiles)
+const STF_HOLIDAYS_CACHE = {};
+
+function calculateEasterSunday(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0-indexed (2=Marzo, 3=Abril)
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month, day);
+}
+
+function moveHolidayToNextMonday(date) {
+  const res = new Date(date);
+  const dow = res.getDay(); // 0=Domingo, 1=Lunes
+  if (dow === 1) return res;
+  res.setDate(res.getDate() + ((dow === 0) ? 1 : (8 - dow)));
+  return res;
+}
+
+function addCalendarDays(date, n) {
+  const res = new Date(date);
+  res.setDate(res.getDate() + n);
+  return res;
+}
+
+function formatIsoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getColombianHolidaysForYear(year) {
+  if (STF_HOLIDAYS_CACHE[year]) return STF_HOLIDAYS_CACHE[year];
+  const easter = calculateEasterSunday(year);
+
+  const holidays = [
+    { name: 'Año Nuevo', date: formatIsoDate(new Date(year, 0, 1)) },
+    { name: 'Reyes Magos', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 0, 6))) },
+    { name: 'Día de San José', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 2, 19))) },
+    { name: 'Jueves Santo', date: formatIsoDate(addCalendarDays(easter, -3)) },
+    { name: 'Viernes Santo', date: formatIsoDate(addCalendarDays(easter, -2)) },
+    { name: 'Día del Trabajo', date: formatIsoDate(new Date(year, 4, 1)) },
+    { name: 'Ascensión del Señor', date: formatIsoDate(moveHolidayToNextMonday(addCalendarDays(easter, 43))) },
+    { name: 'Corpus Christi', date: formatIsoDate(moveHolidayToNextMonday(addCalendarDays(easter, 64))) },
+    { name: 'Sagrado Corazón de Jesús', date: formatIsoDate(moveHolidayToNextMonday(addCalendarDays(easter, 71))) },
+    { name: 'San Pedro y San Pablo', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 5, 29))) },
+    { name: 'Día de la Independencia', date: formatIsoDate(new Date(year, 6, 20)) },
+    { name: 'Batalla de Boyacá', date: formatIsoDate(new Date(year, 7, 7)) },
+    { name: 'La Asunción de la Virgen', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 7, 15))) },
+    { name: 'Día de la Raza', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 9, 12))) },
+    { name: 'Todos los Santos', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 10, 1))) },
+    { name: 'Independencia de Cartagena', date: formatIsoDate(moveHolidayToNextMonday(new Date(year, 10, 11))) },
+    { name: 'Inmaculada Concepción', date: formatIsoDate(new Date(year, 11, 8)) },
+    { name: 'Navidad', date: formatIsoDate(new Date(year, 11, 25)) }
+  ];
+
+  STF_HOLIDAYS_CACHE[year] = holidays;
+  return holidays;
+}
+
+function checkColombianHoliday(dateOrStr) {
+  let dateStr = '';
+  if (typeof dateOrStr === 'string') {
+    dateStr = dateOrStr.substring(0, 10);
+  } else if (dateOrStr instanceof Date) {
+    dateStr = formatIsoDate(dateOrStr);
+  } else {
+    return { isHoliday: false, name: null };
+  }
+
+  const parts = dateStr.split('-');
+  if (parts.length < 3) return { isHoliday: false, name: null };
+  const year = parseInt(parts[0], 10);
+  if (!year || isNaN(year)) return { isHoliday: false, name: null };
+
+  const holidays = getColombianHolidaysForYear(year);
+  const found = holidays.find(h => h.date === dateStr);
+  return found ? { isHoliday: true, name: found.name, date: dateStr } : { isHoliday: false, name: null, date: dateStr };
+}
+
+function isSTFLaborDay(dateOrStr) {
+  let dateObj = (dateOrStr instanceof Date) ? dateOrStr : new Date(dateOrStr + (typeof dateOrStr === 'string' && dateOrStr.length === 10 ? 'T12:00:00' : ''));
+  if (isNaN(dateObj.getTime())) return true;
+  
+  // Domingo = 0 (No laboral en STF)
+  if (dateObj.getDay() === 0) return false;
+  
+  // Festivo oficial de Colombia (No laboral en STF)
+  const hol = checkColombianHoliday(dateObj);
+  if (hol.isHoliday) return false;
+  
+  // Lunes (1) a Sábado (6) laborables
+  return true;
+}
+
+function getSTFLaborDaysMetrics(startDateOrStr, endDateOrStr) {
+  let dStart = (startDateOrStr instanceof Date) ? new Date(startDateOrStr) : new Date(startDateOrStr + (typeof startDateOrStr === 'string' && startDateOrStr.length === 10 ? 'T00:00:00' : ''));
+  let dEnd = (endDateOrStr instanceof Date) ? new Date(endDateOrStr) : new Date(endDateOrStr + (typeof endDateOrStr === 'string' && endDateOrStr.length === 10 ? 'T23:59:59' : ''));
+
+  if (isNaN(dStart.getTime()) || isNaN(dEnd.getTime())) {
+    return { workdays: 1, calendarDays: 1, sundays: 0, holidays: 0, workHours: 7 };
+  }
+
+  const cur = new Date(dStart.getFullYear(), dStart.getMonth(), dStart.getDate());
+  const end = new Date(dEnd.getFullYear(), dEnd.getMonth(), dEnd.getDate());
+
+  let calendarDays = 0;
+  let workdays = 0;
+  let sundays = 0;
+  let holidays = 0;
+
+  if (cur > end) {
+    return { workdays: 0, calendarDays: 0, sundays: 0, holidays: 0, workHours: 0 };
+  }
+
+  while (cur <= end) {
+    calendarDays++;
+    const dow = cur.getDay();
+    const hol = checkColombianHoliday(cur);
+
+    if (dow === 0) {
+      sundays++;
+    } else if (hol.isHoliday) {
+      holidays++;
+    } else {
+      workdays++;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  return {
+    workdays,
+    calendarDays,
+    sundays,
+    holidays,
+    workHours: workdays * STF_WORK_HOURS_PER_DAY // 7 horas diarias (6am a 1pm)
+  };
+}
+
+function getSTFDeadlineDiagnosis(deadlineStr, refDate = (typeof getSystemReferenceDate === 'function' ? getSystemReferenceDate() : new Date())) {
+  if (!deadlineStr) {
+    return {
+      isOverdue: false,
+      workdaysDiff: 0,
+      calendarDaysDiff: 0,
+      countdownText: 'Sin límite fijado',
+      status: 'ontime'
+    };
+  }
+
+  const dTarget = new Date(deadlineStr + (deadlineStr.length === 10 ? 'T23:59:59' : ''));
+  const dRef = refDate || new Date();
+
+  const targetMidnight = new Date(dTarget.getFullYear(), dTarget.getMonth(), dTarget.getDate());
+  const refMidnight = new Date(dRef.getFullYear(), dRef.getMonth(), dRef.getDate());
+
+  const diffMs = targetMidnight.getTime() - refMidnight.getTime();
+  const rawCalendarDiff = Math.round(diffMs / 86400000);
+
+  if (rawCalendarDiff === 0) {
+    return {
+      isOverdue: false,
+      workdaysDiff: 1,
+      calendarDaysDiff: 1,
+      countdownText: 'Vence Hoy (Turno 6am-1pm)',
+      status: 'ontime'
+    };
+  }
+
+  if (rawCalendarDiff < 0) {
+    const pastMetrics = getSTFLaborDaysMetrics(addCalendarDays(targetMidnight, 1), refMidnight);
+    const overdueWorkdays = Math.max(1, pastMetrics.workdays);
+    const overdueCalendar = Math.abs(rawCalendarDiff);
+
+    return {
+      isOverdue: true,
+      workdaysDiff: -overdueWorkdays,
+      calendarDaysDiff: -overdueCalendar,
+      countdownText: `⚠️ ${overdueWorkdays}d hábil${overdueWorkdays > 1 ? 'es' : ''} retraso`,
+      status: 'risk'
+    };
+  }
+
+  const futureMetrics = getSTFLaborDaysMetrics(addCalendarDays(refMidnight, 1), targetMidnight);
+  const remainingWorkdays = Math.max(1, futureMetrics.workdays);
+
+  return {
+    isOverdue: false,
+    workdaysDiff: remainingWorkdays,
+    calendarDaysDiff: rawCalendarDiff,
+    countdownText: `En ${remainingWorkdays}d hábil${remainingWorkdays > 1 ? 'es' : ''} (${rawCalendarDiff}d corr.)`,
+    status: remainingWorkdays <= 2 ? 'risk' : 'ontime'
+  };
+}
+
+window.getColombianHolidaysForYear = getColombianHolidaysForYear;
+window.checkColombianHoliday = checkColombianHoliday;
+window.isSTFLaborDay = isSTFLaborDay;
+window.getSTFLaborDaysMetrics = getSTFLaborDaysMetrics;
+window.getSTFDeadlineDiagnosis = getSTFDeadlineDiagnosis;
+
+// ==========================================================================
 // VELOCIDAD DE ENTREGA (SPRINTS) · MOTOR ÁGIL CON MEDICIÓN POR DESARROLLADOR
 // Y CALENDARIO INTERACTIVO DE FECHAS PERSONALIZADAS
 // ==========================================================================
@@ -3927,8 +4145,16 @@ function renderVelocityCalendarGrid() {
     const dd = String(d).padStart(2, '0');
     const dateStr = `${vcalViewingYear}-${mm}-${dd}`;
 
+    const dayDate = new Date(vcalViewingYear, vcalViewingMonth, d);
+    const dayOfWeek = dayDate.getDay(); // 0 = Domingo
+    const isSunday = (dayOfWeek === 0);
+    const holidayInfo = checkColombianHoliday(dateStr);
+    const isHoliday = holidayInfo.isHoliday;
+
     let dayClass = 'vcal-day';
     if (dateStr === todayStr) dayClass += ' today';
+    if (isSunday) dayClass += ' sunday-day';
+    if (isHoliday) dayClass += ' holiday-day';
 
     const isStart = vcalSelectedStart === dateStr;
     const isEnd = vcalSelectedEnd === dateStr;
@@ -3949,10 +4175,17 @@ function renderVelocityCalendarGrid() {
       dayClass += ' has-deliveries';
     }
 
+    let tooltip = dateStr;
+    if (isSunday) tooltip += ' · Domingo (No laboral STF)';
+    else if (isHoliday) tooltip += ` · 🇨🇴 Festivo: ${holidayInfo.name} (No laboral)`;
+    else tooltip += ' · Día Laboral STF (Turno 6:00 AM – 1:00 PM)';
+    if (hasDeliv) tooltip += ' [Tiene entregas registradas]';
+
     html += `
-      <div class="${dayClass}" onclick="handleVCalDayClick('${dateStr}')" title="${dateStr}${hasDeliv ? ' (Tiene entregas registradas)' : ''}">
+      <div class="${dayClass}" onclick="handleVCalDayClick('${dateStr}')" title="${tooltip}">
         <span>${d}</span>
         ${hasDeliv ? '<span class="vcal-dot-deliv"></span>' : ''}
+        ${isHoliday ? '<span class="vcal-dot-holiday"></span>' : ''}
       </div>
     `;
   }
@@ -3996,10 +4229,8 @@ function updateVCalSummaryText() {
   if (!summaryEl) return;
 
   if (vcalSelectedStart && vcalSelectedEnd) {
-    const d1 = new Date(vcalSelectedStart);
-    const d2 = new Date(vcalSelectedEnd);
-    const diff = Math.max(1, Math.round((d2 - d1) / 86400000) + 1);
-    summaryEl.innerHTML = `<strong>Rango seleccionado:</strong> ${vcalSelectedStart} al ${vcalSelectedEnd} (<strong>${diff} días</strong> de auditoría).`;
+    const stats = getSTFLaborDaysMetrics(vcalSelectedStart, vcalSelectedEnd);
+    summaryEl.innerHTML = `<strong>Rango:</strong> ${vcalSelectedStart} al ${vcalSelectedEnd} · <strong>${stats.calendarDays} días calendario</strong> (<span style="color: #2563EB; font-weight: 800;">${stats.workdays} días laborales STF</span> · ${stats.workHours}h de turno Lun-Sáb) · <span style="color: #64748B; font-size: 11px;">(${stats.sundays} domingos y ${stats.holidays} festivos descansados)</span>.`;
   } else if (vcalSelectedStart) {
     summaryEl.innerHTML = `<strong>Fecha inicial:</strong> ${vcalSelectedStart}. Ahora haz clic en el día de fecha final.`;
   } else {
@@ -5616,19 +5847,16 @@ function calculateIntegrationTimeProgress(integration) {
   const dStart = parseSafeDate(integration.startDate) || new Date('2026-10-19T00:00:00');
   const dEnd = parseSafeDate(integration.deadline) || new Date('2026-11-15T23:59:59');
 
-  const start = dStart.getTime();
-  const end = dEnd.getTime();
-  const now = refDate.getTime();
+  const dlDiag = getSTFDeadlineDiagnosis(integration.deadline, refDate);
+  const totalMetrics = getSTFLaborDaysMetrics(dStart, dEnd);
+  const totalWorkdays = Math.max(1, totalMetrics.workdays);
+  
+  // Días laborales transcurridos desde el inicio
+  const elapsedMetrics = getSTFLaborDaysMetrics(dStart, refDate);
+  const elapsedWorkdays = Math.min(totalWorkdays, Math.max(0, elapsedMetrics.workdays));
+  const workdaysRemaining = dlDiag.workdaysDiff;
 
-  const totalMs = Math.max(1, end - start);
-  const elapsedMs = Math.max(0, now - start);
-  const remainingMs = end - now;
-
-  const totalDays = Math.max(1, Math.round(totalMs / (1000 * 60 * 60 * 24)) || 10);
-  const elapsedDays = Math.min(totalDays, Math.max(0, Math.round(elapsedMs / (1000 * 60 * 60 * 24)) || 0));
-  const daysRemaining = Math.round(remainingMs / (1000 * 60 * 60 * 24)) || 0;
-
-  const timeBurnRate = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100) || 50));
+  const timeBurnRate = Math.min(100, Math.max(0, Math.round((elapsedWorkdays / totalWorkdays) * 100) || 50));
   const expectedProgress = timeBurnRate;
 
   if (integration.status === 'evaluated') {
@@ -5637,9 +5865,12 @@ function calculateIntegrationTimeProgress(integration) {
       statusText: 'Auditada & Aprobada',
       friendlyStatusText: 'Auditada',
       badgeClass: 'evaluated',
-      totalDays,
-      elapsedDays,
+      totalDays: totalMetrics.calendarDays,
+      totalWorkdays,
+      elapsedDays: elapsedMetrics.calendarDays,
+      elapsedWorkdays,
       daysRemaining: 0,
+      workdaysRemaining: 0,
       timeBurnRate: 100,
       expectedProgress: 100,
       isOverdue: false,
@@ -5647,36 +5878,42 @@ function calculateIntegrationTimeProgress(integration) {
     };
   }
 
-  if (daysRemaining < 0) {
-    const daysOverdue = Math.abs(daysRemaining);
+  if (dlDiag.isOverdue) {
+    const daysOverdue = Math.abs(workdaysRemaining);
     return {
       status: 'risk',
-      statusText: `Retraso (+${daysOverdue} d)`,
-      friendlyStatusText: `Desfase (+${daysOverdue} d)`,
+      statusText: `Retraso (+${daysOverdue}d háb.)`,
+      friendlyStatusText: `Desfase (+${daysOverdue}d háb.)`,
       badgeClass: 'risk',
-      totalDays,
-      elapsedDays: totalDays + daysOverdue,
-      daysRemaining,
+      totalDays: totalMetrics.calendarDays,
+      totalWorkdays,
+      elapsedDays: totalMetrics.calendarDays + Math.abs(dlDiag.calendarDaysDiff),
+      elapsedWorkdays: totalWorkdays + daysOverdue,
+      daysRemaining: dlDiag.calendarDaysDiff,
+      workdaysRemaining,
       timeBurnRate: 100,
       expectedProgress: 100,
       isOverdue: true,
-      countdownText: `⚠️ Vencida hace ${daysOverdue} día${daysOverdue > 1 ? 's' : ''}`
+      countdownText: `⚠️ Vencida hace ${daysOverdue} día${daysOverdue > 1 ? 's' : ''} hábil${daysOverdue > 1 ? 'es' : ''}`
     };
   }
 
-  if (timeBurnRate >= 75) {
+  if (timeBurnRate >= 75 || (workdaysRemaining <= 2 && workdaysRemaining > 0)) {
     return {
       status: 'risk',
       statusText: 'En Riesgo (>75% Tiempo)',
       friendlyStatusText: 'Por entregar',
       badgeClass: 'risk',
-      totalDays,
-      elapsedDays,
-      daysRemaining,
+      totalDays: totalMetrics.calendarDays,
+      totalWorkdays,
+      elapsedDays: elapsedMetrics.calendarDays,
+      elapsedWorkdays,
+      daysRemaining: dlDiag.calendarDaysDiff,
+      workdaysRemaining,
       timeBurnRate,
       expectedProgress,
       isOverdue: false,
-      countdownText: `Quedan ${daysRemaining} día${daysRemaining !== 1 ? 's' : ''} para entrega`
+      countdownText: `Quedan ${workdaysRemaining} día${workdaysRemaining !== 1 ? 's' : ''} hábil${workdaysRemaining !== 1 ? 'es' : ''} (Turno 6am-1pm)`
     };
   }
 
@@ -5685,13 +5922,16 @@ function calculateIntegrationTimeProgress(integration) {
     statusText: 'En Tiempo (Ritmo Óptimo)',
     friendlyStatusText: 'Ritmo óptimo',
     badgeClass: 'ontime',
-    totalDays,
-    elapsedDays,
-    daysRemaining,
+    totalDays: totalMetrics.calendarDays,
+    totalWorkdays,
+    elapsedDays: elapsedMetrics.calendarDays,
+    elapsedWorkdays,
+    daysRemaining: dlDiag.calendarDaysDiff,
+    workdaysRemaining,
     timeBurnRate,
     expectedProgress,
     isOverdue: false,
-    countdownText: `Quedan ${daysRemaining} día${daysRemaining !== 1 ? 's' : ''} para entrega`
+    countdownText: `Quedan ${workdaysRemaining} día${workdaysRemaining !== 1 ? 's' : ''} hábil${workdaysRemaining !== 1 ? 'es' : ''} para entrega`
   };
 }
 
@@ -8059,22 +8299,20 @@ function renderProjectsView(brand = activeBrandFilter) {
 
       const taskRatioPct = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : (progress === 100 ? 100 : 0);
 
-      // Cálculo de fecha límite y cuenta regresiva
-      const deadlineDate = new Date((app.deadline || '2026-11-30') + 'T23:59:59');
-      const diffDays = Math.ceil((deadlineDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+      // Cálculo de fecha límite y cuenta regresiva con Motor Laboral STF (Lun-Sáb 6am-1pm, domingos y festivos libres)
+      const deadlineDiag = getSTFDeadlineDiagnosis(app.deadline, refDate);
       
       let deadlineDisplay, deadlineCountdown, isOverdue = false;
       if (progress === 100) {
         deadlineDisplay = '✅ Desplegado';
         deadlineCountdown = 'Producción Activa';
-      } else if (diffDays < 0 || app.status === 'risk') {
+      } else if (deadlineDiag.isOverdue || app.status === 'risk') {
         isOverdue = true;
-        const daysOver = Math.abs(diffDays);
         deadlineDisplay = formatShortDate(app.deadline);
-        deadlineCountdown = `⚠️ ${daysOver > 0 ? daysOver + 'd retraso' : 'En Atención'}`;
+        deadlineCountdown = deadlineDiag.countdownText;
       } else {
         deadlineDisplay = formatShortDate(app.deadline);
-        deadlineCountdown = `En ${diffDays} días`;
+        deadlineCountdown = deadlineDiag.countdownText;
       }
 
       // Track segmentado de las 6 fases de desarrollo
@@ -10160,18 +10398,17 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
     completedTasksCount = totalTasksCount;
   }
 
-  // Cronograma / Deadline
-  const deadlineDate = new Date((app.deadline || '2026-11-30') + 'T23:59:59');
-  const diffDays = Math.ceil((deadlineDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+  // Cronograma / Deadline con Motor Laboral STF (Lun-Sáb 6am-1pm, sin domingos ni festivos)
+  const deadlineDiag = getSTFDeadlineDiagnosis(app.deadline, refDate);
   
   let deadlineDisplay, isOverdue = false;
   if (isProd) {
     deadlineDisplay = 'En Producción';
-  } else if (diffDays < 0 || app.status === 'risk') {
+  } else if (deadlineDiag.isOverdue || app.status === 'risk') {
     isOverdue = true;
-    deadlineDisplay = `${formatShortDate(app.deadline)} (Retraso)`;
+    deadlineDisplay = `${formatShortDate(app.deadline)} (Retraso ${Math.abs(deadlineDiag.workdaysDiff)}d hábiles)`;
   } else {
-    deadlineDisplay = formatShortDate(app.deadline);
+    deadlineDisplay = `${formatShortDate(app.deadline)} (${deadlineDiag.workdaysDiff}d hábiles)`;
   }
 
   // Extracción dinámica del nombre corto de cada fase definida libremente por el Admin para este aplicativo
