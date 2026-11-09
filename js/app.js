@@ -10692,6 +10692,54 @@ function formatMonthYearEs(d) {
   };
 }
 
+/**
+ * Formats task date range as [DD/MM — DD/MM], e.g. "28/11 — 30/12"
+ */
+function formatTaskDateRange(task) {
+  if (!task) return 'Jornada STF';
+
+  const formatDM = (dateVal) => {
+    if (!dateVal) return null;
+    const str = String(dateVal).trim();
+    if (str.length >= 10 && str.includes('-')) {
+      const parts = str.substring(0, 10).split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}`;
+      }
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${day}/${month}`;
+    }
+    return null;
+  };
+
+  const endDM = formatDM(task.deadline);
+  let startDM = formatDM(task.startDate || task.createdAt);
+
+  // If startDM is missing, calculate 7 days prior to deadline
+  if (!startDM && endDM && task.deadline) {
+    const dStr = task.deadline.substring(0, 10) + 'T12:00:00';
+    const endD = new Date(dStr);
+    if (!isNaN(endD.getTime())) {
+      const prevD = new Date(endD);
+      prevD.setDate(prevD.getDate() - 7);
+      const day = String(prevD.getDate()).padStart(2, '0');
+      const month = String(prevD.getMonth() + 1).padStart(2, '0');
+      startDM = `${day}/${month}`;
+    }
+  }
+
+  if (startDM && endDM) {
+    return `${startDM} — ${endDM}`;
+  } else if (endDM) {
+    return `Hasta ${endDM}`;
+  }
+  return 'Turno 6am - 1pm';
+}
+
 function getScopedCalendarIntegrations() {
   const isAdmin = isCurrentSessionAdmin();
   let list = Array.isArray(appState.integrations) ? [...appState.integrations] : [];
@@ -10931,7 +10979,7 @@ function toggleCalendarQuickFilters() {
 }
 
 /* ==========================================================================
-   Week Grid Rendering (Oripio Compact SaaS View)
+   Week Grid Rendering (Oripio Compact SaaS View with Exact Date Range)
    ========================================================================== */
 function renderCalendarWeekGrid(container, currentDate, refDate) {
   const monday = getMondayOfWeek(currentDate);
@@ -11014,11 +11062,17 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
       <tbody>
   `;
 
-  // Group tasks by day
+  // Group tasks by day (excluding Sunday and Holidays because NO activities are scheduled on non-working days!)
   const tasksByDay = {};
   weekDays.forEach(d => {
     const iso = formatIsoDate(d);
-    tasksByDay[iso] = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+    const isSunday = d.getDay() === 0;
+    const hol = checkColombianHoliday(iso);
+    if (isSunday || hol.isHoliday) {
+      tasksByDay[iso] = []; // No scheduled activities on Sunday/Holiday!
+    } else {
+      tasksByDay[iso] = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+    }
   });
 
   // Render Time Slot Rows
@@ -11037,21 +11091,43 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
       const hol = checkColombianHoliday(iso);
       const isNonWorking = isSunday || hol.isHoliday;
 
-      // Distribute tasks across reasonable slots (e.g. 9 AM, 11 AM, 12 PM, 1 PM)
+      // If Sunday or holiday, render diagonal striped background with non-working banner in the middle slot
+      if (isNonWorking) {
+        html += `
+          <td class="o-cell-td is-rest-col" data-drop-date="${iso}"
+              ondragover="handleCalendarDragOver(event)"
+              ondragleave="handleCalendarDragLeave(event)"
+              ondrop="handleCalendarDrop(event, '${iso}')">
+        `;
+
+        // Render non-working banner once in slot 10 AM (slotIdx 4)
+        if (slot.hour === 10) {
+          html += `
+            <div class="o-non-working-banner">
+              <span class="onw-icon">${isSunday ? '☕' : '🇨🇴'}</span>
+              <strong class="onw-title">${isSunday ? 'Domingo Oficial' : (hol.name ? hol.name.substring(0, 13) : 'Festivo Ley Emiliani')}</strong>
+              <span class="onw-sub">Sin actividades programadas</span>
+            </div>
+          `;
+        }
+
+        html += `</td>`;
+        return;
+      }
+
+      // Regular working day: Distribute tasks across reasonable hours
       const dayTasks = tasksByDay[iso] || [];
       const cellTasks = dayTasks.filter((_, tIdx) => {
-        // Map first task to 9 AM (slotIdx 3), second to 11 AM (slotIdx 5), third to 12 PM (slotIdx 6), others to 1 PM
         if (tIdx === 0 && slot.hour === 9) return true;
         if (tIdx === 1 && slot.hour === 11) return true;
         if (tIdx === 2 && slot.hour === 12) return true;
         if (tIdx >= 3 && slot.hour === 13) return true;
-        // If only 1 task on this day and we're at 10 AM, show it
         if (dayTasks.length === 1 && slot.hour === 10) return true;
         return false;
       });
 
       html += `
-        <td class="o-cell-td ${isNonWorking ? 'non-working' : ''} ${hol.isHoliday ? 'holiday-bg' : ''}"
+        <td class="o-cell-td"
             data-drop-date="${iso}"
             ondragover="handleCalendarDragOver(event)"
             ondragleave="handleCalendarDragLeave(event)"
@@ -11080,12 +11156,12 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
 }
 
 /* ==========================================================================
-   Render Event Card in Oripio SaaS Pastel Style
+   Render Event Card in Oripio SaaS Pastel Style with [DD/MM — DD/MM] Strip
    ========================================================================== */
 function renderOripioEventCard(task, dayIso, timeSlotLabel) {
-  const app = getApplicationById(task.appId) || { name: task.appName || 'Aplicativo', iconColor: '#3B82F6' };
   const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
   const diag = getSTFDeadlineDiagnosis(task.deadline);
+  const dateRangeStr = formatTaskDateRange(task);
 
   // Determine pastel theme matching reference image
   let themeClass = 'card-theme-blue';
@@ -11096,15 +11172,14 @@ function renderOripioEventCard(task, dayIso, timeSlotLabel) {
   } else if (task.appId === 'app_torre') {
     themeClass = 'card-theme-purple';
   } else if (task.appId === 'app_geo') {
-    themeClass = 'card-theme-orange';
+    themeClass = 'card-theme-blue';
   } else if (task.appId === 'app_colchas') {
     themeClass = 'card-theme-green';
   } else if (task.appId === 'app_laboratorio') {
     themeClass = 'card-theme-indigo';
+  } else {
+    themeClass = 'card-theme-orange';
   }
-
-  // Time pill range (e.g. 09:00 AM - 11:00 AM)
-  const timePillText = timeSlotLabel ? `${timeSlotLabel} - STF` : '06:00 AM - 01:00 PM';
 
   return `
     <div class="oripio-event-card ${themeClass}"
@@ -11113,34 +11188,42 @@ function renderOripioEventCard(task, dayIso, timeSlotLabel) {
          ondragstart="handleCalendarDragStart(event, '${task.id}')"
          ondragend="handleCalendarDragEnd(event)"
          onclick="openTaskObservationsModal('${task.id}')"
-         title="${task.name} · Asignado a ${dev.name} · Arrastra para reprogramar entrega">
+         title="${task.name} · Vigencia: ${dateRangeStr} · Responsable: ${dev.name} · Clic para bitácora, arrastra para mover">
       
-      <div class="oec-top-row">
-        <span class="oec-time-pill">${timePillText}</span>
-        ${diag.isOverdue ? '<span class="oec-status-badge" style="background:#FEE2E2; color:#B91C1C;">Retraso</span>' : ''}
-        ${task.status === 'evaluated' ? '<span class="oec-status-badge" style="background:#DCFCE7; color:#15803D;">Auditada</span>' : ''}
+      <!-- Top Strip with exact [DD/MM — DD/MM] format requested -->
+      <div class="oec-top-strip">
+        <span class="oec-date-range">
+          <i data-lucide="calendar" style="width: 10px; height: 10px;"></i>
+          ${dateRangeStr}
+        </span>
+        ${diag.isOverdue ? '<span class="oec-status-badge oec-badge-danger">Retraso</span>' : ''}
+        ${task.status === 'evaluated' ? '<span class="oec-status-badge oec-badge-success">Auditada</span>' : ''}
       </div>
 
-      <h4 class="oec-title">${task.name}</h4>
+      <!-- Card Body -->
+      <div class="oec-body">
+        <h4 class="oec-title">${task.name}</h4>
 
-      <div class="oec-meta">
-        <div class="oec-dev-tag">
-          <img src="${dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}" alt="${dev.name}" class="oec-avatar">
-          <span>${dev.name.split(' ')[0]}</span>
+        <div class="oec-meta">
+          <div class="oec-dev-tag">
+            <img src="${dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}" alt="${dev.name}" class="oec-avatar">
+            <span>${dev.name.split(' ')[0]}</span>
+          </div>
+          <span class="oec-progress">${task.weight || 10}%</span>
         </div>
-        <span class="oec-progress">${task.weight || 10}%</span>
       </div>
     </div>
   `;
 }
 
 /* ==========================================================================
-   Month & Day Grids
+   Month Grid: Dynamic Complete Month Days (35 or 42 cells) & No Non-Working Tasks
    ========================================================================== */
 function renderCalendarMonthGrid(container, currentDate, refDate) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
 
   const rangePill = document.getElementById('futCalRangePill');
   if (rangePill) {
@@ -11154,13 +11237,22 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
 
   let html = `
     <div class="oripio-month-grid">
-      ${dayNames.map(d => `<div class="o-month-header">${d}</div>`).join('')}
+      ${dayNames.map((d, i) => `<div class="o-month-header ${i === 6 ? 'is-rest-day' : ''}">${d}</div>`).join('')}
   `;
 
+  // Start from Monday of the first week
   const startMonday = getMondayOfWeek(firstDay);
+  
+  // Calculate ending Sunday to ensure ALL days of the month (up to 30/31) are complete!
+  const endSunday = new Date(lastDay);
+  const diffSun = (7 - endSunday.getDay()) % 7;
+  endSunday.setDate(endSunday.getDate() + diffSun);
+
+  // totalDays will be 35 (5 weeks) or 42 (6 weeks)
+  const totalDays = Math.round((endSunday - startMonday) / (24 * 3600 * 1000)) + 1;
   const currentCell = new Date(startMonday);
 
-  for (let i = 0; i < 35; i++) {
+  for (let i = 0; i < totalDays; i++) {
     const iso = formatIsoDate(currentCell);
     const isOtherMonth = currentCell.getMonth() !== month;
     const isToday = iso === todayIso;
@@ -11168,10 +11260,21 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
     const hol = checkColombianHoliday(iso);
     const isNonWorking = isSunday || hol.isHoliday;
 
-    const cellTasks = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+    // Filter tasks for this cell: NO scheduled activities on Sundays or Holidays!
+    const cellTasks = isNonWorking ? [] : scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
+
+    let restClass = '';
+    let restBadge = '';
+    if (isSunday) {
+      restClass = 'is-sunday-rest';
+      restBadge = '<span class="o-month-rest-tag tag-sun">Descanso</span>';
+    } else if (hol.isHoliday) {
+      restClass = 'is-holiday-rest';
+      restBadge = `<span class="o-month-rest-tag tag-hol" title="${hol.name}">Festivo</span>`;
+    }
 
     html += `
-      <div class="o-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${isNonWorking ? 'non-working' : ''}"
+      <div class="o-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${restClass}"
            data-drop-date="${iso}"
            ondragover="handleCalendarDragOver(event)"
            ondragleave="handleCalendarDragLeave(event)"
@@ -11179,28 +11282,32 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
         
         <div class="o-month-cell-header">
           <span class="o-month-cell-num">${currentCell.getDate()}</span>
-          ${hol.isHoliday ? '<span style="font-size: 8.5px; color: #DC2626; font-weight: 800;">Festivo</span>' : (isSunday ? '<span style="font-size: 8.5px; color: #94A3B8;">Descanso</span>' : '')}
+          ${restBadge}
         </div>
 
         <div class="o-month-cell-tasks-wrap">
           ${cellTasks.map(t => {
             const diag = getSTFDeadlineDiagnosis(t.deadline);
-            let pillBg = '#EFF6FF';
-            let pillColor = '#1E40AF';
-            if (t.status === 'evaluated') { pillBg = '#DCFCE7'; pillColor = '#15803D'; }
-            else if (diag.isOverdue) { pillBg = '#FEE2E2'; pillColor = '#B91C1C'; }
+            const dateRangeStr = formatTaskDateRange(t);
+            let themeClass = 'card-theme-blue';
+            if (t.status === 'evaluated') themeClass = 'card-theme-green';
+            else if (diag.isOverdue) themeClass = 'card-theme-rose';
+            else if (t.appId === 'app_torre') themeClass = 'card-theme-purple';
+            else if (t.appId === 'app_colchas') themeClass = 'card-theme-green';
+            else if (t.appId === 'app_laboratorio') themeClass = 'card-theme-indigo';
+            else if (t.appId === 'app_geo') themeClass = 'card-theme-blue';
 
             return `
-              <div class="o-month-task-pill" 
-                   style="background: ${pillBg}; color: ${pillColor};"
+              <div class="o-month-task-pill ${themeClass}" 
                    id="futCard_${t.id}"
                    draggable="true"
                    ondragstart="handleCalendarDragStart(event, '${t.id}')"
                    ondragend="handleCalendarDragEnd(event)"
                    onclick="openTaskObservationsModal('${t.id}')"
-                   title="${t.name} (${t.weight || 10}%) · Arrastra para reprogramar">
+                   title="${t.name} · Vigencia: ${dateRangeStr} · Avance: ${t.weight || 10}% · Arrastra para reprogramar">
+                <span class="o-month-pill-range">${dateRangeStr}</span>
                 <span class="o-month-task-pill-text">${t.name}</span>
-                <span class="o-month-task-pill-weight">${t.weight}%</span>
+                <span class="o-month-task-pill-weight">${t.weight || 10}%</span>
               </div>
             `;
           }).join('')}
@@ -11216,11 +11323,14 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
 }
 
 function renderCalendarDayGrid(container, currentDate, refDate) {
-  // Day view renders a single focused day with hourly breakdown
   const iso = formatIsoDate(currentDate);
   const scopedIntegrations = getScopedCalendarIntegrations();
-  const dayTasks = scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
   const hol = checkColombianHoliday(iso);
+  const isSunday = currentDate.getDay() === 0;
+  const isNonWorking = isSunday || hol.isHoliday;
+  
+  // No activities on Sunday or Holidays
+  const dayTasks = isNonWorking ? [] : scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
 
   const rangePill = document.getElementById('futCalRangePill');
   if (rangePill) {
@@ -11228,17 +11338,26 @@ function renderCalendarDayGrid(container, currentDate, refDate) {
   }
 
   let html = `
-    <div style="padding: 18px; max-width: 700px; margin: 0 auto;">
+    <div style="padding: 18px; max-width: 650px; margin: 0 auto;">
       <div style="margin-bottom: 16px; padding: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
         <div>
           <h3 style="margin: 0; font-size: 15px; font-weight: 700;">Jornada Diaria: ${formatShortDate(iso)}</h3>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Horario laboral STF: 6:00 AM - 1:00 PM</p>
+          <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">
+            ${isNonWorking ? (isSunday ? 'Domingo · Descanso oficial STF' : 'Festivo Nacional · Ley Emiliani') : 'Horario laboral STF: 6:00 AM - 1:00 PM'}
+          </p>
         </div>
+        ${isSunday ? '<span style="background: #F1F5F9; color: #64748B; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">Descanso Semanal</span>' : ''}
         ${hol.isHoliday ? '<span style="background: #FEE2E2; color: #DC2626; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">Festivo Nacional</span>' : ''}
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        ${dayTasks.length > 0 ? dayTasks.map(t => renderOripioEventCard(t, iso, '06:00 AM - 01:00 PM')).join('') : '<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px;">No hay entregas fijadas para este día.</div>'}
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        ${isNonWorking 
+          ? `<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px; background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F1F5F9 10px, #F1F5F9 20px); border-radius: 12px; border: 1px dashed #E2E8F0;">
+               ☕ <strong>Día no laboral en STF:</strong> No hay actividades programadas.
+             </div>`
+          : (dayTasks.length > 0 
+              ? dayTasks.map(t => renderOripioEventCard(t, iso, '06:00 AM - 01:00 PM')).join('') 
+              : '<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px;">No hay entregas fijadas para este día.</div>')}
       </div>
     </div>
   `;
@@ -11247,7 +11366,7 @@ function renderCalendarDayGrid(container, currentDate, refDate) {
 }
 
 /* ==========================================================================
-   Drag & Drop Handlers
+   Drag & Drop Handlers with STF Non-Working Days Protection
    ========================================================================== */
 function handleCalendarDragStart(e, taskId) {
   draggedTaskId = taskId;
@@ -11287,6 +11406,30 @@ function handleCalendarDrop(e, targetDateStr) {
   const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
   if (!taskId || !targetDateStr) return;
 
+  // VERIFY SUNDAY / HOLIDAY PROTECTION: No activities scheduled on non-working days!
+  const hol = checkColombianHoliday(targetDateStr);
+  const targetDateObj = parseSafeDate(targetDateStr);
+  const isSunday = targetDateObj && targetDateObj.getDay() === 0;
+
+  if (isSunday || hol.isHoliday) {
+    // Automatically find the next working day
+    let nextWorkDate = new Date(targetDateObj);
+    while (true) {
+      nextWorkDate.setDate(nextWorkDate.getDate() + 1);
+      const nextIso = formatIsoDate(nextWorkDate);
+      const nextHol = checkColombianHoliday(nextIso);
+      const nextIsSun = nextWorkDate.getDay() === 0;
+      if (!nextIsSun && !nextHol.isHoliday) {
+        break;
+      }
+    }
+    const adjustedIso = formatIsoDate(nextWorkDate);
+    const dayReason = isSunday ? 'Los domingos son de descanso oficial en STF' : `El ${hol.name || 'festivo'} no es laborable`;
+    showToast(`⚠️ ${dayReason}. La entrega fue ajustada automáticamente al siguiente día hábil (${formatShortDate(adjustedIso)}).`, 'warning');
+    handleMoveTaskToDate(taskId, adjustedIso);
+    return;
+  }
+
   handleMoveTaskToDate(taskId, targetDateStr);
 }
 
@@ -11321,11 +11464,6 @@ function handleMoveTaskToDate(taskId, targetDateStr) {
     isAutoGenerated: true
   });
 
-  // Check holiday or Sunday for informative feedback
-  const hol = checkColombianHoliday(targetDateStr);
-  const targetDateObj = parseSafeDate(targetDateStr);
-  const isSunday = targetDateObj && targetDateObj.getDay() === 0;
-
   // Save state immediately
   saveData(appState);
 
@@ -11334,15 +11472,7 @@ function handleMoveTaskToDate(taskId, targetDateStr) {
     playNotificationSound();
   }
 
-  // Feedback message
-  let hintMsg = '';
-  if (hol.isHoliday) {
-    hintMsg = ` (Nota: ${hol.name || 'Festivo'} es descanso en STF)`;
-  } else if (isSunday) {
-    hintMsg = ` (Nota: Domingo es día de descanso STF)`;
-  }
-
-  showToast(`📅 "${task.name}" reprogramada para el ${formatShortDate(targetDateStr)}${hintMsg}.`);
+  showToast(`📅 "${task.name}" reprogramada para el ${formatShortDate(targetDateStr)} (Vigencia: ${formatTaskDateRange(task)}).`);
 
   // Refresh reactive views
   renderCalendarDeliveryView();
@@ -11368,7 +11498,7 @@ function openQuickRescheduleModal(taskId) {
 
   document.getElementById('rescheduleTaskId').value = taskId;
   document.getElementById('rescheduleTaskTitle').textContent = task.name;
-  document.getElementById('rescheduleTaskSub').textContent = `Entrega actual: ${formatShortDate(task.deadline)} · Jornada STF Lun-Sáb 6am-1pm`;
+  document.getElementById('rescheduleTaskSub').textContent = `Vigencia actual: ${formatTaskDateRange(task)} · Jornada STF Lun-Sáb 6am-1pm`;
 
   const customInput = document.getElementById('rescheduleCustomDate');
   if (customInput) customInput.value = task.deadline || formatIsoDate(new Date());
@@ -11424,8 +11554,14 @@ function updateRescheduleSlaPreview(dateStr) {
   }
   const diag = getSTFDeadlineDiagnosis(dateStr);
   const hol = checkColombianHoliday(dateStr);
-  let holWarn = hol.isHoliday ? `<span style="color:#DC2626; font-weight:700;"> · ⚠️ Festivo (${hol.name})</span>` : '';
-  preview.innerHTML = `<strong>Pronóstico STF:</strong> ${diag.countdownText}${holWarn} · Medición oficial de cumplimiento TI.`;
+  const dObj = parseSafeDate(dateStr);
+  const isSun = dObj && dObj.getDay() === 0;
+
+  let warn = '';
+  if (isSun) warn = '<span style="color:#DC2626; font-weight:700;"> · ⚠️ Domingo es día de descanso STF</span>';
+  else if (hol.isHoliday) warn = `<span style="color:#DC2626; font-weight:700;"> · ⚠️ Festivo (${hol.name})</span>`;
+
+  preview.innerHTML = `<strong>Pronóstico STF:</strong> ${diag.countdownText}${warn} · Medición oficial de cumplimiento TI.`;
 }
 
 function closeQuickRescheduleModal() {
@@ -11495,6 +11631,7 @@ function updateCalendarFooterStats(integrations, weekDays) {
 }
 
 // Window Global Exports for Calendar
+window.formatTaskDateRange = formatTaskDateRange;
 window.renderCalendarDeliveryView = renderCalendarDeliveryView;
 window.navigateDeliveryCalendar = navigateDeliveryCalendar;
 window.goToDeliveryCalendarToday = goToDeliveryCalendarToday;

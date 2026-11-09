@@ -13243,8 +13243,8 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 /* ==========================================================================
-   VIEW: CALENDARIO EJECUTIVO DE ENTREGAS (Diseño Compacto SaaS Estilo Oripio)
-   100% Responsive - Sin barras de desplazamiento horizontal - Celdas Fijas
+   VIEW: CALENDARIO EJECUTIVO DE ENTREGAS (Diseño Futurista Oripio SaaS 2026)
+   Tarjetas con rango de fecha [inicio — fin], celdas rígidas y meses completos
    ========================================================================== */
 
 .calendar-view-wrapper {
@@ -13259,7 +13259,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 18px;
-  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.06);
   overflow: hidden;
   width: 100%;
   max-width: 100%;
@@ -13755,7 +13755,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 /* ==========================================================================
-   MONTH VIEW: Strict 7 Equal Columns, Text Adjusts to Square (Truncated)
+   MONTH VIEW: Strict 7 Equal Columns, Complete Days (35 or 42 cells)
    ========================================================================== */
 .oripio-month-grid {
   display: grid;
@@ -13783,8 +13783,13 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   box-sizing: border-box;
 }
 
+.o-month-header.is-rest-day {
+  color: #94A3B8;
+  background: #F8FAFC;
+}
+
 .o-month-cell {
-  min-height: 82px;
+  min-height: 80px;
   max-height: 98px;
   border-right: 1px solid #F1F5F9;
   border-bottom: 1px solid #F1F5F9;
@@ -13792,22 +13797,29 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   background: #FFFFFF;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2.5px;
   transition: background 0.15s ease;
   min-width: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  position: relative;
 }
 
 .o-month-cell.is-other-month {
   background: #FAFAFC;
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 .o-month-cell.is-today {
   background: #F8FAFC;
+}
+
+/* Diagonal Pinstripes for Sundays and Holidays */
+.o-month-cell.is-sunday-rest,
+.o-month-cell.is-holiday-rest {
+  background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 8px, #F1F5F9 8px, #F1F5F9 16px) !important;
 }
 
 .o-month-cell-header {
@@ -13836,6 +13848,22 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   font-size: 10px;
 }
 
+.o-month-rest-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.o-month-rest-tag.tag-sun {
+  color: #94A3B8;
+  background: #F1F5F9;
+}
+.o-month-rest-tag.tag-hol {
+  color: #DC2626;
+  background: #FEE2E2;
+}
+
 .o-month-cell-tasks-wrap {
   display: flex;
   flex-direction: column;
@@ -13846,9 +13874,10 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   box-sizing: border-box;
 }
 
+/* Month Event Pill with Top / Inline Range [28/11 — 30/12] */
 .o-month-task-pill {
   padding: 2.5px 5px;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: grab;
   user-select: none;
   width: 100%;
@@ -13858,12 +13887,24 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 4px;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-left: 3px solid #3B82F6;
 }
 .o-month-task-pill:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.o-month-pill-range {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 3.5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
 }
 
 .o-month-task-pill-text {
@@ -13878,7 +13919,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 .o-month-task-pill-weight {
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
   opacity: 0.85;
   flex-shrink: 0;
@@ -14033,41 +14074,67 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   outline-offset: -2px;
 }
 
-.o-cell-td.non-working {
-  background-image: repeating-linear-gradient(45deg, #F8FAFC, #F8FAFC 8px, #F1F5F9 8px, #F1F5F9 16px);
-  opacity: 0.65;
+/* Diagonal Pinstripes for Sunday and Holidays in Week View */
+.o-cell-td.is-rest-col {
+  background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F1F5F9 10px, #F1F5F9 20px) !important;
+  vertical-align: middle;
+  text-align: center;
 }
 
-.o-cell-td.holiday-bg {
-  background-image: repeating-linear-gradient(45deg, #FEF2F2, #FEF2F2 8px, #FEE2E2 8px, #FEE2E2 16px);
-  opacity: 0.75;
+.o-non-working-banner {
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0.65;
+  user-select: none;
+}
+
+.onw-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.onw-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+}
+
+.onw-sub {
+  font-size: 8px;
+  color: #94A3B8;
+  white-space: nowrap;
 }
 
 /* ==========================================================================
-   Oripio Event Cards: Fixed Bounds, Text Clamped
+   Oripio Event Cards: Exact Reference Style (media_1794241765998_663c581e.jpg)
+   Distinct Top Strip with [28/11 — 30/12], Pastel Body & Left Accent Border
    ========================================================================== */
 .oripio-event-card {
-  border-radius: 7px;
-  padding: 5px 6px;
-  margin-bottom: 3px;
+  border-radius: 8px;
+  margin-bottom: 4px;
   cursor: grab;
   font-family: inherit;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
   display: flex;
   flex-direction: column;
-  gap: 3px;
   position: relative;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
   overflow: hidden;
+  border: 1px solid transparent;
 }
 
 .oripio-event-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .oripio-event-card:active {
@@ -14075,81 +14142,63 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 .oripio-event-card.is-dragging {
-  opacity: 0.4;
+  opacity: 0.35;
   transform: scale(0.96);
 }
 
-/* Pastel Card Themes */
-.card-theme-purple {
-  background: #F3E8FF;
-  border-left: 3px solid #A855F7;
-  color: #581C87;
-}
-
-.card-theme-blue {
-  background: #E0F2FE;
-  border-left: 3px solid #0284C7;
-  color: #0369A1;
-}
-
-.card-theme-green {
-  background: #DCFCE7;
-  border-left: 3px solid #16A34A;
-  color: #15803D;
-}
-
-.card-theme-orange {
-  background: #FFEDD5;
-  border-left: 3px solid #EA580C;
-  color: #C2410C;
-}
-
-.card-theme-rose {
-  background: #FFE4E6;
-  border-left: 3px solid #E11D48;
-  color: #9F1239;
-}
-
-.card-theme-indigo {
-  background: #EEF2FF;
-  border-left: 3px solid #6366F1;
-  color: #3730A3;
-}
-
-/* Event Card Inner Elements */
-.oec-top-row {
+/* Top Strip for Card Header (Exact to reference image!) */
+.oec-top-strip {
+  padding: 3px 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
   overflow: hidden;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.oec-time-pill {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.8);
+.oec-date-range {
+  font-size: 9.5px;
+  font-weight: 800;
   display: inline-flex;
+  align-items: center;
+  gap: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .oec-status-badge {
-  font-size: 8.5px;
-  font-weight: 700;
+  font-size: 8px;
+  font-weight: 800;
   padding: 1px 4px;
   border-radius: 3px;
   flex-shrink: 0;
+  text-transform: uppercase;
+}
+.oec-badge-danger {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+.oec-badge-success {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+/* Card Body */
+.oec-body {
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .oec-title {
   font-size: 11px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -14194,9 +14243,169 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 
 .oec-progress {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   opacity: 0.85;
   flex-shrink: 0;
+}
+
+/* ==========================================================================
+   High-Definition Pastel Themes (Matching Reference Image)
+   ========================================================================== */
+
+/* 1. Purple (Lila - Sprint Planning / Torre) */
+.card-theme-purple {
+  background: #F5EEFF;
+  border-color: #E9D5FF;
+  border-left: 3.5px solid #A855F7;
+}
+.card-theme-purple .oec-top-strip {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+.card-theme-purple .oec-date-range {
+  color: #6B21A8;
+}
+.card-theme-purple .oec-title {
+  color: #4C1D95;
+}
+.card-theme-purple .oec-dev-tag,
+.card-theme-purple .oec-progress {
+  color: #6B21A8;
+}
+.o-month-task-pill.card-theme-purple {
+  background: #F5EEFF;
+  border-left-color: #A855F7;
+  color: #4C1D95;
+}
+
+/* 2. Sky Blue (Celeste - Client Presentation / Geo) */
+.card-theme-blue {
+  background: #F0F9FF;
+  border-color: #BAE6FD;
+  border-left: 3.5px solid #0284C7;
+}
+.card-theme-blue .oec-top-strip {
+  background: rgba(2, 132, 199, 0.16);
+  border-color: rgba(2, 132, 199, 0.2);
+}
+.card-theme-blue .oec-date-range {
+  color: #0369A1;
+}
+.card-theme-blue .oec-title {
+  color: #0C4A6E;
+}
+.card-theme-blue .oec-dev-tag,
+.card-theme-blue .oec-progress {
+  color: #0369A1;
+}
+.o-month-task-pill.card-theme-blue {
+  background: #F0F9FF;
+  border-left-color: #0284C7;
+  color: #0C4A6E;
+}
+
+/* 3. Mint Green (Menta - Homepage Design / Colchas) */
+.card-theme-green {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+  border-left: 3.5px solid #16A34A;
+}
+.card-theme-green .oec-top-strip {
+  background: rgba(22, 163, 74, 0.16);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+.card-theme-green .oec-date-range {
+  color: #15803D;
+}
+.card-theme-green .oec-title {
+  color: #14532D;
+}
+.card-theme-green .oec-dev-tag,
+.card-theme-green .oec-progress {
+  color: #15803D;
+}
+.o-month-task-pill.card-theme-green {
+  background: #F0FDF4;
+  border-left-color: #16A34A;
+  color: #14532D;
+}
+
+/* 4. Peach Orange (Naranja - Marketing Sync / Tintoreria) */
+.card-theme-orange {
+  background: #FFF7ED;
+  border-color: #FED7AA;
+  border-left: 3.5px solid #EA580C;
+}
+.card-theme-orange .oec-top-strip {
+  background: rgba(234, 88, 12, 0.16);
+  border-color: rgba(234, 88, 12, 0.2);
+}
+.card-theme-orange .oec-date-range {
+  color: #C2410C;
+}
+.card-theme-orange .oec-title {
+  color: #7C2D12;
+}
+.card-theme-orange .oec-dev-tag,
+.card-theme-orange .oec-progress {
+  color: #C2410C;
+}
+.o-month-task-pill.card-theme-orange {
+  background: #FFF7ED;
+  border-left-color: #EA580C;
+  color: #7C2D12;
+}
+
+/* 5. Cyber Indigo (Laboratorio / Calidad) */
+.card-theme-indigo {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  border-left: 3.5px solid #4F46E5;
+}
+.card-theme-indigo .oec-top-strip {
+  background: rgba(79, 70, 229, 0.14);
+  border-color: rgba(79, 70, 229, 0.2);
+}
+.card-theme-indigo .oec-date-range {
+  color: #3730A3;
+}
+.card-theme-indigo .oec-title {
+  color: #312E81;
+}
+.card-theme-indigo .oec-dev-tag,
+.card-theme-indigo .oec-progress {
+  color: #3730A3;
+}
+.o-month-task-pill.card-theme-indigo {
+  background: #EEF2FF;
+  border-left-color: #4F46E5;
+  color: #312E81;
+}
+
+/* 6. Soft Rose (Retraso / Urgente) */
+.card-theme-rose {
+  background: #FFF1F2;
+  border-color: #FECDD3;
+  border-left: 3.5px solid #E11D48;
+}
+.card-theme-rose .oec-top-strip {
+  background: rgba(225, 29, 72, 0.14);
+  border-color: rgba(225, 29, 72, 0.2);
+}
+.card-theme-rose .oec-date-range {
+  color: #9F1239;
+}
+.card-theme-rose .oec-title {
+  color: #881337;
+}
+.card-theme-rose .oec-dev-tag,
+.card-theme-rose .oec-progress {
+  color: #9F1239;
+}
+.o-month-task-pill.card-theme-rose {
+  background: #FFF1F2;
+  border-left-color: #E11D48;
+  color: #881337;
 }
 
 /* ==========================================================================
