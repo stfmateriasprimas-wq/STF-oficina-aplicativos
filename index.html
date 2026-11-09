@@ -136,7 +136,21 @@
                   style="font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none; cursor: pointer; text-decoration: underline;"
                   title="Marcar todas como leídas">Marcar leídas</button>
               </div>
-              <div class="dev-drop-divider" style="margin: 4px 0 8px 0;"></div>
+              <div class="notif-controls-bar">
+                <button type="button" class="notif-ctrl-btn" onclick="testNotificationAlert()" title="Probar sonido y alerta visual">
+                  <i data-lucide="volume-2"></i>
+                  <span>Probar Sonido</span>
+                </button>
+                <button type="button" class="notif-ctrl-btn" id="btnToggleSound" onclick="toggleNotificationSound()" title="Silenciar o activar sonido">
+                  <i data-lucide="bell" id="iconSoundStatus"></i>
+                  <span id="labelSoundStatus">Sonido: ON</span>
+                </button>
+                <button type="button" class="notif-ctrl-btn" onclick="requestNotificationPermission()" title="Habilitar notificaciones en el celular">
+                  <i data-lucide="smartphone"></i>
+                  <span>Alertas Móvil</span>
+                </button>
+              </div>
+              <div class="dev-drop-divider" style="margin: 0 0 8px 0;"></div>
               <div id="notificationsListContainer"
                 style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px;">
                 <!-- Populated dynamically via JS -->
@@ -2822,6 +2836,22 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- Live Floating Notification Toast with Sound & Visual Alert -->
+  <div class="live-notif-toast" id="liveNotifToast" onclick="handleLiveNotifClick()">
+    <div class="lnt-icon-box" id="lntIconBox">
+      <i data-lucide="bell" id="lntIcon"></i>
+    </div>
+    <div class="lnt-body">
+      <div class="lnt-top-line">
+        <span class="lnt-badge" id="lntBadge">Aviso STF</span>
+        <span class="lnt-time" id="lntTime">Ahora</span>
+      </div>
+      <strong class="lnt-title" id="lntTitle">Nueva Notificación</strong>
+      <p class="lnt-desc" id="lntDesc">Detalle descriptivo de la alerta</p>
+    </div>
+    <button type="button" class="lnt-close-btn" onclick="closeLiveNotifToast(event)" title="Cerrar notificación">✕</button>
   </div>
 
   <!-- Toast Notification Message -->

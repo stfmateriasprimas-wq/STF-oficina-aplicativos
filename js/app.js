@@ -346,6 +346,269 @@ function syncDynamicSelects() {
   }
 }
 
+// ==========================================================================
+// SISTEMA DE NOTIFICACIONES EJECUTIVAS: SONIDO, ALERTAS VISUALES & POLLING
+// ==========================================================================
+
+let stfAudioContext = null;
+let isNotifSoundActive = localStorage.getItem('STF_NOTIF_SOUND') !== 'false'; // Activo por defecto
+let activeLiveNotifAction = null;
+let liveNotifDismissTimeout = null;
+let lastKnownNotifIds = new Set();
+let automatedPollingInterval = null;
+
+function getStfAudioContext() {
+  if (!stfAudioContext) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      stfAudioContext = new AudioCtx();
+    }
+  }
+  if (stfAudioContext && stfAudioContext.state === 'suspended') {
+    stfAudioContext.resume().catch(() => {});
+  }
+  return stfAudioContext;
+}
+
+// Inicializar audio con el primer toque del usuario (política estándar de navegadores)
+window.addEventListener('click', () => { getStfAudioContext(); }, { once: true });
+window.addEventListener('touchstart', () => { getStfAudioContext(); }, { once: true });
+
+/**
+ * Reproducir campana de sonido corporativa STF (Web Audio API)
+ */
+function playNotificationSound() {
+  if (!isNotifSoundActive) return;
+  try {
+    const ctx = getStfAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+
+    // Tres acordes armónicos de campana cristalina (F#5, A#5, C#6)
+    const bellTones = [
+      { freq: 739.99, delay: 0.0,  duration: 0.35, gain: 0.28 },
+      { freq: 932.33, delay: 0.08, duration: 0.40, gain: 0.32 },
+      { freq: 1108.73, delay: 0.16, duration: 0.60, gain: 0.36 }
+    ];
+
+    bellTones.forEach(tone => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(tone.freq, now + tone.delay);
+
+      // Decaimiento exponencial suave estilo campana de catedral/tecnológica
+      gainNode.gain.setValueAtTime(0.0001, now + tone.delay);
+      gainNode.gain.linearRampToValueAtTime(tone.gain, now + tone.delay + 0.015);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + tone.delay + tone.duration);
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(now + tone.delay);
+      osc.stop(now + tone.delay + tone.duration);
+    });
+
+    // Vibración háptica en teléfonos móviles (si está soportada por el dispositivo)
+    if (navigator.vibrate) {
+      navigator.vibrate([70, 40, 70]);
+    }
+  } catch (err) {
+    console.warn('[Audio] Reproducción de sonido omitida:', err);
+  }
+}
+
+/**
+ * Alternar sonido de notificaciones
+ */
+function toggleNotificationSound() {
+  isNotifSoundActive = !isNotifSoundActive;
+  localStorage.setItem('STF_NOTIF_SOUND', isNotifSoundActive ? 'true' : 'false');
+  updateNotifSoundControlsUI();
+  if (isNotifSoundActive) {
+    playNotificationSound();
+    if (typeof showToast === 'function') showToast('🔔 Sonido de notificaciones ACTIVADO');
+  } else {
+    if (typeof showToast === 'function') showToast('🔕 Sonido de notificaciones SILENCIADO');
+  }
+}
+
+function updateNotifSoundControlsUI() {
+  const lbl = document.getElementById('labelSoundStatus');
+  const icon = document.getElementById('iconSoundStatus');
+  if (lbl) lbl.textContent = isNotifSoundActive ? 'Sonido: ON' : 'Sonido: OFF';
+  if (icon) {
+    icon.setAttribute('data-lucide', isNotifSoundActive ? 'bell' : 'bell-off');
+    if (window.lucide) window.lucide.createIcons();
+  }
+}
+
+/**
+ * Probar alerta completa de notificación (Sonido + Visual + Campana)
+ */
+function testNotificationAlert() {
+  triggerNotificationAlert({
+    title: '🔔 Alerta de Prueba · STF GROUP',
+    message: 'El sistema de notificaciones automáticas sonoro y visual está 100% activo en tu dispositivo.',
+    tag: 'Prueba STF',
+    icon: 'bell'
+  });
+}
+
+/**
+ * Solicitar permiso para notificaciones nativas de Android / iOS / Windows
+ */
+function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    if (typeof showToast === 'function') showToast('Tu navegador no soporta notificaciones de sistema.', 'info');
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+      if (typeof showToast === 'function') showToast('✓ Notificaciones nativas activadas en tu celular.');
+      playNotificationSound();
+      try {
+        new Notification('STF GROUP · Notificaciones Activas', {
+          body: 'Recibirás avisos de tareas y observaciones en tu dispositivo.',
+          icon: 'assets/favicon-32x32.png'
+        });
+      } catch (e) {}
+    } else {
+      if (typeof showToast === 'function') showToast('Permiso de notificaciones rechazado o bloqueado.', 'warning');
+    }
+  });
+}
+
+/**
+ * Desplegar banner visual flotante en pantalla
+ */
+function showLiveNotificationBanner(opts = {}) {
+  const toast = document.getElementById('liveNotifToast');
+  if (!toast) return;
+
+  const titleEl = document.getElementById('lntTitle');
+  const descEl = document.getElementById('lntDesc');
+  const badgeEl = document.getElementById('lntBadge');
+  const timeEl = document.getElementById('lntTime');
+  const iconBox = document.getElementById('lntIconBox');
+
+  if (titleEl) titleEl.textContent = opts.title || 'Nueva Notificación';
+  if (descEl) descEl.textContent = opts.message || opts.desc || '';
+  if (badgeEl) badgeEl.textContent = opts.tag || 'Aviso STF';
+  if (timeEl) timeEl.textContent = 'Ahora';
+
+  if (iconBox && opts.icon) {
+    iconBox.innerHTML = `<i data-lucide="${opts.icon}"></i>`;
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  activeLiveNotifAction = opts.action || null;
+
+  toast.classList.add('show');
+
+  if (liveNotifDismissTimeout) clearTimeout(liveNotifDismissTimeout);
+  liveNotifDismissTimeout = setTimeout(() => {
+    closeLiveNotifToast();
+  }, 6500);
+}
+
+function closeLiveNotifToast(event) {
+  if (event) event.stopPropagation();
+  const toast = document.getElementById('liveNotifToast');
+  if (toast) toast.classList.remove('show');
+  activeLiveNotifAction = null;
+}
+
+function handleLiveNotifClick() {
+  const action = activeLiveNotifAction;
+  closeLiveNotifToast();
+  if (typeof action === 'function') {
+    action();
+  }
+}
+
+/**
+ * Disparador unificado de alerta: Sonido + Banner Flotante + Campana Animada + SO Nativo
+ */
+function triggerNotificationAlert(opts = {}) {
+  // 1. Sonido corporativo
+  playNotificationSound();
+
+  // 2. Animación en el botón de campana
+  const btnBell = document.getElementById('btnNotifications');
+  const badgeEl = document.getElementById('notificationBadgeCount');
+  if (btnBell) {
+    btnBell.classList.remove('bell-ringing');
+    void btnBell.offsetWidth; // Reflow
+    btnBell.classList.add('bell-ringing');
+    setTimeout(() => btnBell.classList.remove('bell-ringing'), 1000);
+  }
+  if (badgeEl) {
+    badgeEl.classList.add('pulse-badge');
+    setTimeout(() => badgeEl.classList.remove('pulse-badge'), 3000);
+  }
+
+  // 3. Banner visual flotante
+  showLiveNotificationBanner(opts);
+
+  // 4. Notificación del sistema operativo si hay permiso
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(opts.title || 'STF GROUP · Notificación', {
+        body: opts.message || opts.sub || '',
+        icon: 'assets/favicon-32x32.png',
+        badge: 'assets/favicon-16x16.png'
+      });
+    } catch (e) {}
+  }
+}
+
+/**
+ * Automatización de Sondeo en Segundo Plano (Polling cada 35 segundos)
+ */
+function startAutomatedNotificationPolling() {
+  if (automatedPollingInterval) clearInterval(automatedPollingInterval);
+
+  // Registrar conjunto inicial de IDs para no disparar alertas masivas al arrancar
+  const initialNotifs = getNotificationsData();
+  initialNotifs.forEach(n => lastKnownNotifIds.add(n.id));
+
+  automatedPollingInterval = setInterval(async () => {
+    try {
+      if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
+        await window.SheetsSync.pullCloudData(true);
+      }
+      checkAndAlertNewNotifications();
+    } catch (err) {
+      console.warn('[Polling Automatizado]', err);
+    }
+  }, 35000);
+}
+
+function checkAndAlertNewNotifications() {
+  const currentNotifs = getNotificationsData();
+  renderNotificationsDropdown();
+
+  // Detectar notificaciones nuevas que no estaban en el sondeo anterior
+  const brandNewNotifs = currentNotifs.filter(n => !lastKnownNotifIds.has(n.id) && !readNotificationsSet.has(n.id));
+
+  if (brandNewNotifs.length > 0) {
+    const latest = brandNewNotifs[0];
+    triggerNotificationAlert({
+      title: latest.title,
+      message: latest.sub,
+      tag: latest.tag,
+      icon: latest.icon,
+      action: latest.action
+    });
+  }
+
+  // Actualizar tracking
+  currentNotifs.forEach(n => lastKnownNotifIds.add(n.id));
+}
+
 // Variable global para tracking de notificaciones leídas
 let readNotificationsSet = new Set();
 try {
@@ -731,6 +994,8 @@ function renderNotificationsDropdown() {
       });
     });
   }
+
+  updateNotifSoundControlsUI();
 
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
@@ -6832,6 +7097,12 @@ function handleSaveObservation(event) {
   if (typeof renderNotificationsDropdown === 'function') {
     renderNotificationsDropdown();
   }
+  triggerNotificationAlert({
+    title: '💬 Observación Registrada en Bitácora',
+    message: `${task.name}: ${text.length > 80 ? text.substring(0, 80) + '...' : text}`,
+    tag: type.toUpperCase(),
+    icon: type === 'bloqueo' ? 'alert-octagon' : 'message-square'
+  });
   showToast('✓ Observación registrada con éxito. Notificación enviada al Administrador.', 'success');
 }
 
@@ -7155,6 +7426,7 @@ function initApp() {
   renderTaskObservationsFeed(); // Render Task Observations Feed
   updateHeaderStatChips(); // Actualizar contadores dinámicos de cabecera
   renderNotificationsDropdown(); // Initial notifications check
+  startAutomatedNotificationPolling(); // Iniciar sondeo y alertas automáticas sonoras y visuales
 
 
   // Global search input
