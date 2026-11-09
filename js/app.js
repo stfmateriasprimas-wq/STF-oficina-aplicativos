@@ -661,6 +661,64 @@ function getNotificationsData() {
     // VISTA SUPER ADMIN: Avances de Desarrolladores, Tareas y Alertas en Planta
     // =========================================================================
     
+    // 0. Alerta al Super Admin: Reunión de Entrega Programada (1 Hora Antes)
+    const nowRef = new Date();
+    const todayIsoRef = formatIsoDate(nowRef);
+    allInts.forEach(task => {
+      if (task.status === 'evaluated') return;
+      if (!task.deadline) return;
+      const taskDateIso = task.deadline.substring(0, 10);
+      if (taskDateIso !== todayIsoRef) return;
+
+      const timeStr = task.deliveryTime || '10:00';
+      const meetingD = new Date(`${taskDateIso}T${timeStr}:00`);
+      if (isNaN(meetingD.getTime())) return;
+
+      const diffMin = Math.round((meetingD.getTime() - nowRef.getTime()) / 60000);
+      const app = allApps.find(a => a.id === task.appId);
+      const dev = getDeveloperById(task.devId);
+      const devName = dev ? dev.name : 'Desarrollador';
+      const appName = app ? app.name : 'Sistema';
+
+      if (diffMin > 0 && diffMin <= 60) {
+        notifications.unshift({
+          id: `notif_meet_1h_${task.id}_${taskDateIso}_${timeStr}`,
+          type: 'meeting_1h',
+          icon: 'alarm-clock',
+          iconBg: '#FEF3C7',
+          iconColor: '#D97706',
+          tag: '⏰ Reunión en 1h',
+          tagColor: '#B45309',
+          tagBg: '#FDE68A',
+          title: `Reunión de Entrega en ${diffMin} min (${formatTime12h(timeStr)})`,
+          sub: `Revisión programada con ${devName} para la entrega de "${task.name}" (${appName}).`,
+          time: `Hoy a las ${formatTime12h(timeStr)}`,
+          action: () => {
+            if (typeof switchView === 'function') switchView('calendar');
+            if (typeof openTaskObservationsModal === 'function') openTaskObservationsModal(task.id);
+          }
+        });
+      } else if (diffMin <= 0 && diffMin >= -60) {
+        notifications.unshift({
+          id: `notif_meet_now_${task.id}_${taskDateIso}_${timeStr}`,
+          type: 'meeting_now',
+          icon: 'video',
+          iconBg: '#EEF2FF',
+          iconColor: '#4F46E5',
+          tag: '🔴 Reunión en Vivo',
+          tagColor: '#3730A3',
+          tagBg: '#C7D2FE',
+          title: `¡Hora de Entrega! (${formatTime12h(timeStr)})`,
+          sub: `Reunión en curso con ${devName} para auditar "${task.name}" (${appName}).`,
+          time: 'Ahora',
+          action: () => {
+            if (typeof switchView === 'function') switchView('calendar');
+            if (typeof openTaskObservationsModal === 'function') openTaskObservationsModal(task.id);
+          }
+        });
+      }
+    });
+
     // 1. Tareas en desarrollo activo con avance de desarrolladores
     allInts.forEach(task => {
       const app = allApps.find(a => a.id === task.appId);
@@ -5020,6 +5078,7 @@ function handleCreateNewProject(e) {
     webUrl: webUrl || `https://stf-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`,
     devId: devId,
     deadline: deadline,
+    deliveryTime: deliveryTime,
     priority: priority,
     status: 'ontime',
     iconColor: '#4E65FF',
@@ -6580,6 +6639,7 @@ function handleAssignIntegrationSubmit(e) {
   const devId = document.getElementById('assignIntDev')?.value;
   const startDate = document.getElementById('assignIntStartDate')?.value;
   const deadline = document.getElementById('assignIntDeadline')?.value;
+  const deliveryTime = document.getElementById('assignIntDeliveryTime')?.value || '10:00';
   const weight = parseInt(document.getElementById('assignIntWeight')?.value) || 15;
   const desc = document.getElementById('assignIntDesc')?.value.trim();
 
@@ -10695,6 +10755,21 @@ function formatMonthYearEs(d) {
 /**
  * Formats task date range as [DD/MM — DD/MM], e.g. "28/11 — 30/12"
  */
+/**
+ * Converts 24h "HH:MM" string to 12h format "hh:mm AM/PM"
+ */
+function formatTime12h(timeStr) {
+  if (!timeStr) return '10:00 AM';
+  const parts = String(timeStr).split(':');
+  let h = parseInt(parts[0], 10);
+  if (isNaN(h)) return '10:00 AM';
+  const m = parts[1] || '00';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  h = h ? h : 12;
+  return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+}
+
 function formatTaskDateRange(task) {
   if (!task) return 'Jornada STF';
 
@@ -11115,15 +11190,18 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
         return;
       }
 
-      // Regular working day: Distribute tasks across reasonable hours
+      // Regular working day: Place tasks into their exact delivery meeting hour!
       const dayTasks = tasksByDay[iso] || [];
-      const cellTasks = dayTasks.filter((_, tIdx) => {
-        if (tIdx === 0 && slot.hour === 9) return true;
-        if (tIdx === 1 && slot.hour === 11) return true;
-        if (tIdx === 2 && slot.hour === 12) return true;
-        if (tIdx >= 3 && slot.hour === 13) return true;
-        if (dayTasks.length === 1 && slot.hour === 10) return true;
-        return false;
+      const cellTasks = dayTasks.filter((task, tIdx) => {
+        let taskH = 10;
+        if (task.deliveryTime) {
+          const parts = String(task.deliveryTime).split(':');
+          taskH = parseInt(parts[0], 10);
+        } else {
+          const defaultSlots = [10, 9, 11, 12, 8];
+          taskH = defaultSlots[tIdx % defaultSlots.length];
+        }
+        return taskH === slot.hour;
       });
 
       html += `
@@ -11162,6 +11240,7 @@ function renderOripioEventCard(task, dayIso, timeSlotLabel) {
   const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
   const diag = getSTFDeadlineDiagnosis(task.deadline);
   const dateRangeStr = formatTaskDateRange(task);
+  const meetingTime12h = formatTime12h(task.deliveryTime || '10:00');
 
   // Determine pastel theme matching reference image
   let themeClass = 'card-theme-blue';
@@ -11190,11 +11269,14 @@ function renderOripioEventCard(task, dayIso, timeSlotLabel) {
          onclick="openTaskObservationsModal('${task.id}')"
          title="${task.name} · Vigencia: ${dateRangeStr} · Responsable: ${dev.name} · Clic para bitácora, arrastra para mover">
       
-      <!-- Top Strip with exact [DD/MM — DD/MM] format requested -->
+      <!-- Top Strip with [DD/MM — DD/MM] format and meeting delivery time -->
       <div class="oec-top-strip">
         <span class="oec-date-range">
           <i data-lucide="calendar" style="width: 10px; height: 10px;"></i>
           ${dateRangeStr}
+        </span>
+        <span class="oec-time-pill" title="Hora de reunión de entrega con el desarrollador">
+          ⏰ ${meetingTime12h}
         </span>
         ${diag.isOverdue ? '<span class="oec-status-badge oec-badge-danger">Retraso</span>' : ''}
         ${task.status === 'evaluated' ? '<span class="oec-status-badge oec-badge-success">Auditada</span>' : ''}
@@ -11304,7 +11386,8 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
                    ondragstart="handleCalendarDragStart(event, '${t.id}')"
                    ondragend="handleCalendarDragEnd(event)"
                    onclick="openTaskObservationsModal('${t.id}')"
-                   title="${t.name} · Vigencia: ${dateRangeStr} · Avance: ${t.weight || 10}% · Arrastra para reprogramar">
+                   title="${t.name} · Reunión: ${formatTime12h(t.deliveryTime || '10:00')} · Vigencia: ${dateRangeStr} · Avance: ${t.weight || 10}% · Arrastra para reprogramar">
+                <span class="o-month-pill-time">⏰ ${formatTime12h(t.deliveryTime || '10:00')}</span>
                 <span class="o-month-pill-range">${dateRangeStr}</span>
                 <span class="o-month-task-pill-text">${t.name}</span>
                 <span class="o-month-task-pill-weight">${t.weight || 10}%</span>
@@ -11433,7 +11516,7 @@ function handleCalendarDrop(e, targetDateStr) {
   handleMoveTaskToDate(taskId, targetDateStr);
 }
 
-function handleMoveTaskToDate(taskId, targetDateStr) {
+function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
   if (!appState || !Array.isArray(appState.integrations)) return;
 
   const task = appState.integrations.find(i => i.id === taskId);
@@ -11444,6 +11527,9 @@ function handleMoveTaskToDate(taskId, targetDateStr) {
 
   const oldDate = task.deadline;
   task.deadline = targetDateStr;
+  if (targetTimeStr) {
+    task.deliveryTime = targetTimeStr;
+  }
 
   // Add observation tracking the rescheduled date
   if (!Array.isArray(task.observations)) task.observations = [];
@@ -11502,6 +11588,9 @@ function openQuickRescheduleModal(taskId) {
 
   const customInput = document.getElementById('rescheduleCustomDate');
   if (customInput) customInput.value = task.deadline || formatIsoDate(new Date());
+
+  const customTime = document.getElementById('rescheduleCustomTime');
+  if (customTime) customTime.value = task.deliveryTime || '10:00';
 
   const pillsContainer = document.getElementById('rescheduleQuickPills');
   if (pillsContainer) {
@@ -11573,6 +11662,8 @@ function confirmQuickRescheduleSubmit() {
   const taskId = document.getElementById('rescheduleTaskId')?.value;
   const customInput = document.getElementById('rescheduleCustomDate');
   const targetDate = customInput ? customInput.value : null;
+  const customTime = document.getElementById('rescheduleCustomTime');
+  const targetTime = customTime ? customTime.value : '10:00';
 
   if (!taskId || !targetDate) {
     showToast('⚠️ Selecciona una fecha válida.', 'warning');
@@ -11580,7 +11671,7 @@ function confirmQuickRescheduleSubmit() {
   }
 
   closeQuickRescheduleModal();
-  handleMoveTaskToDate(taskId, targetDate);
+  handleMoveTaskToDate(taskId, targetDate, targetTime);
 }
 
 /* ==========================================================================
@@ -11650,3 +11741,70 @@ window.openQuickRescheduleModal = openQuickRescheduleModal;
 window.closeQuickRescheduleModal = closeQuickRescheduleModal;
 window.confirmQuickRescheduleSubmit = confirmQuickRescheduleSubmit;
 window.selectQuickRescheduleDate = selectQuickRescheduleDate;
+
+/**
+ * Proactive Meeting Alert System:
+ * Checks if any task has a delivery meeting scheduled within 60 minutes today.
+ * Triggers sound alert, toast, and notification to Super Admin 1 hour before!
+ */
+function checkUpcomingMeetingsAlert() {
+  const isAdmin = isCurrentSessionAdmin();
+  if (!isAdmin) return; // Alert specifically designed for Super Admin
+  if (!appState || !Array.isArray(appState.integrations)) return;
+
+  const now = new Date();
+  const todayIso = formatIsoDate(now);
+  const notifiedKey = 'stf_notified_meetings';
+  let notifiedSet = new Set();
+  try {
+    const raw = localStorage.getItem(notifiedKey);
+    if (raw) notifiedSet = new Set(JSON.parse(raw));
+  } catch (e) {}
+
+  appState.integrations.forEach(task => {
+    if (task.status === 'evaluated') return;
+    if (!task.deadline) return;
+
+    const taskDateStr = task.deadline.substring(0, 10);
+    if (taskDateStr !== todayIso) return;
+
+    const timeStr = task.deliveryTime || '10:00';
+    const meetingD = new Date(`${taskDateStr}T${timeStr}:00`);
+    if (isNaN(meetingD.getTime())) return;
+
+    const diffMinutes = Math.round((meetingD.getTime() - now.getTime()) / 60000);
+    const alertId = `${task.id}_${taskDateStr}_${timeStr}`;
+
+    // Trigger alert when within 60 minutes of the meeting
+    if (diffMinutes > 0 && diffMinutes <= 60 && !notifiedSet.has(alertId)) {
+      notifiedSet.add(alertId);
+      try {
+        localStorage.setItem(notifiedKey, JSON.stringify([...notifiedSet]));
+      } catch (e) {}
+
+      const dev = getDeveloperById(task.devId);
+      const devName = dev ? dev.name : 'Desarrollador';
+
+      // Sound notification
+      if (typeof isSoundEnabled !== 'undefined' && isSoundEnabled && typeof playNotificationSound === 'function') {
+        playNotificationSound();
+      }
+
+      // Visual live toast notification
+      showToast(`⏰ ¡Reunión de Entrega en ${diffMinutes} min! "${task.name}" con ${devName} a las ${formatTime12h(timeStr)}.`);
+
+      // Refresh notification badge
+      if (typeof renderNotificationsDropdown === 'function') {
+        renderNotificationsDropdown();
+      }
+    }
+  });
+}
+
+// Run check periodically and on startup
+if (typeof window !== 'undefined') {
+  window.checkUpcomingMeetingsAlert = checkUpcomingMeetingsAlert;
+  window.formatTime12h = formatTime12h;
+  setTimeout(checkUpcomingMeetingsAlert, 3000);
+  setInterval(checkUpcomingMeetingsAlert, 30000);
+}

@@ -34,7 +34,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=54">
+  <link rel="stylesheet" href="css/styles.css?v=55">
 </head>
 
 <body>
@@ -2124,14 +2124,25 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group" style="flex: 1;">
               <label for="assignIntStartDate">Fecha de Inicio *</label>
               <input type="date" id="assignIntStartDate" required class="form-input">
             </div>
-            <div class="form-group">
-              <label for="assignIntDeadline">Fecha Límite Comprometida (Deadline) *</label>
+            <div class="form-group" style="flex: 1;">
+              <label for="assignIntDeadline">Fecha Límite Comprometida *</label>
               <input type="date" id="assignIntDeadline" required class="form-input">
             </div>
+            <div class="form-group" style="flex: 0.95;">
+              <label for="assignIntDeliveryTime" title="Hora pactada para la reunión formal de entrega con el Super Admin">
+                <i data-lucide="clock" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i>
+                Hora de Entrega / Reunión *
+              </label>
+              <input type="time" id="assignIntDeliveryTime" class="form-input" value="10:00" min="06:00" max="13:00" required>
+            </div>
+          </div>
+          <div style="margin-top: -6px; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; font-size: 11px; color: #4F46E5; background: #EEF2FF; padding: 6px 10px; border-radius: 8px;">
+            <i data-lucide="bell-ring" style="width: 13px; height: 13px; flex-shrink: 0;"></i>
+            <span><strong>Alerta Automática TI:</strong> El sistema enviará una notificación sonora y visual al Super Admin 1 hora antes de la reunión de entrega.</span>
           </div>
 
           <div class="form-group">
@@ -3027,11 +3038,19 @@
         <div class="reschedule-quick-pills" id="rescheduleQuickPills">
           <!-- Rendered dynamically with 1-click days -->
         </div>
-        <div style="margin-top: 16px;">
-          <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
-            O escoge una fecha específica en el calendario:
-          </label>
-          <input type="date" id="rescheduleCustomDate" class="form-input" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1.5px solid #CBD5E1; font-weight: 600;">
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <div style="flex: 1;">
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+              Fecha de Entrega:
+            </label>
+            <input type="date" id="rescheduleCustomDate" class="form-input" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #CBD5E1; font-weight: 600;">
+          </div>
+          <div style="flex: 0.85;">
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+              Hora de Reunión:
+            </label>
+            <input type="time" id="rescheduleCustomTime" class="form-input" value="10:00" min="06:00" max="13:00" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #CBD5E1; font-weight: 600;">
+          </div>
         </div>
         <div id="rescheduleSlaPreview" style="margin-top: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px; font-size: 11.5px; color: #64748B;">
           <!-- Preview of SLA -->
