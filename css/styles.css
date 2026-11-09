@@ -13244,35 +13244,43 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 
 /* ==========================================================================
    VIEW: CALENDARIO EJECUTIVO DE ENTREGAS (Diseño Compacto SaaS Estilo Oripio)
+   100% Responsive - Sin barras de desplazamiento horizontal - Celdas Fijas
    ========================================================================== */
 
 .calendar-view-wrapper {
   width: 100%;
+  max-width: 100%;
   animation: fadeIn 0.25s ease;
+  box-sizing: border-box;
 }
 
 .oripio-calendar-container {
   display: flex;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  min-height: 720px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
    Left Panel: Projects & Team Sidebar
    ========================================================================== */
 .oripio-cal-sidebar {
-  width: 230px;
+  width: 205px;
+  min-width: 205px;
+  max-width: 205px;
   flex-shrink: 0;
   border-right: 1px solid #EEF2F6;
   background: #F8FAFC;
-  padding: 20px 14px;
+  padding: 14px 10px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  box-sizing: border-box;
 }
 
 .oripio-sidebar-section {
@@ -13281,7 +13289,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 .oripio-section-header {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -13289,17 +13297,17 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 8px 8px 8px;
+  padding: 0 6px 6px 6px;
 }
 
 .oripio-btn-add-mini {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   border: 1px solid #CBD5E1;
   background: #FFFFFF;
   color: #64748B;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -13317,16 +13325,16 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 .oripio-team-nav {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .oripio-nav-item {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
-  border-radius: 9px;
-  font-size: 12.5px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 500;
   color: #475569;
   cursor: pointer;
@@ -13336,6 +13344,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   text-align: left;
   transition: all 0.15s ease;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .oripio-nav-item:hover {
@@ -13350,34 +13359,36 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 .oripio-nav-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .oripio-nav-icon {
-  font-size: 13px;
-  width: 18px;
+  font-size: 12px;
+  width: 16px;
   text-align: center;
   flex-shrink: 0;
 }
 
 .oripio-nav-text {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .oripio-nav-badge {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
   background: #E2E8F0;
   color: #475569;
   margin-left: auto;
+  flex-shrink: 0;
 }
 .oripio-nav-item.active .oripio-nav-badge {
   background: #C7D2FE;
@@ -13385,8 +13396,8 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 .oripio-nav-avatar {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -13395,46 +13406,46 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 .oripio-sidebar-stf-banner {
   background: #EFF6FF;
   border: 1px solid #BFDBFE;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 10px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: flex-start;
   margin-top: auto;
 }
 
 .stf-shift-icon {
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .stf-shift-meta {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .stf-shift-meta strong {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #1E40AF;
 }
 
 .stf-shift-meta span {
-  font-size: 10.5px;
+  font-size: 10px;
   color: #3B82F6;
 }
 
 .stf-shift-tag {
   display: inline-block;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
   background: #DBEAFE;
   color: #1D4ED8;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 1px 5px;
+  border-radius: 5px;
   width: fit-content;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 /* ==========================================================================
@@ -13442,24 +13453,26 @@ body:has(.modal-backdrop.show) .floating-sidebar,
    ========================================================================== */
 .oripio-cal-workspace {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
   background: #FFFFFF;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .oripio-top-header {
-  padding: 20px 24px 14px 24px;
+  padding: 12px 18px 8px 18px;
   border-bottom: 1px solid #F1F5F9;
 }
 
 .oripio-breadcrumb {
-  font-size: 11.5px;
+  font-size: 11px;
   color: #94A3B8;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 5px;
+  margin-bottom: 6px;
 }
 
 .oripio-sep {
@@ -13471,118 +13484,110 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 10px;
 }
 
 .oripio-title-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .oripio-project-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
   flex-shrink: 0;
 }
 
 .oripio-project-name {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 700;
   color: #0F172A;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .oripio-project-sub {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #64748B;
-  margin: 2px 0 0 0;
+  margin: 1px 0 0 0;
 }
 
 .oripio-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .oripio-team-avatars-stacked {
   display: flex;
   align-items: center;
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
 .stacked-av {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid #FFFFFF;
-  margin-left: -8px;
+  margin-left: -7px;
   object-fit: cover;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   transition: transform 0.15s ease;
 }
 .stacked-av:first-child {
   margin-left: 0;
 }
-.stacked-av:hover {
-  transform: translateY(-2px);
-  z-index: 2;
-}
 
 .oripio-search-box {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 6px 11px;
+  border-radius: 7px;
+  padding: 5px 9px;
   color: #64748B;
-  transition: all 0.15s ease;
 }
 .oripio-search-box:focus-within {
   border-color: #3B82F6;
   background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .oripio-search-box input {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #1E293B;
-  width: 140px;
+  width: 125px;
 }
 
 .oripio-pill-btn {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 .oripio-pill-btn:hover {
   background: #F8FAFC;
-  border-color: #CBD5E1;
   color: #0F172A;
 }
 
@@ -13590,41 +13595,35 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   background: #2563EB !important;
   color: #FFFFFF !important;
   border: none !important;
-  border-radius: 8px !important;
-  padding: 7px 14px !important;
-  font-size: 12.5px !important;
+  border-radius: 7px !important;
+  padding: 6px 12px !important;
+  font-size: 11.5px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
-  transition: all 0.15s ease !important;
-}
-.oripio-create-task-btn:hover {
-  background: #1D4ED8 !important;
-  transform: translateY(-1px);
+  gap: 5px !important;
 }
 
 .oripio-subnav-tabs {
   display: flex;
-  gap: 6px;
-  margin-top: 14px;
+  gap: 4px;
+  margin-top: 10px;
 }
 
 .oripio-tab-btn {
   background: transparent;
   border: none;
-  padding: 8px 14px;
-  font-size: 12.5px;
+  padding: 6px 12px;
+  font-size: 12px;
   font-weight: 500;
   color: #64748B;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   border-bottom: 2px solid transparent;
-  margin-bottom: -15px;
+  margin-bottom: -9px;
   transition: all 0.15s ease;
 }
 .oripio-tab-btn:hover {
@@ -13643,37 +13642,35 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  padding: 8px 18px;
   background: #FAFAFC;
   border-bottom: 1px solid #F1F5F9;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .oripio-controls-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .oripio-cal-month-label {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #0F172A;
   margin: 0;
-  letter-spacing: -0.01em;
 }
 
 .oripio-today-pill {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 7px;
-  padding: 4px 11px;
-  font-size: 11.5px;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 11px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 .oripio-today-pill:hover {
   background: #F1F5F9;
@@ -13682,13 +13679,13 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 
 .oripio-arrows-wrap {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .oripio-arrow-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   border: 1px solid #E2E8F0;
   background: #FFFFFF;
   display: flex;
@@ -13696,37 +13693,34 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   justify-content: center;
   cursor: pointer;
   color: #475569;
-  transition: all 0.15s ease;
 }
 .oripio-arrow-btn:hover {
   background: #F8FAFC;
   color: #0F172A;
-  border-color: #CBD5E1;
 }
 
 .oripio-controls-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .oripio-mode-toggle {
   display: inline-flex;
   background: #EEF2F6;
   padding: 2px;
-  border-radius: 8px;
+  border-radius: 7px;
 }
 
 .oripio-mode-btn {
-  padding: 4px 12px;
-  font-size: 11.5px;
+  padding: 3px 10px;
+  font-size: 11px;
   font-weight: 600;
   border: none;
   background: transparent;
   color: #64748B;
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 .oripio-mode-btn.active {
   background: #FFFFFF;
@@ -13737,48 +13731,190 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 .oripio-range-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 8px;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 7px;
   border: 1px solid #E2E8F0;
   background: #FFFFFF;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #475569;
 }
 
 /* ==========================================================================
-   Main Grid Container (Week, Month & Day Views)
+   Main Grid Container: Strict 100% Fit, Zero Horizontal Scrollbars
    ========================================================================== */
 .oripio-grid-container {
   flex: 1;
-  min-height: 520px;
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
   overflow-y: auto;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   MONTH VIEW: Strict 7 Equal Columns, Text Adjusts to Square (Truncated)
+   ========================================================================== */
+.oripio-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: #FFFFFF;
 }
 
-/* Week View Table */
+.o-month-header {
+  padding: 8px 2px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  background: #FAFAFC;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #F1F5F9;
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.o-month-cell {
+  min-height: 82px;
+  max-height: 98px;
+  border-right: 1px solid #F1F5F9;
+  border-bottom: 1px solid #F1F5F9;
+  padding: 4px;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background 0.15s ease;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.o-month-cell.is-other-month {
+  background: #FAFAFC;
+  opacity: 0.45;
+}
+
+.o-month-cell.is-today {
+  background: #F8FAFC;
+}
+
+.o-month-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1px;
+  min-width: 0;
+}
+
+.o-month-cell-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.o-month-cell.is-today .o-month-cell-num {
+  background: #2563EB;
+  color: #FFFFFF;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.o-month-cell-tasks-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5px;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.o-month-task-pill {
+  padding: 2.5px 5px;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  transition: transform 0.15s ease;
+}
+.o-month-task-pill:hover {
+  transform: translateY(-1px);
+}
+
+.o-month-task-pill-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.o-month-task-pill-weight {
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   WEEK VIEW: Fixed Table Layout, 100% Width Fit
+   ========================================================================== */
 .oripio-week-table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 820px;
+  box-sizing: border-box;
 }
 
 .o-time-th {
-  width: 72px;
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
   border-right: 1px solid #EEF2F6;
   border-bottom: 1px solid #E2E8F0;
   background: #FAFAFC;
+  box-sizing: border-box;
 }
 
 .o-day-th {
-  padding: 10px 8px;
+  width: calc((100% - 58px) / 7);
+  padding: 7px 3px;
   text-align: center;
   border-bottom: 1px solid #E2E8F0;
   border-right: 1px solid #F1F5F9;
   background: #FAFAFC;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .o-day-th.today {
@@ -13789,18 +13925,18 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .o-day-name {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #64748B;
   text-transform: uppercase;
 }
 
 .o-day-num {
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #0F172A;
 }
@@ -13808,24 +13944,29 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 .o-day-th.today .o-day-num {
   background: #2563EB;
   color: #FFFFFF;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 11px;
 }
 
 .o-stf-badge {
   display: block;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
-  margin-top: 3px;
-  padding: 1.5px 6px;
-  border-radius: 5px;
+  margin-top: 2px;
+  padding: 1px 5px;
+  border-radius: 4px;
   width: fit-content;
   margin-left: auto;
   margin-right: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .o-badge-work {
@@ -13852,17 +13993,18 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 /* Time & Cell Rows */
 .o-time-td {
   text-align: right;
-  padding-right: 10px;
-  font-size: 11px;
+  padding-right: 6px;
+  font-size: 10px;
   font-weight: 600;
   color: #94A3B8;
   vertical-align: top;
-  padding-top: 6px;
+  padding-top: 4px;
   border-right: 1px solid #EEF2F6;
   border-bottom: 1px solid #F1F5F9;
-  height: 52px;
+  height: 48px;
   background: #FAFAFC;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .o-time-td.shift-finish {
@@ -13871,13 +14013,18 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 .o-cell-td {
+  width: calc((100% - 58px) / 7);
+  max-width: calc((100% - 58px) / 7);
   border-right: 1px solid #F1F5F9;
   border-bottom: 1px solid #F1F5F9;
   vertical-align: top;
-  padding: 4px;
+  padding: 3px;
   position: relative;
   transition: background 0.15s ease;
-  min-height: 52px;
+  min-height: 48px;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .o-cell-td.drag-over {
@@ -13897,25 +14044,30 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 /* ==========================================================================
-   Oripio Event Cards (Pastel Tones, Time Pill, Clean Title)
+   Oripio Event Cards: Fixed Bounds, Text Clamped
    ========================================================================== */
 .oripio-event-card {
-  border-radius: 8px;
-  padding: 6px 8px;
-  margin-bottom: 4px;
+  border-radius: 7px;
+  padding: 5px 6px;
+  margin-bottom: 3px;
   cursor: grab;
   font-family: inherit;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .oripio-event-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 .oripio-event-card:active {
@@ -13930,37 +14082,37 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 /* Pastel Card Themes */
 .card-theme-purple {
   background: #F3E8FF;
-  border-left: 3.5px solid #A855F7;
+  border-left: 3px solid #A855F7;
   color: #581C87;
 }
 
 .card-theme-blue {
   background: #E0F2FE;
-  border-left: 3.5px solid #0284C7;
+  border-left: 3px solid #0284C7;
   color: #0369A1;
 }
 
 .card-theme-green {
   background: #DCFCE7;
-  border-left: 3.5px solid #16A34A;
+  border-left: 3px solid #16A34A;
   color: #15803D;
 }
 
 .card-theme-orange {
   background: #FFEDD5;
-  border-left: 3.5px solid #EA580C;
+  border-left: 3px solid #EA580C;
   color: #C2410C;
 }
 
 .card-theme-rose {
   background: #FFE4E6;
-  border-left: 3.5px solid #E11D48;
+  border-left: 3px solid #E11D48;
   color: #9F1239;
 }
 
 .card-theme-indigo {
   background: #EEF2FF;
-  border-left: 3.5px solid #6366F1;
+  border-left: 3px solid #6366F1;
   color: #3730A3;
 }
 
@@ -13969,31 +14121,41 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .oec-time-pill {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 1.5px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.75);
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.8);
   display: inline-flex;
-  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .oec-status-badge {
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
 .oec-title {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   word-break: break-word;
 }
 
@@ -14001,131 +14163,60 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
-  margin-top: 2px;
+  gap: 3px;
+  min-width: 0;
+  margin-top: 1px;
 }
 
 .oec-dev-tag {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.oec-dev-tag span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .oec-avatar {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .oec-progress {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
   opacity: 0.85;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
-   Month & Day View Grids
+   Footer Hint & Stats Bar
    ========================================================================== */
-.oripio-month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  width: 100%;
-  min-width: 780px;
-}
-
-.o-month-header {
-  padding: 10px;
-  text-align: center;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #64748B;
-  background: #FAFAFC;
-  border-bottom: 1px solid #E2E8F0;
-  border-right: 1px solid #F1F5F9;
-  text-transform: uppercase;
-}
-
-.o-month-cell {
-  min-height: 105px;
-  border-right: 1px solid #F1F5F9;
-  border-bottom: 1px solid #F1F5F9;
-  padding: 6px;
-  background: #FFFFFF;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: background 0.15s ease;
-}
-
-.o-month-cell.is-other-month {
-  background: #FAFAFC;
-  opacity: 0.5;
-}
-
-.o-month-cell.is-today {
-  background: #F8FAFC;
-}
-
-.o-month-cell-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2px;
-}
-
-.o-month-cell-num {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #334155;
-}
-
-.o-month-cell.is-today .o-month-cell-num {
-  background: #2563EB;
-  color: #FFFFFF;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.o-month-task-pill {
-  padding: 3px 6px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  cursor: grab;
-  transition: transform 0.15s ease;
-  user-select: none;
-}
-.o-month-task-pill:hover {
-  transform: translateY(-1px);
-}
-
-/* Footer Hint & Stats Bar */
 .oripio-cal-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
+  padding: 7px 18px;
   background: #FAFAFC;
   border-top: 1px solid #F1F5F9;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .oripio-footer-hint {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: 11px;
   color: #64748B;
 }
@@ -14133,13 +14224,13 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 .oripio-footer-stats {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .o-stat-pill {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 6px;
+  font-size: 10.5px;
+  padding: 2.5px 7px;
+  border-radius: 5px;
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   color: #475569;
@@ -14154,19 +14245,17 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   }
   .oripio-cal-sidebar {
     width: 100%;
+    min-width: 100%;
+    max-width: 100%;
     border-right: none;
     border-bottom: 1px solid #EEF2F6;
-    padding: 14px;
+    padding: 10px;
   }
-  .oripio-projects-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
+  .oripio-projects-nav,
   .oripio-team-nav {
     flex-direction: row;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding-bottom: 3px;
   }
   .oripio-nav-item {
     white-space: nowrap;

@@ -11182,7 +11182,7 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
           ${hol.isHoliday ? '<span style="font-size: 8.5px; color: #DC2626; font-weight: 800;">Festivo</span>' : (isSunday ? '<span style="font-size: 8.5px; color: #94A3B8;">Descanso</span>' : '')}
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 85px;">
+        <div class="o-month-cell-tasks-wrap">
           ${cellTasks.map(t => {
             const diag = getSTFDeadlineDiagnosis(t.deadline);
             let pillBg = '#EFF6FF';
@@ -11198,9 +11198,9 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
                    ondragstart="handleCalendarDragStart(event, '${t.id}')"
                    ondragend="handleCalendarDragEnd(event)"
                    onclick="openTaskObservationsModal('${t.id}')"
-                   title="${t.name} · Arrastra para reprogramar">
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px;">${t.name}</span>
-                <span style="font-size: 9px; opacity: 0.8; flex-shrink: 0;">${t.weight}%</span>
+                   title="${t.name} (${t.weight || 10}%) · Arrastra para reprogramar">
+                <span class="o-month-task-pill-text">${t.name}</span>
+                <span class="o-month-task-pill-weight">${t.weight}%</span>
               </div>
             `;
           }).join('')}
