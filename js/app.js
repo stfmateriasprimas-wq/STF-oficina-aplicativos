@@ -763,8 +763,20 @@ function applyRoleBasedUI() {
   const navAnalyticsBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="analytics"]');
   const navTasksBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="tasks"]');
 
-  if (navDevBtn) navDevBtn.style.display = isAdmin ? '' : 'none';
-  if (navSettingsBtn) navSettingsBtn.style.display = isAdmin ? '' : 'none';
+  if (navDevBtn) {
+    navDevBtn.style.display = '';
+    navDevBtn.classList.remove('is-hidden');
+    navDevBtn.title = isAdmin ? 'Gestión de Usuarios & Desarrolladores' : 'Directorio de Desarrolladores & Equipo';
+  }
+  if (navSettingsBtn) {
+    if (isAdmin) {
+      navSettingsBtn.style.display = '';
+      navSettingsBtn.classList.remove('is-hidden');
+    } else {
+      navSettingsBtn.style.display = 'none';
+      navSettingsBtn.classList.add('is-hidden');
+    }
+  }
   if (navDashBtn) navDashBtn.title = isAdmin ? 'Dashboard General' : 'Mi Panel de Desarrollo';
   if (navProjBtn) navProjBtn.title = isAdmin ? 'Aplicativos y Módulos' : 'Mis Aplicativos Asignados';
   if (navAnalyticsBtn) navAnalyticsBtn.title = isAdmin ? 'Métricas y QA' : 'Mis Métricas y Fases';
@@ -7398,8 +7410,11 @@ function switchView(viewName) {
   const isAdmin = isCurrentSessionAdmin();
   const session = getLoggedSessionUser();
 
-  // Bloquear acceso a vistas exclusivas de Super Admin para desarrolladores
-  if (!isAdmin && (viewName === 'developers' || viewName === 'settings')) {
+  // Bloquear acceso a configuraciones exclusivas de Super Admin para desarrolladores
+  if (!isAdmin && viewName === 'settings') {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Acceso reservado para el Super Administrador (Jefe TI).', 'warning');
+    }
     viewName = 'dashboard';
   }
 
@@ -7442,11 +7457,19 @@ function switchView(viewName) {
     }
     renderProjectsView(activeBrandFilter);
   } else if (viewName === 'developers') {
-    if (titleEl) titleEl.innerHTML = 'Rendimiento de Ingeniería & Gestión de Usuarios · <span class="text-gradient">STF GROUP</span>';
-    if (subtitleEl) subtitleEl.textContent = 'Gestión integral de desarrolladores: creación, eliminación y anclaje bidireccional en tiempo real con Google Sheets.';
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin 
+        ? 'Rendimiento de Ingeniería & Gestión de Usuarios · <span class="text-gradient">STF GROUP</span>'
+        : 'Directorio de Desarrolladores & Equipo · <span class="text-gradient">STF GROUP</span>';
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Gestión integral de desarrolladores: creación, eliminación y anclaje bidireccional en tiempo real con Google Sheets.'
+        : 'Directorio general de ingenieros de software, canales de contacto y capacidad técnica en STF GROUP.';
+    }
     renderDevelopersFullView();
-    // Auto-sincronizar silenciosamente desde Google Sheets (hoja Usuarios)
-    if (window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
+    // Auto-sincronizar silenciosamente desde Google Sheets (hoja Usuarios) si es admin
+    if (isAdmin && window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
       window.SheetsSync.pullUsersFromSheets(true);
     }
   } else if (viewName === 'analytics') {
@@ -8058,6 +8081,14 @@ function renderDevelopersFullView() {
   const container = document.getElementById('devsFullGrid');
   if (!container) return;
 
+  const currentSessionIsAdmin = isCurrentSessionAdmin();
+
+  // Control de visibilidad de la barra de acciones de gestión (Crear / Sincronizar)
+  const toolbarActions = document.querySelector('.devs-management-toolbar .devs-toolbar-actions');
+  if (toolbarActions) {
+    toolbarActions.style.display = currentSessionIsAdmin ? 'flex' : 'none';
+  }
+
   // Actualizar contador en la barra de herramientas y métrica macro
   const countLabel = document.getElementById('devsCountLabel');
   if (countLabel) countLabel.textContent = appState.developers.length;
@@ -8070,11 +8101,13 @@ function renderDevelopersFullView() {
       <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: #FFFFFF; border-radius: 20px; border: 1px dashed #CBD5E1;">
         <i data-lucide="users" style="width: 44px; height: 44px; color: #94A3B8; margin-bottom: 12px;"></i>
         <h3 style="font-size: 16px; font-weight: 700; color: #1E232E; margin-bottom: 6px;">No hay desarrolladores registrados</h3>
-        <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">Crea el primer desarrollador o sincroniza en tiempo real con la pestaña 'Usuarios' de Google Sheets.</p>
-        <button class="pill-btn primary-btn" onclick="openNewDeveloperModal()">
-          <i data-lucide="user-plus"></i>
-          <span>+ Nuevo Desarrollador</span>
-        </button>
+        <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">${currentSessionIsAdmin ? 'Crea el primer desarrollador o sincroniza en tiempo real con la pestaña "Usuarios" de Google Sheets.' : 'No se encontraron desarrolladores registrados en este momento.'}</p>
+        ${currentSessionIsAdmin ? `
+          <button class="pill-btn primary-btn" onclick="openNewDeveloperModal()">
+            <i data-lucide="user-plus"></i>
+            <span>+ Nuevo Desarrollador</span>
+          </button>
+        ` : ''}
       </div>
     `;
     lucide.createIcons();
@@ -8083,7 +8116,7 @@ function renderDevelopersFullView() {
 
   container.innerHTML = appState.developers.map(dev => {
     const assignedApps = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
-    const isAdmin = dev.roleType === 'Admin' || String(dev.role || '').toLowerCase().includes('admin') || dev.id === 'dev_ediaz';
+    const devIsAdmin = dev.roleType === 'Admin' || String(dev.role || '').toLowerCase().includes('admin') || dev.id === 'dev_ediaz';
     const isProtectedAdmin = dev.id === 'dev_ediaz';
     const cleanUsername = dev.username ? (dev.username.startsWith('@') ? dev.username : `@${dev.username}`) : `@${dev.id.replace('dev_', '')}`;
     const avatarUrl = dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
@@ -8102,7 +8135,7 @@ function renderDevelopersFullView() {
           <div class="dev-row-meta">
             <div class="dev-row-name-line">
               <strong class="dev-row-name">${dev.name}</strong>
-              <span class="dev-role-badge ${isAdmin ? 'badge-admin' : 'badge-dev'}">${isAdmin ? '🛡️ Admin' : '💻 Dev'}</span>
+              <span class="dev-role-badge ${devIsAdmin ? 'badge-admin' : 'badge-dev'}">${devIsAdmin ? '🛡️ Admin' : '💻 Dev'}</span>
             </div>
             <div class="dev-row-contact-line">
               <span class="dev-row-user">${cleanUsername}</span>
@@ -8112,19 +8145,21 @@ function renderDevelopersFullView() {
           </div>
         </div>
 
-        <!-- Acciones: Eliminar Usuario -->
+        <!-- Acciones: Eliminar Usuario exclusivo de Super Admin -->
         <div class="dev-row-actions">
           ${isProtectedAdmin ? `
             <span class="dev-protected-badge" title="Cuenta principal de administración protegida">
               <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
               <span>Admin Base</span>
             </span>
-          ` : `
+          ` : (currentSessionIsAdmin ? `
             <button class="btn-delete-row-dev" onclick="deleteDeveloperUser('${dev.id}', event)" title="Eliminar usuario del sistema y de Google Sheets">
               <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
               <span>Eliminar</span>
             </button>
-          `}
+          ` : `
+            <span class="status-pill status-ontime" style="font-size: 11px;">✓ Activo</span>
+          `)}
         </div>
       </div>
     `;
