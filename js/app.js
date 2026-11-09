@@ -5,40 +5,71 @@
  */
 
 let appState = getStoredData();
+if (typeof sanitizeAndDeduplicateDevelopers === 'function' && appState && Array.isArray(appState.developers)) {
+  appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
+  saveData(appState);
+}
 if (typeof window !== 'undefined') {
   window.appState = appState;
 }
 
 // Mapa de alias oficiales para garantizar que cualquier ID derivado de Sheets/login resuelva al ID canónico del sistema
 const CANONICAL_DEV_MAP = {
+  // Jose Guzman
   'dev_jg': 'dev_jg',
   'dev_jose_guzman': 'dev_jg',
+  'dev_jose': 'dev_jg',
   'jose@guzman': 'dev_jg',
+  'jose.guzman': 'dev_jg',
   'joseoneiber711@gmail.com': 'dev_jg',
   'jose': 'dev_jg',
   'jose guzman': 'dev_jg',
+  '1073524622': 'dev_jg',
+  'jg': 'dev_jg',
+  'jguzman': 'dev_jg',
+
+  // Juan David
   'dev_jd': 'dev_jd',
   'dev_juan_david': 'dev_jd',
   'juan@david': 'dev_jd',
+  'juan.david': 'dev_jd',
+  'juan.david@studiof.com.co': 'dev_jd',
   'juan': 'dev_jd',
   'juan david': 'dev_jd',
+  '1107047649': 'dev_jd',
+  'jd': 'dev_jd',
+
+  // Esteban Escobar
   'dev_ee': 'dev_ee',
   'dev_esteban_escobar': 'dev_ee',
   'esteban@escobar': 'dev_ee',
+  'esteban.escobar': 'dev_ee',
+  'esteban.escobar@studiof.com.co': 'dev_ee',
   'esteban': 'dev_ee',
   'esteban escobar': 'dev_ee',
+  '1111': 'dev_ee',
+  'ee': 'dev_ee',
+
+  // Jhon Eyder (Mocho)
   'dev_mocho': 'dev_mocho',
   'dev_jhon_eyder': 'dev_mocho',
   'jhon@eyder': 'dev_mocho',
+  'jhon.eyder': 'dev_mocho',
+  'jhon.eyder@studiof.com.co': 'dev_mocho',
+  'mocho': 'dev_mocho',
   'jhon': 'dev_mocho',
   'jhon eyder': 'dev_mocho',
   'jhon eyder (mocho)': 'dev_mocho',
+  '1010159672': 'dev_mocho',
+
+  // Edwin Diaz (Admin)
   'dev_ediaz': 'dev_ediaz',
   'dev_edwin_diaz': 'dev_ediaz',
   'ediaz': 'dev_ediaz',
   'edwin.diaz@studiof.com.co': 'dev_ediaz',
   'edwin': 'dev_ediaz',
-  'edwin diaz': 'dev_ediaz'
+  'edwin diaz': 'dev_ediaz',
+  'admin': 'dev_ediaz'
 };
 
 function resolveCanonicalDevId(input) {
@@ -1744,6 +1775,9 @@ function renderDevelopersSection() {
   }
 
   // MODO ADMIN: Renderizar los desarrolladores operativos del equipo (excluyendo al Admin)
+  if (typeof sanitizeAndDeduplicateDevelopers === 'function') {
+    appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
+  }
   const teamDevs = appState.developers.filter(dev => {
     const isDevAdmin = dev.role === 'Admin' || dev.id === 'dev_ediaz' || dev.isAdmin || dev.roleType === 'Admin' || String(dev.role || '').toLowerCase() === 'admin';
     return !isDevAdmin;
@@ -8665,6 +8699,9 @@ function renderKanbanBoard() {
 // ==========================================================================
 
 function renderDevelopersFullView() {
+  if (typeof sanitizeAndDeduplicateDevelopers === 'function' && appState && Array.isArray(appState.developers)) {
+    appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
+  }
   const container = document.getElementById('devsFullGrid');
   if (!container) return;
 

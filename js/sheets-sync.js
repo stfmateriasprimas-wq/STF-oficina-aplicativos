@@ -523,16 +523,26 @@
         const email = String(u.email || '').trim();
         const nameFromSheet = String(u.name || '').trim();
 
-        if (!username && !idPassword) return;
-        validCloudUsernames.add(username.toLowerCase());
+        if (!username && !idPassword && !nameFromSheet) return;
+        if (username) validCloudUsernames.add(username.toLowerCase());
 
-        // Buscar coincidencia en developers existentes (incluyendo resolución canónica por usuario o ID)
-        const canonicalId = typeof window.resolveCanonicalDevId === 'function' ? window.resolveCanonicalDevId(username) : null;
+        // Resolver ID canónico buscando por username, idPassword, nombre o email
+        let canonicalId = null;
+        if (typeof window.resolveCanonicalDevId === 'function') {
+          canonicalId = window.resolveCanonicalDevId(username) ||
+                        window.resolveCanonicalDevId(idPassword) ||
+                        window.resolveCanonicalDevId(nameFromSheet) ||
+                        window.resolveCanonicalDevId(email);
+        }
+
+        // Buscar coincidencia en developers existentes por ID canónico, usuario, nombre o email
         let match = stateDevs.find(d =>
           (canonicalId && d.id === canonicalId) ||
-          (d.username && d.username.toLowerCase() === username.toLowerCase()) ||
-          d.id.toLowerCase() === `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}` ||
-          (d.idPassword && String(d.idPassword).trim() === idPassword)
+          (d.username && username && d.username.toLowerCase() === username.toLowerCase()) ||
+          (d.name && nameFromSheet && d.name.toLowerCase().trim() === nameFromSheet.toLowerCase().trim()) ||
+          (d.email && email && d.email.toLowerCase().trim() === email.toLowerCase().trim()) ||
+          (d.idPassword && idPassword && String(d.idPassword).trim() === idPassword) ||
+          (username && d.id.toLowerCase() === `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`)
         );
 
         if (match) {
@@ -549,7 +559,7 @@
           const newDev = {
             id: canonicalId || `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
             name: cleanName,
-            username: username,
+            username: username || canonicalId,
             idPassword: idPassword,
             role: role,
             email: email,
@@ -563,6 +573,11 @@
           stateDevs.push(newDev);
         }
       });
+
+      // Sanitizar y deduplicar inmediatamente para garantizar unicidad absoluta
+      if (typeof window.sanitizeAndDeduplicateDevelopers === 'function') {
+        window.appState.developers = window.sanitizeAndDeduplicateDevelopers(stateDevs);
+      }
 
       // Eliminar usuarios locales que fueron borrados directamente en Google Sheets (excepto el admin principal dev_ediaz)
       if (cloudUsers.length > 0) {

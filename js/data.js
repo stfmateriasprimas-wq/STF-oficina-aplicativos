@@ -540,6 +540,108 @@ function purgePhantomAppsFromState(stateObj) {
   return stateObj;
 }
 
+// Sanitizar y deduplicar perfiles de desarrolladores para garantizar que nunca existan registros fantasma ni duplicados
+function sanitizeAndDeduplicateDevelopers(devList) {
+  if (!Array.isArray(devList) || devList.length === 0) {
+    return JSON.parse(JSON.stringify(STF_REAL_DATA.developers));
+  }
+
+  const canonicalAliases = {
+    'dev_jg': 'dev_jg', 'dev_jose_guzman': 'dev_jg', 'dev_jose': 'dev_jg',
+    'jose@guzman': 'dev_jg', 'jose.guzman': 'dev_jg', 'joseoneiber711@gmail.com': 'dev_jg',
+    'jose': 'dev_jg', 'jose guzman': 'dev_jg', '1073524622': 'dev_jg', 'jg': 'dev_jg', 'jguzman': 'dev_jg',
+    'dev_jd': 'dev_jd', 'dev_juan_david': 'dev_jd', 'juan@david': 'dev_jd',
+    'juan.david': 'dev_jd', 'juan.david@studiof.com.co': 'dev_jd', 'juan': 'dev_jd',
+    'juan david': 'dev_jd', '1107047649': 'dev_jd', 'jd': 'dev_jd',
+    'dev_ee': 'dev_ee', 'dev_esteban_escobar': 'dev_ee', 'esteban@escobar': 'dev_ee',
+    'esteban.escobar': 'dev_ee', 'esteban.escobar@studiof.com.co': 'dev_ee', 'esteban': 'dev_ee',
+    'esteban escobar': 'dev_ee', '1111': 'dev_ee', 'ee': 'dev_ee',
+    'dev_mocho': 'dev_mocho', 'dev_jhon_eyder': 'dev_mocho', 'jhon@eyder': 'dev_mocho',
+    'jhon.eyder': 'dev_mocho', 'jhon.eyder@studiof.com.co': 'dev_mocho', 'mocho': 'dev_mocho',
+    'jhon': 'dev_mocho', 'jhon eyder': 'dev_mocho', 'jhon eyder (mocho)': 'dev_mocho', '1010159672': 'dev_mocho',
+    'dev_ediaz': 'dev_ediaz', 'dev_edwin_diaz': 'dev_ediaz', 'ediaz': 'dev_ediaz',
+    'edwin.diaz@studiof.com.co': 'dev_ediaz', 'edwin': 'dev_ediaz', 'edwin diaz': 'dev_ediaz', 'admin': 'dev_ediaz'
+  };
+
+  function resolveId(item) {
+    if (!item) return 'dev_jg';
+    if (typeof item === 'string') {
+      const clean = item.trim().toLowerCase();
+      return canonicalAliases[clean] || clean;
+    }
+    const candidates = [item.id, item.username, item.email, item.name, item.idPassword];
+    for (const c of candidates) {
+      if (!c) continue;
+      const clean = String(c).trim().toLowerCase();
+      if (canonicalAliases[clean]) return canonicalAliases[clean];
+    }
+    return item.id || 'dev_jg';
+  }
+
+  const map = new Map();
+
+  devList.forEach(d => {
+    if (!d) return;
+    const cid = resolveId(d);
+    const official = (typeof STF_REAL_DATA !== 'undefined' && Array.isArray(STF_REAL_DATA.developers))
+      ? STF_REAL_DATA.developers.find(o => o.id === cid)
+      : null;
+
+    if (!map.has(cid)) {
+      const unified = {
+        ...d,
+        id: cid,
+        name: official ? official.name : (d.name || 'Desarrollador'),
+        username: official ? official.username : (d.username || cid),
+        avatar: official ? official.avatar : (d.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'),
+        role: official ? official.role : (d.role || 'desarrollador'),
+        idPassword: d.idPassword || (official ? official.idPassword : null),
+        onTimeDelivery: official ? official.onTimeDelivery : (d.onTimeDelivery || 95),
+        codeQuality: official ? official.codeQuality : (d.codeQuality || 93),
+        sprintsCompleted: official ? official.sprintsCompleted : (d.sprintsCompleted || 10),
+        score: official ? official.score : (d.score || '9.5 / 10'),
+        activeProjects: Array.isArray(d.activeProjects) ? [...d.activeProjects] : (official ? [...official.activeProjects] : [])
+      };
+      if (official && Array.isArray(official.activeProjects)) {
+        official.activeProjects.forEach(p => {
+          if (!unified.activeProjects.includes(p)) unified.activeProjects.push(p);
+        });
+      }
+      map.set(cid, unified);
+    } else {
+      // Duplicado encontrado: fusionar sistemas y mantener información legítima
+      const existing = map.get(cid);
+      if (official) {
+        existing.name = official.name;
+        existing.avatar = official.avatar;
+        existing.username = official.username;
+        existing.role = official.role;
+        existing.onTimeDelivery = official.onTimeDelivery;
+        existing.codeQuality = official.codeQuality;
+      }
+      if (Array.isArray(d.activeProjects)) {
+        d.activeProjects.forEach(p => {
+          if (!existing.activeProjects.includes(p)) existing.activeProjects.push(p);
+        });
+      }
+      if (d.idPassword && !existing.idPassword) {
+        existing.idPassword = d.idPassword;
+      }
+    }
+  });
+
+  // Asegurar que los 5 desarrolladores oficiales siempre existan
+  if (typeof STF_REAL_DATA !== 'undefined' && Array.isArray(STF_REAL_DATA.developers)) {
+    STF_REAL_DATA.developers.forEach(official => {
+      if (!map.has(official.id)) {
+        map.set(official.id, JSON.parse(JSON.stringify(official)));
+      }
+    });
+  }
+
+  return Array.from(map.values());
+}
+
 // Guardar o inicializar en LocalStorage con migración inteligente
 function getStoredData() {
   const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V6';
@@ -548,7 +650,10 @@ function getStoredData() {
   if (local) {
     try {
       const parsed = JSON.parse(local);
-      if (parsed.developers && parsed.developers.some(d => d.name === "Jose Guzman")) {
+      if (parsed.developers && Array.isArray(parsed.developers)) {
+        // Sanitizar y deduplicar inmediatamente los perfiles de desarrolladores
+        parsed.developers = sanitizeAndDeduplicateDevelopers(parsed.developers);
+
         // Asegurar que dev_ediaz (ADMIN) esté presente
         if (!parsed.developers.some(d => d.id === 'dev_ediaz')) {
           const ediazDev = STF_REAL_DATA.developers.find(d => d.id === 'dev_ediaz');
@@ -628,6 +733,9 @@ function getStoredData() {
 
 function saveData(data) {
   purgePhantomAppsFromState(data);
+  if (data && Array.isArray(data.developers)) {
+    data.developers = sanitizeAndDeduplicateDevelopers(data.developers);
+  }
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('STF_GROUP_REAL_DATA_V6', JSON.stringify(data));
   }
@@ -636,6 +744,7 @@ function saveData(data) {
 if (typeof window !== 'undefined') {
   window.saveData = saveData;
   window.getStoredData = getStoredData;
+  window.sanitizeAndDeduplicateDevelopers = sanitizeAndDeduplicateDevelopers;
   window.isInvalidPhantomApp = isInvalidPhantomApp;
   window.purgePhantomAppsFromState = purgePhantomAppsFromState;
 }
