@@ -1975,6 +1975,7 @@ function formatWebLinkInfo(url, appName) {
       isValid: true,
       url: spUrl,
       label: `Abrir SharePoint (${appName || 'Torre de Control'}) ↗`,
+      actionLabel: 'Abrir SharePoint ↗',
       statusText: 'SharePoint',
       isLive: false,
       isSharepoint: true,
@@ -1988,6 +1989,7 @@ function formatWebLinkInfo(url, appName) {
     isValid: true,
     url: fullUrl,
     label: `Abrir Sistema Web (${appName || 'Publicado'}) ↗`,
+    actionLabel: 'Abrir Sistema Web ↗',
     statusText: 'En Producción',
     isLive: true,
     isSharepoint: false,
@@ -4437,9 +4439,10 @@ function openSystemDetailModal(appId) {
     if (linkInfo.isValid) {
       webLinkEl.href = linkInfo.url;
       webLinkEl.style.display = 'inline-flex';
+      webLinkEl.title = linkInfo.label;
       webLinkEl.innerHTML = `
-        <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 12px; height: 12px;"></i>
-        <span>${linkInfo.label}</span>
+        <i data-lucide="${linkInfo.isSharepoint ? 'folder' : 'globe'}" style="width: 12px; height: 12px; flex-shrink: 0;"></i>
+        <span>${linkInfo.actionLabel || 'Abrir Sistema Web ↗'}</span>
       `;
     } else {
       webLinkEl.style.display = 'none';

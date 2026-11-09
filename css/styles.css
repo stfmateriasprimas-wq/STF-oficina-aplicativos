@@ -10805,15 +10805,15 @@ body:has(.modal-backdrop.show) .floating-sidebar,
    ========================================================================== */
 
 #modalSystemDetail .modal-card.modal-card-audit-sys {
-  width: 92vw !important;
-  max-width: 790px !important;
-  border-radius: 24px !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  max-height: 90vh !important;
-  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.28) !important;
+  width: 92vw;
+  max-width: 790px;
+  border-radius: 24px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.28);
 }
 
 .sys-modal-accent-bar {
@@ -10824,14 +10824,15 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 }
 
 #modalSystemDetail .sys-audit-header {
-  padding: 22px 28px 18px 28px !important;
-  border-bottom: 1px solid #EEF2F7 !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 16px !important;
-  background: #FFFFFF !important;
-  flex-shrink: 0 !important;
+  position: relative;
+  padding: 22px 28px 18px 28px;
+  border-bottom: 1px solid #EEF2F7;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: #FFFFFF;
+  flex-shrink: 0;
 }
 
 .sys-audit-header-left {
@@ -10862,6 +10863,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 5px;
+  min-width: 0;
 }
 
 .sys-audit-cat-pill {
@@ -10872,21 +10874,192 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   border: 1px solid #E2E8F0;
   padding: 2px 9px;
   border-radius: 999px;
+  line-height: 1.3;
+}
+
+#modalSystemDetail .btn-card-web-mini {
+  padding: 3px 10px;
+  font-size: 11px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #modalSystemDetail .modal-title {
-  font-size: 20px !important;
-  font-weight: 800 !important;
-  color: #0F172A !important;
-  margin: 0 0 3px 0 !important;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 3px 0;
   letter-spacing: -0.01em;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 #modalSystemDetail .modal-subtitle {
-  font-size: 12.5px !important;
-  color: #64748B !important;
-  line-height: 1.45 !important;
-  margin: 0 !important;
+  font-size: 12.5px;
+  color: #64748B;
+  line-height: 1.45;
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ==========================================================================
+   ADAPTACIÓN MÓVIL BLINDADA PARA #modalSystemDetail (Smartphones & Pantallas Angostas)
+   ========================================================================== */
+@media (max-width: 768px) {
+  #modalSystemDetail .modal-card.modal-card-audit-sys {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    border-radius: 20px !important;
+    margin: 6px auto !important;
+    max-height: calc(100vh - 20px - env(safe-area-inset-top, 10px)) !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top, 10px)) !important;
+  }
+
+  #modalSystemDetail .sys-audit-header {
+    position: relative !important;
+    padding: 14px 14px 12px 14px !important;
+    padding-right: 48px !important; /* Espacio reservado para el botón cerrar X sin colisiones */
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    box-sizing: border-box !important;
+    background: #FFFFFF !important;
+  }
+
+  #modalSystemDetail #btnCloseSystemModal,
+  #modalSystemDetail .modal-close-btn {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    z-index: 30 !important;
+    border-radius: 50% !important;
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #475569 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  #modalSystemDetail .sys-audit-header-left {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  #modalSystemDetail .sys-audit-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    margin-top: 1px !important;
+    flex-shrink: 0 !important;
+  }
+
+  #modalSystemDetail .modal-title-group {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #modalSystemDetail .sys-audit-tags-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 4px !important;
+    width: 100% !important;
+  }
+
+  #modalSystemDetail .modal-tag,
+  #modalSystemDetail #modalSysCode {
+    font-size: 10px !important;
+    padding: 2px 7px !important;
+    border-radius: 6px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  #modalSystemDetail .sys-audit-cat-pill,
+  #modalSystemDetail #modalSysCategory {
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    line-height: 1.25 !important;
+    max-width: 135px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-shrink: 1 !important;
+  }
+
+  #modalSystemDetail #modalSysWebLink,
+  #modalSystemDetail .btn-card-web-mini {
+    font-size: 10px !important;
+    padding: 2.5px 8px !important;
+    border-radius: 999px !important;
+    line-height: 1.25 !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    box-sizing: border-box !important;
+    margin-top: 2px !important;
+  }
+
+  #modalSystemDetail #modalSysWebLink span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  #modalSystemDetail .modal-title,
+  #modalSystemDetail #modalSysTitle {
+    font-size: 15.5px !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    color: #0F172A !important;
+    margin: 4px 0 2px 0 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  #modalSystemDetail .modal-subtitle,
+  #modalSystemDetail #modalSysDesc {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    color: #64748B !important;
+    margin: 0 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  #modalSystemDetail .sys-audit-body {
+    padding: 12px 14px !important;
+  }
 }
 
 #modalSystemDetail .sys-audit-body {
