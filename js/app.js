@@ -7418,6 +7418,13 @@ function switchView(viewName) {
     targetPanel.classList.add('show', 'active');
   }
 
+  // Desplazar automáticamente al inicio en móviles y escritorios para una navegación fluida
+  try {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) {
+    window.scrollTo(0, 0);
+  }
+
   // Actualizar banner superior con título y contexto acorde a la sección activa y al rol
   const titleEl = document.getElementById('mainWelcomeTitle');
   const subtitleEl = document.getElementById('mainWelcomeSubtitle');
