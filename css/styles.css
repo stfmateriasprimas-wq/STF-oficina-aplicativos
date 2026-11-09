@@ -2887,6 +2887,27 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   flex-direction: column;
 }
 
+.modal-card > form,
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.modal-card form .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-card form .modal-footer {
+  flex-shrink: 0;
+}
+
 .modal-card-medium {
   max-width: 600px;
 }
@@ -7927,10 +7948,22 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     line-height: 1.4 !important;
   }
 
+  .modal-card > form,
+  .modal-card form {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .modal-card form .modal-body,
   .modal-body,
   #modalSystemDetail .sys-audit-body {
     padding: 14px 16px !important;
     flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
@@ -7950,6 +7983,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     font-size: 12.5px !important;
   }
 
+  .modal-card form .modal-footer,
   .modal-footer,
   #modalSystemDetail .sys-audit-footer {
     padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 12px)) 16px !important;
@@ -7960,6 +7994,9 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     flex-shrink: 0 !important;
     background: #FFFFFF !important;
     border-top: 1px solid #E2E8F0 !important;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.08) !important;
+    position: relative !important;
+    z-index: 100 !important;
   }
 
   .sys-audit-footer-actions {
@@ -14483,5 +14520,49 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   }
   .oripio-sidebar-stf-banner {
     display: none;
+  }
+}
+
+/* Mobile Responsive Enhancements for Asignar Integración en Planta */
+@media (max-width: 600px) {
+  #modalAssignIntegration .modal-card {
+    height: 92vh !important;
+    max-height: 92vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #assignIntegrationForm {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  #assignIntegrationForm .modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 24px !important;
+  }
+  #assignIntegrationForm .modal-footer {
+    flex-shrink: 0 !important;
+    background: #FFFFFF !important;
+    border-top: 1.5px solid #E2E8F0 !important;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12) !important;
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 10px)) 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  #assignIntegrationForm .modal-footer .primary-glow-btn {
+    width: 100% !important;
+    min-height: 46px !important;
+    font-size: 14px !important;
+    font-weight: 750 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35) !important;
   }
 }
