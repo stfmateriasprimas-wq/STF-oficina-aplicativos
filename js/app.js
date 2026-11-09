@@ -7432,6 +7432,11 @@ function handleSaveObservation(event) {
     });
   }
 
+  // Sincronizar estado completo a Google Sheets
+  if (window.SheetsSync && typeof window.SheetsSync.syncFullState === 'function') {
+    window.SheetsSync.syncFullState(appState);
+  }
+
   closeNewObservationModal();
   if (typeof renderIntegrationsList === 'function') {
     renderIntegrationsList(activeIntFilter);
@@ -7464,6 +7469,9 @@ function deleteTaskObservation(taskId, obsId) {
 
   task.observations = task.observations.filter(o => o.id !== obsId);
   saveData(appState);
+  if (window.SheetsSync && typeof window.SheetsSync.syncFullState === 'function') {
+    window.SheetsSync.syncFullState(appState);
+  }
   renderTaskObservationsFeed();
   showToast('Observación eliminada.');
 }
@@ -7474,185 +7482,210 @@ function deleteTaskObservation(taskId, obsId) {
 
 let currentViewTaskObsId = null;
 
+function renderTaskObservationsModalContent(taskId) {
+  const task = (appState.integrations || []).find(t => String(t.id) === String(taskId));
+  if (!task) return false;
+
+  const app = getApplicationById(task.appId) || { name: task.appName || 'Aplicativo', code: 'STF', iconColor: '#4E65FF' };
+  const appColor = app.iconColor || app.color || '#4E65FF';
+  const dev = getDeveloperById(task.devId) || {
+    name: task.devName || 'Desarrollador',
+    role: 'Desarrollador',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+  };
+  const diag = calculateIntegrationTimeProgress(task);
+
+  // Título y Subtítulo del Modal
+  const titleEl = document.getElementById('taskObsModalTitle');
+  const subEl = document.getElementById('taskObsModalSubtitle');
+  if (titleEl) titleEl.textContent = `[${app.code}] ${task.name}`;
+  if (subEl) subEl.textContent = `Sistema ${app.name} · Desarrollador: ${dev.name} · Plazo límite: ${formatShortDate(task.deadline)}`;
+
+  // Hero Card con resumen de la tarea
+  const heroEl = document.getElementById('taskObsModalHero');
+  if (heroEl) {
+    heroEl.innerHTML = `
+      <div class="task-obs-hero-top">
+        <div class="task-obs-hero-dev">
+          <img src="${dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}" alt="${dev.name}" class="task-obs-hero-avatar">
+          <div class="task-obs-hero-info">
+            <h4>${dev.name}</h4>
+            <p>${dev.role || 'Desarrollador'} · Responsable asignado</p>
+          </div>
+        </div>
+        <div class="task-obs-hero-badges">
+          <div class="int-app-badge" style="background-color: ${appColor}15; color: ${appColor}; border: 1px solid ${appColor}35;">
+            <span class="int-app-dot" style="background-color: ${appColor};"></span>
+            <span class="int-app-name">${app.name} (${app.code})</span>
+          </div>
+          <div class="int-weight-badge">
+            <i data-lucide="sparkles" style="width: 11px; height: 11px;"></i>
+            <span>Peso ${task.weight}%</span>
+          </div>
+          <span class="friendly-deadline-pill ${diag.badgeClass}">
+            <i data-lucide="${diag.isOverdue ? 'alert-triangle' : (task.status === 'evaluated' ? 'check-check' : 'clock')}" style="width: 12px; height: 12px;"></i>
+            <span>${diag.countdownText || diag.statusText}</span>
+          </span>
+        </div>
+      </div>
+      <div class="task-obs-hero-dates">
+        <span><strong>Plazo programado:</strong> ${formatShortDate(task.startDate)} → ${formatShortDate(task.deadline)}</span>
+        <span><strong>Estado actual:</strong> ${task.status === 'evaluated' ? 'Auditada & Aprobada' : (task.status === 'in_progress' ? 'En Desarrollo' : 'Pendiente')}</span>
+      </div>
+    `;
+  }
+
+  // Cálculos de métricas de observaciones
+  const observations = Array.isArray(task.observations) ? task.observations : [];
+  const totalObs = observations.length;
+  const bloqueosCount = observations.filter(o => o.type === 'bloqueo').length;
+  const avancesCount = observations.filter(o => o.type === 'avance' || o.type === 'reschedule').length;
+  const ajustesCount = observations.filter(o => o.type === 'ajuste').length;
+
+  // Toolbar de contadores
+  const countsEl = document.getElementById('taskObsModalCounts');
+  if (countsEl) {
+    countsEl.innerHTML = `
+      <span class="task-obs-count-chip">
+        <i data-lucide="layers" style="width: 12px; height: 12px;"></i>
+        <span>Total: <strong>${totalObs}</strong></span>
+      </span>
+      <span class="task-obs-count-chip bloqueo" style="${bloqueosCount > 0 ? '' : 'opacity: 0.65;'}">
+        <i data-lucide="alert-octagon" style="width: 12px; height: 12px;"></i>
+        <span>Bloqueos: <strong>${bloqueosCount}</strong></span>
+      </span>
+      <span class="task-obs-count-chip avance" style="${avancesCount > 0 ? '' : 'opacity: 0.65;'}">
+        <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i>
+        <span>Avances: <strong>${avancesCount}</strong></span>
+      </span>
+      <span class="task-obs-count-chip ajuste" style="${ajustesCount > 0 ? '' : 'opacity: 0.65;'}">
+        <i data-lucide="wrench" style="width: 12px; height: 12px;"></i>
+        <span>Ajustes: <strong>${ajustesCount}</strong></span>
+      </span>
+    `;
+  }
+
+  // Timeline / Feed de Observaciones
+  const timelineEl = document.getElementById('taskObsModalTimeline');
+  if (timelineEl) {
+    if (totalObs === 0) {
+      timelineEl.innerHTML = `
+        <div class="task-obs-empty-box">
+          <div class="task-obs-empty-icon">
+            <i data-lucide="message-square-dashed"></i>
+          </div>
+          <h4>Sin observaciones reportadas para esta tarea</h4>
+          <p>El desarrollador no ha reportado bloqueos, novedades técnicas ni acuerdos en esta tarea aún.<br>Cuando se registre una observación durante el proceso, podrás verla aquí en tiempo real y te llegará una alerta a la campana de notificaciones.</p>
+          <button type="button" class="pill-btn primary-glow-btn small-btn" onclick="openAddNoteFromTaskObsModal()">
+            <i data-lucide="plus"></i>
+            <span>Registrar Primera Observación</span>
+          </button>
+        </div>
+      `;
+    } else {
+      timelineEl.innerHTML = observations.map((obs, idx) => {
+        const isBlock = obs.type === 'bloqueo';
+        const isAjuste = obs.type === 'ajuste';
+        const isAuditoria = obs.type === 'auditoria';
+        const isReschedule = obs.type === 'reschedule' || (obs.text && obs.text.includes('📅'));
+        const isAvance = !isBlock && !isAjuste && !isAuditoria;
+
+        let typePillText = '🚀 Avance';
+        let typeClass = 'avance';
+        if (isBlock) {
+          typePillText = '⚠️ Bloqueo / Retraso';
+          typeClass = 'bloqueo';
+        } else if (isAjuste) {
+          typePillText = '🛠️ Ajuste Técnico';
+          typeClass = 'ajuste';
+        } else if (isAuditoria) {
+          typePillText = '📋 Dictamen / Auditoría';
+          typeClass = 'auditoria';
+        } else if (isReschedule) {
+          typePillText = '📅 Reprogramación';
+          typeClass = 'avance';
+        }
+
+        const sevClass = obs.severity === 'alta' || obs.severity === 'critico' ? 'sev-alta' : (obs.severity === 'baja' ? 'sev-baja' : 'sev-normal');
+        const sevText = obs.severity === 'alta' || obs.severity === 'critico' ? 'Alta / Urgente' : (obs.severity === 'baja' ? 'Baja / Informativa' : 'Normal');
+
+        const safeText = typeof escapeHtml === 'function' ? escapeHtml(obs.text || '') : (obs.text || '');
+
+        return `
+          <div class="task-obs-item-card type-${typeClass}">
+            <div class="task-obs-item-header">
+              <div class="task-obs-item-author">
+                <div class="task-obs-author-icon">
+                  <i data-lucide="${isBlock ? 'alert-triangle' : (isReschedule ? 'calendar-clock' : (isAvance ? 'trending-up' : 'message-square'))}"></i>
+                </div>
+                <div>
+                  <span class="task-obs-author-name">${obs.author || dev.name}</span>
+                  <span class="task-obs-author-role">${obs.role || (obs.author?.includes('Admin') ? 'Super Admin (Jefe TI)' : 'Desarrollador')}</span>
+                </div>
+              </div>
+              <div class="task-obs-item-meta">
+                <span class="task-obs-pill-type ${typeClass}">${typePillText}</span>
+                <span class="task-obs-pill-sev ${sevClass}">${sevText}</span>
+                <span class="task-obs-date-badge">
+                  <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>
+                  ${obs.date || 'Reciente'}
+                </span>
+              </div>
+            </div>
+
+            <div class="task-obs-item-body">
+              ${safeText}
+            </div>
+
+            <div class="task-obs-item-footer">
+              <button type="button" class="btn-del-obs-mini" onclick="deleteTaskObservationFromModal('${task.id}', '${obs.id}')" title="Eliminar observación de la bitácora">
+                <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                <span>Eliminar de bitácora</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Footer sync text
+  const footerStatusEl = document.getElementById('taskObsModalFooterStatus');
+  if (footerStatusEl) {
+    footerStatusEl.textContent = `${totalObs} observación(es) en historial de esta tarea · Sincronizado en tiempo real`;
+  }
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+  return true;
+}
+
 function openTaskObservationsModal(taskId) {
   try {
-    const task = (appState.integrations || []).find(t => String(t.id) === String(taskId));
-    if (!task) {
+    currentViewTaskObsId = taskId;
+    const ok = renderTaskObservationsModalContent(taskId);
+    if (!ok) {
       showToast('No se encontró la tarea seleccionada.', 'error');
       return;
     }
 
-    currentViewTaskObsId = taskId;
-
-    const app = getApplicationById(task.appId) || { name: 'Aplicativo', code: 'STF', iconColor: '#4E65FF' };
-    const appColor = app.iconColor || app.color || '#4E65FF';
-    const dev = getDeveloperById(task.devId) || {
-      name: 'Desarrollador',
-      role: 'Desarrollador',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
-    };
-    const diag = calculateIntegrationTimeProgress(task);
-
-    // Título y Subtítulo del Modal
-    const titleEl = document.getElementById('taskObsModalTitle');
-    const subEl = document.getElementById('taskObsModalSubtitle');
-    if (titleEl) titleEl.textContent = `[${app.code}] ${task.name}`;
-    if (subEl) subEl.textContent = `Sistema ${app.name} · Desarrollador: ${dev.name} · Plazo límite: ${formatShortDate(task.deadline)}`;
-
-    // Hero Card con resumen de la tarea
-    const heroEl = document.getElementById('taskObsModalHero');
-    if (heroEl) {
-      heroEl.innerHTML = `
-        <div class="task-obs-hero-top">
-          <div class="task-obs-hero-dev">
-            <img src="${dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}" alt="${dev.name}" class="task-obs-hero-avatar">
-            <div class="task-obs-hero-info">
-              <h4>${dev.name}</h4>
-              <p>${dev.role} · Responsable asignado</p>
-            </div>
-          </div>
-          <div class="task-obs-hero-badges">
-            <div class="int-app-badge" style="background-color: ${appColor}15; color: ${appColor}; border: 1px solid ${appColor}35;">
-              <span class="int-app-dot" style="background-color: ${appColor};"></span>
-              <span class="int-app-name">${app.name} (${app.code})</span>
-            </div>
-            <div class="int-weight-badge">
-              <i data-lucide="sparkles" style="width: 11px; height: 11px;"></i>
-              <span>Peso ${task.weight}%</span>
-            </div>
-            <span class="friendly-deadline-pill ${diag.badgeClass}">
-              <i data-lucide="${diag.isOverdue ? 'alert-triangle' : (task.status === 'evaluated' ? 'check-check' : 'clock')}" style="width: 12px; height: 12px;"></i>
-              <span>${diag.countdownText || diag.statusText}</span>
-            </span>
-          </div>
-        </div>
-        <div class="task-obs-hero-dates">
-          <span><strong>Plazo programado:</strong> ${formatShortDate(task.startDate)} → ${formatShortDate(task.deadline)}</span>
-          <span><strong>Estado actual:</strong> ${task.status === 'evaluated' ? 'Auditada & Aprobada' : (task.status === 'in_progress' ? 'En Desarrollo' : 'Pendiente')}</span>
-        </div>
-      `;
-    }
-
-    // Cálculos de métricas de observaciones
-    const observations = Array.isArray(task.observations) ? task.observations : [];
-    const totalObs = observations.length;
-    const bloqueosCount = observations.filter(o => o.type === 'bloqueo').length;
-    const avancesCount = observations.filter(o => o.type === 'avance').length;
-    const ajustesCount = observations.filter(o => o.type === 'ajuste').length;
-
-    // Toolbar de contadores
-    const countsEl = document.getElementById('taskObsModalCounts');
-    if (countsEl) {
-      countsEl.innerHTML = `
-        <span class="task-obs-count-chip">
-          <i data-lucide="layers" style="width: 12px; height: 12px;"></i>
-          <span>Total: <strong>${totalObs}</strong></span>
-        </span>
-        <span class="task-obs-count-chip bloqueo" style="${bloqueosCount > 0 ? '' : 'opacity: 0.65;'}">
-          <i data-lucide="alert-octagon" style="width: 12px; height: 12px;"></i>
-          <span>Bloqueos: <strong>${bloqueosCount}</strong></span>
-        </span>
-        <span class="task-obs-count-chip avance" style="${avancesCount > 0 ? '' : 'opacity: 0.65;'}">
-          <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i>
-          <span>Avances: <strong>${avancesCount}</strong></span>
-        </span>
-        <span class="task-obs-count-chip ajuste" style="${ajustesCount > 0 ? '' : 'opacity: 0.65;'}">
-          <i data-lucide="wrench" style="width: 12px; height: 12px;"></i>
-          <span>Ajustes: <strong>${ajustesCount}</strong></span>
-        </span>
-      `;
-    }
-
-    // Timeline / Feed de Observaciones
-    const timelineEl = document.getElementById('taskObsModalTimeline');
-    if (timelineEl) {
-      if (totalObs === 0) {
-        timelineEl.innerHTML = `
-          <div class="task-obs-empty-box">
-            <div class="task-obs-empty-icon">
-              <i data-lucide="message-square-dashed"></i>
-            </div>
-            <h4>Sin observaciones reportadas para esta tarea</h4>
-            <p>El desarrollador no ha reportado bloqueos, novedades técnicas ni acuerdos en esta tarea aún.<br>Cuando se registre una observación durante el proceso, podrás verla aquí en tiempo real y te llegará una alerta a la campana de notificaciones.</p>
-            <button type="button" class="pill-btn primary-glow-btn small-btn" onclick="openAddNoteFromTaskObsModal()">
-              <i data-lucide="plus"></i>
-              <span>Registrar Primera Observación</span>
-            </button>
-          </div>
-        `;
-      } else {
-        timelineEl.innerHTML = observations.map((obs, idx) => {
-          const isBlock = obs.type === 'bloqueo';
-          const isAvance = obs.type === 'avance';
-          const isAjuste = obs.type === 'ajuste';
-          const isAuditoria = obs.type === 'auditoria';
-
-          let typePillText = '🚀 Avance';
-          let typeClass = 'avance';
-          if (isBlock) {
-            typePillText = '⚠️ Bloqueo / Retraso';
-            typeClass = 'bloqueo';
-          } else if (isAjuste) {
-            typePillText = '🛠️ Ajuste Técnico';
-            typeClass = 'ajuste';
-          } else if (isAuditoria) {
-            typePillText = '📋 Dictamen / Auditoría';
-            typeClass = 'auditoria';
-          }
-
-          const sevClass = obs.severity === 'alta' ? 'sev-alta' : (obs.severity === 'baja' ? 'sev-baja' : 'sev-normal');
-          const sevText = obs.severity === 'alta' ? 'Alta / Urgente' : (obs.severity === 'baja' ? 'Baja / Informativa' : 'Normal');
-
-          const safeText = typeof escapeHtml === 'function' ? escapeHtml(obs.text || '') : (obs.text || '');
-
-          return `
-            <div class="task-obs-item-card type-${typeClass}">
-              <div class="task-obs-item-header">
-                <div class="task-obs-item-author">
-                  <div class="task-obs-author-icon">
-                    <i data-lucide="${isBlock ? 'alert-triangle' : (isAvance ? 'trending-up' : 'message-square')}"></i>
-                  </div>
-                  <div>
-                    <span class="task-obs-author-name">${obs.author || dev.name}</span>
-                    <span class="task-obs-author-role">${obs.author?.includes('Admin') ? 'Super Admin (Jefe TI)' : 'Desarrollador'}</span>
-                  </div>
-                </div>
-                <div class="task-obs-item-meta">
-                  <span class="task-obs-pill-type ${typeClass}">${typePillText}</span>
-                  <span class="task-obs-pill-sev ${sevClass}">${sevText}</span>
-                  <span class="task-obs-date-badge">
-                    <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>
-                    ${obs.date || 'Reciente'}
-                  </span>
-                </div>
-              </div>
-
-              <div class="task-obs-item-body">
-                ${safeText}
-              </div>
-
-              <div class="task-obs-item-footer">
-                <button type="button" class="btn-del-obs-mini" onclick="deleteTaskObservationFromModal('${task.id}', '${obs.id}')" title="Eliminar observación de la bitácora">
-                  <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
-                  <span>Eliminar de bitácora</span>
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    // Footer sync text
-    const footerStatusEl = document.getElementById('taskObsModalFooterStatus');
-    if (footerStatusEl) {
-      footerStatusEl.textContent = `${totalObs} observación(es) en historial de esta tarea · Sincronizado en tiempo real`;
-    }
-
     document.getElementById('modalTaskObservations')?.classList.add('show');
     document.body.classList.add('modal-open');
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
+
+    // Sincronización en tiempo real desde Google Sheets en segundo plano para móvil y PC
+    if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function' && window.SheetsSync.isConnected()) {
+      const footerStatusEl = document.getElementById('taskObsModalFooterStatus');
+      if (footerStatusEl) {
+        footerStatusEl.innerHTML = `<span style="color:#6366f1;">🔄 Consultando Google Sheets en tiempo real...</span>`;
+      }
+      window.SheetsSync.pullCloudData(true).then((res) => {
+        if (currentViewTaskObsId === taskId && document.getElementById('modalTaskObservations')?.classList.contains('show')) {
+          renderTaskObservationsModalContent(taskId);
+        }
+      }).catch(err => {
+        console.warn('[ObsModalSync]', err);
+      });
     }
   } catch (err) {
     console.error('Error al abrir modal de observaciones:', err);
@@ -7684,9 +7717,12 @@ function deleteTaskObservationFromModal(taskId, obsId) {
 
   task.observations = task.observations.filter(o => o.id !== obsId);
   saveData(appState);
+  if (window.SheetsSync && typeof window.SheetsSync.syncFullState === 'function') {
+    window.SheetsSync.syncFullState(appState);
+  }
 
   // Refrescar modal, lista y notificaciones
-  openTaskObservationsModal(taskId);
+  renderTaskObservationsModalContent(taskId);
   if (typeof renderIntegrationsList === 'function') {
     renderIntegrationsList(activeIntFilter);
   }
@@ -7709,6 +7745,7 @@ window.scrollToIntegrationTask = scrollToIntegrationTask;
 window.deleteTaskObservation = deleteTaskObservation;
 window.renderTaskObservationsFeed = renderTaskObservationsFeed;
 window.openTaskObservationsModal = openTaskObservationsModal;
+window.renderTaskObservationsModalContent = renderTaskObservationsModalContent;
 window.closeTaskObservationsModal = closeTaskObservationsModal;
 window.deleteTaskObservationFromModal = deleteTaskObservationFromModal;
 window.openAddNoteFromTaskObsModal = openAddNoteFromTaskObsModal;
@@ -11540,12 +11577,15 @@ function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
     hour: '2-digit', minute: '2-digit'
   });
 
+  const rescheduleObsText = `📅 Fecha de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(targetDateStr)}.`;
+  const rescheduleObsId = `obs_${Date.now()}`;
+
   task.observations.unshift({
-    id: `obs_${Date.now()}`,
+    id: rescheduleObsId,
     author: session.name || 'Jefe TI',
     role: session.role || 'Admin',
     date: timestampStr,
-    text: `📅 Fecha de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(targetDateStr)}.`,
+    text: rescheduleObsText,
     type: 'reschedule',
     isAutoGenerated: true
   });
@@ -11566,9 +11606,28 @@ function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
   if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
   if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
 
-  // Push to Sheets if connected
-  if (window.SheetsSync && typeof window.SheetsSync.pushAllToSheets === 'function') {
-    window.SheetsSync.pushAllToSheets(true);
+  // Push to Sheets if connected (tanto fila directa como sync total de estado)
+  if (window.SheetsSync) {
+    if (typeof window.SheetsSync.logTaskObservation === 'function') {
+      const app = getApplicationById(task.appId) || { name: task.appName || 'Sistema' };
+      const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador' };
+      window.SheetsSync.logTaskObservation({
+        date: timestampStr,
+        appName: app.name || task.appName || 'Sistema',
+        developer: session.name || dev.name || 'Desarrollador',
+        taskName: task.name,
+        impact: 'NORMAL',
+        observation: rescheduleObsText,
+        taskId: task.id,
+        obsId: rescheduleObsId,
+        type: 'avance'
+      });
+    }
+    if (typeof window.SheetsSync.syncFullState === 'function') {
+      window.SheetsSync.syncFullState(appState);
+    } else if (typeof window.SheetsSync.pushAllToSheets === 'function') {
+      window.SheetsSync.pushAllToSheets(true);
+    }
   }
 }
 

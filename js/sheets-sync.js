@@ -287,6 +287,13 @@
     },
 
     /**
+     * Alias compatible para enviar todo el estado (aplicaciones, tareas, observaciones, usuarios) a Google Sheets
+     */
+    async pushAllToSheets(silent = false) {
+      return await this.syncFullState(window.appState);
+    },
+
+    /**
      * Sincronizar estado completo del portafolio en las 5 hojas maestras
      */
     async syncFullState(appState) {
@@ -680,9 +687,11 @@
           clearTimeout(timeoutId);
           if (res.ok) {
             const json = await res.json();
-            if (json.status === 'success' && Array.isArray(json.tasks) && json.tasks.length > 0) {
+            if (json && json.status === 'success') {
               fullDataLoaded = true;
-              syncedCount = this.mergeCloudTasks(json.tasks);
+              if (Array.isArray(json.tasks) && json.tasks.length > 0) {
+                syncedCount = this.mergeCloudTasks(json.tasks);
+              }
               if (Array.isArray(json.systems) && json.systems.length > 0) {
                 this.mergeCloudSystems(json.systems);
               }
@@ -878,12 +887,34 @@
         else if (rawImpact.includes('alt')) severity = 'alto';
         else if (rawImpact.includes('baj')) severity = 'bajo';
 
-        // Buscar tarea destino por nombre
-        let targetTask = state.integrations.find(t =>
-          (tName && t.name.trim().toLowerCase() === tName.toLowerCase()) ||
-          (tName && t.name.trim().toLowerCase().includes(tName.toLowerCase())) ||
-          (tName && tName.toLowerCase().includes(t.name.trim().toLowerCase()))
-        );
+        // Normalización inteligente para matching infalible de tareas (quita códigos tipo [STF-LAB-03], puntuación y espacios extras)
+        const cleanStr = (s) => (s || '')
+          .toLowerCase()
+          .replace(/\[[^\]]+\]/g, '')
+          .replace(/[.,:;()_\-]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const cleanTName = cleanStr(tName);
+
+        // Buscar tarea destino por ID directo o por nombre
+        let targetTask = null;
+        if (co.taskId) {
+          targetTask = state.integrations.find(t => String(t.id) === String(co.taskId));
+        }
+
+        if (!targetTask && tName) {
+          targetTask = state.integrations.find(t => {
+            if (!t || !t.name) return false;
+            const cleanCur = cleanStr(t.name);
+            return (
+              t.name.trim().toLowerCase() === tName.toLowerCase() ||
+              (cleanTName && cleanCur === cleanTName) ||
+              (cleanTName.length > 5 && cleanCur.includes(cleanTName)) ||
+              (cleanCur.length > 5 && cleanTName.includes(cleanCur))
+            );
+          });
+        }
 
         // Fallback por Aplicativo + Desarrollador
         if (!targetTask && appName) {
@@ -902,21 +933,28 @@
           }
 
           // Evitar duplicar observaciones idénticas
-          const exists = targetTask.observations.some(o =>
-            (o.text && o.text.trim().toLowerCase() === obsText.toLowerCase()) ||
-            (o.date && o.date === dateStr && o.text.includes(obsText.substring(0, 20)))
-          );
+          const cleanObsTarget = cleanStr(obsText);
+          const exists = targetTask.observations.some(o => {
+            const cleanExisting = cleanStr(o.text);
+            return (
+              cleanExisting === cleanObsTarget ||
+              (cleanObsTarget.length > 20 && cleanExisting.includes(cleanObsTarget.substring(0, 20))) ||
+              (o.date && o.date === dateStr && cleanExisting.includes(cleanObsTarget.substring(0, 15)))
+            );
+          });
 
           if (!exists) {
-            targetTask.observations.push({
-              id: 'obs_cloud_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            const newObs = {
+              id: co.obsId || ('obs_cloud_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
               date: dateStr || new Date().toISOString().slice(0, 16).replace('T', ' '),
               timestamp: Date.now(),
-              type: severity === 'critico' ? 'bloqueo' : (severity === 'alto' ? 'ajuste' : 'avance'),
+              type: severity === 'critico' ? 'bloqueo' : (severity === 'alto' ? 'ajuste' : (obsText.includes('📅') ? 'reschedule' : 'avance')),
               severity: severity,
               author: devName || 'Desarrollador',
               text: obsText
-            });
+            };
+            // Las observaciones más recientes se agregan al inicio del historial
+            targetTask.observations.unshift(newObs);
             mergedCount++;
           }
         }
