@@ -14566,3 +14566,598 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     box-shadow: 0 4px 14px rgba(78, 101, 255, 0.35) !important;
   }
 }
+
+
+/* ==========================================================================
+   STF GROUP · EXECUTIVE ULTRA-DARK THEME (MODO OSCURO)
+   High-Fidelity Contrast, Deep Slate Obsidian & Luminous Neon Accents
+   Preserves Light Mode 100% untouched when .dark-mode is inactive
+   ========================================================================== */
+
+/* Toggle Buttons */
+.theme-toggle-btn {
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: rotate(18deg) scale(1.08);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.theme-toggle-btn.active-dark {
+  background: #1E293B !important;
+  color: #FBBF24 !important;
+  border-color: rgba(251, 191, 36, 0.4) !important;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.3) !important;
+}
+
+.theme-sidebar-btn {
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.theme-sidebar-btn:hover {
+  color: #FBBF24 !important;
+  transform: rotate(15deg);
+}
+
+.theme-sidebar-btn.active-dark {
+  color: #FBBF24 !important;
+}
+
+/* 1. Base Body & Root Variable Overrides */
+body.dark-mode {
+  --bg-app: #0A0E17;
+  --bg-card: #111827;
+  --bg-card-subtle: #162035;
+  --text-dark: #F8FAFC;
+  --text-body: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-light: #64748B;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 14px 38px -6px rgba(0, 0, 0, 0.55), 0 4px 14px -2px rgba(0, 0, 0, 0.35);
+  --card-shadow-hover: 0 20px 48px -8px rgba(0, 0, 0, 0.7), 0 8px 20px -3px rgba(0, 0, 0, 0.45);
+
+  background-color: #0A0E17 !important;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.09) 0%, transparent 45%),
+    radial-gradient(circle at 100% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 40%) !important;
+  color: #F8FAFC !important;
+}
+
+/* 2. Top Header & Search */
+body.dark-mode .top-header {
+  background: rgba(15, 23, 42, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.dark-mode .search-input-wrapper {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .search-input-wrapper input {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .search-input-wrapper input::placeholder {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .search-shortcut {
+  background: #1E293B !important;
+  color: #94A3B8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .pill-btn.secondary-btn {
+  background: #162035 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode .pill-btn.secondary-btn:hover {
+  background: #1E293B !important;
+  border-color: #6366F1 !important;
+  color: #FFFFFF !important;
+}
+
+body.dark-mode .sheets-sync-pill {
+  background: #162035 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode .icon-circle-btn {
+  background: #162035 !important;
+  color: #CBD5E1 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .icon-circle-btn:hover {
+  background: #1E293B !important;
+  color: #FFFFFF !important;
+  border-color: #6366F1 !important;
+}
+
+body.dark-mode .header-dev-selector-btn {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .header-dev-selector-btn strong {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .header-dev-selector-btn span {
+  color: #94A3B8 !important;
+}
+
+/* 3. Sidebar & Floating Navigation */
+body.dark-mode .floating-sidebar {
+  background: rgba(17, 24, 39, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-mode .sidebar-nav .nav-btn {
+  color: #94A3B8 !important;
+  background: transparent !important;
+}
+
+body.dark-mode .sidebar-nav .nav-btn:hover {
+  color: #F8FAFC !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .sidebar-nav .nav-btn.active {
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5) !important;
+}
+
+body.dark-mode .monogram-logo {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+  color: #FFFFFF !important;
+}
+
+body.dark-mode .logout-btn {
+  color: #F87171 !important;
+}
+
+body.dark-mode .logout-btn:hover {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #EF4444 !important;
+}
+
+/* 4. Cards & Containers */
+body.dark-mode .card-flat,
+body.dark-mode .grid-card,
+body.dark-mode .metric-summary-card,
+body.dark-mode .ind-kpi-card,
+body.dark-mode .overview-card,
+body.dark-mode .system-card,
+body.dark-mode .rep-card,
+body.dark-mode .settings-quadrant-card,
+body.dark-mode .industrial-kpi-bar .ind-kpi-card,
+body.dark-mode .kpi-metric-capsule,
+body.dark-mode .sys-kpi-card,
+body.dark-mode .devs-full-card,
+body.dark-mode .int-task-card,
+body.dark-mode .fut-cal-summary-strip,
+body.dark-mode .chart-wrapper,
+body.dark-mode .velocity-card,
+body.dark-mode .velocity-chart-wrapper {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .summary-box,
+body.dark-mode .sys-summary-item,
+body.dark-mode .dci-workload,
+body.dark-mode .int-card-meta-row,
+body.dark-mode .task-obs-modal-hero,
+body.dark-mode .task-obs-item-card,
+body.dark-mode .reschedule-quick-pills,
+body.dark-mode .velocity-kpi-card,
+body.dark-mode .eval-diagnostic-bar,
+body.dark-mode .benchmark-input-card,
+body.dark-mode .settings-dev-quotas-box,
+body.dark-mode .settings-theme-selector-box,
+body.dark-mode .vault-stat-item {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 5. Typography Hierarchy */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6,
+body.dark-mode strong,
+body.dark-mode b,
+body.dark-mode .card-title,
+body.dark-mode .modal-title,
+body.dark-mode .system-title,
+body.dark-mode .dev-name,
+body.dark-mode .oripio-title-group h2,
+body.dark-mode .ind-kpi-val,
+body.dark-mode .m-value,
+body.dark-mode .dci-name,
+body.dark-mode .int-title,
+body.dark-mode .sys-item-name {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .card-subtitle,
+body.dark-mode .modal-subtitle,
+body.dark-mode .system-desc,
+body.dark-mode .dev-role,
+body.dark-mode .ind-kpi-sub,
+body.dark-mode .m-label,
+body.dark-mode .pair-label,
+body.dark-mode .oripio-title-group p,
+body.dark-mode p,
+body.dark-mode label,
+body.dark-mode .sub-label,
+body.dark-mode .card-subtext {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .header-stat-chip {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F1F5F9 !important;
+}
+
+/* 6. Stacked Deck of Cards */
+body.dark-mode .deck-card {
+  background: #162035 !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-mode .deck-title {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .deck-tab-pill {
+  background: #111827 !important;
+  color: #94A3B8 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .deck-tab-pill.active {
+  background: #25334E !important;
+  color: #FFFFFF !important;
+  border-color: #6366F1 !important;
+}
+
+/* 7. Interactive Developer Cards */
+body.dark-mode .dev-card-interactive {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+body.dark-mode .dev-card-interactive:hover {
+  border-color: #6366F1 !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.dark-mode .dev-card-interactive.active {
+  background: #19243B !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 1px #6366F1, 0 12px 28px rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-mode .dci-workload {
+  background: #101726 !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .dci-meta-label {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .dci-meta-val {
+  color: #F8FAFC !important;
+}
+
+/* 8. Systems Table */
+body.dark-mode .systems-table {
+  color: #F1F5F9 !important;
+}
+
+body.dark-mode .systems-table th {
+  background: #101726 !important;
+  color: #94A3B8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .systems-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #E2E8F0 !important;
+}
+
+body.dark-mode .systems-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+body.dark-mode .system-name-cell strong {
+  color: #F8FAFC !important;
+}
+
+/* 9. Delivery Calendar (Oripio Layout) */
+body.dark-mode #view-calendar,
+body.dark-mode .oripio-calendar-wrapper {
+  background: #0A0E17 !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .oripio-header-card {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .oripio-cal-grid {
+  background: #0E1422 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .cal-grid-header-col {
+  background: #111827 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #CBD5E1 !important;
+}
+
+body.dark-mode .cal-grid-header-col.is-today {
+  background: #1A2640 !important;
+  color: #818CF8 !important;
+}
+
+body.dark-mode .cal-grid-col {
+  background: #0E1422 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .cal-grid-col.is-weekend,
+body.dark-mode .cal-grid-col.is-holiday,
+body.dark-mode .is-weekend,
+body.dark-mode .is-holiday {
+  background: repeating-linear-gradient(45deg, #090D16, #090D16 10px, #0F1626 10px, #0F1626 20px) !important;
+}
+
+body.dark-mode .oripio-time-cell {
+  color: #94A3B8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+body.dark-mode .oripio-task-tag {
+  background: #19243B !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .oripio-task-tag:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark-mode .oripio-search-box {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .oripio-search-box input {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .oripio-pill-btn,
+body.dark-mode .cal-nav-btn {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #CBD5E1 !important;
+}
+
+body.dark-mode .cal-nav-btn:hover,
+body.dark-mode .oripio-pill-btn:hover {
+  background: #1E293B !important;
+  color: #FFFFFF !important;
+}
+
+/* 10. Modals & Forms */
+body.dark-mode .modal-backdrop {
+  background: rgba(2, 6, 23, 0.85) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+body.dark-mode .modal-card {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75) !important;
+}
+
+body.dark-mode .modal-header {
+  background: #161F30 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .modal-body {
+  background: #111827 !important;
+  color: #CBD5E1 !important;
+}
+
+body.dark-mode .modal-footer,
+body.dark-mode #assignIntegrationForm .modal-footer,
+body.dark-mode #modalSystemDetail .sys-audit-footer {
+  background: #161F30 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .form-input,
+body.dark-mode .form-select,
+body.dark-mode .form-textarea,
+body.dark-mode select,
+body.dark-mode input[type="text"],
+body.dark-mode input[type="date"],
+body.dark-mode input[type="time"],
+body.dark-mode input[type="url"],
+body.dark-mode input[type="password"],
+body.dark-mode input[type="number"],
+body.dark-mode textarea {
+  background: #1E293B !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .form-input:focus,
+body.dark-mode .form-select:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-mode .modal-close-btn {
+  background: #1E293B !important;
+  color: #94A3B8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .modal-close-btn:hover {
+  background: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+/* 11. Task Observations Timeline */
+body.dark-mode .task-obs-modal-hero {
+  background: #162035 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .task-obs-item-card {
+  background: #162035 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #F1F5F9 !important;
+}
+
+body.dark-mode .task-obs-item-body {
+  color: #CBD5E1 !important;
+}
+
+body.dark-mode .task-obs-empty-box {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .task-obs-empty-box h4 {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .task-obs-empty-box p {
+  color: #94A3B8 !important;
+}
+
+/* 12. Notifications Dropdown & Items */
+body.dark-mode .header-dev-dropdown,
+body.dark-mode .notif-center-dropdown {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+}
+
+body.dark-mode .dropdown-session-header {
+  background: #161F30 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .dropdown-session-header span {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .notif-controls-bar {
+  background: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .notif-ctrl-btn {
+  background: #1E293B !important;
+  color: #CBD5E1 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .notif-item {
+  background: #162035 !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .notif-item:hover {
+  background: #1E2A44 !important;
+}
+
+body.dark-mode .notif-title {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .notif-desc {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .notif-dropdown-footer {
+  background: #161F30 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 13. Pipeline View */
+body.dark-mode .pipeline-column {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .pipeline-col-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .pipeline-card {
+  background: #162035 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .pipeline-card:hover {
+  border-color: #6366F1 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 14. Scrollbars in Dark Mode */
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #0B0F19;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: #25334E;
+  border-radius: 999px;
+  border: 2px solid #0B0F19;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #3B4D72;
+}

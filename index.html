@@ -78,6 +78,10 @@
       </nav>
 
       <div class="sidebar-footer">
+        <button type="button" class="nav-btn theme-sidebar-btn" id="btnSidebarThemeToggle" onclick="toggleDarkTheme()"
+          title="Modo Oscuro / Modo Claro" aria-label="Cambiar tema de interfaz">
+          <i data-lucide="moon" id="sidebarThemeIcon"></i>
+        </button>
         <button class="nav-btn logout-btn" id="btnLogout" onclick="logoutApp()"
           title="Cerrar Sesión (Cambiar de Usuario)">
           <i data-lucide="log-out"></i>
@@ -120,6 +124,12 @@
             <i data-lucide="table"></i>
             <span id="sheetsStatusLabel">Google Sheets</span>
             <span class="sheets-live-dot offline" id="sheetsLiveDot"></span>
+          </button>
+
+          <!-- Theme Toggle Button (Modo Claro / Modo Oscuro) -->
+          <button type="button" class="icon-circle-btn theme-toggle-btn" id="btnThemeToggle" onclick="toggleDarkTheme()"
+            title="Alternar entre Modo Claro y Modo Oscuro" aria-label="Cambiar tema">
+            <i data-lucide="moon" id="themeToggleIcon"></i>
           </button>
 
           <div class="header-notifications-wrapper" style="position: relative;">
@@ -1346,6 +1356,27 @@
                   <span>Limpia caché local y restaura base oficial STF</span>
                 </div>
               </button>
+            </div>
+
+            <!-- Selector de Tema Visual: Claro vs Oscuro -->
+            <div class="settings-theme-selector-box" style="margin-top: 14px; padding: 12px 14px; background: #F8FAFD; border: 1px solid #E2E8F0; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%); display: flex; align-items: center; justify-content: center; color: #FFF; flex-shrink: 0;">
+                  <i data-lucide="palette"></i>
+                </div>
+                <div>
+                  <strong style="display: block; font-size: 13px; color: var(--text-dark);">Tema Visual de la Plataforma</strong>
+                  <span style="font-size: 11.5px; color: var(--text-muted);">Elige entre la interfaz clara estándar o el modo oscuro de alta fidelidad</span>
+                </div>
+              </div>
+              <div class="theme-switch-group" style="display: flex; gap: 6px;">
+                <button type="button" class="pill-btn secondary-btn small-btn" id="btnThemeSetLight" onclick="applyTheme('light', true)" style="font-size: 11.5px; padding: 6px 12px;">
+                  <span>☀️ Modo Claro</span>
+                </button>
+                <button type="button" class="pill-btn primary-glow-btn small-btn" id="btnThemeSetDark" onclick="applyTheme('dark', true)" style="font-size: 11.5px; padding: 6px 12px;">
+                  <span>🌙 Modo Oscuro</span>
+                </button>
+              </div>
             </div>
 
             <!-- Nota de Seguridad Corporativa -->

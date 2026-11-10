@@ -2755,6 +2755,8 @@ function updateOverviewChart(period = currentOverviewPeriod) {
 
   const appColor = chartData.targetApp?.iconColor || '#4E65FF';
 
+  const isDark = document.body.classList.contains('dark-mode');
+
   // If chart exists, smoothly animate to the new data
   if (overviewChartInstance) {
     overviewChartInstance.data.labels = chartData.labels;
@@ -2762,9 +2764,29 @@ function updateOverviewChart(period = currentOverviewPeriod) {
     overviewChartInstance.data.datasets[0].data = chartData.realData;
     overviewChartInstance.data.datasets[0].borderColor = appColor;
     overviewChartInstance.data.datasets[0].pointBackgroundColor = appColor;
-    overviewChartInstance.data.datasets[0].backgroundColor = `${appColor}12`;
+    overviewChartInstance.data.datasets[0].backgroundColor = isDark ? `${appColor}25` : `${appColor}12`;
     overviewChartInstance.data.datasets[1].label = chartData.targetLabel;
     overviewChartInstance.data.datasets[1].data = chartData.targetData;
+
+    // Ajuste dinámico de colores de ejes y tooltips según tema
+    if (overviewChartInstance.options && overviewChartInstance.options.scales) {
+      if (overviewChartInstance.options.scales.y && overviewChartInstance.options.scales.y.grid) {
+        overviewChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.6)';
+      }
+      if (overviewChartInstance.options.scales.y && overviewChartInstance.options.scales.y.ticks) {
+        overviewChartInstance.options.scales.y.ticks.color = isDark ? '#94A3B8' : '#8E96A6';
+      }
+      if (overviewChartInstance.options.scales.x && overviewChartInstance.options.scales.x.ticks) {
+        overviewChartInstance.options.scales.x.ticks.color = isDark ? '#94A3B8' : '#8E96A6';
+      }
+    }
+    if (overviewChartInstance.options && overviewChartInstance.options.plugins && overviewChartInstance.options.plugins.tooltip) {
+      overviewChartInstance.options.plugins.tooltip.backgroundColor = isDark ? '#1E293B' : '#FFFFFF';
+      overviewChartInstance.options.plugins.tooltip.titleColor = isDark ? '#F8FAFC' : '#1E232E';
+      overviewChartInstance.options.plugins.tooltip.bodyColor = isDark ? '#CBD5E1' : '#4F5668';
+      overviewChartInstance.options.plugins.tooltip.borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0';
+    }
+
     overviewChartInstance.update();
     return;
   }
@@ -2779,12 +2801,12 @@ function updateOverviewChart(period = currentOverviewPeriod) {
           label: chartData.realLabel,
           data: chartData.realData,
           borderColor: appColor,
-          backgroundColor: `${appColor}12`,
+          backgroundColor: isDark ? `${appColor}25` : `${appColor}12`,
           fill: true,
           borderWidth: 3.5,
           tension: 0.42,
           pointBackgroundColor: appColor,
-          pointBorderColor: '#FFFFFF',
+          pointBorderColor: isDark ? '#111827' : '#FFFFFF',
           pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 7
@@ -2798,7 +2820,7 @@ function updateOverviewChart(period = currentOverviewPeriod) {
           borderDash: [6, 6],
           tension: 0.42,
           pointBackgroundColor: '#FFA043',
-          pointBorderColor: '#FFFFFF',
+          pointBorderColor: isDark ? '#111827' : '#FFFFFF',
           pointBorderWidth: 2,
           pointRadius: 3.5,
           pointHoverRadius: 6.5
@@ -2811,10 +2833,10 @@ function updateOverviewChart(period = currentOverviewPeriod) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#FFFFFF',
-          titleColor: '#1E232E',
-          bodyColor: '#4F5668',
-          borderColor: '#E2E8F0',
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+          titleColor: isDark ? '#F8FAFC' : '#1E232E',
+          bodyColor: isDark ? '#CBD5E1' : '#4F5668',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
           borderWidth: 1,
           padding: 12,
           boxPadding: 6,
@@ -2830,19 +2852,19 @@ function updateOverviewChart(period = currentOverviewPeriod) {
       scales: {
         x: {
           grid: { display: false },
-          ticks: { color: '#8E96A6', font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } }
+          ticks: { color: isDark ? '#94A3B8' : '#8E96A6', font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } }
         },
         y: {
           min: 0,
           max: 100,
           grid: {
-            color: 'rgba(226, 232, 240, 0.6)',
+            color: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.6)',
             borderDash: [5, 5]
           },
           ticks: {
             stepSize: 25,
             callback: value => value + '%',
-            color: '#8E96A6',
+            color: isDark ? '#94A3B8' : '#8E96A6',
             font: { family: 'Plus Jakarta Sans', size: 11 }
           }
         }
@@ -7751,10 +7773,92 @@ window.deleteTaskObservationFromModal = deleteTaskObservationFromModal;
 window.openAddNoteFromTaskObsModal = openAddNoteFromTaskObsModal;
 
 // ==========================================================================
+// TEMA VISUAL: MODO CLARO & MODO OSCURO (EJECUTIVO DE ALTO CONTRASTE)
+// ==========================================================================
+
+function initTheme() {
+  const saved = localStorage.getItem('STF_THEME');
+  if (saved === 'dark') {
+    applyTheme('dark', false);
+  } else {
+    applyTheme('light', false);
+  }
+}
+
+function toggleDarkTheme() {
+  const isDark = document.body.classList.contains('dark-mode');
+  const targetTheme = isDark ? 'light' : 'dark';
+  applyTheme(targetTheme, true);
+}
+
+function applyTheme(theme, showNotice = false) {
+  const isDark = theme === 'dark';
+  document.body.classList.toggle('dark-mode', isDark);
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('STF_THEME', theme);
+
+  // Actualizar iconos y títulos de los botones en Header y Sidebar
+  const iconName = isDark ? 'sun' : 'moon';
+  const toggleBtn = document.getElementById('btnThemeToggle');
+  const sidebarBtn = document.getElementById('btnSidebarThemeToggle');
+  const iconEl = document.getElementById('themeToggleIcon');
+  const sidebarIcon = document.getElementById('sidebarThemeIcon');
+
+  if (iconEl) iconEl.setAttribute('data-lucide', iconName);
+  if (sidebarIcon) sidebarIcon.setAttribute('data-lucide', iconName);
+  if (toggleBtn) {
+    toggleBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
+    toggleBtn.classList.toggle('active-dark', isDark);
+  }
+  if (sidebarBtn) {
+    sidebarBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
+    sidebarBtn.classList.toggle('active-dark', isDark);
+  }
+
+  // Actualizar botones de configuración
+  const btnSetLight = document.getElementById('btnThemeSetLight');
+  const btnSetDark = document.getElementById('btnThemeSetDark');
+  if (btnSetLight && btnSetDark) {
+    if (isDark) {
+      btnSetLight.className = 'pill-btn secondary-btn small-btn';
+      btnSetDark.className = 'pill-btn primary-glow-btn small-btn';
+    } else {
+      btnSetLight.className = 'pill-btn primary-glow-btn small-btn';
+      btnSetDark.className = 'pill-btn secondary-btn small-btn';
+    }
+  }
+
+  // Meta tag de navegador móvil para la barra de estado
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', isDark ? '#0A0E17' : '#0B0C10');
+  }
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+
+  // Actualizar gráficos dinámicos con la paleta de modo oscuro
+  if (typeof updateOverviewChart === 'function') updateOverviewChart();
+  if (typeof initVelocityBarChart === 'function') initVelocityBarChart();
+
+  if (showNotice && typeof showToast === 'function') {
+    showToast(isDark ? '🌙 Modo Oscuro Activado' : '☀️ Modo Claro Activado', 'info');
+  }
+}
+
+window.initTheme = initTheme;
+window.toggleDarkTheme = toggleDarkTheme;
+window.applyTheme = applyTheme;
+
+// ==========================================================================
 // EVENT LISTENERS & BOOTSTRAP
 // ==========================================================================
 
 function initApp() {
+  // Inicializar tema visual guardado (Claro u Oscuro)
+  initTheme();
+
   // Lucide icons
   lucide.createIcons();
 
