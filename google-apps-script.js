@@ -648,22 +648,44 @@ function doGet(e) {
     });
   }
 
-  // 1. Obtener Lista de Usuarios para Autenticación
+  // 1. Obtener Lista de Usuarios para Autenticación (Mapeo Inteligente y Dinámico de Columnas)
   if (action === "get_users") {
     var sU = getMasterSheet(ss, "USUARIOS");
     var uRows = sU.getDataRange().getValues();
     var usersList = [];
     if (uRows.length > 1) {
+      // Detección dinámica de índices de columna por encabezado
+      var hRow = uRows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+      var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxStatus = -1;
+
+      for (var c = 0; c < hRow.length; c++) {
+        var h = hRow[c];
+        if (idxPass === -1 && (h === "id" || h.indexOf("pass") !== -1 || h.indexOf("clave") !== -1 || h.indexOf("contra") !== -1)) idxPass = c;
+        else if (idxUser === -1 && (h.indexOf("usuario") !== -1 || h.indexOf("login") !== -1 || h === "user")) idxUser = c;
+        else if (idxRole === -1 && (h.indexOf("rol") !== -1 || h.indexOf("role") !== -1 || h.indexOf("perfil") !== -1)) idxRole = c;
+        else if (idxEmail === -1 && (h.indexOf("correo") !== -1 || h.indexOf("email") !== -1 || h.indexOf("mail") !== -1)) idxEmail = c;
+        else if (idxName === -1 && (h.indexOf("nombre") !== -1 || h.indexOf("name") !== -1 || h.indexOf("desarrollador") !== -1)) idxName = c;
+        else if (idxStatus === -1 && (h.indexOf("estado") !== -1 || h.indexOf("status") !== -1 || h.indexOf("activo") !== -1)) idxStatus = c;
+      }
+
+      // Fallback a posiciones predeterminadas A..F
+      if (idxPass === -1) idxPass = 0;
+      if (idxUser === -1) idxUser = 1;
+      if (idxRole === -1) idxRole = 2;
+      if (idxEmail === -1) idxEmail = 3;
+      if (idxName === -1) idxName = 4;
+      if (idxStatus === -1) idxStatus = 5;
+
       for (var r = 1; r < uRows.length; r++) {
-        var uLogin = String(uRows[r][1] || "").trim();
-        if (!uLogin || uLogin.toLowerCase() === "usuario_logueo") continue;
+        var uLogin = String(uRows[r][idxUser] !== undefined ? uRows[r][idxUser] : "").trim();
+        if (!uLogin || uLogin.toLowerCase() === "usuario_logueo" || uLogin.toLowerCase() === "usuario") continue;
         usersList.push({
-          idPassword: String(uRows[r][0] || "").trim(),
+          idPassword: String(uRows[r][idxPass] !== undefined ? uRows[r][idxPass] : "").trim(),
           username: uLogin,
-          role: String(uRows[r][2] || "desarrollador").trim(),
-          email: String(uRows[r][3] || "").trim(),
-          name: uRows[r].length > 4 ? String(uRows[r][4] || "").trim() : "",
-          status: uRows[r].length > 5 ? String(uRows[r][5] || "ACTIVO").trim() : "ACTIVO"
+          role: String(uRows[r][idxRole] || "desarrollador").trim(),
+          email: String(uRows[r][idxEmail] || "").trim(),
+          name: idxName < uRows[r].length ? String(uRows[r][idxName] || "").trim() : "",
+          status: idxStatus < uRows[r].length ? String(uRows[r][idxStatus] || "ACTIVO").trim() : "ACTIVO"
         });
       }
     }

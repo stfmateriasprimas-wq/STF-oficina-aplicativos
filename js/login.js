@@ -180,7 +180,7 @@ function togglePasswordVisibility(inputId, btn) {
 const STF_USERS_CREDENTIALS = [
   {
     id: "dev_jg",
-    idPassword: "1073524622",
+    idPassword: "1937",
     username: "jose@guzman",
     role: "desarrollador",
     name: "Jose Guzman",
@@ -189,29 +189,29 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_jd",
-    idPassword: "1107047649",
+    idPassword: "4444",
     username: "juan@david",
     role: "desarrollador",
     name: "Juan David",
-    email: "",
+    email: "juan.david@studiof.com.co",
     avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop&crop=face"
   },
   {
     id: "dev_ee",
-    idPassword: "1111",
+    idPassword: "ee",
     username: "esteban@escobar",
     role: "desarrollador",
     name: "Esteban Escobar",
-    email: "",
+    email: "esteban.escobar@studiof.com.co",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face"
   },
   {
     id: "dev_mocho",
-    idPassword: "1010159672",
+    idPassword: "Mocho",
     username: "jhon@eyder",
     role: "desarrollador",
-    name: "Jhon Eyder",
-    email: "",
+    name: "Jhon Eyder (Mocho)",
+    email: "jhon.eyder@studiof.com.co",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
   },
   {
@@ -247,11 +247,11 @@ function getActiveUsersCredentials() {
           const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uLower);
           map.set(uLower, {
             id: (baseUser && baseUser.id) || existing.id || d.id,
-            idPassword: d.idPassword || existing.idPassword || '123456',
+            idPassword: d.idPassword || existing.idPassword || (baseUser && baseUser.idPassword) || '123456',
             username: d.username,
             role: d.roleType || d.role || existing.role || 'desarrollador',
             name: (baseUser && baseUser.name) || d.name || existing.name || d.username,
-            email: d.email || existing.email || '',
+            email: d.email || existing.email || (baseUser && baseUser.email) || '',
             avatar: (baseUser && baseUser.avatar) || d.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
           });
         });
@@ -261,7 +261,7 @@ function getActiveUsersCredentials() {
     console.warn('Error reading STF_GROUP_REAL_DATA_V6 in login:', e);
   }
 
-  // 3. Usuarios de respaldo de credenciales (STF_USERS_CREDENTIALS_STORE)
+  // 3. Usuarios de Google Sheets en tiempo real (STF_USERS_CREDENTIALS_STORE) -> MÁXIMA PRIORIDAD
   try {
     const rawStore = localStorage.getItem('STF_USERS_CREDENTIALS_STORE');
     if (rawStore) {
@@ -274,11 +274,11 @@ function getActiveUsersCredentials() {
           const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uLower);
           map.set(uLower, {
             id: (baseUser && baseUser.id) || existing.id || su.id || `dev_${uLower.replace(/[^a-z0-9]/g, '_')}`,
-            idPassword: su.idPassword || existing.idPassword || '123456',
+            idPassword: su.idPassword !== undefined && su.idPassword !== '' ? su.idPassword : (existing.idPassword || '123456'),
             username: su.username,
             role: su.role || existing.role || 'desarrollador',
-            name: (baseUser && baseUser.name) || existing.name || su.name || su.username,
-            email: su.email || existing.email || '',
+            name: su.name || (baseUser && baseUser.name) || existing.name || su.username,
+            email: su.email || existing.email || (baseUser && baseUser.email) || '',
             avatar: (baseUser && baseUser.avatar) || existing.avatar || su.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
           });
         });
@@ -307,11 +307,14 @@ function renderDevChips() {
   }).join('');
 }
 
-// Consulta silenciosa en segundo plano a Google Sheets (pestaña Usuarios)
-async function autoPullUsersFromSheets() {
+// Consulta en segundo plano y en vivo a Google Sheets (pestaña Usuarios)
+async function autoPullUsersFromSheets(silent = true) {
   try {
     const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
-    const res = await fetch(`${GOOGLE_SHEETS_URL}?action=get_users&_t=${Date.now()}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`${GOOGLE_SHEETS_URL}?action=get_users&_t=${Date.now()}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (res.ok) {
       const data = await res.json();
       if (data.status === 'success' && Array.isArray(data.users) && data.users.length > 0) {
@@ -322,24 +325,25 @@ async function autoPullUsersFromSheets() {
 
         data.users.forEach(u => {
           const uName = String(u.username || '').trim();
-          const uPass = String(u.idPassword || '').trim();
+          const uPass = String(u.idPassword !== undefined ? u.idPassword : '').trim();
           const uRole = String(u.role || 'desarrollador').trim();
           const uEmail = String(u.email || '').trim();
+          const uFullName = String(u.name || '').trim();
           if (!uName) return;
 
           const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uName.toLowerCase());
           const match = credsStore.find(c => c.username && c.username.toLowerCase() === uName.toLowerCase());
           if (match) {
-            if (baseUser) {
-              match.id = baseUser.id;
-              match.name = baseUser.name;
-              match.avatar = baseUser.avatar;
-            }
             match.idPassword = uPass || match.idPassword;
             match.role = uRole || match.role;
             match.email = uEmail || match.email;
+            if (uFullName) match.name = uFullName;
+            if (baseUser) {
+              match.id = baseUser.id;
+              match.avatar = baseUser.avatar;
+            }
           } else {
-            const cleanName = (baseUser && baseUser.name) || uName.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const cleanName = uFullName || (baseUser && baseUser.name) || uName.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             credsStore.push({
               id: (baseUser && baseUser.id) || `dev_${uName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
               idPassword: uPass || (baseUser && baseUser.idPassword) || '123456',
@@ -354,11 +358,16 @@ async function autoPullUsersFromSheets() {
 
         localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(credsStore));
         renderDevChips();
+        if (!silent) {
+          showLoginToast(`☁️ Credenciales sincronizadas en vivo con Google Sheets (${data.users.length} usuarios)`);
+        }
+        return data.users;
       }
     }
   } catch (err) {
     console.warn('[login.js] Verificación silenciosa con Sheets:', err);
   }
+  return null;
 }
 
 function selectDevPreset(devId) {
@@ -377,46 +386,79 @@ function selectDevPreset(devId) {
   showLoginToast(`Credenciales cargadas: ${user.name} (${user.username}) · Rol: ${user.role}`);
 }
 
-// Form Submission & Redirect with Columna 2 & Columna 3 Anchoring
-function handleLoginSubmit(e) {
+// Form Submission & Redirect with Real-Time Google Sheets Fallback Coordination
+async function handleLoginSubmit(e) {
   e.preventDefault();
 
   const enteredUser = (document.getElementById('loginEmail')?.value || '').trim();
   const enteredPass = (document.getElementById('loginPassword')?.value || '').trim();
   const btn = document.getElementById('btnSignIn');
+  const originalBtnHtml = btn ? btn.innerHTML : 'Iniciar Sesión';
 
   if (!enteredUser || !enteredPass) {
     showLoginToast('Por favor completa todos los campos');
     return;
   }
 
-  // 1. Validar Usuario (Columna 2 de Google Sheets o Correo en Columna 4)
+  // 1. Primer intento: Validar con credenciales locales en memoria
   const normalizedUser = enteredUser.toLowerCase();
-  const allUsers = getActiveUsersCredentials();
-  const matchedUser = allUsers.find(u => 
+  let allUsers = getActiveUsersCredentials();
+  let matchedUser = allUsers.find(u => 
     (u.username && u.username.toLowerCase() === normalizedUser) || 
     (u.email && u.email.toLowerCase() === normalizedUser) ||
     (u.id && u.id.toLowerCase() === normalizedUser)
   );
 
+  let isPasswordValid = matchedUser && String(matchedUser.idPassword).trim() === enteredPass;
+
+  // 2. Si no coincide el usuario o la contraseña, consultar INMEDIATAMENTE a Google Sheets en tiempo real
+  // Esto garantiza que si el admin recién editó el Excel/Google Sheets, el dev ingrese sin problemas
+  if (!matchedUser || !isPasswordValid) {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando en vivo con Google Sheets...`;
+    }
+
+    try {
+      await autoPullUsersFromSheets(true);
+      allUsers = getActiveUsersCredentials();
+      matchedUser = allUsers.find(u => 
+        (u.username && u.username.toLowerCase() === normalizedUser) || 
+        (u.email && u.email.toLowerCase() === normalizedUser) ||
+        (u.id && u.id.toLowerCase() === normalizedUser)
+      );
+      isPasswordValid = matchedUser && String(matchedUser.idPassword).trim() === enteredPass;
+    } catch(err) {
+      console.warn("Live sheets check error:", err);
+    }
+  }
+
+  // 3. Evaluar resultado final tras verificación en tiempo real
   if (!matchedUser) {
-    showLoginToast('⚠️ Usuario no encontrado. Verifica el usuario ingresado (Columna 2)');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+    showLoginToast('⚠️ Usuario no encontrado. Verifica la Columna 2 (Usuario_Logueo) en Google Sheets');
     return;
   }
 
-  // 2. Validar ID / Contraseña (Columna 1 de Google Sheets)
-  if (String(matchedUser.idPassword).trim() !== enteredPass) {
-    showLoginToast('🔒 Contraseña / ID incorrecto para ' + matchedUser.name + ' (Columna 1)');
+  if (!isPasswordValid) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+    showLoginToast('🔒 Contraseña / ID incorrecto para ' + matchedUser.name + '. Verifica la Columna 1 en Google Sheets');
     return;
   }
 
-  // Visual button loading state
+  // Visual button loading state for access approval
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando Acceso...`;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> ¡Acceso Concedido!...`;
   }
 
-  // 3. ANCLAR COLUMNA 2 (Usuario_Logueo) Y COLUMNA 3 (Rol) AL SISTEMA
+  // 4. ANCLAR COLUMNA 2 (Usuario_Logueo) Y COLUMNA 3 (Rol) AL SISTEMA
   const sessionUser = {
     id: matchedUser.id,
     name: matchedUser.name,
@@ -445,7 +487,7 @@ function handleLoginSubmit(e) {
         developer: matchedUser.name,
         eventType: 'LOGIN_EXITOSO',
         appName: 'Portal de Ingeniería',
-        description: `Ingreso autenticado: Usuario [${matchedUser.username}] | Rol [${matchedUser.role}]`,
+        description: `Ingreso autenticado en vivo: Usuario [${matchedUser.username}] | Rol [${matchedUser.role}]`,
         version: 'v2.6'
       })
     }).catch(() => {});
@@ -727,6 +769,9 @@ if (typeof document !== 'undefined') {
 
       renderDevChips();
       autoPullUsersFromSheets();
+      setInterval(() => {
+        autoPullUsersFromSheets(true);
+      }, 20000);
 
       // Keyboard shortcut to toggle lamp
       document.addEventListener('keydown', (e) => {

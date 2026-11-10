@@ -11391,6 +11391,13 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
   html += `
       </tbody>
     </table>
+    <div class="cal-color-legend">
+      <span class="cal-legend-title"><strong>Convención Visual STF:</strong></span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-red"></span> <strong>Rojo:</strong> Días festivos</span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-yellow"></span> <strong>Amarillo:</strong> Día actual en vivo</span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-green"></span> <strong>Verde:</strong> Tareas y compromisos reuniones</span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-grey"></span> <strong>Gris:</strong> Días domingos</span>
+    </div>
   `;
 
   container.innerHTML = html;
@@ -11509,6 +11516,22 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
     // Filter tasks for this cell: NO scheduled activities on Sundays or Holidays!
     const cellTasks = isNonWorking ? [] : scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
 
+    // Demarcación cromática automatizada según directriz visual STF:
+    // ROJO: Días festivos
+    // AMARILLO: Día actual en vivo
+    // VERDE: Las tareas y compromiso reuniones estipuladas
+    // GRIS: Los días domingos
+    let demarcClass = '';
+    if (isSunday) {
+      demarcClass = 'cal-demarc-sunday';
+    } else if (hol.isHoliday) {
+      demarcClass = 'cal-demarc-holiday';
+    } else if (isToday) {
+      demarcClass = cellTasks.length > 0 ? 'cal-demarc-today cal-demarc-tasks' : 'cal-demarc-today';
+    } else if (cellTasks.length > 0) {
+      demarcClass = 'cal-demarc-tasks';
+    }
+
     let restClass = '';
     let restBadge = '';
     if (isSunday) {
@@ -11520,7 +11543,7 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
     }
 
     html += `
-      <div class="o-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${restClass}"
+      <div class="o-month-cell ${isOtherMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''} ${restClass} ${demarcClass}"
            data-drop-date="${iso}"
            ondragover="handleCalendarDragOver(event)"
            ondragleave="handleCalendarDragLeave(event)"
@@ -11566,6 +11589,15 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
   }
 
   html += `</div>`;
+  html += `
+    <div class="cal-color-legend">
+      <span class="cal-legend-title"><strong>Convención Visual STF:</strong></span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-red"></span> <strong>Rojo:</strong> Días festivos</span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-yellow"></span> <strong>Amarillo:</strong> Día actual en vivo</span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-green"></span> <strong>Verde:</strong> Tareas y compromisos reuniones</span>
+      <span class="cal-legend-item"><span class="cal-legend-box box-grey"></span> <strong>Gris:</strong> Días domingos</span>
+    </div>
+  `;
   container.innerHTML = html;
 }
 
