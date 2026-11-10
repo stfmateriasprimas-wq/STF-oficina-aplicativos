@@ -6,8 +6,9 @@
 
 let appState = getStoredData();
 if (appState) {
-  // Asegurar tareas e integraciones limpias en 0 para lanzamiento a prueba en planta
-  appState.integrations = [];
+  if (!Array.isArray(appState.integrations)) {
+    appState.integrations = [];
+  }
   if (typeof sanitizeAndDeduplicateDevelopers === 'function' && Array.isArray(appState.developers)) {
     appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
   }

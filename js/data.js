@@ -513,8 +513,21 @@ function getStoredData() {
             }
           });
         }
-        // Tareas en 0 para el lanzamiento a prueba en planta
-        parsed.integrations = [];
+        // Mantener integraciones asignadas por el Super Admin (o inicializar array vacío)
+        if (!Array.isArray(parsed.integrations)) {
+          parsed.integrations = [];
+        } else {
+          parsed.integrations.forEach(item => {
+            if (!item.appName && item.appId) {
+              const app = (parsed.applications || []).find(a => a.id === item.appId);
+              if (app) item.appName = app.name;
+            }
+            if (!item.devName && item.devId) {
+              const dev = (parsed.developers || []).find(d => d.id === item.devId);
+              if (dev) item.devName = dev.name;
+            }
+          });
+        }
         purgePhantomAppsFromState(parsed);
         saveData(parsed);
         return parsed;
