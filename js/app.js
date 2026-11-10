@@ -3685,17 +3685,34 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
 
   // 4. Gradientes dinámicos para las barras (resaltando la columna elegida o el pico récord)
   const ctx2d = canvas.getContext('2d');
+  const isDark = typeof document !== 'undefined' && document.body.classList.contains('dark-mode');
+
   const normGrad = ctx2d.createLinearGradient(0, 250, 0, 30);
-  normGrad.addColorStop(0, '#DBEAFE');
-  normGrad.addColorStop(1, '#93C5FD');
+  if (isDark) {
+    normGrad.addColorStop(0, '#1E3A8A');
+    normGrad.addColorStop(1, '#3B82F6');
+  } else {
+    normGrad.addColorStop(0, '#DBEAFE');
+    normGrad.addColorStop(1, '#93C5FD');
+  }
 
   const overGrad = ctx2d.createLinearGradient(0, 250, 0, 30);
-  overGrad.addColorStop(0, '#C7D2FE');
-  overGrad.addColorStop(1, '#818CF8');
+  if (isDark) {
+    overGrad.addColorStop(0, '#312E81');
+    overGrad.addColorStop(1, '#6366F1');
+  } else {
+    overGrad.addColorStop(0, '#C7D2FE');
+    overGrad.addColorStop(1, '#818CF8');
+  }
 
   const peakGrad = ctx2d.createLinearGradient(0, 250, 0, 15);
-  peakGrad.addColorStop(0, '#2563EB');
-  peakGrad.addColorStop(1, '#4E65FF');
+  if (isDark) {
+    peakGrad.addColorStop(0, '#2563EB');
+    peakGrad.addColorStop(1, '#60A5FA');
+  } else {
+    peakGrad.addColorStop(0, '#2563EB');
+    peakGrad.addColorStop(1, '#4E65FF');
+  }
 
   const backgroundColors = values.map((val, idx) => {
     if (idx === activeHighlightIdx && val >= 0) return peakGrad;
@@ -3704,9 +3721,9 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
   });
 
   const hoverColors = values.map((val, idx) => {
-    if (idx === activeHighlightIdx) return '#1D4ED8';
-    if (val >= targetBenchmark) return '#6366F1';
-    return '#60A5FA';
+    if (idx === activeHighlightIdx) return isDark ? '#3B82F6' : '#1D4ED8';
+    if (val >= targetBenchmark) return isDark ? '#818CF8' : '#6366F1';
+    return isDark ? '#60A5FA' : '#60A5FA';
   });
 
   const backgroundCapsules = values.map(() => maxY);
@@ -3748,7 +3765,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
           const textCenterX = badgeX + (totalBadgeW / 2);
           const badgeY = Math.max(6, (bar.y || 32) - 32);
 
-          c.shadowColor = 'rgba(37, 99, 235, 0.35)';
+          c.shadowColor = isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(37, 99, 235, 0.35)';
           c.shadowBlur = 10;
           c.shadowOffsetY = 3;
           c.fillStyle = isColFocused ? '#1D4ED8' : '#4E65FF';
@@ -3771,7 +3788,9 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
           c.fillText(text, textCenterX, badgeY + (badgeH / 2));
         } else if (val >= 0) {
           c.font = '800 12px "Plus Jakarta Sans", sans-serif';
-          c.fillStyle = val >= targetBenchmark ? '#1E293B' : '#475569';
+          c.fillStyle = isDark
+            ? (val >= targetBenchmark ? '#F8FAFC' : '#CBD5E1')
+            : (val >= targetBenchmark ? '#1E293B' : '#475569');
           c.textAlign = 'center';
           c.textBaseline = 'bottom';
           c.fillText(`${val}`, bar.x || 0, Math.max(22, (bar.y || 14) - 6));
@@ -3792,8 +3811,8 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
           type: 'bar',
           label: 'Capacidad de Fondo',
           data: backgroundCapsules,
-          backgroundColor: 'rgba(226, 232, 240, 0.45)',
-          hoverBackgroundColor: 'rgba(226, 232, 240, 0.55)',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(226, 232, 240, 0.45)',
+          hoverBackgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.55)',
           borderRadius: 12,
           borderSkipped: false,
           maxBarThickness: isMobileView ? 44 : 52,
@@ -3918,7 +3937,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
             maxRotation: 0,
             minRotation: 0,
             autoSkip: false,
-            color: '#334155',
+            color: isDark ? '#F1F5F9' : '#334155',
             font: { family: 'Plus Jakarta Sans', size: isMobileView ? 11 : 12, weight: '700' },
             padding: 6
           }
@@ -3930,12 +3949,12 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
           ticks: {
             stepSize: maxY <= 6 ? 1 : (maxY <= 12 ? 2 : Math.max(2, Math.round(maxY / 5))),
             precision: 0,
-            color: '#64748B',
+            color: isDark ? '#94A3B8' : '#64748B',
             font: { family: 'Plus Jakarta Sans', size: isMobileView ? 11 : 11.5, weight: '600' },
             callback: value => value === 0 ? '0' : `${value} mods`
           },
           grid: {
-            color: 'rgba(226, 232, 240, 0.85)',
+            color: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.85)',
             borderDash: [4, 4]
           }
         }
@@ -7840,7 +7859,11 @@ function applyTheme(theme, showNotice = false) {
 
   // Actualizar gráficos dinámicos con la paleta de modo oscuro
   if (typeof updateOverviewChart === 'function') updateOverviewChart();
-  if (typeof initVelocityBarChart === 'function') initVelocityBarChart();
+  if (typeof updateVelocitySection === 'function') {
+    updateVelocitySection(currentVelocityPeriod, currentVelocityDev, true);
+  } else if (typeof initVelocityBarChart === 'function') {
+    initVelocityBarChart();
+  }
 
   if (showNotice && typeof showToast === 'function') {
     showToast(isDark ? '🌙 Modo Oscuro Activado' : '☀️ Modo Claro Activado', 'info');

@@ -14824,13 +14824,73 @@ body.dark-mode .header-stat-chip {
 
 /* 6. Stacked Deck of Cards */
 body.dark-mode .deck-card {
-  background: #162035 !important;
+  background: #111827 !important;
   border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.6) !important;
 }
 
+body.dark-mode .deck-card-body {
+  background: #111827 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .deck-tab-active {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
 body.dark-mode .deck-title {
   color: #F8FAFC !important;
+}
+
+body.dark-mode .deck-badge-pill {
+  background: #1E293B !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #93C5FD !important;
+}
+
+body.dark-mode .deck-cycle-controls {
+  background: #1E293B !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode .deck-cycle-controls span {
+  color: #F1F5F9 !important;
+}
+
+body.dark-mode .deck-mini-arrow {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .deck-mini-arrow:hover {
+  color: #FFFFFF !important;
+}
+
+body.dark-mode .deck-stat-label {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .deck-stat-number {
+  color: #F8FAFC !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .deck-footer-info {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .dev-lead-pill {
+  color: #E2E8F0 !important;
+}
+
+body.dark-mode .dev-lead-pill span {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .delivery-date-pill {
+  background: #1E293B !important;
+  color: #94A3B8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 body.dark-mode .deck-tab-pill {
@@ -14845,7 +14905,7 @@ body.dark-mode .deck-tab-pill.active {
   border-color: #6366F1 !important;
 }
 
-/* 7. Interactive Developer Cards */
+/* 7. Interactive Developer Cards & Active Focus Strip */
 body.dark-mode .dev-card-interactive {
   background: #162035 !important;
   border-color: rgba(255, 255, 255, 0.09) !important;
@@ -14875,7 +14935,182 @@ body.dark-mode .dci-meta-val {
   color: #F8FAFC !important;
 }
 
-/* 8. Systems Table */
+/* Strip inferior de auditoría de desarrollador activo */
+body.dark-mode .team-footer-strip {
+  background: linear-gradient(135deg, #111827 0%, #0F172A 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-mode .tfs-text {
+  color: #E2E8F0 !important;
+}
+
+body.dark-mode .tfs-text strong {
+  color: #60A5FA !important;
+}
+
+body.dark-mode .tfs-text span {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .tfs-score-pill {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  color: #34D399 !important;
+}
+
+body.dark-mode .dev-projects-tags-list {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .dev-project-tag-pill {
+  background: #1E293B !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .dev-project-tag-pill:hover {
+  background: #25334E !important;
+  border-color: #6366F1 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-mode .tag-prog-badge {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #93C5FD !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
+body.dark-mode .tag-group-badge {
+  background: rgba(168, 85, 247, 0.2) !important;
+  color: #D8B4FE !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+}
+
+/* 7.1 Velocity Executive KPI Cards & Sprints Breakdown */
+body.dark-mode .vem-card {
+  background: linear-gradient(135deg, #111827 0%, #0F172A 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .vem-card:hover {
+  border-color: #6366F1 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark-mode .vem-card-highlight {
+  background: linear-gradient(135deg, #1A1D36 0%, #111827 100%) !important;
+  border: 1.5px solid rgba(168, 85, 247, 0.35) !important;
+  box-shadow: 0 6px 22px rgba(168, 85, 247, 0.15) !important;
+}
+
+body.dark-mode .vem-label {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .vem-val.text-blue {
+  color: #60A5FA !important;
+}
+
+body.dark-mode .vem-val.text-purple {
+  color: #C084FC !important;
+}
+
+body.dark-mode .vem-val.text-dark {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .vem-sub {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .vem-badge.badge-green {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+body.dark-mode .vem-badge.badge-purple {
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #D8B4FE !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+}
+
+body.dark-mode .vem-badge.badge-blue {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #93C5FD !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
+/* Desglose Mensual / Sprints */
+body.dark-mode .velocity-sprint-digest {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .v-digest-chip {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .v-digest-chip:hover {
+  background: #1E293B !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25) !important;
+}
+
+body.dark-mode .v-digest-chip.peak {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, #111827 100%) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+body.dark-mode .v-digest-chip.active-highlight {
+  background: #1E293B !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4), 0 4px 16px rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-mode .vdc-title {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .vdc-val {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .v-digest-chip.peak .vdc-val {
+  color: #C084FC !important;
+}
+
+body.dark-mode .vdc-badge.over {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+body.dark-mode .vdc-badge.exact {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #93C5FD !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+body.dark-mode .vdc-badge.under {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #FBBF24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+body.dark-mode .vdc-badge.peak-badge {
+  background: rgba(168, 85, 247, 0.2) !important;
+  color: #E9D5FF !important;
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+}
+
+/* 8. Systems Table (Alto Contraste y Hover Libre de Fondos Blancos) */
 body.dark-mode .systems-table {
   color: #F1F5F9 !important;
 }
@@ -14889,14 +15124,148 @@ body.dark-mode .systems-table th {
 body.dark-mode .systems-table td {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
   color: #E2E8F0 !important;
+  background: transparent;
 }
 
-body.dark-mode .systems-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04) !important;
+body.dark-mode .systems-table tr:hover td,
+body.dark-mode .systems-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
-body.dark-mode .system-name-cell strong {
+body.dark-mode .systems-table td strong,
+body.dark-mode .system-name-cell strong,
+body.dark-mode .sys-info strong {
   color: #F8FAFC !important;
+}
+
+body.dark-mode .sys-info span {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .dev-cell span {
+  color: #E2E8F0 !important;
+}
+
+body.dark-mode .systems-table td span {
+  color: #CBD5E1;
+}
+
+body.dark-mode .progress-header-text {
+  color: #E2E8F0 !important;
+}
+
+body.dark-mode .progress-header-text span:first-child {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .progress-header-text span:last-child {
+  color: #60A5FA !important;
+  font-weight: 800 !important;
+}
+
+body.dark-mode .mini-bar-track {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .action-row-btn {
+  background: #1E293B !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #93C5FD !important;
+}
+
+body.dark-mode .action-row-btn:hover {
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  border-color: #2563EB !important;
+}
+
+/* Status Pills */
+body.dark-mode .status-ontime {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+body.dark-mode .status-risk {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #FBBF24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+body.dark-mode .status-delayed {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #F87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+body.dark-mode .status-done {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #A5B4FC !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+/* Tarjetas Horizontales de Sistemas (Portfolio View) */
+body.dark-mode .h-system-row-card {
+  background: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-mode .h-system-row-card:hover {
+  border-color: #6366F1 !important;
+  background: #162035 !important;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-mode .h-system-row-card.is-risk {
+  background: linear-gradient(90deg, #1C1217 0%, #111827 100%) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+body.dark-mode .h-system-row-card.is-prod {
+  background: linear-gradient(90deg, #0F1C18 0%, #111827 100%) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+body.dark-mode .h-code-tag {
+  background: #1E293B !important;
+  color: #93C5FD !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .h-cat-tag {
+  color: #94A3B8 !important;
+}
+
+body.dark-mode .h-sys-title {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .h-phase-name-text {
+  color: #E2E8F0 !important;
+}
+
+body.dark-mode .h-phase-pill-num {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #A5B4FC !important;
+}
+
+body.dark-mode .h-sys-status.status-done {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+body.dark-mode .h-sys-status.status-ontime {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34D399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+body.dark-mode .h-sys-status.status-risk {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #F87171 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
 /* 9. Delivery Calendar (Oripio Layout) */
