@@ -261,6 +261,24 @@
       if (overlay.classList.contains('active')) applyDeviceGeometry();
     });
 
+    // Botón flotante para abrir el simulador en escritorio (oculto automáticamente en móviles)
+    if (!document.getElementById('stfMobileFrameTrigger')) {
+      const trigger = document.createElement('button');
+      trigger.id = 'stfMobileFrameTrigger';
+      trigger.className = 'stf-mf-trigger';
+      trigger.type = 'button';
+      trigger.title = 'Previsualizar interfaz móvil en iPhone / Android';
+      trigger.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+          <path d="M12 18h.01"/>
+        </svg>
+        <span>Vista Móvil</span>
+      `;
+      trigger.onclick = () => toggleOverlay(true);
+      document.body.appendChild(trigger);
+    }
+
     if (window.location.search.indexOf('movil=1') !== -1) {
       toggleOverlay(true);
     }
