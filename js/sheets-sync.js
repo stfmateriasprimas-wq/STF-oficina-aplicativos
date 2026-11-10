@@ -652,6 +652,13 @@
     findDev(nameOrId) {
       if (!nameOrId || !window.appState || !Array.isArray(window.appState.developers)) return null;
       const t = String(nameOrId).toLowerCase().trim();
+      if (typeof window.resolveCanonicalDevId === 'function') {
+        const canonId = window.resolveCanonicalDevId(nameOrId);
+        if (canonId) {
+          const byCanon = window.appState.developers.find(d => d.id === canonId || (window.resolveCanonicalDevId(d.id) === canonId));
+          if (byCanon) return byCanon;
+        }
+      }
       return window.appState.developers.find(d =>
         d.id.toLowerCase() === t ||
         d.name.toLowerCase() === t ||

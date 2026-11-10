@@ -7523,6 +7523,11 @@ function handleSaveObservation(event) {
   if (typeof renderNotificationsDropdown === 'function') {
     renderNotificationsDropdown();
   }
+  if (currentViewTaskObsId && currentViewTaskObsId === taskId) {
+    setTimeout(() => {
+      openTaskObservationsModal(taskId);
+    }, 150);
+  }
   triggerNotificationAlert({
     title: '💬 Observación Registrada en Bitácora',
     message: `${task.name}: ${text.length > 80 ? text.substring(0, 80) + '...' : text}`,
