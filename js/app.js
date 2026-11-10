@@ -8370,6 +8370,8 @@ function switchView(viewName) {
   const subtitleEl = document.getElementById('mainWelcomeSubtitle');
 
   if (viewName === 'projects') {
+    // Por defecto los apartados inician cerrados cada vez que se ingresa
+    stageAccordionState = { stage_core: false, stage_qa: false, stage_prod: false };
     if (titleEl) {
       titleEl.innerHTML = isAdmin
         ? 'Portafolio de Sistemas Industriales · <span class="text-gradient">STF GROUP</span>'
@@ -10551,8 +10553,41 @@ window.getDeveloperById = getDeveloperById;
 
 let currentHorizontalStageFilter = 'all';
 
+// Estado de acordeones desplegables de etapas (por defecto cerrados al ingresar)
+let stageAccordionState = {
+  stage_core: false,
+  stage_qa: false,
+  stage_prod: false
+};
+
+function toggleStageAccordion(stageId) {
+  stageAccordionState[stageId] = !stageAccordionState[stageId];
+  const box = document.getElementById(`accordion_${stageId}`);
+  const body = document.getElementById(`body_${stageId}`);
+  const hint = document.getElementById(`hint_${stageId}`);
+  const chevron = box ? box.querySelector('.h-stage-chevron-icon') : null;
+  
+  if (box && body) {
+    const isOpen = !!stageAccordionState[stageId];
+    box.classList.toggle('is-open', isOpen);
+    box.classList.toggle('is-collapsed', !isOpen);
+    body.style.display = isOpen ? 'flex' : 'none';
+    if (hint) {
+      hint.textContent = isOpen ? 'Ocultar sistemas ▲' : 'Desplegar sistemas ▼';
+    }
+    if (chevron) {
+      chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+  }
+}
+window.toggleStageAccordion = toggleStageAccordion;
+
 function setProjectsHorizontalStage(stageId) {
   currentHorizontalStageFilter = stageId;
+  // Si selecciona una etapa específica, la abre automáticamente
+  if (stageId !== 'all') {
+    stageAccordionState[stageId] = true;
+  }
   const apps = getFilteredApplications(activeBrandFilter);
   renderPipelineView(apps);
 }
@@ -10620,91 +10655,177 @@ function renderPipelineView(apps) {
     </div>
   `;
 
-  // 2. Construcción de los Sistemas según el filtro horizontal activo
+  // 2. Construcción de los Sistemas en Recuadros Coloreados Desplegables
   let streamContentHtml = '';
 
   if (currentHorizontalStageFilter === 'stage_core') {
-    if (coreApps.length > 0) {
-      streamContentHtml = coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('');
-    } else {
-      streamContentHtml = `
-        <div class="h-stage-empty-strip">
-          <i data-lucide="code-2"></i>
-          <span>No hay sistemas en la etapa de <strong>Construcción / Desarrollo Activo</strong>.</span>
+    const isCoreOpen = true;
+    streamContentHtml = `
+      <div class="h-stage-accordion-box stage-box-core is-open" id="accordion_stage_core">
+        <div class="h-stage-accordion-header" onclick="toggleStageAccordion('stage_core')" title="Clic para desplegar / ocultar sistemas en construcción">
+          <div class="h-acc-left">
+            <span class="h-divider-badge core">1. EN CONSTRUCCIÓN</span>
+            <h4 class="h-divider-title">${coreApps.length} Sistema${coreApps.length !== 1 ? 's' : ''}</h4>
+            <span class="h-divider-sub">Arquitectura, backend, integraciones y desarrollo activo</span>
+          </div>
+          <div class="h-acc-right">
+            <span class="h-stage-status-hint" id="hint_stage_core">Ocultar sistemas ▲</span>
+            <button type="button" class="h-stage-chevron-btn" aria-label="Desplegar etapa">
+              <i data-lucide="chevron-down" class="h-stage-chevron-icon" style="transform: rotate(180deg);"></i>
+            </button>
+          </div>
         </div>
-      `;
-    }
+        <div class="h-stage-accordion-body" id="body_stage_core" style="display: flex;">
+          ${coreApps.length > 0 
+            ? coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+            : `<div class="h-stage-empty-strip">
+                 <i data-lucide="code-2"></i>
+                 <span>No hay sistemas en la etapa de <strong>Construcción / Desarrollo Activo</strong>.</span>
+               </div>`
+          }
+        </div>
+      </div>
+    `;
   } else if (currentHorizontalStageFilter === 'stage_qa') {
-    if (qaApps.length > 0) {
-      streamContentHtml = qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('');
-    } else {
-      streamContentHtml = `
-        <div class="h-stage-empty-strip">
-          <i data-lucide="flask-conical"></i>
-          <span>No hay sistemas en la etapa de <strong>Puesta en Planta / Validación</strong>.</span>
+    const isQaOpen = true;
+    streamContentHtml = `
+      <div class="h-stage-accordion-box stage-box-qa is-open" id="accordion_stage_qa">
+        <div class="h-stage-accordion-header" onclick="toggleStageAccordion('stage_qa')" title="Clic para desplegar / ocultar sistemas de puesta en planta">
+          <div class="h-acc-left">
+            <span class="h-divider-badge qa">2. PUESTA EN PLANTA</span>
+            <h4 class="h-divider-title">${qaApps.length} Sistema${qaApps.length !== 1 ? 's' : ''}</h4>
+            <span class="h-divider-sub">Validación en campo, pruebas de operarios y conectividad</span>
+          </div>
+          <div class="h-acc-right">
+            <span class="h-stage-status-hint" id="hint_stage_qa">Ocultar sistemas ▲</span>
+            <button type="button" class="h-stage-chevron-btn" aria-label="Desplegar etapa">
+              <i data-lucide="chevron-down" class="h-stage-chevron-icon" style="transform: rotate(180deg);"></i>
+            </button>
+          </div>
         </div>
-      `;
-    }
+        <div class="h-stage-accordion-body" id="body_stage_qa" style="display: flex;">
+          ${qaApps.length > 0 
+            ? qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+            : `<div class="h-stage-empty-strip">
+                 <i data-lucide="flask-conical"></i>
+                 <span><strong>2. Puesta en Planta:</strong> No hay sistemas pendientes de validación en planta en este momento (0 Sistemas).</span>
+               </div>`
+          }
+        </div>
+      </div>
+    `;
   } else if (currentHorizontalStageFilter === 'stage_prod') {
-    if (prodApps.length > 0) {
-      streamContentHtml = prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('');
-    } else {
-      streamContentHtml = `
-        <div class="h-stage-empty-strip">
-          <i data-lucide="rocket"></i>
-          <span>No hay sistemas en la etapa de <strong>Producción Activa (En Vivo)</strong>.</span>
+    const isProdOpen = true;
+    streamContentHtml = `
+      <div class="h-stage-accordion-box stage-box-prod is-open" id="accordion_stage_prod">
+        <div class="h-stage-accordion-header" onclick="toggleStageAccordion('stage_prod')" title="Clic para desplegar / ocultar sistemas en producción">
+          <div class="h-acc-left">
+            <span class="h-divider-badge prod">3. EN PRODUCCIÓN</span>
+            <h4 class="h-divider-title">${prodApps.length} Sistema${prodApps.length !== 1 ? 's' : ''}</h4>
+            <span class="h-divider-sub">Sistemas operativos en planta en producción continua</span>
+          </div>
+          <div class="h-acc-right">
+            <span class="h-stage-status-hint" id="hint_stage_prod">Ocultar sistemas ▲</span>
+            <button type="button" class="h-stage-chevron-btn" aria-label="Desplegar etapa">
+              <i data-lucide="chevron-down" class="h-stage-chevron-icon" style="transform: rotate(180deg);"></i>
+            </button>
+          </div>
         </div>
-      `;
-    }
+        <div class="h-stage-accordion-body" id="body_stage_prod" style="display: flex;">
+          ${prodApps.length > 0 
+            ? prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+            : `<div class="h-stage-empty-strip">
+                 <i data-lucide="rocket"></i>
+                 <span>No hay sistemas en la etapa de <strong>Producción Activa (En Vivo)</strong>.</span>
+               </div>`
+          }
+        </div>
+      </div>
+    `;
   } else {
-    // Modo "all": Agrupado elegante por etapas con separadores horizontales limpios
+    // Modo "all": Los 3 apartados encerrados en sus recuadros de color, CERRADOS POR DEFECTO
     let groupsHtml = [];
 
-    if (coreApps.length > 0) {
-      groupsHtml.push(`
-        <div class="h-stage-section-divider">
-          <div class="h-divider-left">
+    // 1. Recuadro NEGRO / OSCURO (En Construcción)
+    const isCoreOpen = !!stageAccordionState.stage_core;
+    groupsHtml.push(`
+      <div class="h-stage-accordion-box stage-box-core ${isCoreOpen ? 'is-open' : 'is-collapsed'}" id="accordion_stage_core">
+        <div class="h-stage-accordion-header" onclick="toggleStageAccordion('stage_core')" title="Clic para desplegar / ocultar sistemas en construcción">
+          <div class="h-acc-left">
             <span class="h-divider-badge core">1. EN CONSTRUCCIÓN</span>
-            <h4 class="h-divider-title">${coreApps.length} Sistemas</h4>
+            <h4 class="h-divider-title">${coreApps.length} Sistema${coreApps.length !== 1 ? 's' : ''}</h4>
+            <span class="h-divider-sub">Arquitectura, backend, integraciones y desarrollo activo</span>
           </div>
-          <span class="h-divider-sub">Arquitectura, backend, integraciones y desarrollo activo</span>
+          <div class="h-acc-right">
+            <span class="h-stage-status-hint" id="hint_stage_core">${isCoreOpen ? 'Ocultar sistemas ▲' : 'Desplegar sistemas ▼'}</span>
+            <button type="button" class="h-stage-chevron-btn" aria-label="Desplegar etapa">
+              <i data-lucide="chevron-down" class="h-stage-chevron-icon" style="transform: ${isCoreOpen ? 'rotate(180deg)' : 'rotate(0deg)'};"></i>
+            </button>
+          </div>
         </div>
-        ${coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
-      `);
-    }
+        <div class="h-stage-accordion-body" id="body_stage_core" style="display: ${isCoreOpen ? 'flex' : 'none'};">
+          ${coreApps.length > 0 
+            ? coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+            : `<div class="h-stage-empty-strip">
+                 <i data-lucide="code-2"></i>
+                 <span>No hay sistemas en la etapa de <strong>Construcción / Desarrollo Activo</strong>.</span>
+               </div>`
+          }
+        </div>
+      </div>
+    `);
 
-    if (qaApps.length > 0) {
-      groupsHtml.push(`
-        <div class="h-stage-section-divider">
-          <div class="h-divider-left">
+    // 2. Recuadro AMARILLO (Puesta en Planta)
+    const isQaOpen = !!stageAccordionState.stage_qa;
+    groupsHtml.push(`
+      <div class="h-stage-accordion-box stage-box-qa ${isQaOpen ? 'is-open' : 'is-collapsed'}" id="accordion_stage_qa">
+        <div class="h-stage-accordion-header" onclick="toggleStageAccordion('stage_qa')" title="Clic para desplegar / ocultar sistemas de puesta en planta">
+          <div class="h-acc-left">
             <span class="h-divider-badge qa">2. PUESTA EN PLANTA</span>
-            <h4 class="h-divider-title">${qaApps.length} Sistemas</h4>
+            <h4 class="h-divider-title">${qaApps.length} Sistema${qaApps.length !== 1 ? 's' : ''}</h4>
+            <span class="h-divider-sub">Validación en campo, pruebas de operarios y conectividad</span>
           </div>
-          <span class="h-divider-sub">Validación en campo, pruebas de operarios y conectividad</span>
+          <div class="h-acc-right">
+            <span class="h-stage-status-hint" id="hint_stage_qa">${isQaOpen ? 'Ocultar sistemas ▲' : 'Desplegar sistemas ▼'}</span>
+            <button type="button" class="h-stage-chevron-btn" aria-label="Desplegar etapa">
+              <i data-lucide="chevron-down" class="h-stage-chevron-icon" style="transform: ${isQaOpen ? 'rotate(180deg)' : 'rotate(0deg)'};"></i>
+            </button>
+          </div>
         </div>
-        ${qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
-      `);
-    } else {
-      groupsHtml.push(`
-        <div class="h-stage-empty-strip">
-          <i data-lucide="flask-conical"></i>
-          <span><strong>2. Puesta en Planta:</strong> No hay sistemas pendientes de validación en planta en este momento (0 Sistemas).</span>
+        <div class="h-stage-accordion-body" id="body_stage_qa" style="display: ${isQaOpen ? 'flex' : 'none'};">
+          ${qaApps.length > 0 
+            ? qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+            : `<div class="h-stage-empty-strip">
+                 <i data-lucide="flask-conical"></i>
+                 <span><strong>2. Puesta en Planta:</strong> No hay sistemas pendientes de validación en planta en este momento (0 Sistemas).</span>
+               </div>`
+          }
         </div>
-      `);
-    }
+      </div>
+    `);
 
-    if (prodApps.length > 0) {
-      groupsHtml.push(`
-        <div class="h-stage-section-divider">
-          <div class="h-divider-left">
+    // 3. Recuadro VERDE (En Producción)
+    const isProdOpen = !!stageAccordionState.stage_prod;
+    groupsHtml.push(`
+      <div class="h-stage-accordion-box stage-box-prod ${isProdOpen ? 'is-open' : 'is-collapsed'}" id="accordion_stage_prod">
+        <div class="h-stage-accordion-header" onclick="toggleStageAccordion('stage_prod')" title="Clic para desplegar / ocultar sistemas en producción">
+          <div class="h-acc-left">
             <span class="h-divider-badge prod">3. EN PRODUCCIÓN</span>
-            <h4 class="h-divider-title">${prodApps.length} Sistema${prodApps.length > 1 ? 's' : ''}</h4>
+            <h4 class="h-divider-title">${prodApps.length} Sistema${prodApps.length !== 1 ? 's' : ''}</h4>
+            <span class="h-divider-sub">Sistemas operativos en planta en producción continua</span>
           </div>
-          <span class="h-divider-sub">Sistemas operativos en planta en producción continua</span>
+          <div class="h-acc-right">
+            <span class="h-stage-status-hint" id="hint_stage_prod">${isProdOpen ? 'Ocultar sistemas ▲' : 'Desplegar sistemas ▼'}</span>
+            <button type="button" class="h-stage-chevron-btn" aria-label="Desplegar etapa">
+              <i data-lucide="chevron-down" class="h-stage-chevron-icon" style="transform: ${isProdOpen ? 'rotate(180deg)' : 'rotate(0deg)'};"></i>
+            </button>
+          </div>
         </div>
-        ${prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
-      `);
-    }
+        <div class="h-stage-accordion-body" id="body_stage_prod" style="display: ${isProdOpen ? 'flex' : 'none'};">
+          ${prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')}
+        </div>
+      </div>
+    `);
 
     streamContentHtml = groupsHtml.join('');
   }

@@ -15953,3 +15953,158 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
   position: absolute !important;
   left: -99999px !important;
 }
+
+
+/* ==========================================================================
+   RECUADROS DESPLEGABLES POR ETAPA EN PORTAFOLIO DE SISTEMAS
+   - NEGRO / OSCURO: 1. En Construccion
+   - AMARILLO: 2. Puesta en Planta
+   - VERDE: 3. En Produccion
+   ========================================================================== */
+.h-stage-accordion-box {
+  border-radius: 16px;
+  background: #FFFFFF;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 1. Recuadro NEGRO / OSCURO (En Construccion) */
+.h-stage-accordion-box.stage-box-core {
+  border: 2.5px solid #0F172A !important;
+  background: #FFFFFF;
+}
+
+/* 2. Recuadro AMARILLO (Puesta en Planta) */
+.h-stage-accordion-box.stage-box-qa {
+  border: 2.5px solid #F59E0B !important;
+  background: #FFFDF5;
+}
+
+/* 3. Recuadro VERDE (En Produccion) */
+.h-stage-accordion-box.stage-box-prod {
+  border: 2.5px solid #10B981 !important;
+  background: #F7FEFA;
+}
+
+/* Encabezado Clicable del Acordeon */
+.h-stage-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+  gap: 14px;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.stage-box-core .h-stage-accordion-header:hover {
+  background: #F8FAFC;
+}
+.stage-box-qa .h-stage-accordion-header:hover {
+  background: #FEFCE8;
+}
+.stage-box-prod .h-stage-accordion-header:hover {
+  background: #ECFDF5;
+}
+
+.h-stage-accordion-box.is-open .h-stage-accordion-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+.stage-box-core.is-open .h-stage-accordion-header {
+  border-bottom: 1.5px solid #0F172A;
+}
+.stage-box-qa.is-open .h-stage-accordion-header {
+  border-bottom: 1.5px solid #F59E0B;
+}
+.stage-box-prod.is-open .h-stage-accordion-header {
+  border-bottom: 1.5px solid #10B981;
+}
+
+.h-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.h-acc-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.h-stage-status-hint {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #64748B;
+  transition: color 0.15s ease;
+}
+.h-stage-chevron-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #334155;
+  transition: all 0.2s ease;
+}
+.h-stage-accordion-header:hover .h-stage-chevron-btn {
+  transform: scale(1.06);
+}
+.h-stage-chevron-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.25s ease;
+}
+
+/* Cuerpo del Acordeon con las Tarjetas de Sistemas */
+.h-stage-accordion-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Adaptacion a Modo Oscuro */
+body.dark-mode .h-stage-accordion-box.stage-box-core {
+  border: 2.5px solid #64748B !important;
+  background: #111827 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+body.dark-mode .stage-box-core .h-stage-accordion-header:hover {
+  background: #1E293B !important;
+}
+
+body.dark-mode .h-stage-accordion-box.stage-box-qa {
+  border: 2.5px solid #F59E0B !important;
+  background: rgba(245, 158, 11, 0.06) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+body.dark-mode .stage-box-qa .h-stage-accordion-header:hover {
+  background: rgba(245, 158, 11, 0.12) !important;
+}
+
+body.dark-mode .h-stage-accordion-box.stage-box-prod {
+  border: 2.5px solid #10B981 !important;
+  background: rgba(16, 185, 129, 0.06) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+body.dark-mode .stage-box-prod .h-stage-accordion-header:hover {
+  background: rgba(16, 185, 129, 0.12) !important;
+}
+
+body.dark-mode .h-stage-chevron-btn {
+  background: #1E293B !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F8FAFC !important;
+}
+body.dark-mode .h-stage-status-hint {
+  color: #94A3B8 !important;
+}
