@@ -15939,3 +15939,17 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
   background: #3B4D72;
 }
+
+
+/* Eliminar definitivamente el boton flotante Vista Movil */
+#stfMobileFrameTrigger,
+.stf-mf-trigger {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: -99999px !important;
+}
