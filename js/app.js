@@ -7536,13 +7536,32 @@ function renderTaskObservationsModalContent(taskId) {
   };
   const diag = calculateIntegrationTimeProgress(task);
 
-  // Título y Subtítulo del Modal
+  // Formateo completo del Día y Hora de la Reunión de Revisión de Tarea
+  const meetingTime12h = formatTime12h(task.deliveryTime || '10:00');
+  let meetingFullDayText = 'Fecha no asignada';
+  let meetingDayShort = '';
+  if (task.deadline) {
+    const dObj = parseSafeDate(task.deadline);
+    if (dObj) {
+      const daysEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const monthsEs = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+      const dayName = daysEs[dObj.getDay()];
+      meetingDayShort = dayName;
+      meetingFullDayText = `${dayName}, ${dObj.getDate()} de ${monthsEs[dObj.getMonth()]} de ${dObj.getFullYear()}`;
+    } else {
+      meetingFullDayText = String(task.deadline).substring(0, 10);
+    }
+  }
+
+  // Título y Subtítulo del Modal con Día y Hora de Reunión
   const titleEl = document.getElementById('taskObsModalTitle');
   const subEl = document.getElementById('taskObsModalSubtitle');
   if (titleEl) titleEl.textContent = `[${app.code}] ${task.name}`;
-  if (subEl) subEl.textContent = `Sistema ${app.name} · Desarrollador: ${dev.name} · Plazo límite: ${formatShortDate(task.deadline)}`;
+  if (subEl) {
+    subEl.innerHTML = `Sistema <strong>${app.name}</strong> · Desarrollador: <strong>${dev.name}</strong> · 📅 <strong>Reunión:</strong> ${meetingFullDayText} · ⏰ <strong>Hora:</strong> ${meetingTime12h}`;
+  }
 
-  // Hero Card con resumen de la tarea
+  // Hero Card con resumen de la tarea y banner destacado de reunión
   const heroEl = document.getElementById('taskObsModalHero');
   if (heroEl) {
     heroEl.innerHTML = `
@@ -7569,8 +7588,35 @@ function renderTaskObservationsModalContent(taskId) {
           </span>
         </div>
       </div>
+
+      <!-- Banner Destacado: Día y Hora de la Reunión para Revisar la Tarea -->
+      <div class="task-obs-meeting-highlight">
+        <div class="tomh-badge-icon">
+          <i data-lucide="calendar-check" style="width: 22px; height: 22px;"></i>
+        </div>
+        <div class="tomh-content">
+          <div class="tomh-tag-row">
+            <span class="tomh-pill-type">🤝 REUNIÓN DE REVISIÓN Y ENTREGA DE TAREA</span>
+            <span class="tomh-status-tag ${task.status === 'evaluated' ? 'evaluated' : (diag.isOverdue ? 'overdue' : 'scheduled')}">
+              ${task.status === 'evaluated' ? '✅ Revisión Realizada & Aprobada' : (diag.isOverdue ? '⚠️ Cita en Retraso' : '🔔 Reunión Programada')}
+            </span>
+          </div>
+          <div class="tomh-schedule-row">
+            <div class="tomh-item tomh-date-box">
+              <span class="tomh-lbl">📅 Día de Reunión:</span>
+              <strong class="tomh-val">${meetingFullDayText}</strong>
+            </div>
+            <div class="tomh-item tomh-time-box">
+              <span class="tomh-lbl">⏰ Hora de Entrega:</span>
+              <span class="tomh-val-time">${meetingTime12h}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="task-obs-hero-dates">
         <span><strong>Plazo programado:</strong> ${formatShortDate(task.startDate)} → ${formatShortDate(task.deadline)}</span>
+        <span><strong>Cita oficial:</strong> ${meetingDayShort ? meetingDayShort + ', ' : ''}${formatShortDate(task.deadline)} a las ${meetingTime12h}</span>
         <span><strong>Estado actual:</strong> ${task.status === 'evaluated' ? 'Auditada & Aprobada' : (task.status === 'in_progress' ? 'En Desarrollo' : 'Pendiente')}</span>
       </div>
     `;

@@ -12983,6 +12983,151 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   flex-wrap: wrap;
 }
 
+/* Banner Destacado: Día y Hora de Reunión en Modal de Tarea */
+.task-obs-meeting-highlight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  border: 1.5px solid #A7F3D0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  margin: 4px 0 2px 0;
+}
+
+.tomh-badge-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #10B981;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+}
+
+.tomh-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tomh-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tomh-pill-type {
+  font-size: 10.5px;
+  font-weight: 850;
+  color: #065F46;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tomh-status-tag {
+  font-size: 11px;
+  font-weight: 750;
+  padding: 2.5px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tomh-status-tag.scheduled {
+  background: #E0E7FF;
+  color: #3730A3;
+  border: 1px solid #C7D2FE;
+}
+
+.tomh-status-tag.evaluated {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.tomh-status-tag.overdue {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+
+.tomh-schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tomh-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tomh-lbl {
+  color: #047857;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.tomh-val {
+  color: #064E3B;
+  font-weight: 850;
+  font-size: 13.5px;
+}
+
+.tomh-val-time {
+  background: #047857;
+  color: #FFFFFF;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 850;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 4px rgba(4, 120, 87, 0.35);
+  display: inline-block;
+}
+
+/* Modo Oscuro para el Banner de Reunión */
+body.dark-mode .task-obs-meeting-highlight {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(5, 150, 105, 0.08) 100%) !important;
+  border: 1.5px solid rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-mode .tomh-badge-icon {
+  background: #059669 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 10px rgba(5, 150, 105, 0.4) !important;
+}
+
+body.dark-mode .tomh-pill-type {
+  color: #34D399 !important;
+}
+
+body.dark-mode .tomh-lbl {
+  color: #A7F3D0 !important;
+}
+
+body.dark-mode .tomh-val {
+  color: #FFFFFF !important;
+}
+
+body.dark-mode .tomh-val-time {
+  background: #10B981 !important;
+  color: #0F172A !important;
+  font-weight: 900 !important;
+}
+
+
 .task-obs-modal-toolbar {
   display: flex;
   justify-content: space-between;
