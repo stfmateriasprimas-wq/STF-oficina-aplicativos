@@ -240,7 +240,10 @@ let velocityChartInstance = null;
 
 // Helpers
 function calculateAppProgress(app) {
-  if (!app.phases || app.phases.length === 0) return 0;
+  if (!app) return 0;
+  if (!app.phases || app.phases.length === 0) {
+    return Number(app.progress) || 0;
+  }
   const completedWeight = app.phases.reduce((sum, phase) => {
     return phase.completed ? sum + (Number(phase.weight) || 0) : sum;
   }, 0);
@@ -2453,7 +2456,7 @@ function calculateSystemRealMetrics(app) {
   // 3. Avance Real Actual Neto (sumando positivos y restando penalizaciones)
   let netRealProgress = phasesWeight >= 100
     ? 100
-    : Math.min(100, Math.max(10, Math.round(phasesWeight + (auditPointsBonus * 0.25) - overduePenalty)));
+    : Math.min(100, Math.max(0, Math.round(phasesWeight + (auditPointsBonus * 0.25) - overduePenalty)));
 
   // 4. Meta proyectada hacia el deadline del aplicativo
   const refDate = getSystemReferenceDate();
@@ -2546,13 +2549,13 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
           P
         ];
       } else {
-        const startP = Math.max(20, Math.round(P - 15));
+        const startP = Math.max(0, Math.min(P, Math.round(P * 0.35)));
         realData = [
           startP,
-          Math.round(startP + 3),
-          Math.round(startP + 6),
-          Math.round(startP + 9),
-          Math.round(startP + 12),
+          Math.round(startP + (P - startP) * 0.2),
+          Math.round(startP + (P - startP) * 0.4),
+          Math.round(startP + (P - startP) * 0.6),
+          Math.round(startP + (P - startP) * 0.8),
           P
         ];
       }
@@ -2561,7 +2564,7 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
       targetMetric = '70.0%';
       realLabel = `Avance Real (${dev.name})`;
       targetLabel = `Meta Proyectada (${dev.name})`;
-      const startP = Math.max(25, devAvgProgress - 14);
+      const startP = Math.max(0, Math.min(devAvgProgress, Math.round(devAvgProgress * 0.6)));
       realData = [
         startP,
         Math.round(startP + 2.8),
@@ -3313,11 +3316,11 @@ const STF_VELOCITY_DATA = {
     month_nov: {
       name: 'Noviembre 2026 (Mes Actual)',
       labels: ['Sem 1 (1-7 Nov)', 'Sem 2 (8-14 Nov)', 'Sem 3 (15-21 Nov)', 'Sem 4 (22-30 Nov)'],
-      all: { mods: [6, 8, 7, 6], hours: [44, 58, 50, 42] },
-      dev_jg: { mods: [3, 4, 3, 2], hours: [22, 28, 22, 16] },
-      dev_jd: { mods: [1, 2, 2, 2], hours: [8, 14, 13, 13] },
-      dev_mocho: { mods: [1, 1, 1, 1], hours: [8, 8, 8, 8] },
-      dev_ee: { mods: [1, 1, 1, 1], hours: [6, 8, 7, 5] }
+      all: { mods: [0, 0, 0, 0], hours: [0, 0, 0, 0] },
+      dev_jg: { mods: [0, 0, 0, 0], hours: [0, 0, 0, 0] },
+      dev_jd: { mods: [0, 0, 0, 0], hours: [0, 0, 0, 0] },
+      dev_mocho: { mods: [0, 0, 0, 0], hours: [0, 0, 0, 0] },
+      dev_ee: { mods: [0, 0, 0, 0], hours: [0, 0, 0, 0] }
     },
     month_oct: {
       name: 'Octubre 2026',
@@ -3442,11 +3445,7 @@ const STF_VELOCITY_DATA = {
     { date: '2026-10-25', devId: 'dev_jd', modules: 1, hours: 7, appId: 'app_calidad' },
     { date: '2026-10-27', devId: 'dev_ee', modules: 1, hours: 7, appId: 'app_torre' },
     { date: '2026-10-28', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_torre' },
-    // Noviembre 2026
-    { date: '2026-11-02', devId: 'dev_jg', modules: 2, hours: 14, appId: 'app_oficina' },
-    { date: '2026-11-04', devId: 'dev_jd', modules: 1, hours: 8, appId: 'app_calidad' },
-    { date: '2026-11-05', devId: 'dev_jg', modules: 2, hours: 15, appId: 'app_laboratorio' },
-    { date: '2026-11-06', devId: 'dev_mocho', modules: 1, hours: 7, appId: 'app_tintoreria' }
+    // Noviembre 2026 - Inicializado en 0 para inicio de prueba real en planta
   ]
 };
 

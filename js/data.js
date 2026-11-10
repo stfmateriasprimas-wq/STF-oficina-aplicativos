@@ -123,7 +123,7 @@ const STF_REAL_DATA = {
     }
   ],
 
-  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheets)
+  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheet  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheets)
   applications: [
     {
       id: "app_torre",
@@ -137,12 +137,13 @@ const STF_REAL_DATA = {
       deadline: "2026-12-15",
       priority: "Alta",
       status: "ontime",
+      progress: 25,
       iconColor: "#4E65FF",
       iconInitial: "TDC",
       webUrl: "sharepoint",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
-        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: false },
+        { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Backend & Integraciones", weight: 30, completed: false },
         { id: "p4", name: "4. Frontend & Cuadros de Mando", weight: 25, completed: false },
         { id: "p5", name: "5. Pruebas QA & Integración Grupal", weight: 15, completed: false },
@@ -159,13 +160,14 @@ const STF_REAL_DATA = {
       deadline: "2026-11-30",
       priority: "Media",
       status: "ontime",
+      progress: 5,
       iconColor: "#D88BF8",
       iconInitial: "LAB",
       webUrl: "https://stflab-calidad-textil.vercel.app/",
       phases: [
-        { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
+        { id: "p1", name: "1. Levantamiento & Requisitos", weight: 5, completed: true },
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: false },
-        { id: "p3", name: "3. Desarrollo Backend & Fórmulas", weight: 30, completed: false },
+        { id: "p3", name: "3. Desarrollo Backend & Fórmulas", weight: 35, completed: false },
         { id: "p4", name: "4. Frontend & Reportes Técnicos", weight: 25, completed: false },
         { id: "p5", name: "5. Pruebas QA", weight: 15, completed: false },
         { id: "p6", name: "6. Despliegue Final", weight: 5, completed: false }
@@ -180,15 +182,16 @@ const STF_REAL_DATA = {
       devId: "dev_jg",
       deadline: "2026-11-15",
       priority: "Alta",
-      status: "risk",
+      status: "ontime",
+      progress: 10,
       iconColor: "#10B981",
       iconInitial: "GEO",
       webUrl: "https://stf-rastreo-calidad.vercel.app/",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
-        { id: "p2", name: "2. Arquitectura & Mapas Satelitales", weight: 15, completed: true },
-        { id: "p3", name: "3. Desarrollo Backend & APIs GPS", weight: 30, completed: true },
-        { id: "p4", name: "4. Frontend & Tablero Geográfico", weight: 25, completed: true },
+        { id: "p2", name: "2. Arquitectura & Mapas Satelitales", weight: 15, completed: false },
+        { id: "p3", name: "3. Desarrollo Backend & APIs GPS", weight: 30, completed: false },
+        { id: "p4", name: "4. Frontend & Tablero Geográfico", weight: 25, completed: false },
         { id: "p5", name: "5. Pruebas QA de Conectividad", weight: 15, completed: false },
         { id: "p6", name: "6. Puesta en Marcha", weight: 5, completed: false }
       ]
@@ -203,6 +206,7 @@ const STF_REAL_DATA = {
       deadline: "2026-12-30",
       priority: "Alta",
       status: "ontime",
+      progress: 80,
       iconColor: "#0EA5E9",
       iconInitial: "OFA",
       webUrl: "https://stf-oficina-aplicativos.vercel.app/",
@@ -211,7 +215,7 @@ const STF_REAL_DATA = {
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Core & Integraciones", weight: 30, completed: true },
         { id: "p4", name: "4. Sincronización Google Sheets", weight: 25, completed: true },
-        { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: true },
+        { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: false },
         { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: false }
       ]
     },
@@ -225,6 +229,7 @@ const STF_REAL_DATA = {
       deadline: "2026-11-25",
       priority: "Alta",
       status: "ontime",
+      progress: 80,
       iconColor: "#3B82F6",
       iconInitial: "CAL",
       webUrl: "",
@@ -233,7 +238,7 @@ const STF_REAL_DATA = {
         { id: "p2", name: "2. Arquitectura & Criterios AQL", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Backend & Auditorías", weight: 30, completed: true },
         { id: "p4", name: "4. Frontend Móvil para Inspectores", weight: 25, completed: true },
-        { id: "p5", name: "5. Pruebas QA en Línea de Producción", weight: 15, completed: true },
+        { id: "p5", name: "5. Pruebas QA en Línea de Producción", weight: 15, completed: false },
         { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: false }
       ]
     },
@@ -247,6 +252,7 @@ const STF_REAL_DATA = {
       deadline: "2026-12-05",
       priority: "Alta",
       status: "ontime",
+      progress: 75,
       iconColor: "#8B5CF6",
       iconInitial: "TIN",
       webUrl: "https://stf-tintoreria.netlify.app/?v=2",
@@ -254,8 +260,8 @@ const STF_REAL_DATA = {
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Fórmulas Químicas", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Backend & Barcas", weight: 30, completed: true },
-        { id: "p4", name: "4. Frontend para Operarios de Planta", weight: 25, completed: false },
-        { id: "p5", name: "5. Pruebas QA", weight: 15, completed: false },
+        { id: "p4", name: "4. Frontend para Operarios de Planta", weight: 20, completed: true },
+        { id: "p5", name: "5. Pruebas QA", weight: 20, completed: false },
         { id: "p6", name: "6. Despliegue", weight: 5, completed: false }
       ]
     },
@@ -269,6 +275,7 @@ const STF_REAL_DATA = {
       deadline: "2026-11-20",
       priority: "Alta",
       status: "ontime",
+      progress: 98,
       iconColor: "#FFA043",
       iconInitial: "COL",
       webUrl: "https://colchas.vercel.app/",
@@ -277,219 +284,14 @@ const STF_REAL_DATA = {
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Backend & Lógica Core", weight: 30, completed: true },
         { id: "p4", name: "4. Frontend & Conexión Planta", weight: 25, completed: true },
-        { id: "p5", name: "5. Pruebas QA con Operarios", weight: 15, completed: true },
-        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: true }
+        { id: "p5", name: "5. Pruebas QA con Operarios", weight: 18, completed: true },
+        { id: "p6", name: "6. Salida en Vivo & Certificación Final", weight: 2, completed: false }
       ]
     }
   ],
 
-  // Integraciones y Tareas Reales Registradas en CONTROL_TAREAS de Google Sheets
-  integrations: [
-    {
-      id: "int_kpi_lab",
-      name: "Integración KPI",
-      appId: "app_laboratorio",
-      appName: "LABORATORIO",
-      devId: "dev_jg",
-      devName: "Jose Guzman",
-      startDate: "2026-11-07",
-      deadline: "2026-11-16",
-      weight: 25,
-      status: "in_progress",
-      description: "KPI completos",
-      evaluation: null,
-      observations: []
-    },
-    {
-      id: "int_sharepoint_lab",
-      name: "Investigar como podemos aplicar app de laboratorio en SharePoint",
-      appId: "app_laboratorio",
-      appName: "LABORATORIO",
-      devId: "dev_jg",
-      devName: "Jose Guzman",
-      startDate: "2026-10-19",
-      deadline: "2026-11-09",
-      weight: 10,
-      status: "in_progress",
-      description: "tenemos que crear y estabilizar el sistema de laboratorio por SharePoint para que nos quede en cuanto seguridad mas estable.",
-      evaluation: null,
-      observations: []
-    },
-    {
-      id: "int_17937216525",
-      name: "Iniciar el ajuste de LAB.",
-      appId: "app_laboratorio",
-      devId: "dev_jg",
-      startDate: "2026-10-25",
-      deadline: "2026-11-06",
-      weight: 15,
-      status: "evaluated",
-      description: "Ajuste estructural de fórmulas de laboratorio textil y validación con operarios.",
-      evaluation: {
-        evalDate: "2026-11-05",
-        onTime: true,
-        daysDifference: 1,
-        stabilityScore: 95,
-        usabilityScore: 93,
-        qaScore: 95,
-        qualityScore: 94.3,
-        pointsAdded: 14.1,
-        evaluator: "Super Admin (Jefe TI)",
-        notes: "Implementación en planta validada con los operarios. Operatividad estable."
-      }
-    },
-    {
-      id: "int_17926874219",
-      name: "Retomar incorporacion de base de datos.",
-      appId: "app_laboratorio",
-      devId: "dev_jg",
-      startDate: "2026-10-18",
-      deadline: "2026-10-29",
-      weight: 20,
-      status: "evaluated",
-      description: "Conexión y normalización de tablas de resultados de pruebas físicas y químicas.",
-      evaluation: {
-        evalDate: "2026-11-04",
-        onTime: true,
-        daysDifference: 0,
-        stabilityScore: 95,
-        usabilityScore: 93,
-        qaScore: 95,
-        qualityScore: 94.3,
-        pointsAdded: 18.9,
-        evaluator: "Super Admin (Jefe TI)",
-        notes: "Implementación en planta validada con los operarios. Operatividad estable."
-      }
-    },
-    {
-      id: "int_17926830187",
-      name: "hacer indicador - juan",
-      appId: "app_calidad",
-      devId: "dev_jd",
-      startDate: "2026-10-22",
-      deadline: "2026-10-29",
-      weight: 15,
-      status: "evaluated",
-      description: "Pasar indicadores manuales de inspección de calidad en línea a tableros digitales.",
-      evaluation: {
-        evalDate: "2026-11-05",
-        onTime: true,
-        daysDifference: 0,
-        stabilityScore: 95,
-        usabilityScore: 93,
-        qaScore: 95,
-        qualityScore: 94.3,
-        pointsAdded: 14.1,
-        evaluator: "Super Admin (Jefe TI)",
-        notes: "Implementación en planta validada con los operarios. Operatividad estable."
-      }
-    },
-    {
-      id: "int_0",
-      name: "Gateway de Autenticación & Roles Operativos",
-      appId: "app_torre",
-      devId: "dev_jg",
-      startDate: "2026-10-01",
-      deadline: "2026-10-12",
-      weight: 15,
-      status: "evaluated",
-      description: "Módulo central de login y asignación de permisos para supervisores y operarios en planta para Torre de Control.",
-      evaluation: {
-        evalDate: "2026-11-04",
-        onTime: true,
-        daysDifference: -1,
-        stabilityScore: 98,
-        usabilityScore: 95,
-        qaScore: 96,
-        qualityScore: 96.3,
-        pointsAdded: 14.4,
-        evaluator: "Super Admin (Jefe TI)",
-        notes: "Excelente arquitectura e integración limpia. Pruebas de estrés superadas con cero latencia."
-      }
-    },
-    {
-      id: "int_1",
-      name: "Conexión Báscula Digital & Pesaje de Telas",
-      appId: "app_colchas",
-      devId: "dev_jg",
-      startDate: "2026-10-14",
-      deadline: "2026-10-24",
-      weight: 15,
-      status: "evaluated",
-      description: "Integración de protocolo RS232 de la báscula de planta para pesar rollos de tela y registrar merma automáticamente en COLCHAS.",
-      evaluation: {
-        evalDate: "2026-11-04",
-        onTime: true,
-        daysDifference: 0,
-        stabilityScore: 98,
-        usabilityScore: 98,
-        qaScore: 98,
-        qualityScore: 98.0,
-        pointsAdded: 14.7,
-        evaluator: "Super Admin (Jefe TI)",
-        notes: "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."
-      }
-    },
-    {
-      id: "int_2",
-      name: "Auditoría AQL Móvil & Muestreo en Planta",
-      appId: "app_calidad",
-      devId: "dev_jd",
-      startDate: "2026-10-12",
-      deadline: "2026-10-22",
-      weight: 20,
-      status: "in_progress",
-      description: "Desarrollo de interfaz táctil para auditores de calidad en mesa de corte con cálculo automático de tablas militares estándar AQL.",
-      evaluation: null
-    },
-    {
-      id: "int_3",
-      name: "Automatización de Recetas Químicas en Barcas",
-      appId: "app_tintoreria",
-      devId: "dev_mocho",
-      startDate: "2026-10-15",
-      deadline: "2026-10-28",
-      weight: 15,
-      status: "in_progress",
-      description: "Algoritmo de cálculo de dosificación de tintes y reactivos según el peso del lote de tela a teñir.",
-      evaluation: null
-    },
-    {
-      id: "int_4",
-      name: "Módulo GPS & Trazabilidad de Talleres Satélites",
-      appId: "app_geo",
-      devId: "dev_jg",
-      startDate: "2026-10-05",
-      deadline: "2026-10-18",
-      weight: 20,
-      status: "evaluated",
-      description: "Visualización de geocercas y cálculo de tiempos de transporte entre talleres satélites y el CEDI central de STF.",
-      evaluation: {
-        evalDate: "2026-11-04",
-        onTime: true,
-        daysDifference: 0,
-        stabilityScore: 95,
-        usabilityScore: 93,
-        qaScore: 95,
-        qualityScore: 94.3,
-        pointsAdded: 18.9,
-        evaluator: "Super Admin (Jefe TI)",
-        notes: "Módulo de rastreo validado e integrado con éxito."
-      }
-    },
-    {
-      id: "int_5",
-      name: "Servicio de Notificaciones en Tiempo Real (WebSockets)",
-      appId: "app_torre",
-      devId: "dev_ee",
-      startDate: "2026-10-16",
-      deadline: "2026-10-26",
-      weight: 10,
-      status: "in_progress",
-      description: "Infraestructura de alertas críticas en Torre de Control ante paradas de línea de producción o retrasos en planta.",
-      evaluation: null
-    }
-  ]
+  // Integraciones y Tareas Oficiales Inicializadas en 0 para Arranque Real de Pruebas en Planta
+  integrations: []
 };
 
 // Alias de compatibilidad global para STF_DATA y STF_REAL_DATA
@@ -644,7 +446,7 @@ function sanitizeAndDeduplicateDevelopers(devList) {
 
 // Guardar o inicializar en LocalStorage con migración inteligente
 function getStoredData() {
-  const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V6';
+  const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V7';
   const local = (typeof localStorage !== 'undefined') ? localStorage.getItem(STORAGE_KEY) : null;
 
   if (local) {
@@ -691,18 +493,21 @@ function getStoredData() {
             if (!existing) {
               parsed.applications.push(JSON.parse(JSON.stringify(official)));
             } else {
-              // Sincronizar URL oficial correspondiente a la tabla real SISTEMAS_WEB
+              // Sincronizar fases, porcentaje oficial y URL correspondiente a la prueba en planta
+              existing.phases = JSON.parse(JSON.stringify(official.phases));
+              existing.progress = official.progress;
+              existing.status = official.status;
               if (official.webUrl !== undefined) {
                 existing.webUrl = official.webUrl;
               }
-              if (official.devId && !existing.devId) existing.devId = official.devId;
+              if (official.devId) existing.devId = official.devId;
               if (official.devIds) existing.devIds = official.devIds;
             }
           });
         }
-        // Si integrations no es array o quedó vacío por error anterior, restaurar las tareas reales
-        if (!Array.isArray(parsed.integrations) || parsed.integrations.length === 0) {
-          parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations));
+        // Asegurar que integrations sea un array limpio para el arranque de pruebas
+        if (!Array.isArray(parsed.integrations)) {
+          parsed.integrations = [];
         } else {
           // Asegurar appName y devName en cada integración existente
           parsed.integrations.forEach(item => {
@@ -737,7 +542,7 @@ function saveData(data) {
     data.developers = sanitizeAndDeduplicateDevelopers(data.developers);
   }
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('STF_GROUP_REAL_DATA_V6', JSON.stringify(data));
+    localStorage.setItem('STF_GROUP_REAL_DATA_V7', JSON.stringify(data));
   }
 }
 
