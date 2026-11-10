@@ -5,8 +5,12 @@
  */
 
 let appState = getStoredData();
-if (typeof sanitizeAndDeduplicateDevelopers === 'function' && appState && Array.isArray(appState.developers)) {
-  appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
+if (appState) {
+  // Asegurar tareas e integraciones limpias en 0 para lanzamiento a prueba en planta
+  appState.integrations = [];
+  if (typeof sanitizeAndDeduplicateDevelopers === 'function' && Array.isArray(appState.developers)) {
+    appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
+  }
   saveData(appState);
 }
 if (typeof window !== 'undefined') {
@@ -6164,13 +6168,6 @@ function renderIntegrationsList(filter = activeIntFilter) {
     openedDevFolders.add(getLoggedDevId());
     const canon = resolveCanonicalDevId(getLoggedDevId());
     if (canon) openedDevFolders.add(canon);
-  } else if (openedDevFolders.size === 0 && appState.developers) {
-    // En modo admin, iniciar con carpetas expandidas para máxima claridad operativa
-    appState.developers.forEach(d => {
-      openedDevFolders.add(d.id);
-      const c = resolveCanonicalDevId(d.id);
-      if (c) openedDevFolders.add(c);
-    });
   }
 
   // Update counter badges
@@ -6207,7 +6204,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
     filtered = integrations.filter(i => i.status === 'evaluated');
   }
 
-  if (filtered.length === 0) {
+  if (filter !== 'all' && filtered.length === 0) {
     container.innerHTML = `
       <div style="width: 100%; padding: 42px 24px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: 20px; border: 1.5px dashed #CBD5E1;">
         <i data-lucide="inbox" style="width: 42px; height: 42px; margin-bottom: 10px; color: #94A3B8;"></i>
@@ -6245,13 +6242,17 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   // Group filtered items by developer (sorted descending: most recent assignment at the top, oldest at the bottom)
   const devGroups = [];
-  appState.developers.forEach(dev => {
+  const activeTeamDevs = (appState.developers || []).filter(d => {
+    return d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin && d.roleType !== 'Admin' && String(d.role || '').toLowerCase() !== 'admin';
+  });
+
+  activeTeamDevs.forEach(dev => {
     const devTasks = filtered.filter(i => {
       const c1 = resolveCanonicalDevId(i.devId);
       const c2 = resolveCanonicalDevId(dev.id);
       return (c1 && c2 && c1 === c2) || (i.devId === dev.id);
     });
-    if (devTasks.length > 0) {
+    if (filter === 'all' || devTasks.length > 0) {
       devTasks.sort((a, b) => {
         // 1. Tareas asignadas / en proceso van DE PRIMERAS
         const isEvalA = a.status === 'evaluated' ? 1 : 0;
@@ -6273,7 +6274,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
   // Check for any developer not in appState.developers
   filtered.forEach(item => {
     const cItem = resolveCanonicalDevId(item.devId);
-    if (!appState.developers.some(d => resolveCanonicalDevId(d.id) === cItem || d.id === item.devId)) {
+    if (!activeTeamDevs.some(d => resolveCanonicalDevId(d.id) === cItem || d.id === item.devId)) {
       let group = devGroups.find(g => resolveCanonicalDevId(g.dev.id) === cItem || g.dev.id === item.devId);
       if (!group) {
         group = { dev: getDeveloperById(item.devId), tasks: [] };
@@ -6293,6 +6294,18 @@ function renderIntegrationsList(filter = activeIntFilter) {
       }
     }
   });
+
+  if (devGroups.length === 0) {
+    container.innerHTML = `
+      <div style="width: 100%; padding: 42px 24px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: 20px; border: 1.5px dashed #CBD5E1;">
+        <i data-lucide="inbox" style="width: 42px; height: 42px; margin-bottom: 10px; color: #94A3B8;"></i>
+        <p style="font-weight: 750; font-size: 15px; color: #1E293B; margin-bottom: 4px;">No hay integraciones en esta categoría.</p>
+        <span style="font-size: 13px; color: #64748B;">${isAdmin ? 'Usa el botón "+ Asignar Integración" para asignar nuevas tareas operativas al equipo.' : 'No tienes tareas operativas pendientes en este filtro.'}</span>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
 
   // Toolbar HTML
   const toolbarHtml = isAdmin ? `
@@ -6320,7 +6333,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
   // Folders HTML
   const foldersHtml = devGroups.map(group => {
     const { dev, tasks } = group;
-    const isOpen = !isAdmin || openedDevFolders.has(dev.id) || openedDevFolders.has(resolveCanonicalDevId(dev.id));
+    const isOpen = openedDevFolders.has(dev.id) || openedDevFolders.has(resolveCanonicalDevId(dev.id));
 
     // Summary counts for this developer
     let pCount = 0; // en proceso (amarillo)
@@ -6349,7 +6362,13 @@ function renderIntegrationsList(filter = activeIntFilter) {
     const devRate = totalAllDevTasks > 0 ? Math.round((completedAllDevTasks / totalAllDevTasks) * 100) : 0;
     const hasRisk = oCount > 0;
 
-    const cardsHtml = tasks.map(item => {
+    const cardsHtml = tasks.length === 0 ? `
+      <div style="grid-column: 1 / -1; padding: 26px 20px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: 14px; border: 1.5px dashed #E2E8F0;">
+        <i data-lucide="check-circle-2" style="width: 26px; height: 26px; margin-bottom: 6px; color: #10B981; opacity: 0.85; display: inline-block;"></i>
+        <p style="font-weight: 700; font-size: 13.5px; color: #334155; margin-bottom: 2px;">Sin tareas asignadas</p>
+        <span style="font-size: 12px; color: #64748B;">${isAdmin ? `Usa el botón "+ Asignar Integración" para asignar una nueva tarea a ${dev.name}.` : 'No tienes tareas pendientes asignadas en este momento.'}</span>
+      </div>
+    ` : tasks.map(item => {
       const app = appState.applications.find(a => a.id === item.appId) || { name: 'Sistema General', iconColor: '#4E65FF' };
       const diag = calculateIntegrationTimeProgress(item);
       const isEvaluated = item.status === 'evaluated';
@@ -6613,6 +6632,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
               ${pCount > 0 ? `<span class="dev-folder-pill pill-process" title="${pCount} tarea(s) en proceso"><span class="pill-dot yellow"></span> ${pCount} En Proceso</span>` : ''}
               ${dCount > 0 ? `<span class="dev-folder-pill pill-done" title="${dCount} tarea(s) cumplida(s)"><span class="pill-dot green"></span> ${dCount} Cumplida${dCount !== 1 ? 's' : ''}</span>` : ''}
               ${oCount > 0 ? `<span class="dev-folder-pill pill-overdue" title="${oCount} tarea(s) con desfase"><span class="pill-dot red"></span> ${oCount} Vencida${oCount !== 1 ? 's' : ''}</span>` : ''}
+              ${tasks.length === 0 ? `<span class="dev-folder-pill" style="background: #F1F5F9; color: #64748B; font-weight: 600; font-size: 11.5px;"><span class="pill-dot" style="background: #94A3B8;"></span> Sin tareas</span>` : ''}
             </div>
 
             <button type="button" class="dev-folder-toggle-btn" aria-label="Desplegar tareas">
@@ -10422,7 +10442,7 @@ function updateSettingsKpiStripAndVault(cfg) {
   // Bóveda de Respaldo Stats
   const appsCount = (appState && Array.isArray(appState.applications)) ? appState.applications.length : 7;
   const devsCount = (appState && Array.isArray(appState.developers)) ? appState.developers.length : 4;
-  const tasksCount = (appState && Array.isArray(appState.integrations)) ? appState.integrations.length : 6;
+  const tasksCount = (appState && Array.isArray(appState.integrations)) ? appState.integrations.length : 0;
 
   const elSys = document.getElementById('vaultStatSystems');
   const elTasks = document.getElementById('vaultStatTasks');

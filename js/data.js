@@ -446,7 +446,15 @@ function sanitizeAndDeduplicateDevelopers(devList) {
 
 // Guardar o inicializar en LocalStorage con migración inteligente
 function getStoredData() {
-  const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V7';
+  const STORAGE_KEY = 'STF_GROUP_REAL_DATA_V8';
+
+  if (typeof localStorage !== 'undefined') {
+    // Purgar versiones previas de pruebas para garantizar arranque en 0 tareas
+    ['STF_GROUP_REAL_DATA_V7', 'STF_GROUP_REAL_DATA_V6', 'STF_GROUP_REAL_DATA_V5', 'STF_GROUP_REAL_DATA_V4', 'STF_GROUP_DASHBOARD_DATA', 'STF_DASHBOARD_DATA'].forEach(k => {
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+  }
+
   const local = (typeof localStorage !== 'undefined') ? localStorage.getItem(STORAGE_KEY) : null;
 
   if (local) {
@@ -505,22 +513,8 @@ function getStoredData() {
             }
           });
         }
-        // Asegurar que integrations sea un array limpio para el arranque de pruebas
-        if (!Array.isArray(parsed.integrations)) {
-          parsed.integrations = [];
-        } else {
-          // Asegurar appName y devName en cada integración existente
-          parsed.integrations.forEach(item => {
-            if (!item.appName && item.appId) {
-              const app = (parsed.applications || []).find(a => a.id === item.appId);
-              if (app) item.appName = app.name;
-            }
-            if (!item.devName && item.devId) {
-              const dev = (parsed.developers || []).find(d => d.id === item.devId);
-              if (dev) item.devName = dev.name;
-            }
-          });
-        }
+        // Tareas en 0 para el lanzamiento a prueba en planta
+        parsed.integrations = [];
         purgePhantomAppsFromState(parsed);
         saveData(parsed);
         return parsed;
@@ -532,6 +526,7 @@ function getStoredData() {
 
   // Guardar datos reales oficiales
   purgePhantomAppsFromState(STF_REAL_DATA);
+  STF_REAL_DATA.integrations = [];
   saveData(STF_REAL_DATA);
   return STF_REAL_DATA;
 }
@@ -542,7 +537,7 @@ function saveData(data) {
     data.developers = sanitizeAndDeduplicateDevelopers(data.developers);
   }
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('STF_GROUP_REAL_DATA_V7', JSON.stringify(data));
+    localStorage.setItem('STF_GROUP_REAL_DATA_V8', JSON.stringify(data));
   }
 }
 
