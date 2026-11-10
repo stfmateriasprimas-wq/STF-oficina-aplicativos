@@ -14990,6 +14990,61 @@ body.dark-mode .tag-group-badge {
   border: 1px solid rgba(168, 85, 247, 0.35) !important;
 }
 
+/* Selectores de Velocidad (Filtro Dev y Filtro Periodo) - Píldora Blanca Limpia con Letra Negra de Alto Contraste */
+body.dark-mode .velocity-dev-select-wrap,
+body.dark-mode .velocity-period-select-wrap {
+  background: #FFFFFF !important;
+  border: 1.5px solid #CBD5E1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22) !important;
+}
+
+body.dark-mode .velocity-dev-select-wrap:hover,
+body.dark-mode .velocity-period-select-wrap:hover {
+  border-color: #6366F1 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25) !important;
+}
+
+body.dark-mode .velocity-dev-select-wrap select,
+body.dark-mode .velocity-period-select-wrap select {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  font-size: 12.5px !important;
+  padding-right: 22px !important;
+}
+
+body.dark-mode .velocity-dev-select-wrap select:focus,
+body.dark-mode .velocity-period-select-wrap select:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+body.dark-mode .velocity-dev-select-wrap select option,
+body.dark-mode .velocity-period-select-wrap select option {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  font-weight: 750 !important;
+  padding: 6px 10px !important;
+}
+
+body.dark-mode .velocity-dev-select-wrap .select-prefix-icon,
+body.dark-mode .velocity-period-select-wrap .select-prefix-icon {
+  color: #0F172A !important;
+  stroke: #0F172A !important;
+}
+
+body.dark-mode .velocity-dev-select-wrap .select-arrow,
+body.dark-mode .velocity-period-select-wrap .select-arrow {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
 /* 7.1 Velocity Executive KPI Cards & Sprints Breakdown */
 body.dark-mode .vem-card {
   background: linear-gradient(135deg, #111827 0%, #0F172A 100%) !important;
