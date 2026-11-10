@@ -934,7 +934,10 @@ function getNotificationsData() {
           title: `Tarea Asignada: ${task.name}`,
           sub: `Sistema: ${appName} · Plazo: ${formatShortDate(task.deadline)} (${task.weight}% peso)`,
           time: diag.countdownText || 'Activa',
-          action: () => openSystemDetailModal(task.appId)
+          action: () => {
+            if (typeof switchView === 'function') switchView('tasks');
+            if (typeof openTaskObservationsModal === 'function') openTaskObservationsModal(task.id);
+          }
         });
       }
 
@@ -6455,9 +6458,17 @@ function renderIntegrationsList(filter = activeIntFilter) {
           `;
         }
       } else {
-        // PERFIL DESARROLLADOR: Exclusivo con botón para Registrar Observaciones hacia el Administrador
+        // PERFIL DESARROLLADOR: Ver Requerimiento & Qué Hacer y Registrar Observaciones
+        const viewTaskBtn = `
+          <button type="button" class="btn-card-view-obs full-width" onclick="openTaskObservationsModal('${item.id}'); event.stopPropagation();" title="Ver qué tienes que hacer, requerimientos y reunión de entrega" style="margin-bottom: 6px;">
+            <i data-lucide="clipboard-list" style="width: 14px; height: 14px;"></i>
+            <span>Ver Qué Hacer & Detalle</span>
+          </button>
+        `;
+
         if (isEvaluated) {
           actionHtml = `
+            ${viewTaskBtn}
             <div class="evaluated-friendly-card-action" onclick="openEvaluateIntegrationModal('${item.id}')" title="Clic para revisar dictamen técnico y notas del Jefe TI">
               <div class="eval-action-badge">
                 <i data-lucide="check" style="width: 13px; height: 13px;"></i>
@@ -6468,7 +6479,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
               </div>
               <i data-lucide="chevron-right" class="eval-action-arrow"></i>
             </div>
-            <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación en esta tarea">
+            <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación en esta tarea" style="margin-top: 6px;">
               <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
               <span>Registrar observación</span>
               ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
@@ -6476,9 +6487,10 @@ function renderIntegrationsList(filter = activeIntFilter) {
           `;
         } else {
           actionHtml = `
-            <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Registrar observación de avance o bloqueo en esta tarea">
+            ${viewTaskBtn}
+            <button type="button" class="btn-card-obs-action full-width" onclick="openNewObservationModal('${item.id}'); event.stopPropagation();" title="Reportar avance o bloqueo en esta tarea">
               <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
-              <span>Registrar observación</span>
+              <span>Reportar Novedad / Avance</span>
               ${obsCount > 0 ? `<span class="btn-obs-count-badge" title="${obsCount} observaciones registradas">${obsCount}</span>` : ''}
             </button>
           `;
@@ -6510,8 +6522,8 @@ function renderIntegrationsList(filter = activeIntFilter) {
               </div>
             </div>
 
-            <!-- Card Body: Title & Description -->
-            <div class="int-card-body">
+            <!-- Card Body: Title & Description (Clicable para ver detalle de qué hacer) -->
+            <div class="int-card-body" onclick="openTaskObservationsModal('${item.id}')" style="cursor: pointer;" title="Clic para ver qué tienes que hacer y detalle oficial">
               <h3 class="int-card-title">${item.name}</h3>
               <p class="int-card-desc" title="${item.description || ''}">${item.description || 'Integración técnica operativa en planta de confección.'}</p>
             </div>
@@ -6723,6 +6735,7 @@ function handleAssignIntegrationSubmit(e) {
     devName: dev ? dev.name : '',
     startDate: startDate,
     deadline: deadline,
+    deliveryTime: deliveryTime,
     weight: weight,
     status: 'in_progress',
     description: desc,
@@ -6765,6 +6778,7 @@ function handleAssignIntegrationSubmit(e) {
       description: desc,
       weight: weight,
       deadline: deadline,
+      deliveryTime: deliveryTime,
       status: 'En Progreso'
     });
     // Actualizar snapshot completo en Google Sheets
@@ -7635,6 +7649,25 @@ function renderTaskObservationsModalContent(taskId) {
         </div>
       </div>
 
+      <!-- Bloque Destacado: ¿Qué tiene que hacer el Desarrollador? · Requerimiento Oficial -->
+      <div class="task-obs-instruction-card">
+        <div class="toic-header">
+          <div class="toic-title">
+            <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: #2563EB;"></i>
+            <span>¿Qué tiene que hacer el Desarrollador? · Requerimiento Oficial</span>
+          </div>
+          <span class="toic-weight-badge">Impacto: +${task.weight}% al aplicativo</span>
+        </div>
+        <div class="toic-body">
+          ${task.description ? (typeof escapeHtml === 'function' ? escapeHtml(task.description).replace(/\n/g, '<br>') : task.description.replace(/\n/g, '<br>')) : '<em style="color:#94A3B8;">El Administrador no detalló requerimientos específicos en texto para esta tarea. Coordina directamente con el Super Admin.</em>'}
+        </div>
+        <div class="toic-footer-guide">
+          <span class="toic-guide-item"><i data-lucide="calendar" style="width: 12px; height: 12px;"></i> <strong>Inicio:</strong> ${formatShortDate(task.startDate)}</span>
+          <span class="toic-guide-item"><i data-lucide="flag" style="width: 12px; height: 12px;"></i> <strong>Fecha Límite:</strong> ${formatShortDate(task.deadline)}</span>
+          <span class="toic-guide-item"><i data-lucide="clock" style="width: 12px; height: 12px;"></i> <strong>Cita de Entrega:</strong> ${meetingDayShort ? meetingDayShort + ', ' : ''}${formatShortDate(task.deadline)} a las ${meetingTime12h}</span>
+        </div>
+      </div>
+
       <div class="task-obs-hero-dates">
         <span><strong>Plazo programado:</strong> ${formatShortDate(task.startDate)} → ${formatShortDate(task.deadline)}</span>
         <span><strong>Cita oficial:</strong> ${meetingDayShort ? meetingDayShort + ', ' : ''}${formatShortDate(task.deadline)} a las ${meetingTime12h}</span>
@@ -7754,6 +7787,27 @@ function renderTaskObservationsModalContent(taskId) {
           </div>
         `;
       }).join('');
+    }
+  }
+
+  // Adaptación de cabecera y botón de acción según rol (Admin vs Dev)
+  const shieldPill = document.querySelector('#modalTaskObservations .super-admin-shield-pill');
+  if (shieldPill) {
+    if (isCurrentSessionAdmin()) {
+      shieldPill.innerHTML = `<i data-lucide="shield-check"></i><span>Super Admin TI · Bitácora & Novedades de Tarea</span>`;
+    } else {
+      shieldPill.innerHTML = `<i data-lucide="code-2"></i><span>Desarrollador TI · Requerimientos & Bitácora de Tarea</span>`;
+    }
+  }
+
+  const addNoteBtn = document.getElementById('btnTaskObsAddNote');
+  if (addNoteBtn) {
+    if (isCurrentSessionAdmin()) {
+      addNoteBtn.innerHTML = `<i data-lucide="message-square-plus"></i><span>+ Añadir Nota Admin</span>`;
+      addNoteBtn.title = 'Añadir nota, acuerdo o instrucción técnica';
+    } else {
+      addNoteBtn.innerHTML = `<i data-lucide="message-square-plus"></i><span>+ Reportar Avance / Novedad</span>`;
+      addNoteBtn.title = 'Reportar avance o novedad técnica hacia el Jefe TI';
     }
   }
 
@@ -11175,13 +11229,19 @@ function getScopedCalendarIntegrations() {
   if (!isAdmin) {
     const loggedId = getLoggedDevId();
     const canon = resolveCanonicalDevId(loggedId);
-    list = list.filter(i => i.devId === loggedId || i.devId === canon);
+    list = list.filter(i => {
+      const taskCanon = resolveCanonicalDevId(i.devId);
+      return i.devId === loggedId || i.devId === canon || (taskCanon && taskCanon === canon) || (taskCanon && taskCanon === loggedId);
+    });
   }
 
   // Filter by Developer selector
   if (calDeliveryDevFilter !== 'all') {
     const canonFilter = resolveCanonicalDevId(calDeliveryDevFilter);
-    list = list.filter(i => i.devId === calDeliveryDevFilter || i.devId === canonFilter);
+    list = list.filter(i => {
+      const taskCanon = resolveCanonicalDevId(i.devId);
+      return i.devId === calDeliveryDevFilter || i.devId === canonFilter || (taskCanon && taskCanon === canonFilter);
+    });
   }
 
   // Filter by App selector

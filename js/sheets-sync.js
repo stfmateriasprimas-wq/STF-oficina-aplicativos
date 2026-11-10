@@ -223,6 +223,7 @@
         description: data.description || '',
         weight: data.weight || 0,
         deadline: cleanDeadline || '2026-11-15',
+        deliveryTime: data.deliveryTime || '10:00',
         status: data.status || 'En Progreso',
         sendEmail: sendEmailPref,
         qualityScore: data.qualityScore || null
@@ -813,6 +814,10 @@
           if (!existing.devName && devObj) existing.devName = devObj.name;
           if (!existing.devId && devObj) existing.devId = devObj.id;
           if (cleanDeadline) existing.deadline = cleanDeadline;
+          if (task.deliveryTime && !existing.deliveryTime) existing.deliveryTime = task.deliveryTime;
+          if (cleanNotes && (!existing.description || existing.description === 'Integración técnica operativa en planta de confección.' || existing.description === 'Integración asignada desde Google Sheets.')) {
+            existing.description = cleanNotes;
+          }
 
           if (isEval && existing.status !== 'evaluated') {
             existing.status = 'evaluated';
@@ -838,6 +843,7 @@
             devName: devObj ? devObj.name : 'Jose Guzman',
             startDate: task.startDate || '2026-10-19',
             deadline: cleanDeadline,
+            deliveryTime: task.deliveryTime || '10:00',
             weight: tWeight,
             status: isEval ? 'evaluated' : 'in_progress',
             description: cleanNotes || 'Integración asignada desde Google Sheets.',

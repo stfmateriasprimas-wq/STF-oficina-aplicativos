@@ -16108,3 +16108,99 @@ body.dark-mode .h-stage-chevron-btn {
 body.dark-mode .h-stage-status-hint {
   color: #94A3B8 !important;
 }
+
+/* ==========================================================================
+   CARD: ¿QUÉ TIENE QUE HACER EL DESARROLLADOR? (REQUERIMIENTO OFICIAL & BITÁCORA)
+   ========================================================================== */
+.task-obs-instruction-card {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-left: 4.5px solid #2563EB;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 6px 0 2px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.toic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toic-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #1E293B;
+}
+
+.toic-weight-badge {
+  font-size: 11px;
+  font-weight: 750;
+  color: #2563EB;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.toic-body {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.6;
+  background: #FFFFFF;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  word-break: break-word;
+}
+
+.toic-footer-guide {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: #64748B;
+  flex-wrap: wrap;
+}
+
+.toic-guide-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Dark mode for instruction card */
+body.dark-mode .task-obs-instruction-card {
+  background: #111A2E !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+  border-left: 4.5px solid #3B82F6 !important;
+}
+
+body.dark-mode .toic-title {
+  color: #F8FAFC !important;
+}
+
+body.dark-mode .toic-body {
+  background: #162035 !important;
+  color: #CBD5E1 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .toic-weight-badge {
+  background: rgba(37, 99, 235, 0.2) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  color: #93C5FD !important;
+}
+
+body.dark-mode .toic-footer-guide {
+  color: #94A3B8 !important;
+}
