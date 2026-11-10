@@ -249,7 +249,7 @@ const STF_REAL_DATA = {
       status: "ontime",
       iconColor: "#8B5CF6",
       iconInitial: "TIN",
-      webUrl: "",
+      webUrl: "https://stf-tintoreria.netlify.app/?v=2",
       phases: [
         { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
         { id: "p2", name: "2. Arquitectura & Fórmulas Químicas", weight: 15, completed: true },
