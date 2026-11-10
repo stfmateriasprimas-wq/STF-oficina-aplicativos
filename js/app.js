@@ -3173,23 +3173,35 @@ function computeDynamicVelocityData(period = 'months', devId = 'all') {
   let periodSubtext = '';
   let periodTypeName = 'Mes';
 
-  if (period === 'weeks') {
-    labels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'];
+  if (period === 'current_month' || period === 'weeks' || period === 'month_nov') {
+    const sData = STF_VELOCITY_DATA.singleMonths.month_nov || {
+      name: 'Noviembre 2026 (Mes Actual)',
+      labels: ['Sem 1 (1-7 Nov)', 'Sem 2 (8-14 Nov)', 'Sem 3 (15-21 Nov)', 'Sem 4 (22-30 Nov)'],
+      all: { mods: [6, 8, 7, 6], hours: [44, 58, 50, 42] },
+      dev_jg: { mods: [3, 4, 3, 2], hours: [22, 28, 22, 16] },
+      dev_jd: { mods: [1, 2, 2, 2], hours: [8, 14, 13, 13] },
+      dev_mocho: { mods: [1, 1, 1, 1], hours: [8, 8, 8, 8] },
+      dev_ee: { mods: [1, 1, 1, 1], hours: [6, 8, 7, 5] }
+    };
+    labels = [...sData.labels];
+    const devSData = sData[canonicalDevId] || sData.all;
+    values = [...devSData.mods];
+    actualHours = [...devSData.hours];
     targetBenchmark = benchmarks.weekly || 8;
     benchmarkUnitText = 'Sem';
-    periodSubtext = 'acumuladas en 8 sprints';
-    periodTypeName = 'Sprint';
+    periodSubtext = 'entregas en Noviembre 2026 (Mes Actual)';
+    periodTypeName = 'Semana';
 
-    // Computar semanas dinámicamente sumando entregas base y agregadas
-    const wData = STF_VELOCITY_DATA.weeks[canonicalDevId] || STF_VELOCITY_DATA.weeks.all;
-    values = [...wData.mods];
-    actualHours = [...wData.hours];
-
-    // Ajustar con entregas reales recientes
+    // Ajustar dinámicamente con entregas reales de Noviembre 2026
     filteredDeliveries.forEach(d => {
-      if (d.date >= '2026-10-15') {
-        values[7] = (values[7] || 0) + 1;
-        actualHours[7] = (actualHours[7] || 0) + (d.hours || 6);
+      if (d.date && d.date.startsWith('2026-11')) {
+        const day = parseInt(d.date.substring(8, 10), 10);
+        let semIdx = 0;
+        if (day > 21) semIdx = 3;
+        else if (day > 14) semIdx = 2;
+        else if (day > 7) semIdx = 1;
+        values[semIdx] = (values[semIdx] || 0) + 1;
+        actualHours[semIdx] = (actualHours[semIdx] || 0) + (d.hours || 6);
       }
     });
 
@@ -3293,8 +3305,17 @@ const STF_VELOCITY_DATA = {
       hours: [7, 7, 6, 9, 8, 10, 8, 7]
     }
   },
-  // Semanas de meses individuales (Mayo a Octubre 2026)
+  // Semanas de meses individuales (Mayo a Noviembre 2026)
   singleMonths: {
+    month_nov: {
+      name: 'Noviembre 2026 (Mes Actual)',
+      labels: ['Sem 1 (1-7 Nov)', 'Sem 2 (8-14 Nov)', 'Sem 3 (15-21 Nov)', 'Sem 4 (22-30 Nov)'],
+      all: { mods: [6, 8, 7, 6], hours: [44, 58, 50, 42] },
+      dev_jg: { mods: [3, 4, 3, 2], hours: [22, 28, 22, 16] },
+      dev_jd: { mods: [1, 2, 2, 2], hours: [8, 14, 13, 13] },
+      dev_mocho: { mods: [1, 1, 1, 1], hours: [8, 8, 8, 8] },
+      dev_ee: { mods: [1, 1, 1, 1], hours: [6, 8, 7, 5] }
+    },
     month_oct: {
       name: 'Octubre 2026',
       labels: ['Sem 1 (1-7 Oct)', 'Sem 2 (8-14 Oct)', 'Sem 3 (15-21 Oct)', 'Sem 4 (22-28 Oct)'],
