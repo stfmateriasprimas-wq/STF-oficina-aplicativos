@@ -927,16 +927,16 @@ function getNotificationsData() {
         });
       }
 
-      // 2. Nuevas Tareas Asignadas por el Admin
+      // 2. Nuevas Tareas Asignadas por el Admin (prioridad alta al inicio de la lista)
       if (task.status === 'in_progress') {
         const diag = calculateIntegrationTimeProgress(task);
-        notifications.push({
+        notifications.unshift({
           id: `notif_new_task_${task.id}`,
           type: 'new_task',
           icon: 'clipboard-list',
           iconBg: '#E0F2FE',
           iconColor: '#0284C7',
-          tag: 'Nueva Tarea Asignada',
+          tag: '⚡ Nueva Tarea Asignada',
           tagColor: '#0369A1',
           tagBg: '#BAE6FD',
           title: `Tarea Asignada: ${task.name}`,
@@ -6663,7 +6663,67 @@ function renderIntegrationsList(filter = activeIntFilter) {
 // MODAL: Asignar Integración (Super Admin)
 // --------------------------------------------------------------------------
 
-function openAssignIntegrationModal() {
+function autoSelectDevForApp(appId) {
+  if (!appId) return;
+  const app = (appState && Array.isArray(appState.applications)) ? appState.applications.find(a => a.id === appId) : null;
+  const devSelect = document.getElementById('assignIntDev');
+  const hintEl = document.getElementById('assignDevHint');
+  if (!devSelect) return;
+
+  let targetDevId = null;
+
+  if (app && app.devId) {
+    targetDevId = resolveCanonicalDevId(app.devId) || app.devId;
+  } else if (app && Array.isArray(app.devIds) && app.devIds.length > 0) {
+    targetDevId = resolveCanonicalDevId(app.devIds[0]) || app.devIds[0];
+  } else {
+    // Buscar en los desarrolladores cuál tiene este appId en sus activeProjects
+    const devMatch = (appState.developers || []).find(d => 
+      d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin &&
+      Array.isArray(d.activeProjects) && d.activeProjects.includes(appId)
+    );
+    if (devMatch) {
+      targetDevId = devMatch.id;
+    }
+  }
+
+  if (targetDevId) {
+    const canonTarget = resolveCanonicalDevId(targetDevId) || targetDevId;
+    let optionMatch = null;
+    if (devSelect.options && devSelect.options.length > 0) {
+      optionMatch = Array.from(devSelect.options).find(opt => 
+        opt.value === targetDevId || opt.value === canonTarget || (resolveCanonicalDevId(opt.value) === canonTarget)
+      );
+    }
+    const finalVal = optionMatch ? optionMatch.value : canonTarget;
+    devSelect.value = finalVal;
+    const devObj = getDeveloperById(finalVal) || getDeveloperById(targetDevId);
+    if (hintEl) {
+      hintEl.innerHTML = `<span style="color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="check-check" style="width: 13px; height: 13px; display: inline-block;"></i> Asignado automáticamente: <strong>${devObj ? devObj.name : 'Desarrollador Oficial'}</strong></span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Animación suave de confirmación en el selector
+    devSelect.style.transition = 'all 0.3s ease';
+    devSelect.style.borderColor = '#10B981';
+    devSelect.style.backgroundColor = '#ECFDF5';
+    setTimeout(() => {
+      devSelect.style.borderColor = '';
+      devSelect.style.backgroundColor = '';
+    }, 700);
+    return;
+  }
+
+  if (hintEl) {
+    hintEl.textContent = '';
+  }
+}
+
+function handleAssignAppChange(appId) {
+  autoSelectDevForApp(appId);
+}
+
+function openAssignIntegrationModal(preselectedAppId) {
   const appSelect = document.getElementById('assignIntApp');
   const devSelect = document.getElementById('assignIntDev');
 
@@ -6671,6 +6731,9 @@ function openAssignIntegrationModal() {
     appSelect.innerHTML = appState.applications.map(app => `
       <option value="${app.id}">${app.name} (${app.code})</option>
     `).join('');
+    if (preselectedAppId) {
+      appSelect.value = preselectedAppId;
+    }
   }
 
   if (devSelect) {
@@ -6678,6 +6741,11 @@ function openAssignIntegrationModal() {
     devSelect.innerHTML = realDevs.map(dev => `
       <option value="${dev.id}">${dev.name} (${dev.role})</option>
     `).join('');
+  }
+
+  // Auto-seleccionar desarrollador según el aplicativo seleccionado
+  if (appSelect && appSelect.value) {
+    autoSelectDevForApp(appSelect.value);
   }
 
   // Set default dates
@@ -6703,6 +6771,8 @@ function openAssignIntegrationModal() {
 function closeAssignIntegrationModal() {
   document.getElementById('modalAssignIntegration')?.classList.remove('show');
   document.getElementById('assignIntegrationForm')?.reset();
+  const hintEl = document.getElementById('assignDevHint');
+  if (hintEl) hintEl.textContent = '';
 }
 
 function updateAssignPreviewCard() {
@@ -8202,6 +8272,15 @@ function initApp() {
 
   document.getElementById('assignIntStartDate')?.addEventListener('change', updateAssignPreviewCard);
   document.getElementById('assignIntDeadline')?.addEventListener('change', updateAssignPreviewCard);
+
+  // Auto-selección de desarrollador al cambiar de aplicativo
+  document.getElementById('assignIntApp')?.addEventListener('change', (e) => {
+    autoSelectDevForApp(e.target.value);
+  });
+  document.getElementById('assignIntDev')?.addEventListener('change', () => {
+    const hintEl = document.getElementById('assignDevHint');
+    if (hintEl) hintEl.textContent = '';
+  });
 
   // Evaluation Modal Events
   document.getElementById('btnCloseEvalModal')?.addEventListener('click', closeEvaluateIntegrationModal);
@@ -10602,6 +10681,8 @@ window.openNewProjectModal = openNewProjectModal;
 window.closeNewProjectModal = closeNewProjectModal;
 window.openAssignIntegrationModal = openAssignIntegrationModal;
 window.closeAssignIntegrationModal = closeAssignIntegrationModal;
+window.autoSelectDevForApp = autoSelectDevForApp;
+window.handleAssignAppChange = handleAssignAppChange;
 window.openEvaluateIntegrationModal = openEvaluateIntegrationModal;
 window.closeEvaluateIntegrationModal = closeEvaluateIntegrationModal;
 window.openSystemDetailModal = openSystemDetailModal;

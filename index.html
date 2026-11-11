@@ -2142,7 +2142,7 @@
           <div class="form-row">
             <div class="form-group">
               <label for="assignIntApp">Aplicativo Destino *</label>
-              <select id="assignIntApp" class="form-input" required>
+              <select id="assignIntApp" class="form-input" required onchange="handleAssignAppChange(this.value)">
                 <!-- Populated via JS -->
               </select>
             </div>
@@ -2151,6 +2151,7 @@
               <select id="assignIntDev" class="form-input" required>
                 <!-- Populated via JS -->
               </select>
+              <div id="assignDevHint" style="font-size: 11px; margin-top: 4px; min-height: 16px;"></div>
             </div>
           </div>
 
