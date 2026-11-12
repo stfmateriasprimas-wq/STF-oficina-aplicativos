@@ -8214,6 +8214,66 @@ function setupRealtimeTaskSync() {
             if (typeof renderSupportView === 'function') renderSupportView();
           }
         }
+
+        // Nueva solicitud de soporte reportada desde planta
+        if (data.type === 'NEW_SUPPORT_TICKET' && data.ticket) {
+          const isAdmin = isCurrentSessionAdmin();
+          const myId = getLoggedDevId();
+          const myCanon = resolveCanonicalDevId(myId);
+          const targetCanon = resolveCanonicalDevId(data.targetDevId);
+
+          if (!isAdmin && (data.targetDevId === myId || targetCanon === myCanon)) {
+            if (typeof playNotificationSound === 'function') playNotificationSound();
+            if (typeof triggerNotificationAlert === 'function') {
+              triggerNotificationAlert({
+                title: `🛎️ Solicitud de Planta: ${data.ticket.title}`,
+                desc: `${data.ticket.requester?.name || 'Operario'} (${data.ticket.requester?.area || 'Planta'}) en ${data.ticket.appName}. ¡Requiere tu atención!`,
+                badge: 'Soporte Técnico'
+              });
+            } else if (typeof showToast === 'function') {
+              showToast(`🛎️ Nueva solicitud de soporte en tu bandeja: "${data.ticket.title}"`, 'warning');
+            }
+          } else if (isAdmin) {
+            if (typeof triggerNotificationAlert === 'function') {
+              triggerNotificationAlert({
+                title: `🛎️ Nueva Solicitud en Planta: ${data.ticket.title}`,
+                desc: `Enrutado automáticamente a ${data.ticket.devName} (${data.ticket.appName}).`,
+                badge: 'Soporte STF'
+              });
+            }
+          }
+
+          const freshData = getStoredData();
+          if (freshData) {
+            appState = freshData;
+            if (typeof renderSupportView === 'function') renderSupportView();
+            if (typeof updateSupportNavBadge === 'function') updateSupportNavBadge();
+            if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
+          }
+        }
+
+        // Resolución de solicitud de soporte (Notificación de respuesta del desarrollador al solicitante)
+        if (data.type === 'SUPPORT_TICKET_RESOLVED' && data.ticket) {
+          if (typeof playNotificationSound === 'function') playNotificationSound();
+          const isAcc = data.decision === 'aceptada';
+          if (typeof triggerNotificationAlert === 'function') {
+            triggerNotificationAlert({
+              title: isAcc ? `✓ Solicitud Aceptada: ${data.ticket.title}` : `✕ Solicitud Rechazada: ${data.ticket.title}`,
+              desc: `${data.ticket.devName} respondió: "${data.resolution?.observation}"${data.resolution?.etaHours ? ` · Estimado: ${data.resolution.etaHours}` : ''}`,
+              badge: 'Respuesta de Soporte'
+            });
+          } else if (typeof showToast === 'function') {
+            showToast(`📱 Respuesta de ${data.ticket.devName}: "${data.resolution?.observation}"`, isAcc ? 'success' : 'warning');
+          }
+
+          const freshData = getStoredData();
+          if (freshData) {
+            appState = freshData;
+            if (typeof renderSupportView === 'function') renderSupportView();
+            if (typeof updateSupportNavBadge === 'function') updateSupportNavBadge();
+            if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
+          }
+        }
       };
       window._stfTaskBroadcastChannel = taskChannel;
     } catch (e) {
@@ -13153,6 +13213,20 @@ function handleSupportActionSubmit(e) {
   saveData(appState);
   closeSupportActionModal();
 
+  // Emitir señal de broadcast en vivo a todas las terminales/usuarios y pestañas
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'SUPPORT_TICKET_RESOLVED',
+        ticket: ticket,
+        decision: decision,
+        resolution: ticket.resolution
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch (e) { }
+
   if (typeof playNotificationSound === 'function') {
     playNotificationSound();
   }
@@ -13304,6 +13378,19 @@ function handleNewSupportTicketSubmit(e) {
   appState.supportTickets.unshift(newTicket);
   saveData(appState);
   closeNewSupportModal();
+
+  // Emitir señal de broadcast en vivo al programador asignado y a la consola Admin
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'NEW_SUPPORT_TICKET',
+        ticket: newTicket,
+        targetDevId: resolveCanonicalDevId(devId) || devId
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch (e) { }
 
   if (typeof playNotificationSound === 'function') {
     playNotificationSound();
