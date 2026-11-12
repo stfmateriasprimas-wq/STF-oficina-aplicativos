@@ -764,24 +764,22 @@
           // get_all_data puede no existir si el script desplegado es v2.6 anterior, usamos fallback
         }
 
-        // 2. Fallback inteligente: Consultar Bitácora de Cambios (get_updates)
-        if (!fullDataLoaded) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            const res = await fetch(`${this.url}?action=get_updates&_t=${Date.now()}`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (res.ok) {
-              const json = await res.json();
-              if (json.status === 'success' && Array.isArray(json.data)) {
-                const result = this.mergeUpdatesFromBitacora(json.data);
-                syncedCount = result.taskCount;
-                phaseUpdatesCount = result.phaseCount;
-              }
+        // 2. Consultar siempre la Bitácora de Cambios (get_updates) para sincronizar tickets de soporte en tiempo real
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(`${this.url}?action=get_updates&_t=${Date.now()}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.status === 'success' && Array.isArray(json.data)) {
+              const result = this.mergeUpdatesFromBitacora(json.data);
+              syncedCount += (result.taskCount || 0);
+              phaseUpdatesCount += (result.phaseCount || 0);
             }
-          } catch (e) {
-            console.warn('[SheetsSync] Error consultando bitácora de Google Sheets:', e);
           }
+        } catch (e) {
+          console.warn('[SheetsSync] Error consultando bitácora de Google Sheets:', e);
         }
 
         const now = new Date();
@@ -1413,8 +1411,22 @@
         }
       });
 
-      if ((taskCount > 0 || phaseCount > 0) && typeof window.saveData === 'function') {
-        window.saveData(state);
+      if ((taskCount > 0 || phaseCount > 0)) {
+        if (typeof window.saveData === 'function') {
+          window.saveData(state);
+        } else {
+          try { localStorage.setItem('STF_DATA_V1', JSON.stringify(state)); } catch(e){}
+        }
+
+        if (typeof window.renderSupportView === 'function') {
+          window.renderSupportView();
+        }
+        if (typeof window.updateSupportNavBadge === 'function') {
+          window.updateSupportNavBadge();
+        }
+        if (typeof window.renderNotificationsDropdown === 'function') {
+          window.renderNotificationsDropdown();
+        }
       }
 
       return { taskCount, phaseCount };
