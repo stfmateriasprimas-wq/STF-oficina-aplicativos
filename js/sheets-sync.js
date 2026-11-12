@@ -755,6 +755,9 @@
               if (Array.isArray(json.observations) && json.observations.length > 0) {
                 syncedObsCount = this.mergeCloudObservations(json.observations);
               }
+              if (Array.isArray(json.supportTickets) && json.supportTickets.length > 0) {
+                this.mergeCloudSupportTickets(json.supportTickets);
+              }
             }
           }
         } catch (err) {
@@ -1026,6 +1029,59 @@
     },
 
     /**
+     * Fusionar solicitudes de soporte técnico desde la hoja SOLICITUDES_SOPORTE
+     */
+    mergeCloudSupportTickets(cloudTickets) {
+      if (!Array.isArray(cloudTickets) || !window.appState) return 0;
+      const state = window.appState;
+      if (!Array.isArray(state.supportTickets)) state.supportTickets = [];
+
+      let mergedCount = 0;
+      let hasChanges = false;
+
+      cloudTickets.forEach(ct => {
+        const ctCode = String(ct.code || ct.id || '').trim();
+        if (!ctCode) return;
+
+        const existingIdx = state.supportTickets.findIndex(t =>
+          String(t.code || t.id || '').trim().toUpperCase() === ctCode.toUpperCase()
+        );
+
+        if (existingIdx !== -1) {
+          const local = state.supportTickets[existingIdx];
+          if (local.status !== ct.status || (!local.resolution && ct.resolution)) {
+            state.supportTickets[existingIdx] = { ...local, ...ct };
+            hasChanges = true;
+          }
+        } else {
+          state.supportTickets.unshift(ct);
+          hasChanges = true;
+          mergedCount++;
+        }
+      });
+
+      if (hasChanges) {
+        if (typeof window.saveData === 'function') {
+          window.saveData(state);
+        } else {
+          try { localStorage.setItem('STF_DATA_V1', JSON.stringify(state)); } catch(e){}
+        }
+
+        if (typeof window.renderSupportView === 'function') {
+          window.renderSupportView();
+        }
+        if (typeof window.updateSupportNavBadge === 'function') {
+          window.updateSupportNavBadge();
+        }
+        if (typeof window.renderNotificationsDropdown === 'function') {
+          window.renderNotificationsDropdown();
+        }
+      }
+
+      return mergedCount;
+    },
+
+    /**
      * Fusionar sistemas desde la hoja PORTAFOLIO_SISTEMAS (9 Columnas A:I)
      */
     mergeCloudSystems(sysList) {
@@ -1277,6 +1333,81 @@
                   notes: desc
                 };
               }
+            }
+          }
+        }
+
+        // D. Cargar Solicitudes de Soporte Técnico y Actualizaciones desde Bitácora
+        if (evType === 'SOLICITUD_SOPORTE_TECNICO' || evType === 'SOLICITUD_ACTUALIZACION') {
+          if (!Array.isArray(state.supportTickets)) state.supportTickets = [];
+          const rawDev = item.Desarrollador || '';
+          const reqMatch = rawDev.match(/^(.*?)\s*\((.*?)\)$/);
+          const reqName = reqMatch ? reqMatch[1].trim() : (rawDev || 'Operario de Planta');
+          const isAct = evType === 'SOLICITUD_ACTUALIZACION';
+
+          let title = desc;
+          let targetDevName = 'Jose Guzman';
+          const matchTitle = desc.match(/^\[(.*?)\]\s*(.*?)\s*->\s*Asignado a\s*(.*?)$/i);
+          if (matchTitle) {
+            title = matchTitle[2].trim();
+            targetDevName = matchTitle[3].trim();
+          }
+
+          const appObj = this.findApp(appName);
+          const devObj = this.findDev(targetDevName);
+          const dateStr = item.Timestamp || item.Fecha_Hora || new Date().toISOString();
+          const cleanCode = 'STF-SUP-' + (item.Timestamp ? String(new Date(item.Timestamp).getTime()).slice(-4) : '3491');
+
+          const existingTicket = state.supportTickets.find(t =>
+            (t.title && t.title.toLowerCase() === title.toLowerCase()) ||
+            (t.code && t.code === cleanCode)
+          );
+
+          if (!existingTicket) {
+            state.supportTickets.unshift({
+              id: 'sup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+              code: cleanCode,
+              appId: appObj ? appObj.id : 'app_colchas',
+              appName: appName || (appObj ? appObj.name : 'COLCHAS'),
+              appCode: appObj ? appObj.code : 'STF-COL-02',
+              devId: devObj ? devObj.id : 'dev_jg',
+              devName: targetDevName,
+              requester: {
+                name: reqName,
+                role: 'Planta STF',
+                area: 'Módulo de Planta'
+              },
+              type: isAct ? 'actualizacion' : 'soporte',
+              priority: 'media',
+              title: title,
+              description: title,
+              createdAt: dateStr,
+              status: 'pendiente',
+              resolution: null
+            });
+            taskCount++;
+          }
+        }
+
+        // E. Cargar Resoluciones Oficiales de Soporte Técnico
+        if (evType === 'SOPORTE_ACEPTADO' || evType === 'SOPORTE_RECHAZADO') {
+          if (!Array.isArray(state.supportTickets)) state.supportTickets = [];
+          const matchRes = desc.match(/Ticket\s+(STF-SUP-\d+)\s+marcado como\s+(Aceptada|Rechazada):\s*(.*?)(?:\s*\(ETA:\s*(.*?)\))?$/i);
+          if (matchRes) {
+            const ticketCode = matchRes[1].trim();
+            const decision = matchRes[2].toLowerCase() === 'aceptada' ? 'aceptada' : 'rechazada';
+            const obs = matchRes[3].trim();
+            const eta = matchRes[4] ? matchRes[4].trim() : '';
+            const t = state.supportTickets.find(tk => tk.code === ticketCode);
+            if (t) {
+              t.status = decision;
+              t.resolution = {
+                action: decision,
+                resolvedBy: item.Desarrollador || 'Jose Guzman',
+                resolvedAt: item.Timestamp || new Date().toISOString(),
+                observation: obs,
+                etaHours: eta
+              };
             }
           }
         }

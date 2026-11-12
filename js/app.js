@@ -8855,6 +8855,10 @@ function switchView(viewName) {
     if (typeof renderSupportView === 'function') {
       renderSupportView();
     }
+    // Sincronizar en tiempo real con Google Sheets para traer solicitudes de planta de inmediato
+    if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
+      window.SheetsSync.pullCloudData(true);
+    }
   } else if (viewName === 'dashboard') {
     if (titleEl) {
       titleEl.innerHTML = isAdmin
@@ -12934,7 +12938,7 @@ function renderSupportView() {
         <!-- Header -->
         <div class="st-card-header">
           <div class="st-meta-left">
-            <span class="st-code-pill">${ticket.code}</span>
+            <span class="st-code-pill">${ticket.code || (ticket.id ? String(ticket.id).replace('sup_', 'STF-SUP-').toUpperCase() : 'STF-SUP-1001')}</span>
             <span class="st-app-badge" style="background: ${app.color || '#4F46E5'}18; color: ${app.color || '#4F46E5'}; border: 1.5px solid ${app.color || '#4F46E5'}35;">
               <i data-lucide="layers" style="width: 13px; height: 13px;"></i>
               <span>${app.name}</span>
@@ -13438,8 +13442,25 @@ function handleNewSupportTicketSubmit(e) {
   }
 }
 
+async function syncSupportWithSheets() {
+  const icon = document.getElementById('iconSyncSupport');
+  const txt = document.getElementById('textSyncSupport');
+  if (icon) icon.style.animation = 'spin 1s linear infinite';
+  if (txt) txt.textContent = 'Consultando...';
+
+  if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
+    await window.SheetsSync.pullCloudData(false);
+  }
+
+  if (icon) icon.style.animation = '';
+  if (txt) txt.textContent = 'Sincronizar Planta';
+  if (typeof renderSupportView === 'function') renderSupportView();
+  if (typeof updateSupportNavBadge === 'function') updateSupportNavBadge();
+}
+
 // Global Exports
 if (typeof window !== 'undefined') {
+  window.syncSupportWithSheets = syncSupportWithSheets;
   window.renderSupportView = renderSupportView;
   window.setSupportStatusFilter = setSupportStatusFilter;
   window.handleSupportDevFilterChange = handleSupportDevFilterChange;

@@ -1718,6 +1718,10 @@
               <span class="stb-badge-sla"><i data-lucide="shield-check"></i> Protocolo SLA Activo</span>
             </div>
             <div class="stb-right">
+              <button type="button" class="btn-sheets-pill" onclick="syncSupportWithSheets()" title="Consultar solicitudes de planta en tiempo real" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4); color: #818cf8; border-radius: 999px; padding: 4px 12px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                <i data-lucide="refresh-cw" id="iconSyncSupport" style="width: 12px; height: 12px;"></i>
+                <span id="textSyncSupport">Sincronizar Planta</span>
+              </button>
               <span class="stb-pulse-tag">ENLACE ACTIVO</span>
               <span class="stb-clock-display" id="supportLiveClock">--:--:--</span>
             </div>
@@ -3486,8 +3490,8 @@
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=42"></script>
-  <script src="js/sheets-sync.js?v=43"></script>
-  <script src="js/app.js?v=53"></script>
+  <script src="js/sheets-sync.js?v=44"></script>
+  <script src="js/app.js?v=54"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 

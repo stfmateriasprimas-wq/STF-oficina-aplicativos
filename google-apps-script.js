@@ -870,12 +870,79 @@ function doGet(e) {
       }
     }
 
+    // E. Solicitudes de Soporte desde SOLICITUDES_SOPORTE (15 Columnas A:O)
+    var sSup = getMasterSheet(ss, "SOPORTE");
+    var supRows = sSup ? sSup.getDataRange().getValues() : [];
+    var supportTickets = [];
+    if (supRows.length > 1) {
+      for (var sp = 1; sp < supRows.length; sp++) {
+        var rowSp = supRows[sp];
+        var code = String(rowSp[0] || "").trim();
+        if (!code || code.toLowerCase() === "id_ticket" || code.toLowerCase() === "id") continue;
+
+        var reqDate = rowSp[1];
+        var reqDateFormatted = (reqDate instanceof Date)
+          ? Utilities.formatDate(reqDate, "America/Bogota", "yyyy-MM-dd HH:mm:ss")
+          : String(reqDate || "").trim();
+
+        var typeStr = String(rowSp[2] || "soporte").toLowerCase().trim();
+        var normalizedType = (typeStr.indexOf("act") !== -1) ? "actualizacion" : "soporte";
+
+        var appName = String(rowSp[3] || "").trim();
+        var appCode = String(rowSp[4] || "").trim();
+        var reqName = String(rowSp[5] || "Operario").trim();
+        var reqArea = String(rowSp[6] || "Planta STF").trim();
+        var title = String(rowSp[7] || "").trim();
+        var desc = String(rowSp[8] || "").trim();
+        var devName = String(rowSp[9] || "Jose Guzman").trim();
+        var rawStatus = String(rowSp[10] || "pendiente").toLowerCase().trim();
+        var status = "pendiente";
+        if (rawStatus.indexOf("acept") !== -1) status = "aceptada";
+        else if (rawStatus.indexOf("rechaz") !== -1) status = "rechazada";
+
+        var resDate = rowSp[11];
+        var resDateFormatted = (resDate instanceof Date)
+          ? Utilities.formatDate(resDate, "America/Bogota", "yyyy-MM-dd HH:mm:ss")
+          : String(resDate || "").trim();
+
+        var observation = String(rowSp[12] || "").trim();
+        var etaHours = String(rowSp[13] || "").trim();
+        var resolvedBy = String(rowSp[14] || "").trim();
+
+        supportTickets.push({
+          id: "sup_" + code.replace(/[^a-zA-Z0-9]/g, "_"),
+          code: code,
+          createdAt: reqDateFormatted || new Date().toISOString(),
+          type: normalizedType,
+          appName: appName,
+          appCode: appCode,
+          requester: {
+            name: reqName,
+            role: "Planta STF",
+            area: reqArea
+          },
+          title: title,
+          description: desc,
+          devName: devName,
+          status: status,
+          resolution: (status !== "pendiente" && observation) ? {
+            action: status,
+            resolvedBy: resolvedBy || devName,
+            resolvedAt: resDateFormatted || new Date().toISOString(),
+            observation: observation,
+            etaHours: etaHours
+          } : null
+        });
+      }
+    }
+
     return createJsonResponse({
       status: "success",
       tasks: tasks,
       systems: systems,
       webSystems: webSystems,
-      observations: observations
+      observations: observations,
+      supportTickets: supportTickets
     });
   }
 
