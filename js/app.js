@@ -126,14 +126,14 @@ function resolveCanonicalDevId(input) {
 const savedLoggedUserJson = localStorage.getItem('STF_LOGGED_USER');
 let loggedUser = null;
 if (savedLoggedUserJson) {
-  try { loggedUser = JSON.parse(savedLoggedUserJson); } catch(e) {}
+  try { loggedUser = JSON.parse(savedLoggedUserJson); } catch (e) { }
 }
 
 function getLoggedSessionUser() {
   if (!loggedUser) {
     const saved = localStorage.getItem('STF_LOGGED_USER');
     if (saved) {
-      try { loggedUser = JSON.parse(saved); } catch(e) {}
+      try { loggedUser = JSON.parse(saved); } catch (e) { }
     }
   }
   if (loggedUser) {
@@ -158,7 +158,7 @@ function getLoggedSessionUser() {
         try {
           localStorage.setItem('STF_LOGGED_USER', JSON.stringify(loggedUser));
           localStorage.setItem('STF_ACTIVE_DEV_ID', canonicalDev.id);
-        } catch (e) {}
+        } catch (e) { }
       }
     }
     return loggedUser;
@@ -235,8 +235,8 @@ window.resolveCanonicalDevId = resolveCanonicalDevId;
 let activeSelectedDevId = !isCurrentSessionAdmin()
   ? getLoggedDevId()
   : ((localStorage.getItem('STF_ACTIVE_DEV_ID') && localStorage.getItem('STF_ACTIVE_DEV_ID') !== 'dev_ediaz' && localStorage.getItem('STF_ACTIVE_DEV_ID') !== 'admin')
-      ? resolveCanonicalDevId(localStorage.getItem('STF_ACTIVE_DEV_ID'))
-      : ((appState.developers.find(d => d.role !== 'Admin' && d.id !== 'dev_ediaz') || {}).id || 'dev_jg'));
+    ? resolveCanonicalDevId(localStorage.getItem('STF_ACTIVE_DEV_ID'))
+    : ((appState.developers.find(d => d.role !== 'Admin' && d.id !== 'dev_ediaz') || {}).id || 'dev_jg'));
 let currentEditingSysId = null;
 
 // Chart Instances
@@ -404,7 +404,7 @@ function getStfAudioContext() {
     }
   }
   if (stfAudioContext && stfAudioContext.state === 'suspended') {
-    stfAudioContext.resume().catch(() => {});
+    stfAudioContext.resume().catch(() => { });
   }
   return stfAudioContext;
 }
@@ -426,7 +426,7 @@ function playNotificationSound() {
 
     // Tres acordes armónicos de campana cristalina (F#5, A#5, C#6)
     const bellTones = [
-      { freq: 739.99, delay: 0.0,  duration: 0.35, gain: 0.28 },
+      { freq: 739.99, delay: 0.0, duration: 0.35, gain: 0.28 },
       { freq: 932.33, delay: 0.08, duration: 0.40, gain: 0.32 },
       { freq: 1108.73, delay: 0.16, duration: 0.60, gain: 0.36 }
     ];
@@ -513,7 +513,7 @@ function requestNotificationPermission() {
           body: 'Recibirás avisos de tareas y observaciones en tu dispositivo.',
           icon: 'assets/favicon-32x32.png'
         });
-      } catch (e) {}
+      } catch (e) { }
     } else {
       if (typeof showToast === 'function') showToast('Permiso de notificaciones rechazado o bloqueado.', 'warning');
     }
@@ -600,7 +600,7 @@ function triggerNotificationAlert(opts = {}) {
         icon: 'assets/favicon-32x32.png',
         badge: 'assets/favicon-16x16.png'
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -655,7 +655,7 @@ try {
   if (storedRead) {
     readNotificationsSet = new Set(JSON.parse(storedRead));
   }
-} catch (e) {}
+} catch (e) { }
 
 function getNotificationsData() {
   const isAdmin = isCurrentSessionAdmin();
@@ -668,7 +668,7 @@ function getNotificationsData() {
     // =========================================================================
     // VISTA SUPER ADMIN: Avances de Desarrolladores, Tareas y Alertas en Planta
     // =========================================================================
-    
+
     // 0. Alerta al Super Admin: Reunión de Entrega Programada (1 Hora Antes)
     const nowRef = new Date();
     const todayIsoRef = formatIsoDate(nowRef);
@@ -868,6 +868,28 @@ function getNotificationsData() {
     // Colocar las observaciones de tareas en la posición prioritaria superior
     notifications.unshift(...taskObsNotifs);
 
+    // 3. Solicitudes de Soporte Técnico de Planta (Pendientes de Revisión)
+    const pendingTickets = (appState.supportTickets || []).filter(t => t.status === 'pendiente');
+    pendingTickets.forEach(ticket => {
+      notifications.unshift({
+        id: `notif_sup_${ticket.id}`,
+        type: 'support_ticket',
+        icon: 'headphones',
+        iconBg: '#EEF2FF',
+        iconColor: '#4F46E5',
+        tag: '🛎️ Soporte Planta',
+        tagColor: '#4338CA',
+        tagBg: '#E0E7FF',
+        title: `Solicitud de Soporte: ${ticket.title}`,
+        sub: `Reporta ${ticket.requester?.name || 'Operario'} (${ticket.requester?.area || 'Planta'}) · Asignado a ${ticket.devName}`,
+        time: formatShortDate(ticket.createdAt),
+        action: () => {
+          if (typeof switchView === 'function') switchView('support');
+          if (typeof openSupportActionModal === 'function') openSupportActionModal(ticket.id, 'aceptada');
+        }
+      });
+    });
+
   } else {
     // =========================================================================
     // VISTA DESARROLLADOR: Nuevas Tareas Asignadas & Observaciones del Admin
@@ -989,6 +1011,30 @@ function getNotificationsData() {
         action: () => openSystemDetailModal(app.id)
       });
     });
+
+    // 5. Solicitudes de Soporte Técnico de Planta Asignadas al Desarrollador
+    const myPendingTickets = (appState.supportTickets || []).filter(t => 
+      t.status === 'pendiente' && (resolveCanonicalDevId(t.devId) === currentDevId || t.devId === currentDevId)
+    );
+    myPendingTickets.forEach(ticket => {
+      notifications.unshift({
+        id: `notif_dev_sup_${ticket.id}`,
+        type: 'support_ticket_dev',
+        icon: 'headphones',
+        iconBg: '#FEF3C7',
+        iconColor: '#D97706',
+        tag: '🚨 Solicitud de Planta',
+        tagColor: '#B45309',
+        tagBg: '#FDE68A',
+        title: `Soporte Requerido: ${ticket.title}`,
+        sub: `Reporta ${ticket.requester?.name || 'Operario'} (${ticket.requester?.area || 'Planta'}) en ${ticket.appName}. ¡Requiere tu atención!`,
+        time: formatShortDate(ticket.createdAt),
+        action: () => {
+          if (typeof switchView === 'function') switchView('support');
+          if (typeof openSupportActionModal === 'function') openSupportActionModal(ticket.id, 'aceptada');
+        }
+      });
+    });
   }
 
   return notifications;
@@ -999,7 +1045,7 @@ function markAllNotificationsRead() {
   notifications.forEach(n => readNotificationsSet.add(n.id));
   try {
     localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-  } catch (e) {}
+  } catch (e) { }
   renderNotificationsDropdown();
   if (typeof showToast === 'function') {
     showToast('✓ Todas las notificaciones han sido marcadas como leídas');
@@ -1011,7 +1057,7 @@ function markSingleNotificationRead(notifId) {
     readNotificationsSet.add(notifId);
     try {
       localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-    } catch (e) {}
+    } catch (e) { }
     renderNotificationsDropdown();
   }
 }
@@ -1153,6 +1199,15 @@ function applyRoleBasedUI() {
   if (navProjBtn) navProjBtn.title = isAdmin ? 'Aplicativos y Módulos' : 'Mis Aplicativos Asignados';
   if (navAnalyticsBtn) navAnalyticsBtn.title = isAdmin ? 'Métricas y QA' : 'Mis Métricas y Fases';
   if (navTasksBtn) navTasksBtn.title = isAdmin ? 'Integraciones Operativas & Tareas en Vivo' : 'Mis Tareas & Entregables Asignados';
+  const navSupportBtn = document.querySelector('.sidebar-nav .nav-btn[data-view="support"]');
+  if (navSupportBtn) {
+    navSupportBtn.style.display = '';
+    navSupportBtn.classList.remove('is-hidden');
+    navSupportBtn.title = isAdmin ? 'Bandeja Global de Soporte Técnico en Planta' : 'Mi Bandeja de Solicitudes de Soporte';
+  }
+  if (typeof updateSupportNavBadge === 'function') {
+    updateSupportNavBadge();
+  }
 
   // 3. Acciones de Cabecera Superior (Top Header)
   const btnNewProj = document.getElementById('btnNewProject');
@@ -1869,9 +1924,9 @@ function renderDevelopersSection() {
     const isSelected = dev.id === activeSelectedDevId;
     const assigned = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
     const assignedCount = assigned.length;
-    
+
     // Average progress across their assigned projects
-    const avgProgress = assignedCount > 0 
+    const avgProgress = assignedCount > 0
       ? Math.round(assigned.reduce((acc, a) => acc + calculateAppProgress(a), 0) / assignedCount)
       : 0;
 
@@ -1954,7 +2009,7 @@ function renderHeaderSessionUser() {
   if (dshName) dshName.textContent = session.name || 'Edwin Diaz';
   if (dshAvatar) dshAvatar.src = session.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face';
   if (dshRole) {
-    dshRole.innerHTML = isAdmin 
+    dshRole.innerHTML = isAdmin
       ? '<span style="color:#F59E0B; font-weight:600;">🛡️ Admin · ' + (session.username || 'ediaz') + '</span>'
       : '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador · ' + (session.username || '') + '</span>';
   }
@@ -2209,7 +2264,7 @@ function updateQuickDevStrip() {
         const prog = calculateAppProgress(app);
         const isGroup = app.isGroupProject ? '<span class="tag-group-badge">Grupal</span>' : '';
         const link = formatWebLinkInfo(app.webUrl, app.name);
-        
+
         let webLinkIcon = '';
         if (link.isLive) {
           webLinkIcon = `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="tag-web-link-icon" onclick="event.stopPropagation()" title="${link.label}">🌐</a>`;
@@ -2262,16 +2317,16 @@ function renderSystemsTable(filterQuery = '') {
     filtered = filtered.filter(app => {
       const dev = getDeveloperById(app.devId);
       return app.name.toLowerCase().includes(q) ||
-             app.code.toLowerCase().includes(q) ||
-             dev.name.toLowerCase().includes(q) ||
-             app.category.toLowerCase().includes(q);
+        app.code.toLowerCase().includes(q) ||
+        dev.name.toLowerCase().includes(q) ||
+        app.category.toLowerCase().includes(q);
     });
   }
 
   tbody.innerHTML = filtered.map(app => {
     const dev = getDeveloperById(app.devId);
     const progress = calculateAppProgress(app);
-    
+
     // Status text & class
     let statusClass = 'status-ontime';
     let statusText = 'En Tiempo';
@@ -2344,7 +2399,7 @@ function renderSystemsTable(filterQuery = '') {
     mobileCardsContainer.innerHTML = filtered.map(app => {
       const dev = getDeveloperById(app.devId);
       const progress = calculateAppProgress(app);
-      
+
       let statusClass = 'status-ontime';
       let statusText = 'En Tiempo';
       if (progress === 100) {
@@ -2492,11 +2547,11 @@ function getOverviewChartData(period = currentOverviewPeriod, devId = activeSele
   const effectiveDevId = !isAdmin ? getLoggedDevId() : devId;
   const isAll = !effectiveDevId || effectiveDevId === 'all';
   const dev = isAll ? null : getDeveloperById(effectiveDevId);
-  const assigned = dev 
-    ? appState.applications.filter(a => isAppAssignedToDev(a, dev.id)) 
+  const assigned = dev
+    ? appState.applications.filter(a => isAppAssignedToDev(a, dev.id))
     : (isAdmin ? appState.applications : getScopedApplications());
 
-  const devAvgProgress = assigned.length > 0 
+  const devAvgProgress = assigned.length > 0
     ? Math.round(assigned.reduce((acc, a) => acc + calculateAppProgress(a), 0) / assigned.length)
     : (isAdmin ? 76 : 0);
 
@@ -2854,7 +2909,7 @@ function updateOverviewChart(period = currentOverviewPeriod) {
           usePointStyle: true,
           cornerRadius: 14,
           callbacks: {
-            label: function(context) {
+            label: function (context) {
               return `${context.dataset.label}: ${context.raw}%`;
             }
           }
@@ -2997,14 +3052,14 @@ function checkColombianHoliday(dateOrStr) {
 function isSTFLaborDay(dateOrStr) {
   let dateObj = (dateOrStr instanceof Date) ? dateOrStr : new Date(dateOrStr + (typeof dateOrStr === 'string' && dateOrStr.length === 10 ? 'T12:00:00' : ''));
   if (isNaN(dateObj.getTime())) return true;
-  
+
   // Domingo = 0 (No laboral en STF)
   if (dateObj.getDay() === 0) return false;
-  
+
   // Festivo oficial de Colombia (No laboral en STF)
   const hol = checkColombianHoliday(dateObj);
   if (hol.isHoliday) return false;
-  
+
   // Lunes (1) a Sábado (6) laborables
   return true;
 }
@@ -3138,7 +3193,7 @@ let vcalSelectedEnd = '2026-10-28';
 function getDynamicDeliveriesList() {
   const baseDeliveries = (typeof STF_VELOCITY_DATA !== 'undefined' && Array.isArray(STF_VELOCITY_DATA.dailyDeliveries)) ? [...STF_VELOCITY_DATA.dailyDeliveries] : [];
   const integrations = (typeof appState !== 'undefined' && appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
-  
+
   // Agregar tareas evaluadas o completadas en tiempo real al historial de entregas
   integrations.forEach(t => {
     if (t.status === 'evaluated' || t.status === 'done') {
@@ -3146,7 +3201,7 @@ function getDynamicDeliveriesList() {
       const devId = resolveCanonicalDevId(t.devId) || 'dev_jg';
       const weight = Number(t.weight) || 15;
       const hours = Math.round(weight * 0.8) || 8;
-      
+
       const alreadyPresent = baseDeliveries.some(d => d.appId === t.appId && d.date === evalDate && d.devId === devId);
       if (!alreadyPresent) {
         baseDeliveries.push({
@@ -3167,7 +3222,7 @@ function computeDynamicVelocityData(period = 'months', devId = 'all') {
   const isAll = !devId || devId === 'all';
   const canonicalDevId = isAll ? 'all' : resolveCanonicalDevId(devId);
   const allDeliveries = getDynamicDeliveriesList();
-  
+
   // Filtrar por desarrollador
   const filteredDeliveries = isAll
     ? allDeliveries
@@ -3600,7 +3655,7 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
   }
 
   const targetValues = values.map(() => targetBenchmark);
-  
+
   // Encontrar el pico récord en los datos actuales
   let peakVal = -1;
   let peakIdx = 0;
@@ -3656,8 +3711,8 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
     if (isColFocused) {
       tasksSub.textContent = `📌 Columna seleccionada: ${focusedLabel} (clic de nuevo para ver todo)`;
     } else {
-      tasksSub.textContent = isAll 
-        ? periodSubtext 
+      tasksSub.textContent = isAll
+        ? periodSubtext
         : `${devObj.name} · ${periodSubtext}`;
     }
   }
@@ -3703,12 +3758,12 @@ function updateVelocitySection(period = 'months', devId = currentVelocityDev, ke
 
   // 3. Destrucción limpia de cualquier instancia previa para evitar bloqueos de canvas al filtrar fechas
   if (velocityChartInstance) {
-    try { velocityChartInstance.destroy(); } catch (e) {}
+    try { velocityChartInstance.destroy(); } catch (e) { }
     velocityChartInstance = null;
   }
   const existingChart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
   if (existingChart) {
-    try { existingChart.destroy(); } catch (e) {}
+    try { existingChart.destroy(); } catch (e) { }
   }
 
   // 4. Gradientes dinámicos para las barras (resaltando la columna elegida o el pico récord)
@@ -4156,8 +4211,8 @@ function renderVelocitySprintDigest(period, labels, values, hours, benchmark, pe
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const count = labels.length;
   if (!isMobile) {
-    container.style.gridTemplateColumns = count <= 4 
-      ? `repeat(${count}, 1fr)` 
+    container.style.gridTemplateColumns = count <= 4
+      ? `repeat(${count}, 1fr)`
       : (count <= 8 ? `repeat(${count}, 1fr)` : 'repeat(auto-fit, minmax(115px, 1fr))');
   } else {
     container.style.gridTemplateColumns = '';
@@ -4213,7 +4268,7 @@ function highlightSprintBar(index) {
         { datasetIndex: 1, index: selectedVelocityBarIndex }
       ]);
       velocityChartInstance.update('none');
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -4611,7 +4666,7 @@ function openSystemDetailModal(appId) {
   }
 
   document.getElementById('modalSysDeadline').textContent = formatDate(app.deadline);
-  
+
   // Health
   const isProd = typeof isAppInLiveProduction === 'function' ? isAppInLiveProduction(app) : (progress === 100);
   const healthEl = document.getElementById('modalSysHealth');
@@ -5006,7 +5061,7 @@ function removeNewProjectPhaseRow(idxToRemove) {
     showToast('⚠️ El aplicativo debe tener al menos una fase de desarrollo.');
     return;
   }
-  
+
   const currentPhases = [];
   rows.forEach((row, idx) => {
     if (idx !== idxToRemove) {
@@ -5022,7 +5077,7 @@ function removeNewProjectPhaseRow(idxToRemove) {
 
 function applyPhasePreset(presetKey) {
   const preset = PHASE_PRESETS[presetKey] || PHASE_PRESETS.standard6;
-  
+
   // Update active preset button styling
   document.querySelectorAll('#modalNewProject .btn-phase-preset').forEach(btn => btn.classList.remove('active'));
   const activeBtn = {
@@ -5059,7 +5114,7 @@ function openNewProjectModal() {
   const devSelect = document.getElementById('newSysDev');
   const realDevs = appState.developers.filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin && d.roleType !== 'Admin');
   devSelect.innerHTML = realDevs.map(d => `<option value="${d.id}">${d.name} (${d.role})</option>`).join('');
-  
+
   // Set default deadline (1 month from now)
   const d = new Date();
   d.setMonth(d.getMonth() + 1);
@@ -5310,7 +5365,7 @@ function initReportSignaturePad() {
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
-  
+
   if (!reportSignaturePadInitialized) {
     reportSignaturePadInitialized = true;
 
@@ -5496,8 +5551,8 @@ function updateExecutiveReportPreview() {
       // Como Director de TI y Administrador, supervisa todo el portafolio corporativo
       filteredApps = appState.applications.slice();
     } else {
-      filteredApps = filteredApps.filter(a => 
-        a.devId === devId || 
+      filteredApps = filteredApps.filter(a =>
+        a.devId === devId ||
         (a.devIds && a.devIds.includes(devId)) ||
         (selectedDevObj?.activeProjects && selectedDevObj.activeProjects.includes(a.id))
       );
@@ -5578,7 +5633,7 @@ function updateExecutiveReportPreview() {
   // Formato de Textos de Alcance y Metadatos
   let devScopeText = 'Portafolio General (Equipo de Desarrollo)';
   if (selectedDevObj) {
-    devScopeText = isAdminDev 
+    devScopeText = isAdminDev
       ? `${selectedDevObj.name} (Director de TI · Supervisión Global)`
       : `${selectedDevObj.name} (${selectedDevObj.role})`;
   }
@@ -5747,10 +5802,10 @@ function updateExecutiveReportPreview() {
       </thead>
       <tbody>
         ${maxAppsToRender.map(app => {
-          const dev = getDeveloperById(app.devId);
-          const prog = calculateAppProgress(app);
-          const isOntime = app.status === 'ontime';
-          return `
+    const dev = getDeveloperById(app.devId);
+    const prog = calculateAppProgress(app);
+    const isOntime = app.status === 'ontime';
+    return `
             <tr>
               <td><strong>${app.code}</strong></td>
               <td>${app.name}</td>
@@ -5769,7 +5824,7 @@ function updateExecutiveReportPreview() {
               </td>
             </tr>
           `;
-        }).join('')}
+  }).join('')}
         ${!selectedDevObj && filteredApps.length > 3 ? `
           <tr>
             <td colspan="6" style="text-align: center; color: #64748B; font-size: 8px; font-style: italic; padding: 4px;">
@@ -5801,10 +5856,10 @@ function updateExecutiveReportPreview() {
         </thead>
         <tbody>
           ${maxTasksToRender.map(task => {
-            const dev = getDeveloperById(task.devId);
-            const app = getApplicationById(task.appId);
-            const isEval = task.status === 'evaluated';
-            return `
+      const dev = getDeveloperById(task.devId);
+      const app = getApplicationById(task.appId);
+      const isEval = task.status === 'evaluated';
+      return `
               <tr>
                 <td><strong>${task.name}</strong></td>
                 <td>${app ? app.name : task.appId}</td>
@@ -5812,13 +5867,13 @@ function updateExecutiveReportPreview() {
                 <td>${formatShortDate(task.deadline)}</td>
                 <td>${task.weight}%</td>
                 <td>
-                  ${isEval 
-                    ? `<span class="rep-badge-ontime">✓ Auditada (${task.evaluation ? task.evaluation.qualityScore + '%' : 'Aprobada'})</span>` 
-                    : `<span class="rep-badge-eval">En Progreso</span>`}
+                  ${isEval
+          ? `<span class="rep-badge-ontime">✓ Auditada (${task.evaluation ? task.evaluation.qualityScore + '%' : 'Aprobada'})</span>`
+          : `<span class="rep-badge-eval">En Progreso</span>`}
                 </td>
               </tr>
             `;
-          }).join('')}
+    }).join('')}
           ${filteredTasks.length > 3 ? `
             <tr>
               <td colspan="6" style="text-align: center; color: #64748B; font-size: 8px; font-style: italic; padding: 4px;">
@@ -6023,7 +6078,7 @@ function calculateIntegrationTimeProgress(integration) {
   const dlDiag = getSTFDeadlineDiagnosis(integration.deadline, refDate);
   const totalMetrics = getSTFLaborDaysMetrics(dStart, dEnd);
   const totalWorkdays = Math.max(1, totalMetrics.workdays);
-  
+
   // Días laborales transcurridos desde el inicio
   const elapsedMetrics = getSTFLaborDaysMetrics(dStart, refDate);
   const elapsedWorkdays = Math.min(totalWorkdays, Math.max(0, elapsedMetrics.workdays));
@@ -6678,7 +6733,7 @@ function autoSelectDevForApp(appId) {
     targetDevId = resolveCanonicalDevId(app.devIds[0]) || app.devIds[0];
   } else {
     // Buscar en los desarrolladores cuál tiene este appId en sus activeProjects
-    const devMatch = (appState.developers || []).find(d => 
+    const devMatch = (appState.developers || []).find(d =>
       d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin &&
       Array.isArray(d.activeProjects) && d.activeProjects.includes(appId)
     );
@@ -6691,7 +6746,7 @@ function autoSelectDevForApp(appId) {
     const canonTarget = resolveCanonicalDevId(targetDevId) || targetDevId;
     let optionMatch = null;
     if (devSelect.options && devSelect.options.length > 0) {
-      optionMatch = Array.from(devSelect.options).find(opt => 
+      optionMatch = Array.from(devSelect.options).find(opt =>
         opt.value === targetDevId || opt.value === canonTarget || (resolveCanonicalDevId(opt.value) === canonTarget)
       );
     }
@@ -7184,7 +7239,7 @@ function renderTaskObservationsFeed() {
   const devSelect = document.getElementById('obsFilterDev');
   if (devSelect) {
     const realDevs = (appState.developers || []).filter(dev => dev.role !== 'Admin' && dev.id !== 'dev_ediaz');
-    
+
     if (isAdmin) {
       devSelect.innerHTML = `
         <option value="all">Todos los Desarrolladores</option>
@@ -7233,7 +7288,7 @@ function renderTaskObservationsFeed() {
   // 3. Filtro por búsqueda
   if (activeObsSearch.trim()) {
     const q = activeObsSearch.trim().toLowerCase();
-    filtered = filtered.filter(o => 
+    filtered = filtered.filter(o =>
       (o.text && o.text.toLowerCase().includes(q)) ||
       (o.taskName && o.taskName.toLowerCase().includes(q)) ||
       (o.devName && o.devName.toLowerCase().includes(q)) ||
@@ -7249,9 +7304,9 @@ function renderTaskObservationsFeed() {
         <i data-lucide="message-square-off"></i>
         <h4 class="obs-empty-title">No hay observaciones registradas en este filtro</h4>
         <p class="obs-empty-hint">
-          ${isAdmin 
-            ? 'Usa el botón superior "+ Registrar Observación" para documentar cualquier bloqueo, hito o ajuste en las tareas asignadas.' 
-            : 'No tienes observaciones registradas para este criterio de búsqueda.'}
+          ${isAdmin
+        ? 'Usa el botón superior "+ Registrar Observación" para documentar cualquier bloqueo, hito o ajuste en las tareas asignadas.'
+        : 'No tienes observaciones registradas para este criterio de búsqueda.'}
         </p>
       </div>
     `;
@@ -7270,7 +7325,7 @@ function renderTaskObservationsFeed() {
   const cardsHtml = filtered.map(obs => {
     const meta = typeMap[obs.type] || typeMap.avance;
     const devInitials = (obs.devName || 'D').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-    
+
     // Status chip para la tarea
     let statusClass = 'active';
     let statusLabel = 'En Desarrollo';
@@ -7292,9 +7347,9 @@ function renderTaskObservationsFeed() {
         <!-- Top Row: Dev Info, Type Badge & Date -->
         <div class="obs-card-top">
           <div class="obs-dev-profile">
-            ${obs.devAvatar 
-              ? `<img src="${obs.devAvatar}" class="obs-dev-avatar" alt="${obs.devName}">`
-              : `<div class="obs-dev-avatar-fallback">${devInitials}</div>`}
+            ${obs.devAvatar
+        ? `<img src="${obs.devAvatar}" class="obs-dev-avatar" alt="${obs.devName}">`
+        : `<div class="obs-dev-avatar-fallback">${devInitials}</div>`}
             <div class="obs-dev-meta">
               <div class="obs-dev-meta-top">
                 <span class="obs-dev-name">${obs.devName}</span>
@@ -7575,7 +7630,7 @@ function handleSaveObservation(event) {
     readNotificationsSet.delete(notifId);
     try {
       localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Guardar en almacenamiento
@@ -8371,6 +8426,18 @@ function initApp() {
     });
   });
 
+  // Support Status Filter Pills
+  document.querySelectorAll('#supportStatusFilterPills .filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#supportStatusFilterPills .filter-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const filter = pill.dataset.supportFilter;
+      if (typeof setSupportStatusFilter === 'function') {
+        setSupportStatusFilter(filter);
+      }
+    });
+  });
+
   // Switch between Projects Pipeline, Grid & Table
   document.getElementById('btnViewPipeline')?.addEventListener('click', () => setProjectsViewMode('pipeline'));
   document.getElementById('btnViewGrid')?.addEventListener('click', () => setProjectsViewMode('grid'));
@@ -8543,7 +8610,7 @@ function switchView(viewName) {
     renderProjectsView(activeBrandFilter);
   } else if (viewName === 'developers') {
     if (titleEl) {
-      titleEl.innerHTML = isAdmin 
+      titleEl.innerHTML = isAdmin
         ? 'Rendimiento de Ingeniería & Gestión de Usuarios · <span class="text-gradient">STF GROUP</span>'
         : 'Directorio de Desarrolladores & Equipo · <span class="text-gradient">STF GROUP</span>';
     }
@@ -8597,6 +8664,20 @@ function switchView(viewName) {
         : 'Tus entregas programadas, plazos oficiales del Jefe TI y reprogramación interactiva de tareas asignadas.';
     }
     renderCalendarDeliveryView();
+  } else if (viewName === 'support') {
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Mesa de Ayuda & Soporte Técnico · <span class="text-gradient">STF GROUP</span>'
+        : `Bandeja de Soporte Técnico · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Recepción de solicitudes y novedades reportadas desde planta (operarios y jefas de área) con redirección automática por aplicativo.'
+        : 'Solicitudes y novedades de planta asignadas a tus aplicativos. Revisa, acepta o rechaza con respuesta directa al solicitante.';
+    }
+    if (typeof renderSupportView === 'function') {
+      renderSupportView();
+    }
   } else if (viewName === 'dashboard') {
     if (titleEl) {
       titleEl.innerHTML = isAdmin
@@ -8784,7 +8865,7 @@ function renderProjectsView(brand = activeBrandFilter) {
       const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
       const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 });
       const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount;
-      
+
       const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
         plantArea: app.category,
         plantRole: 'Operación Industrial en Planta',
@@ -8809,7 +8890,7 @@ function renderProjectsView(brand = activeBrandFilter) {
 
       // Cálculo de fecha límite y cuenta regresiva con Motor Laboral STF (Lun-Sáb 6am-1pm, domingos y festivos libres)
       const deadlineDiag = getSTFDeadlineDiagnosis(app.deadline, refDate);
-      
+
       let deadlineDisplay, deadlineCountdown, isOverdue = false;
       if (progress === 100) {
         deadlineDisplay = '✅ Desplegado';
@@ -8928,9 +9009,9 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <div class="dev-lead-pill" onclick="openSystemDetailModal('${app.id}')" title="Desarrollo colaborativo grupal (4 desarrolladores)">
                   <div class="stacked-team-avatars">
                     ${(app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']).map(dId => {
-                      const d = getDeveloperById(dId);
-                      return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
-                    }).join('')}
+        const d = getDeveloperById(dId);
+        return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
+      }).join('')}
                   </div>
                   <div class="dev-lead-text">
                     <strong>Equipo Grupal</strong>
@@ -8957,22 +9038,22 @@ function renderProjectsView(brand = activeBrandFilter) {
                 <span>Tareas (${totalTasksCount})</span>
               </button>
               ${(() => {
-                const sysLink = formatWebLinkInfo(app.webUrl, app.name);
-                if (sysLink.isValid) {
-                  return `
+          const sysLink = formatWebLinkInfo(app.webUrl, app.name);
+          if (sysLink.isValid) {
+            return `
                     <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="card-sec-btn card-web-link-btn" style="${sysLink.isSharepoint ? 'background:#EEF2FF; color:#4338CA; border-color:#C7D2FE;' : ''}" title="${sysLink.label}">
                       <i data-lucide="${sysLink.isSharepoint ? 'folder' : 'globe'}"></i>
                       <span>${sysLink.shortLabel}</span>
                     </a>
                   `;
-                }
-                return `
+          }
+          return `
                   <span class="card-sec-btn" style="opacity:0.6; cursor:not-allowed;" title="Despliegue web en desarrollo (Sin URL asignada)">
                     <i data-lucide="clock"></i>
                     <span>Pendiente</span>
                   </span>
                 `;
-              })()}
+        })()}
               ${isAdmin ? `
                 <button class="card-primary-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar las fases de desarrollo de ${app.name}">
                   <i data-lucide="clipboard-check"></i>
@@ -9064,20 +9145,20 @@ function renderProjectsView(brand = activeBrandFilter) {
           <td class="text-right" onclick="event.stopPropagation();">
             <div style="display: inline-flex; gap: 6px; align-items: center;">
               ${(() => {
-                const sysLink = formatWebLinkInfo(app.webUrl, app.name);
-                if (sysLink.isValid) {
-                  return `
+          const sysLink = formatWebLinkInfo(app.webUrl, app.name);
+          if (sysLink.isValid) {
+            return `
                     <a href="${sysLink.url}" target="_blank" rel="noopener noreferrer" class="action-row-btn" style="text-decoration:none; ${sysLink.isSharepoint ? 'color:#4338CA; background:#EEF2FF; border-color:#C7D2FE;' : 'color:#047857; background:#ECFDF5; border-color:#A7F3D0;'}" title="${sysLink.label}">
                       ${sysLink.shortLabel}
                     </a>
                   `;
-                }
-                return `
+          }
+          return `
                   <span class="action-row-btn" style="opacity:0.5; cursor:not-allowed;" title="Despliegue web en desarrollo (Sin URL asignada)">
                     ⏳ Pendiente
                   </span>
                 `;
-              })()}
+        })()}
               <button class="action-row-btn" onclick="openSystemDetailModal('${app.id}')" title="${isAdmin ? 'Auditar' : 'Ver'} Fases">
                 ${isAdmin ? 'Auditar' : 'Ver Fases'}
               </button>
@@ -9145,9 +9226,9 @@ function renderKanbanBoard() {
         <div class="kanban-items-list">
           ${appsInCol.length === 0 ? '<p style="color: #A0ABC0; font-size: 12px; text-align: center; margin-top: 24px;">Sin aplicativos en esta etapa</p>' : ''}
           ${appsInCol.map(app => {
-            const dev = getDeveloperById(app.devId) || { name: 'Equipo STF' };
-            const prog = calculateAppProgress(app);
-            return `
+      const dev = getDeveloperById(app.devId) || { name: 'Equipo STF' };
+      const prog = calculateAppProgress(app);
+      return `
               <div class="kanban-item-card" onclick="openSystemDetailModal('${app.id}')" title="Clic para auditar fases de ${app.name}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                   <span class="matrix-code-chip">${app.code}</span>
@@ -9161,7 +9242,7 @@ function renderKanbanBoard() {
                 </div>
               </div>
             `;
-          }).join('')}
+    }).join('')}
         </div>
       </div>
     `;
@@ -9277,7 +9358,7 @@ function renderHeaderDevDropdown() {
   container.innerHTML = appState.developers.map(dev => {
     const isAdmin = dev.roleType === 'Admin' || String(dev.role || '').toLowerCase().includes('admin') || dev.id === 'dev_ediaz';
     const assignedApps = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
-    const appsSummary = assignedApps.length > 0 
+    const appsSummary = assignedApps.length > 0
       ? assignedApps.map(a => a.shortName || a.name.split(' ')[0]).slice(0, 3).join(', ')
       : 'Sin asignaciones';
 
@@ -9359,8 +9440,8 @@ async function handleCreateDeveloperSubmit(e) {
   }
 
   // Validar si el usuario o ID ya existen
-  const exists = appState.developers.some(d => 
-    (d.username && d.username.toLowerCase() === username) || 
+  const exists = appState.developers.some(d =>
+    (d.username && d.username.toLowerCase() === username) ||
     (d.idPassword && String(d.idPassword).trim() === idPassword)
   );
 
@@ -9467,7 +9548,7 @@ async function deleteDeveloperUser(devId, event) {
     let creds = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
     creds = creds.filter(c => c.id !== devId);
     localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(creds));
-  } catch (err) {}
+  } catch (err) { }
 
   renderDevelopersFullView();
   renderDevelopersSection();
@@ -9607,7 +9688,7 @@ function renderAnalyticsView() {
 
   const totalAppsCount = scopedApps.length;
   const prodAppsCount = scopedApps.filter(a => calculateAppProgress(a) >= 100).length;
-  const avgProg = totalAppsCount > 0 
+  const avgProg = totalAppsCount > 0
     ? Math.round(scopedApps.reduce((acc, a) => acc + calculateAppProgress(a), 0) / totalAppsCount)
     : 0;
 
@@ -9618,8 +9699,8 @@ function renderAnalyticsView() {
     if (!isAdmin) {
       elKpiScopeHint.textContent = `A cargo de ${sessionUser.name}`;
     } else {
-      elKpiScopeHint.textContent = activeAnalyticsDevFilter === 'all' 
-        ? 'Consolidado General' 
+      elKpiScopeHint.textContent = activeAnalyticsDevFilter === 'all'
+        ? 'Consolidado General'
         : `Asignados a ${getDeveloperById(activeAnalyticsDevFilter)?.name || 'Dev'}`;
     }
   }
@@ -9646,12 +9727,12 @@ function renderAnalyticsView() {
   // 1. Brands / Systems Progress Doughnut (Avance Ponderado por Marca / Categoría)
   if (brandsCtx) {
     const isMobile = window.innerWidth <= 768;
-    const labels = scopedApps.length > 0 
+    const labels = scopedApps.length > 0
       ? scopedApps.map(a => {
-          const dev = getDeveloperById(a.devId);
-          const devName = a.isGroupProject ? 'Grupal' : (dev ? dev.name.split(' ')[0] : 'STF');
-          return `${a.name} (${devName})`;
-        })
+        const dev = getDeveloperById(a.devId);
+        const devName = a.isGroupProject ? 'Grupal' : (dev ? dev.name.split(' ')[0] : 'STF');
+        return `${a.name} (${devName})`;
+      })
       : ['Sin Aplicativos'];
     const progressValues = scopedApps.length > 0 ? scopedApps.map(a => calculateAppProgress(a)) : [0];
     const colors = scopedApps.length > 0 ? scopedApps.map(a => a.iconColor || '#4E65FF') : ['#E2E8F0'];
@@ -9879,14 +9960,14 @@ function renderAnalyticsView() {
       const devTasks = allTasks.filter(t => t.devId === dev.id || (t.developer || '').toLowerCase().includes(dev.name.toLowerCase()));
       const activeTasks = devTasks.filter(t => t.status !== 'done' && t.status !== 'evaluated');
       const completedTasks = devTasks.filter(t => t.status === 'done' || t.status === 'evaluated');
-      
+
       // Cálculo de ponderación activa acumulada
       const activeWeight = activeTasks.reduce((acc, t) => acc + (Number(t.weight) || 15), 0);
       const assignedApps = (appState.applications || []).filter(a => isAppAssignedToDev(a, dev.id));
-      
+
       // Si no tiene tareas explícitas pero sí sistemas a cargo, estimar proporcionalmente
-      const workloadPct = activeTasks.length > 0 
-        ? Math.min(100, Math.round(activeWeight)) 
+      const workloadPct = activeTasks.length > 0
+        ? Math.min(100, Math.round(activeWeight))
         : (assignedApps.length > 0 ? Math.min(90, assignedApps.length * 20) : 15);
 
       let statusBadge = 'optimal';
@@ -10058,11 +10139,11 @@ function renderAnalyticsView() {
     ];
 
     const areaStats = plantAreas.map(area => {
-      const matchApps = allApps.filter(a => 
+      const matchApps = allApps.filter(a =>
         (a.category || '').toLowerCase().includes(area.category.toLowerCase()) ||
         (a.name || '').toUpperCase().includes(area.anchorApp.toUpperCase())
       );
-      
+
       let avgProgress = 0;
       let isLive = false;
       let statusClass = 'progress';
@@ -10232,11 +10313,11 @@ function renderSettingsView() {
     currentEditingPhaseWeights = [...cfg.phaseWeights];
   }
 
-  const baseStandardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases) 
-    ? STF_DATA.standardPhases 
-    : ((typeof STF_REAL_DATA !== 'undefined' && STF_REAL_DATA.standardPhases) 
-        ? STF_REAL_DATA.standardPhases 
-        : (window.STF_DATA ? window.STF_DATA.standardPhases : []));
+  const baseStandardPhases = (typeof STF_DATA !== 'undefined' && STF_DATA.standardPhases)
+    ? STF_DATA.standardPhases
+    : ((typeof STF_REAL_DATA !== 'undefined' && STF_REAL_DATA.standardPhases)
+      ? STF_REAL_DATA.standardPhases
+      : (window.STF_DATA ? window.STF_DATA.standardPhases : []));
 
   const isAdmin = isCurrentSessionAdmin();
 
@@ -10569,7 +10650,7 @@ function handleImportBackupJSON(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     try {
       const imported = JSON.parse(e.target.result);
       if (!imported || !Array.isArray(imported.applications)) {
@@ -10726,7 +10807,7 @@ function toggleStageAccordion(stageId) {
   const body = document.getElementById(`body_${stageId}`);
   const hint = document.getElementById(`hint_${stageId}`);
   const chevron = box ? box.querySelector('.h-stage-chevron-icon') : null;
-  
+
   if (box && body) {
     const isOpen = !!stageAccordionState[stageId];
     box.classList.toggle('is-open', isOpen);
@@ -10836,13 +10917,13 @@ function renderPipelineView(apps) {
           </div>
         </div>
         <div class="h-stage-accordion-body" id="body_stage_core" style="display: flex;">
-          ${coreApps.length > 0 
-            ? coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
-            : `<div class="h-stage-empty-strip">
+          ${coreApps.length > 0
+        ? coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+        : `<div class="h-stage-empty-strip">
                  <i data-lucide="code-2"></i>
                  <span>No hay sistemas en la etapa de <strong>Construcción / Desarrollo Activo</strong>.</span>
                </div>`
-          }
+      }
         </div>
       </div>
     `;
@@ -10864,13 +10945,13 @@ function renderPipelineView(apps) {
           </div>
         </div>
         <div class="h-stage-accordion-body" id="body_stage_qa" style="display: flex;">
-          ${qaApps.length > 0 
-            ? qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
-            : `<div class="h-stage-empty-strip">
+          ${qaApps.length > 0
+        ? qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+        : `<div class="h-stage-empty-strip">
                  <i data-lucide="flask-conical"></i>
                  <span><strong>2. Puesta en Planta:</strong> No hay sistemas pendientes de validación en planta en este momento (0 Sistemas).</span>
                </div>`
-          }
+      }
         </div>
       </div>
     `;
@@ -10892,13 +10973,13 @@ function renderPipelineView(apps) {
           </div>
         </div>
         <div class="h-stage-accordion-body" id="body_stage_prod" style="display: flex;">
-          ${prodApps.length > 0 
-            ? prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
-            : `<div class="h-stage-empty-strip">
+          ${prodApps.length > 0
+        ? prodApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+        : `<div class="h-stage-empty-strip">
                  <i data-lucide="rocket"></i>
                  <span>No hay sistemas en la etapa de <strong>Producción Activa (En Vivo)</strong>.</span>
                </div>`
-          }
+      }
         </div>
       </div>
     `;
@@ -10924,13 +11005,13 @@ function renderPipelineView(apps) {
           </div>
         </div>
         <div class="h-stage-accordion-body" id="body_stage_core" style="display: ${isCoreOpen ? 'flex' : 'none'};">
-          ${coreApps.length > 0 
-            ? coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
-            : `<div class="h-stage-empty-strip">
+          ${coreApps.length > 0
+        ? coreApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+        : `<div class="h-stage-empty-strip">
                  <i data-lucide="code-2"></i>
                  <span>No hay sistemas en la etapa de <strong>Construcción / Desarrollo Activo</strong>.</span>
                </div>`
-          }
+      }
         </div>
       </div>
     `);
@@ -10953,13 +11034,13 @@ function renderPipelineView(apps) {
           </div>
         </div>
         <div class="h-stage-accordion-body" id="body_stage_qa" style="display: ${isQaOpen ? 'flex' : 'none'};">
-          ${qaApps.length > 0 
-            ? qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
-            : `<div class="h-stage-empty-strip">
+          ${qaApps.length > 0
+        ? qaApps.map(app => renderHorizontalSystemCardHtml(app, refDate, isAdmin)).join('')
+        : `<div class="h-stage-empty-strip">
                  <i data-lucide="flask-conical"></i>
                  <span><strong>2. Puesta en Planta:</strong> No hay sistemas pendientes de validación en planta en este momento (0 Sistemas).</span>
                </div>`
-          }
+      }
         </div>
       </div>
     `);
@@ -11032,7 +11113,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
 
   // Cronograma / Deadline con Motor Laboral STF (Lun-Sáb 6am-1pm, sin domingos ni festivos)
   const deadlineDiag = getSTFDeadlineDiagnosis(app.deadline, refDate);
-  
+
   let deadlineDisplay, isOverdue = false;
   if (isProd) {
     deadlineDisplay = 'En Producción';
@@ -11158,9 +11239,9 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
           <div class="h-team-group-wrap" title="Desarrollo colaborativo grupal (4 devs)">
             <div class="stacked-team-avatars">
               ${(app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']).map(dId => {
-                const d = getDeveloperById(dId);
-                return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
-              }).join('')}
+    const d = getDeveloperById(dId);
+    return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
+  }).join('')}
             </div>
             <div class="h-team-labels">
               <strong class="h-dev-title">Equipo Grupal</strong>
@@ -11358,9 +11439,9 @@ function getScopedCalendarIntegrations() {
   // Filter by Search Query
   if (calDeliverySearchQuery && calDeliverySearchQuery.trim()) {
     const q = calDeliverySearchQuery.trim().toLowerCase();
-    list = list.filter(i => 
-      (i.name && i.name.toLowerCase().includes(q)) || 
-      (i.appName && i.appName.toLowerCase().includes(q)) || 
+    list = list.filter(i =>
+      (i.name && i.name.toLowerCase().includes(q)) ||
+      (i.appName && i.appName.toLowerCase().includes(q)) ||
       (i.devName && i.devName.toLowerCase().includes(q))
     );
   }
@@ -11446,7 +11527,7 @@ function renderOripioSidebar() {
       const taskCount = (appState.integrations || []).filter(i => i.appId === app.id).length;
       const isActive = calDeliveryAppFilter === app.id;
       const appColor = app.iconColor || '#3B82F6';
-      
+
       let icon = '🔹';
       if (app.id.includes('colchas')) icon = '🛏️';
       else if (app.id.includes('laboratorio')) icon = '🧪';
@@ -11472,7 +11553,7 @@ function renderOripioSidebar() {
   // 2. Team Navigation
   if (teamNav && Array.isArray(appState.developers)) {
     const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz' && d.role !== 'Admin');
-    
+
     let teamHtml = `
       <button type="button" 
               class="oripio-nav-item ${calDeliveryDevFilter === 'all' ? 'active' : ''}" 
@@ -11849,7 +11930,7 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
 
   // Start from Monday of the first week
   const startMonday = getMondayOfWeek(firstDay);
-  
+
   // Calculate ending Sunday to ensure ALL days of the month (up to 30/31) are complete!
   const endSunday = new Date(lastDay);
   const diffSun = (7 - endSunday.getDay()) % 7;
@@ -11910,17 +11991,17 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
 
         <div class="o-month-cell-tasks-wrap">
           ${cellTasks.map(t => {
-            const diag = getSTFDeadlineDiagnosis(t.deadline);
-            const dateRangeStr = formatTaskDateRange(t);
-            let themeClass = 'card-theme-blue';
-            if (t.status === 'evaluated') themeClass = 'card-theme-green';
-            else if (diag.isOverdue) themeClass = 'card-theme-rose';
-            else if (t.appId === 'app_torre') themeClass = 'card-theme-purple';
-            else if (t.appId === 'app_colchas') themeClass = 'card-theme-green';
-            else if (t.appId === 'app_laboratorio') themeClass = 'card-theme-indigo';
-            else if (t.appId === 'app_geo') themeClass = 'card-theme-blue';
+      const diag = getSTFDeadlineDiagnosis(t.deadline);
+      const dateRangeStr = formatTaskDateRange(t);
+      let themeClass = 'card-theme-blue';
+      if (t.status === 'evaluated') themeClass = 'card-theme-green';
+      else if (diag.isOverdue) themeClass = 'card-theme-rose';
+      else if (t.appId === 'app_torre') themeClass = 'card-theme-purple';
+      else if (t.appId === 'app_colchas') themeClass = 'card-theme-green';
+      else if (t.appId === 'app_laboratorio') themeClass = 'card-theme-indigo';
+      else if (t.appId === 'app_geo') themeClass = 'card-theme-blue';
 
-            return `
+      return `
               <div class="o-month-task-pill ${themeClass}" 
                    id="futCard_${t.id}"
                    draggable="true"
@@ -11934,7 +12015,7 @@ function renderCalendarMonthGrid(container, currentDate, refDate) {
                 <span class="o-month-task-pill-weight">${t.weight || 10}%</span>
               </div>
             `;
-          }).join('')}
+    }).join('')}
         </div>
       </div>
     `;
@@ -11961,7 +12042,7 @@ function renderCalendarDayGrid(container, currentDate, refDate) {
   const hol = checkColombianHoliday(iso);
   const isSunday = currentDate.getDay() === 0;
   const isNonWorking = isSunday || hol.isHoliday;
-  
+
   // No activities on Sunday or Holidays
   const dayTasks = isNonWorking ? [] : scopedIntegrations.filter(t => t.deadline && t.deadline.substring(0, 10) === iso);
 
@@ -11984,13 +12065,13 @@ function renderCalendarDayGrid(container, currentDate, refDate) {
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        ${isNonWorking 
-          ? `<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px; background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F1F5F9 10px, #F1F5F9 20px); border-radius: 12px; border: 1px dashed #E2E8F0;">
+        ${isNonWorking
+      ? `<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px; background: repeating-linear-gradient(45deg, #FAFAFA, #FAFAFA 10px, #F1F5F9 10px, #F1F5F9 20px); border-radius: 12px; border: 1px dashed #E2E8F0;">
                ☕ <strong>Día no laboral en STF:</strong> No hay actividades programadas.
              </div>`
-          : (dayTasks.length > 0 
-              ? dayTasks.map(t => renderOripioEventCard(t, iso, '06:00 AM - 01:00 PM')).join('') 
-              : '<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px;">No hay entregas fijadas para este día.</div>')}
+      : (dayTasks.length > 0
+        ? dayTasks.map(t => renderOripioEventCard(t, iso, '06:00 AM - 01:00 PM')).join('')
+        : '<div style="text-align: center; padding: 40px; color: #94A3B8; font-size: 13px;">No hay entregas fijadas para este día.</div>')}
       </div>
     </div>
   `;
@@ -12331,7 +12412,7 @@ function checkUpcomingMeetingsAlert() {
   try {
     const raw = localStorage.getItem(notifiedKey);
     if (raw) notifiedSet = new Set(JSON.parse(raw));
-  } catch (e) {}
+  } catch (e) { }
 
   appState.integrations.forEach(task => {
     if (task.status === 'evaluated') return;
@@ -12352,7 +12433,7 @@ function checkUpcomingMeetingsAlert() {
       notifiedSet.add(alertId);
       try {
         localStorage.setItem(notifiedKey, JSON.stringify([...notifiedSet]));
-      } catch (e) {}
+      } catch (e) { }
 
       const dev = getDeveloperById(task.devId);
       const devName = dev ? dev.name : 'Desarrollador';
@@ -12379,4 +12460,639 @@ if (typeof window !== 'undefined') {
   window.formatTime12h = formatTime12h;
   setTimeout(checkUpcomingMeetingsAlert, 3000);
   setInterval(checkUpcomingMeetingsAlert, 30000);
+}
+
+// ==========================================================================
+// VIEW: SOPORTE TÉCNICO EN PLANTA & BANDEJA DE DESARROLLADORES
+// ==========================================================================
+
+let currentSupportFilter = 'all'; // 'all', 'pendiente', 'aceptada', 'rechazada'
+let currentSupportDevFilter = 'all'; // 'all' or devId (e.g. 'dev_jg')
+
+function setSupportStatusFilter(filter) {
+  currentSupportFilter = filter || 'all';
+  document.querySelectorAll('#supportStatusFilterPills .filter-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.supportFilter === currentSupportFilter);
+  });
+  renderSupportView();
+}
+
+function handleSupportDevFilterChange(devId) {
+  currentSupportDevFilter = devId || 'all';
+  renderSupportView();
+}
+
+function updateSupportNavBadge() {
+  const badge = document.getElementById('supportNavBadge');
+  if (!badge) return;
+  const isAdmin = isCurrentSessionAdmin();
+  const currentDevId = getLoggedDevId();
+  const tickets = (appState && Array.isArray(appState.supportTickets)) ? appState.supportTickets : [];
+
+  let pendingCount = 0;
+  if (isAdmin) {
+    pendingCount = tickets.filter(t => t.status === 'pendiente').length;
+  } else {
+    pendingCount = tickets.filter(t => t.status === 'pendiente' && (resolveCanonicalDevId(t.devId) === currentDevId || t.devId === currentDevId)).length;
+  }
+
+  if (pendingCount > 0) {
+    badge.textContent = pendingCount;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderSupportView() {
+  const isAdmin = isCurrentSessionAdmin();
+  const session = getLoggedSessionUser();
+  const currentDevId = getLoggedDevId();
+
+  if (!appState.supportTickets) {
+    appState.supportTickets = [];
+  }
+
+  // Actualizar insignias de cabecera y título
+  const shieldPill = document.getElementById('supportRoleShieldPill');
+  const shieldText = document.getElementById('supportRoleShieldText');
+  const sectionTitle = document.getElementById('supportSectionTitle');
+  const sectionSub = document.getElementById('supportSectionSubtitle');
+  const devFilterWrap = document.getElementById('supportDevFilterWrap');
+
+  if (isAdmin) {
+    if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #1E232E 0%, #2E384D 100%)';
+    if (shieldText) shieldText.textContent = 'Atención Técnica de Planta · Super Admin (Jefe TI)';
+    if (sectionTitle) sectionTitle.textContent = 'Bandeja Global de Solicitudes de Soporte Técnico';
+    if (sectionSub) sectionSub.textContent = 'Supervisión en vivo de novedades y fallas reportadas desde planta por operarios y jefas de área hacia los desarrolladores.';
+    if (devFilterWrap) devFilterWrap.style.display = 'flex';
+  } else {
+    if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #047857 0%, #065F46 100%)';
+    if (shieldText) shieldText.textContent = `Bandeja de Soporte · ${session.name}`;
+    if (sectionTitle) sectionTitle.textContent = `Mis Solicitudes Asignadas (${session.name})`;
+    if (sectionSub) sectionSub.textContent = 'Novedades reportadas desde planta para tus aplicativos a cargo. Revisa, acepta o rechaza cada solicitud con respuesta directa al solicitante.';
+    if (devFilterWrap) devFilterWrap.style.display = 'none';
+  }
+
+  // Filtrado de alcance según el rol
+  const scopedTickets = isAdmin
+    ? appState.supportTickets
+    : appState.supportTickets.filter(t => resolveCanonicalDevId(t.devId) === currentDevId || t.devId === currentDevId);
+
+  // KPIs
+  const totalCount = scopedTickets.length;
+  const pendingCount = scopedTickets.filter(t => t.status === 'pendiente').length;
+  const acceptedCount = scopedTickets.filter(t => t.status === 'aceptada').length;
+  const rejectedCount = scopedTickets.filter(t => t.status === 'rechazada').length;
+
+  const kpiTotal = document.getElementById('kpiSupportTotal');
+  const kpiPending = document.getElementById('kpiSupportPending');
+  const kpiAccepted = document.getElementById('kpiSupportAccepted');
+  const kpiRejected = document.getElementById('kpiSupportRejected');
+
+  if (kpiTotal) kpiTotal.textContent = totalCount;
+  if (kpiPending) kpiPending.textContent = pendingCount;
+  if (kpiAccepted) kpiAccepted.textContent = acceptedCount;
+  if (kpiRejected) kpiRejected.textContent = rejectedCount;
+
+  // Pills counters
+  const cAll = document.getElementById('countSupAll');
+  const cPending = document.getElementById('countSupPending');
+  const cAccepted = document.getElementById('countSupAccepted');
+  const cRejected = document.getElementById('countSupRejected');
+
+  if (cAll) cAll.textContent = totalCount;
+  if (cPending) cPending.textContent = pendingCount;
+  if (cAccepted) cAccepted.textContent = acceptedCount;
+  if (cRejected) cRejected.textContent = rejectedCount;
+
+  // Actualizar selector de desarrollador si es Super Admin
+  const devSelect = document.getElementById('selectSupportDevFilter');
+  if (isAdmin && devSelect) {
+    const teamDevs = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
+    let devOptionsHtml = `<option value="all">Todo el Equipo de Desarrollo (${appState.supportTickets.length})</option>`;
+    teamDevs.forEach(dev => {
+      const devTickets = appState.supportTickets.filter(t => resolveCanonicalDevId(t.devId) === dev.id || t.devId === dev.id);
+      const devPend = devTickets.filter(t => t.status === 'pendiente').length;
+      devOptionsHtml += `<option value="${dev.id}">${dev.name} (${devTickets.length} solicitudes${devPend > 0 ? ` · ${devPend} pendientes` : ''})</option>`;
+    });
+    devSelect.innerHTML = devOptionsHtml;
+    devSelect.value = currentSupportDevFilter;
+  }
+
+  // Filtrar lista para mostrar
+  let displayTickets = [...scopedTickets];
+
+  // Filtro por desarrollador (solo activo si es Admin)
+  if (isAdmin && currentSupportDevFilter !== 'all') {
+    displayTickets = displayTickets.filter(t => resolveCanonicalDevId(t.devId) === currentSupportDevFilter || t.devId === currentSupportDevFilter);
+  }
+
+  // Filtro por estado
+  if (currentSupportFilter !== 'all') {
+    displayTickets = displayTickets.filter(t => t.status === currentSupportFilter);
+  }
+
+  // Ordenar: pendientes primero, luego por fecha descendente
+  displayTickets.sort((a, b) => {
+    if (a.status === 'pendiente' && b.status !== 'pendiente') return -1;
+    if (a.status !== 'pendiente' && b.status === 'pendiente') return 1;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const container = document.getElementById('supportTicketsListContainer');
+  if (!container) return;
+
+  if (displayTickets.length === 0) {
+    container.innerHTML = `
+      <div class="support-empty-state" style="text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 16px; border: 1px dashed #CBD5E1;">
+        <div style="width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: #EEF2FF; color: #4F46E5; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+          <i data-lucide="inbox"></i>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 6px;">No hay solicitudes en esta vista</h3>
+        <p style="font-size: 13px; color: #64748B; max-width: 440px; margin: 0 auto 18px;">
+          ${currentSupportFilter !== 'all' 
+            ? `No se encontraron solicitudes con estado "${currentSupportFilter}".`
+            : 'En este momento no hay requerimientos reportados desde los aplicativos de planta.'}
+        </p>
+        <button type="button" class="pill-btn primary-glow-btn small-glow" onclick="openNewSupportModal()">
+          <i data-lucide="plus-circle"></i>
+          <span>Simular Requerimiento de Planta</span>
+        </button>
+      </div>
+    `;
+    updateSupportNavBadge();
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = displayTickets.map(ticket => {
+    const app = (appState.applications || []).find(a => a.id === ticket.appId) || { name: ticket.appName || 'Aplicativo Planta', color: '#4F46E5', code: 'STF' };
+    const dev = getDeveloperById(ticket.devId) || { name: ticket.devName || 'Desarrollador Oficial', avatar: 'assets/avatars/dev1.jpg', role: 'Desarrollador' };
+
+    // Status styling
+    let statusClass = 'status-pending';
+    let statusLabel = 'Pendiente de Revisión';
+    let statusIcon = 'clock';
+    if (ticket.status === 'aceptada') {
+      statusClass = 'status-accepted';
+      statusLabel = 'Aceptada en Atención';
+      statusIcon = 'check-circle-2';
+    } else if (ticket.status === 'rechazada') {
+      statusClass = 'status-rejected';
+      statusLabel = 'Rechazada / No Procede';
+      statusIcon = 'x-circle';
+    }
+
+    // Priority styling
+    let priorityClass = 'priority-normal';
+    let priorityLabel = '🟢 Normal';
+    if (ticket.priority === 'urgente') {
+      priorityClass = 'priority-urgent';
+      priorityLabel = '🔴 Urgente (Detiene operación)';
+    } else if (ticket.priority === 'media') {
+      priorityClass = 'priority-medium';
+      priorityLabel = '🟡 Media';
+    }
+
+    // Type label
+    let typeLabel = '🛠️ Soporte General';
+    if (ticket.type === 'dano') typeLabel = '🚨 Daño / Bloqueo';
+    else if (ticket.type === 'actualizacion') typeLabel = '🔄 Actualización / Mejora';
+
+    const formattedDate = new Date(ticket.createdAt).toLocaleString('es-CO', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+    });
+
+    const isPending = ticket.status === 'pendiente';
+    const hasResolution = !!ticket.resolution;
+
+    return `
+      <div class="support-ticket-card ${statusClass}" id="ticket_card_${ticket.id}">
+        <div class="st-card-header">
+          <div class="st-meta-left">
+            <span class="st-code-pill">${ticket.code}</span>
+            <span class="st-app-badge" style="background: ${app.color || '#4F46E5'}15; color: ${app.color || '#4F46E5'}; border: 1px solid ${app.color || '#4F46E5'}30;">
+              <i data-lucide="layers" style="width: 12px; height: 12px;"></i>
+              <span>${app.name}</span>
+            </span>
+            <span class="st-type-pill">${typeLabel}</span>
+            <span class="st-priority-badge ${priorityClass}">${priorityLabel}</span>
+          </div>
+
+          <div class="st-status-badge ${statusClass}">
+            <i data-lucide="${statusIcon}" style="width: 13px; height: 13px;"></i>
+            <span>${statusLabel}</span>
+          </div>
+        </div>
+
+        <div class="st-card-body">
+          <h3 class="st-ticket-title">${ticket.title}</h3>
+          
+          <div class="st-requester-bar">
+            <div class="st-req-avatar">
+              <i data-lucide="user"></i>
+            </div>
+            <div class="st-req-info">
+              <div class="st-req-name">
+                <strong>${ticket.requester?.name || 'Operario STF'}</strong>
+                <span class="st-req-area">· ${ticket.requester?.area || 'Planta'}</span>
+              </div>
+              <span class="st-req-time">Emitido el ${formattedDate}</span>
+            </div>
+          </div>
+
+          <div class="st-description-box">
+            <div class="st-desc-label">
+              <i data-lucide="file-text" style="width: 12px; height: 12px;"></i>
+              <span>Novedad reportada:</span>
+            </div>
+            <p class="st-desc-text">${ticket.description}</p>
+          </div>
+
+          <!-- Asignación automática de Desarrollador -->
+          <div class="st-assigned-dev-strip">
+            <div class="st-dev-info-left">
+              <img src="${dev.avatar || 'assets/avatars/dev1.jpg'}" alt="${dev.name}" class="st-dev-avatar" onerror="this.src='assets/avatars/dev1.jpg'">
+              <div>
+                <span class="st-dev-caption">Desarrollador Responsable:</span>
+                <strong class="st-dev-name">${dev.name}</strong>
+              </div>
+            </div>
+            <span class="st-dev-routing-tag">
+              <i data-lucide="corner-down-right" style="width: 12px; height: 12px;"></i>
+              <span>Enrutado a ${app.name}</span>
+            </span>
+          </div>
+
+          <!-- Cuadro de Resolución (Visible cuando fue Aceptada o Rechazada) -->
+          ${hasResolution ? `
+            <div class="st-resolution-box ${ticket.status === 'aceptada' ? 'res-accepted' : 'res-rejected'}">
+              <div class="st-res-header">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <i data-lucide="${ticket.status === 'aceptada' ? 'check-circle' : 'alert-circle'}" style="width: 14px; height: 14px; color: ${ticket.status === 'aceptada' ? '#059669' : '#DC2626'};"></i>
+                  <strong style="font-size: 12px; color: ${ticket.status === 'aceptada' ? '#065F46' : '#991B1B'};">
+                    Respuesta Oficial Enviada al Solicitante (${ticket.resolution.resolvedBy || 'Desarrollador'}):
+                  </strong>
+                </div>
+                <span class="st-res-badge">
+                  <i data-lucide="send" style="width: 11px; height: 11px;"></i>
+                  <span>Notificado a Planta</span>
+                </span>
+              </div>
+              <p class="st-res-text">"${ticket.resolution.observation}"</p>
+              ${ticket.resolution.etaHours ? `
+                <div class="st-res-eta">
+                  <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+                  <span><strong>Tiempo Estimado:</strong> ${ticket.resolution.etaHours}</span>
+                </div>
+              ` : ''}
+              <div class="st-res-footer-time">
+                Respondido el ${new Date(ticket.resolution.resolvedAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="st-card-footer">
+          <div class="st-footer-left">
+            <span class="st-footer-hint">
+              <i data-lucide="message-square" style="width: 12px; height: 12px;"></i>
+              <span>Toda respuesta se notifica en vivo a la persona que reportó la novedad.</span>
+            </span>
+          </div>
+
+          <div class="st-footer-actions">
+            ${isPending ? `
+              <button type="button" class="pill-btn st-btn-reject" onclick="openSupportActionModal('${ticket.id}', 'rechazada')">
+                <i data-lucide="x"></i>
+                <span>Rechazar Solicitud</span>
+              </button>
+              <button type="button" class="pill-btn st-btn-accept" onclick="openSupportActionModal('${ticket.id}', 'aceptada')">
+                <i data-lucide="check"></i>
+                <span>Aceptar Solicitud</span>
+              </button>
+            ` : `
+              <button type="button" class="pill-btn secondary-btn" onclick="openSupportActionModal('${ticket.id}', '${ticket.status}')" style="font-size: 12px; padding: 7px 14px;">
+                <i data-lucide="edit-3"></i>
+                <span>Modificar Respuesta Oficial</span>
+              </button>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateSupportNavBadge();
+  if (window.lucide) lucide.createIcons();
+}
+
+function openSupportActionModal(ticketId, preselectedAction) {
+  if (!ticketId) return;
+  const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
+  if (!ticket) return;
+
+  const modal = document.getElementById('modalSupportAction');
+  const inputId = document.getElementById('supActionTicketId');
+  const summaryBox = document.getElementById('supTicketSummaryBox');
+  const radioAccept = document.getElementById('radioDecisionAccept');
+  const radioReject = document.getElementById('radioDecisionReject');
+  const obsTextarea = document.getElementById('supActionObservation');
+  const etaSelect = document.getElementById('supActionEta');
+
+  if (inputId) inputId.value = ticket.id;
+
+  const app = (appState.applications || []).find(a => a.id === ticket.appId) || { name: ticket.appName };
+  const dev = getDeveloperById(ticket.devId) || { name: ticket.devName };
+
+  if (summaryBox) {
+    summaryBox.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 11px; font-weight: 700; color: #4338CA; background: #EEF2FF; padding: 2px 8px; border-radius: 6px;">${ticket.code}</span>
+        <span style="font-size: 12px; color: #64748B;">${app.name}</span>
+      </div>
+      <strong style="font-size: 13.5px; color: #1E293B; display: block; margin-bottom: 4px;">${ticket.title}</strong>
+      <div style="font-size: 12px; color: #475569; display: flex; gap: 12px; flex-wrap: wrap;">
+        <span><strong>Solicita:</strong> ${ticket.requester?.name || 'Operario'} (${ticket.requester?.area || 'Planta'})</span>
+        <span><strong>Desarrollador:</strong> ${dev.name}</span>
+      </div>
+    `;
+  }
+
+  const decision = preselectedAction === 'rechazada' ? 'rechazada' : 'aceptada';
+  if (radioAccept) radioAccept.checked = (decision === 'aceptada');
+  if (radioReject) radioReject.checked = (decision === 'rechazada');
+
+  handleDecisionRadioChange(decision);
+
+  if (ticket.resolution) {
+    if (obsTextarea) obsTextarea.value = ticket.resolution.observation || '';
+    if (etaSelect && ticket.resolution.etaHours) etaSelect.value = ticket.resolution.etaHours;
+  } else {
+    if (obsTextarea) obsTextarea.value = '';
+  }
+
+  if (modal) modal.classList.add('show');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeSupportActionModal() {
+  const modal = document.getElementById('modalSupportAction');
+  if (modal) modal.classList.remove('show');
+}
+
+function handleDecisionRadioChange(action) {
+  const isAccept = action === 'aceptada';
+  const etaRow = document.getElementById('supActionEtaRow');
+  const btnText = document.getElementById('btnSubmitSupActionText');
+  const chipsWrap = document.getElementById('supTemplatesChips');
+
+  if (etaRow) etaRow.style.display = isAccept ? 'flex' : 'none';
+  if (btnText) btnText.textContent = isAccept ? 'Aceptar Solicitud & Enviar Respuesta' : 'Rechazar Solicitud & Notificar Causa';
+
+  const templates = isAccept ? [
+    '✅ Recibido en planta. Procedemos a revisar y corregir de inmediato.',
+    '✅ Solicitud aceptada. Se incluye en el despliegue del día.',
+    '✅ Validado con la jefa de área. Se ajustará la configuración del módulo.',
+    '✅ El módulo se encuentra en pruebas; aplicaremos la actualización solicitada.'
+  ] : [
+    '❌ No procede: El aplicativo opera según la parametrización estándar aprobada.',
+    '❌ Requiere validación previa con la jefatura de planta antes de modificar.',
+    '❌ No corresponde a una falla de software (verificar conectividad o hardware de planta).',
+    '❌ El requerimiento ya se encuentra solventado en la última versión estable.'
+  ];
+
+  if (chipsWrap) {
+    chipsWrap.innerHTML = templates.map(t => `
+      <button type="button" class="sup-chip-btn" onclick="insertSupTemplate('${t.replace(/'/g, "\\'")}')" style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 12px; padding: 4px 10px; font-size: 11px; cursor: pointer; color: #334155; transition: all 0.2s;">
+        ${t}
+      </button>
+    `).join('');
+  }
+}
+
+function insertSupTemplate(text) {
+  const textarea = document.getElementById('supActionObservation');
+  if (textarea) {
+    textarea.value = text;
+    textarea.focus();
+  }
+}
+
+function handleSupportActionSubmit(e) {
+  if (e) e.preventDefault();
+  const ticketId = document.getElementById('supActionTicketId')?.value;
+  if (!ticketId) return;
+
+  const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
+  if (!ticket) return;
+
+  const isAccept = document.getElementById('radioDecisionAccept')?.checked;
+  const decision = isAccept ? 'aceptada' : 'rechazada';
+  const observation = (document.getElementById('supActionObservation')?.value || '').trim();
+  const etaHours = isAccept ? document.getElementById('supActionEta')?.value : null;
+
+  if (!observation) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Debes ingresar una observación o respuesta para el solicitante de planta.', 'warning');
+    }
+    return;
+  }
+
+  const session = getLoggedSessionUser();
+  ticket.status = decision;
+  ticket.resolution = {
+    action: decision,
+    resolvedBy: session.name,
+    resolvedByDevId: getLoggedDevId(),
+    resolvedAt: new Date().toISOString(),
+    observation: observation,
+    etaHours: etaHours
+  };
+
+  saveData(appState);
+  closeSupportActionModal();
+
+  if (typeof playNotificationSound === 'function') {
+    playNotificationSound();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(
+      decision === 'aceptada'
+        ? `✓ Solicitud ${ticket.code} ACEPTADA. Se notificó la respuesta oficial a ${ticket.requester?.name || 'planta'}.`
+        : `✕ Solicitud ${ticket.code} RECHAZADA. Se envió la causa técnica al solicitante.`,
+      'success'
+    );
+  }
+
+  renderSupportView();
+  if (typeof renderNotificationsDropdown === 'function') {
+    renderNotificationsDropdown();
+  }
+}
+
+function openNewSupportModal() {
+  const modal = document.getElementById('modalNewSupportTicket');
+  const appSelect = document.getElementById('newSupApp');
+  const devSelect = document.getElementById('newSupDev');
+
+  if (appSelect) {
+    appSelect.innerHTML = (appState.applications || []).map(app => `
+      <option value="${app.id}">${app.name} (${app.code})</option>
+    `).join('');
+  }
+
+  if (devSelect) {
+    const teamDevs = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
+    devSelect.innerHTML = teamDevs.map(dev => `
+      <option value="${dev.id}">${dev.name}</option>
+    `).join('');
+  }
+
+  if (appSelect && appSelect.value) {
+    handleNewSupAppChange(appSelect.value);
+  }
+
+  // Limpiar campos de texto
+  const form = document.getElementById('newSupportTicketForm');
+  if (form) {
+    document.getElementById('newSupRequesterName').value = 'Marta Gómez (Jefa de Planta)';
+    document.getElementById('newSupRequesterArea').value = 'Módulo 3 - Mesa de Corte';
+    document.getElementById('newSupTitle').value = '';
+    document.getElementById('newSupDescription').value = '';
+  }
+
+  if (modal) modal.classList.add('show');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeNewSupportModal() {
+  const modal = document.getElementById('modalNewSupportTicket');
+  if (modal) modal.classList.remove('show');
+}
+
+function handleNewSupAppChange(appId) {
+  if (!appId) return;
+  const app = (appState.applications || []).find(a => a.id === appId);
+  const devSelect = document.getElementById('newSupDev');
+  const hintEl = document.getElementById('newSupDevHint');
+  if (!devSelect) return;
+
+  let targetDevId = null;
+  if (app && app.devId) {
+    targetDevId = resolveCanonicalDevId(app.devId) || app.devId;
+  } else if (app && Array.isArray(app.devIds) && app.devIds.length > 0) {
+    targetDevId = resolveCanonicalDevId(app.devIds[0]) || app.devIds[0];
+  } else {
+    const devMatch = (appState.developers || []).find(d =>
+      d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin &&
+      Array.isArray(d.activeProjects) && d.activeProjects.includes(appId)
+    );
+    if (devMatch) {
+      targetDevId = devMatch.id;
+    }
+  }
+
+  if (targetDevId) {
+    const canonTarget = resolveCanonicalDevId(targetDevId) || targetDevId;
+    let optionMatch = null;
+    if (devSelect.options && devSelect.options.length > 0) {
+      optionMatch = Array.from(devSelect.options).find(opt =>
+        opt.value === targetDevId || opt.value === canonTarget || (resolveCanonicalDevId(opt.value) === canonTarget)
+      );
+    }
+    const finalVal = optionMatch ? optionMatch.value : canonTarget;
+    devSelect.value = finalVal;
+    const devObj = getDeveloperById(finalVal) || getDeveloperById(targetDevId);
+    if (hintEl) {
+      hintEl.innerHTML = `<span style="color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="check-check" style="width: 13px; height: 13px; display: inline-block;"></i> Enrutamiento automático: <strong>${devObj ? devObj.name : 'Desarrollador'}</strong></span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+    return;
+  }
+
+  if (hintEl) hintEl.textContent = '';
+}
+
+function handleNewSupportTicketSubmit(e) {
+  if (e) e.preventDefault();
+
+  const appId = document.getElementById('newSupApp')?.value;
+  const devId = document.getElementById('newSupDev')?.value;
+  const requesterName = (document.getElementById('newSupRequesterName')?.value || '').trim();
+  const requesterArea = (document.getElementById('newSupRequesterArea')?.value || '').trim();
+  const type = document.getElementById('newSupType')?.value || 'soporte';
+  const priority = document.getElementById('newSupPriority')?.value || 'media';
+  const title = (document.getElementById('newSupTitle')?.value || '').trim();
+  const description = (document.getElementById('newSupDescription')?.value || '').trim();
+
+  if (!appId || !devId || !requesterName || !title || !description) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Por favor completa todos los campos obligatorios.', 'warning');
+    }
+    return;
+  }
+
+  if (!appState.supportTickets) appState.supportTickets = [];
+
+  const app = (appState.applications || []).find(a => a.id === appId);
+  const dev = getDeveloperById(devId);
+  const nextNum = appState.supportTickets.length + 1001;
+
+  const newTicket = {
+    id: `sup_${Date.now()}`,
+    code: `STF-SUP-${nextNum}`,
+    appId: appId,
+    appName: app ? app.name : appId,
+    devId: devId,
+    devName: dev ? dev.name : 'Desarrollador Oficial',
+    requester: {
+      name: requesterName,
+      role: 'Planta STF',
+      area: requesterArea
+    },
+    type: type,
+    priority: priority,
+    title: title,
+    description: description,
+    createdAt: new Date().toISOString(),
+    status: 'pendiente',
+    resolution: null
+  };
+
+  appState.supportTickets.unshift(newTicket);
+  saveData(appState);
+  closeNewSupportModal();
+
+  if (typeof playNotificationSound === 'function') {
+    playNotificationSound();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(`🛎️ Solicitud de planta emitida y asignada a ${newTicket.devName}: "${newTicket.title}"`, 'success');
+  }
+
+  renderSupportView();
+  if (typeof renderNotificationsDropdown === 'function') {
+    renderNotificationsDropdown();
+  }
+}
+
+// Global Exports
+if (typeof window !== 'undefined') {
+  window.renderSupportView = renderSupportView;
+  window.setSupportStatusFilter = setSupportStatusFilter;
+  window.handleSupportDevFilterChange = handleSupportDevFilterChange;
+  window.openSupportActionModal = openSupportActionModal;
+  window.closeSupportActionModal = closeSupportActionModal;
+  window.handleDecisionRadioChange = handleDecisionRadioChange;
+  window.insertSupTemplate = insertSupTemplate;
+  window.handleSupportActionSubmit = handleSupportActionSubmit;
+  window.openNewSupportModal = openNewSupportModal;
+  window.closeNewSupportModal = closeNewSupportModal;
+  window.handleNewSupAppChange = handleNewSupAppChange;
+  window.handleNewSupportTicketSubmit = handleNewSupportTicketSubmit;
+  window.updateSupportNavBadge = updateSupportNavBadge;
 }
