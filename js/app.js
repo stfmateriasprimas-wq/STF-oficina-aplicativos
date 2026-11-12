@@ -130,11 +130,9 @@ if (savedLoggedUserJson) {
 }
 
 function getLoggedSessionUser() {
-  if (!loggedUser) {
-    const saved = localStorage.getItem('STF_LOGGED_USER');
-    if (saved) {
-      try { loggedUser = JSON.parse(saved); } catch (e) { }
-    }
+  const saved = localStorage.getItem('STF_LOGGED_USER');
+  if (saved) {
+    try { loggedUser = JSON.parse(saved); } catch (e) { }
   }
   if (loggedUser) {
     const canonicalId = resolveCanonicalDevId(loggedUser);
@@ -894,7 +892,11 @@ function getNotificationsData() {
     // =========================================================================
     // VISTA DESARROLLADOR: Nuevas Tareas Asignadas & Observaciones del Admin
     // =========================================================================
-    const devTasks = allInts.filter(t => resolveCanonicalDevId(t.devId) === currentDevId);
+    const canonCurrent = resolveCanonicalDevId(currentDevId);
+    const devTasks = allInts.filter(t => {
+      const canonTask = resolveCanonicalDevId(t.devId);
+      return t.devId === currentDevId || t.devId === canonCurrent || (canonTask && canonTask === canonCurrent);
+    });
     const devObj = getDeveloperById(currentDevId);
 
     devTasks.forEach(task => {
@@ -6302,7 +6304,13 @@ function renderIntegrationsList(filter = activeIntFilter) {
     return d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin && d.roleType !== 'Admin' && String(d.role || '').toLowerCase() !== 'admin';
   });
 
-  activeTeamDevs.forEach(dev => {
+  const currentDevId = getLoggedDevId();
+  const canonLogged = resolveCanonicalDevId(currentDevId);
+  const targetDevs = isAdmin
+    ? activeTeamDevs
+    : activeTeamDevs.filter(d => resolveCanonicalDevId(d.id) === canonLogged || d.id === currentDevId);
+
+  targetDevs.forEach(dev => {
     const devTasks = filtered.filter(i => {
       const c1 = resolveCanonicalDevId(i.devId);
       const c2 = resolveCanonicalDevId(dev.id);
@@ -6330,7 +6338,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
   // Check for any developer not in appState.developers
   filtered.forEach(item => {
     const cItem = resolveCanonicalDevId(item.devId);
-    if (!activeTeamDevs.some(d => resolveCanonicalDevId(d.id) === cItem || d.id === item.devId)) {
+    if (!targetDevs.some(d => resolveCanonicalDevId(d.id) === cItem || d.id === item.devId)) {
       let group = devGroups.find(g => resolveCanonicalDevId(g.dev.id) === cItem || g.dev.id === item.devId);
       if (!group) {
         group = { dev: getDeveloperById(item.devId), tasks: [] };
@@ -6908,6 +6916,19 @@ function handleAssignIntegrationSubmit(e) {
 
   // Refrescar todas las vistas en vivo del sistema
   refreshAllViews();
+
+  // Emitir señal de radio / broadcast en vivo a todas las pestañas de los desarrolladores
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'NEW_TASK_ASSIGNED',
+        task: newIntegration,
+        targetDevId: canonicalDevId
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch (e) { }
 
   showToast(`¡Integración asignada a ${dev ? dev.name : 'Desarrollador'} para ${app?.name || 'Sistema'}! Reloj en vivo activado.`);
 
@@ -8146,6 +8167,99 @@ window.toggleDarkTheme = toggleDarkTheme;
 window.applyTheme = applyTheme;
 
 // ==========================================================================
+// REAL-TIME SYNC & TASK NOTIFICATION ENGINE (CROSS-TAB & MULTI-DEVICE)
+// ==========================================================================
+let _isRealtimeSyncInitialized = false;
+
+function setupRealtimeTaskSync() {
+  if (_isRealtimeSyncInitialized) return;
+  _isRealtimeSyncInitialized = true;
+
+  // 1. BroadcastChannel para sincronización instantánea entre pestañas abiertas
+  if (typeof window !== 'undefined' && window.BroadcastChannel) {
+    try {
+      const taskChannel = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      taskChannel.onmessage = (event) => {
+        const data = event.data;
+        if (!data) return;
+
+        if (data.type === 'NEW_TASK_ASSIGNED' && data.task) {
+          const isAdmin = isCurrentSessionAdmin();
+          const myId = getLoggedDevId();
+          const myCanon = resolveCanonicalDevId(myId);
+          const taskCanon = resolveCanonicalDevId(data.task.devId);
+
+          // Si la tarea fue asignada a este desarrollador en sesión
+          if (!isAdmin && (data.task.devId === myId || data.task.devId === myCanon || taskCanon === myCanon)) {
+            // Sonido de campana cristalina
+            if (typeof playNotificationSound === 'function') playNotificationSound();
+
+            // Notificación visual en vivo
+            if (typeof triggerNotificationAlert === 'function') {
+              triggerNotificationAlert({
+                title: `⚡ ¡Nueva Tarea Asignada!`,
+                desc: `"${data.task.name}" en ${data.task.appName || 'tu sistema'}. Plazo: ${data.task.deadline || 'Definido'} (${data.task.weight}% peso).`,
+                badge: 'Asignación Jefe TI'
+              });
+            } else if (typeof showToast === 'function') {
+              showToast(`⚡ ¡Nueva tarea asignada por el Jefe TI: "${data.task.name}" (${data.task.weight}%)!`, 'success');
+            }
+          }
+
+          // Recargar datos desde localStorage y refrescar todas las vistas en vivo
+          const freshData = getStoredData();
+          if (freshData) {
+            appState = freshData;
+            refreshAllViews();
+            if (typeof renderSupportView === 'function') renderSupportView();
+          }
+        }
+      };
+      window._stfTaskBroadcastChannel = taskChannel;
+    } catch (e) {
+      console.warn("BroadcastChannel error:", e);
+    }
+  }
+
+  // 2. Storage event listener para navegadores o pestañas estándar
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'STF_GROUP_REAL_DATA_V8' && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed) {
+          const oldInts = (appState && appState.integrations) ? appState.integrations : [];
+          const newInts = parsed.integrations || [];
+          const isAdmin = isCurrentSessionAdmin();
+          const myId = getLoggedDevId();
+          const myCanon = resolveCanonicalDevId(myId);
+
+          if (newInts.length > oldInts.length && !isAdmin) {
+            const oldIds = new Set(oldInts.map(i => i.id));
+            const newAssignedTasks = newInts.filter(i => !oldIds.has(i.id));
+
+            newAssignedTasks.forEach(t => {
+              const taskCanon = resolveCanonicalDevId(t.devId);
+              if (t.devId === myId || t.devId === myCanon || taskCanon === myCanon) {
+                if (typeof playNotificationSound === 'function') playNotificationSound();
+                if (typeof showToast === 'function') {
+                  showToast(`🔔 ¡Nueva tarea asignada: "${t.name}" (${t.weight}%)!`, 'success');
+                }
+              }
+            });
+          }
+
+          appState = parsed;
+          refreshAllViews();
+          if (typeof renderSupportView === 'function') renderSupportView();
+        }
+      } catch (err) {
+        console.warn("Storage sync failed:", err);
+      }
+    }
+  });
+}
+
+// ==========================================================================
 // EVENT LISTENERS & BOOTSTRAP
 // ==========================================================================
 
@@ -8155,6 +8269,9 @@ function initApp() {
 
   // Lucide icons
   lucide.createIcons();
+
+  // Inicializar motor de sincronización de tareas en tiempo real
+  setupRealtimeTaskSync();
 
   // Inicializar exclusivamente los datos del usuario autenticado en la cabecera
   renderHeaderSessionUser();
