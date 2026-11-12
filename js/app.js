@@ -612,6 +612,7 @@ function startAutomatedNotificationPolling() {
   const initialNotifs = getNotificationsData();
   initialNotifs.forEach(n => lastKnownNotifIds.add(n.id));
 
+  // Sondeo en tiempo real continuo cada 6 segundos para capturar solicitudes de planta en vivo
   automatedPollingInterval = setInterval(async () => {
     try {
       if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
@@ -621,7 +622,7 @@ function startAutomatedNotificationPolling() {
     } catch (err) {
       console.warn('[Polling Automatizado]', err);
     }
-  }, 35000);
+  }, 6000);
 }
 
 function checkAndAlertNewNotifications() {
@@ -8624,6 +8625,13 @@ function initApp() {
   // Settings Actions
   document.getElementById('btnDownloadBackup')?.addEventListener('click', downloadFullBackupJSON);
   document.getElementById('btnResetFactoryData')?.addEventListener('click', resetFactoryData);
+
+  // Sincronización inmediata al arrancar para cargar solicitudes de planta desde Google Sheets
+  if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
+    setTimeout(() => {
+      window.SheetsSync.pullCloudData(true);
+    }, 300);
+  }
 }
 
 if (document.readyState === 'loading') {

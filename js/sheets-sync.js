@@ -1362,7 +1362,7 @@
           );
 
           if (!existingTicket) {
-            state.supportTickets.unshift({
+            const newTicketObj = {
               id: 'sup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
               code: cleanCode,
               appId: appObj ? appObj.id : 'app_colchas',
@@ -1382,8 +1382,23 @@
               createdAt: dateStr,
               status: 'pendiente',
               resolution: null
-            });
+            };
+            state.supportTickets.unshift(newTicketObj);
             taskCount++;
+
+            // Alerta sonora y visual inmediata en tiempo real
+            try {
+              if (typeof window.playNotificationSound === 'function') {
+                window.playNotificationSound();
+              }
+              if (typeof window.triggerNotificationAlert === 'function') {
+                window.triggerNotificationAlert({
+                  title: `🛎️ Solicitud de Planta: ${newTicketObj.title}`,
+                  desc: `${reqName} (${newTicketObj.appName}) asignado a ${targetDevName}.`,
+                  badge: isAct ? 'Actualización' : 'Soporte Técnico'
+                });
+              }
+            } catch(e) {}
           }
         }
 
