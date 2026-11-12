@@ -1036,8 +1036,14 @@
 
       let mergedCount = 0;
       let hasChanges = false;
+      const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-12T18:15:00.000Z').getTime();
 
       cloudTickets.forEach(ct => {
+        const ctTime = new Date(ct.createdAt || 0).getTime();
+        if (ctTime > 0 && ctTime < SUPPORT_OFFICIAL_CUTOFF) {
+          return; // Ignorar tickets de pruebas previas al lanzamiento oficial
+        }
+
         const ctCode = String(ct.code || ct.id || '').trim();
         if (!ctCode) return;
 
@@ -1349,6 +1355,12 @@
           if (matchTitle) {
             title = matchTitle[2].trim();
             targetDevName = matchTitle[3].trim();
+          }
+
+          const itemTime = new Date(item.Timestamp || item.Fecha_Hora || 0).getTime();
+          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-12T18:15:00.000Z').getTime();
+          if (itemTime > 0 && itemTime < SUPPORT_OFFICIAL_CUTOFF) {
+            return; // Omitir tickets de prueba anteriores al reseteo oficial
           }
 
           const appObj = this.findApp(appName);

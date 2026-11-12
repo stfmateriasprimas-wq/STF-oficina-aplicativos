@@ -293,69 +293,8 @@ const STF_REAL_DATA = {
   // Integraciones y Tareas Oficiales Inicializadas en 0 para Arranque Real de Pruebas en Planta
   integrations: [],
 
-  // Solicitudes de Soporte Técnico en Planta (Bandeja por Desarrollador)
-  supportTickets: [
-    {
-      id: "sup_1001",
-      ticketCode: "STF-SUP-001",
-      appId: "app_colchas",
-      appName: "COLCHAS",
-      devId: "dev_jg",
-      devName: "Jose Guzman",
-      requesterName: "Carlos Restrepo (Supervisor Confección)",
-      requesterArea: "Planta de Colchas - Mesa #2",
-      requesterContact: "Ext. 2410",
-      type: "dano",
-      priority: "urgente",
-      title: "Error de lectura en pesaje de báscula digital",
-      description: "Al intentar capturar el peso del lote en la mesa 2, el aplicativo arroja error de tiempo de espera y los operarios no pueden avanzar con el rotulado.",
-      createdAt: "2026-11-12T07:45:00",
-      status: "pendiente",
-      resolution: null
-    },
-    {
-      id: "sup_1002",
-      ticketCode: "STF-SUP-002",
-      appId: "app_calidad",
-      appName: "CALIDAD",
-      devId: "dev_jd",
-      devName: "Juan David",
-      requesterName: "Paola Andrade (Jefa de Calidad AQL)",
-      requesterArea: "Laboratorio de Inspección Final",
-      requesterContact: "Ext. 2115",
-      type: "actualizacion",
-      priority: "media",
-      title: "Agregar nuevo campo de porcentaje de encogimiento",
-      description: "Requerimos que en el formato de inspección de telas se pueda registrar el porcentaje de elongación y encogimiento post-lavado.",
-      createdAt: "2026-11-12T08:10:00",
-      status: "pendiente",
-      resolution: null
-    },
-    {
-      id: "sup_1003",
-      ticketCode: "STF-SUP-003",
-      appId: "app_tintoreria",
-      appName: "TINTORERIA",
-      devId: "dev_mocho",
-      devName: "Jhon Eyder (Mocho)",
-      requesterName: "Guillermo Osorio (Operador Barcas)",
-      requesterArea: "Planta Textil - Tintorería Módulo B",
-      requesterContact: "Ext. 3105",
-      type: "soporte",
-      priority: "normal",
-      title: "Revisión de parámetros de curvas de teñido",
-      description: "Favor validar si la receta cargada para índigo 12oz está sincronizada con la última formulación autorizada.",
-      createdAt: "2026-11-11T16:30:00",
-      status: "aceptada",
-      resolution: {
-        action: "aceptada",
-        resolvedBy: "Jhon Eyder (Mocho)",
-        resolvedAt: "2026-11-11T17:00:00",
-        observation: "Aceptada. Receta validada con el químico de planta. Ya quedó ajustada en el sistema para producción.",
-        etaHours: "Inmediato (15 - 30 minutos)"
-      }
-    }
-  ]
+  // Solicitudes de Soporte Técnico en Planta (Bandeja por Desarrollador iniciada en 0 para pruebas oficiales)
+  supportTickets: []
 };
 
 // Alias de compatibilidad global para STF_DATA y STF_REAL_DATA
@@ -592,9 +531,12 @@ function getStoredData() {
             }
           });
         }
-        // Inicializar o mantener solicitudes de soporte técnico
-        if (!Array.isArray(parsed.supportTickets)) {
-          parsed.supportTickets = JSON.parse(JSON.stringify(STF_REAL_DATA.supportTickets || []));
+        // Inicializar o restablecer solicitudes de soporte técnico en 0 para pruebas oficiales
+        if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V2')) {
+          parsed.supportTickets = [];
+          localStorage.setItem('STF_SUPPORT_RESET_ZERO_V2', 'true');
+        } else if (!Array.isArray(parsed.supportTickets)) {
+          parsed.supportTickets = [];
         } else {
           parsed.supportTickets.forEach(t => {
             if (!t.appName && t.appId) {
