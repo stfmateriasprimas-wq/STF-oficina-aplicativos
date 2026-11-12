@@ -102,7 +102,8 @@ var HEADERS = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
-    .addItem('🚀 Estabilizar Base de Datos (5 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('🚀 Estabilizar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
+    .addItem('🎧 Crear / Configurar Hoja SOLICITUDES_SOPORTE', 'setupSoporteSheetDirect')
     .addItem('🗑️ Eliminar Hoja PORTAFOLIO_SISTEMAS', 'removePortafolioSistemasSheet')
     .addItem('📋 Reparar & Alinear Hoja CONTROL_TAREAS', 'setupTareasSheetDirect')
     .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
@@ -155,9 +156,31 @@ function setupObservacionesSheetDirect() {
   SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña HISTORIAL_OBSERVACIONES configurada y enlazada con éxito.', 'STF GROUP TI', 6);
 }
 
+function setupSoporteSheet(ss) {
+  var s = getOrCreateSheetByName(ss, TABS.SOPORTE, ["Solicitudes_Soporte", "Soporte_Tecnico"]);
+  ensureExactHeaders(s, HEADERS.SOPORTE);
+  s.setTabColor('#f59e0b');
+
+  // Si está vacía (solo fila de encabezado), dejamos listo el formato profesional
+  if (s.getLastRow() <= 1) {
+    s.getRange(1, 1, 1, HEADERS.SOPORTE.length)
+      .setBackground('#4F46E5')
+      .setFontColor('#FFFFFF')
+      .setFontWeight('bold');
+  }
+  return s;
+}
+
+function setupSoporteSheetDirect() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  setupSoporteSheet(ss);
+  cleanAndOrderSheets(ss);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Pestaña SOLICITUDES_SOPORTE creada y configurada con sus 15 columnas oficiales.', 'STF GROUP TI', 6);
+}
+
 /**
- * ESTABILIZADOR MAESTRO: Estabiliza la arquitectura oficial en las 5 hojas maestras:
- * USUARIOS, SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, BITACORA_HISTORIAL
+ * ESTABILIZADOR MAESTRO: Estabiliza la arquitectura oficial en las 6 hojas maestras:
+ * USUARIOS, SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, BITACORA_HISTORIAL, SOLICITUDES_SOPORTE
  */
 function setupProfessionalDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -180,10 +203,13 @@ function setupProfessionalDatabase() {
   // 5. Pestaña BITACORA_HISTORIAL (7 Columnas A:G con auto-reparación de filas)
   setupBitacoraSheet(ss);
 
-  // 6. Ordenar las 5 pestañas oficiales al frente
+  // 6. Pestaña SOLICITUDES_SOPORTE (15 Columnas A:O)
+  setupSoporteSheet(ss);
+
+  // 7. Ordenar las 6 pestañas oficiales al frente
   cleanAndOrderSheets(ss);
 
-  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 5 hojas maestras oficiales.', 'STF GROUP TI', 7);
+  SpreadsheetApp.getActiveSpreadsheet().toast('✅ Base de datos estabilizada con éxito en las 6 hojas maestras oficiales.', 'STF GROUP TI', 7);
 }
 
 /**
@@ -571,7 +597,7 @@ function cleanAndOrderSheets(ss) {
     }
   }
 
-  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.OBSERVACIONES, TABS.BITACORA];
+  var orderedTabs = [TABS.USUARIOS, TABS.SISTEMAS_WEB, TABS.TAREAS, TABS.OBSERVACIONES, TABS.BITACORA, TABS.SOPORTE];
   for (var i = 0; i < orderedTabs.length; i++) {
     var tabSheet = ss.getSheetByName(orderedTabs[i]);
     if (tabSheet) {
