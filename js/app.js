@@ -12463,11 +12463,14 @@ if (typeof window !== 'undefined') {
 }
 
 // ==========================================================================
-// VIEW: SOPORTE TÉCNICO EN PLANTA & BANDEJA DE DESARROLLADORES
+// VIEW: SOPORTE TÉCNICO EN PLANTA & BANDEJA DE DESARROLLADORES (HUD CYBER OPS)
 // ==========================================================================
 
 let currentSupportFilter = 'all'; // 'all', 'pendiente', 'aceptada', 'rechazada'
 let currentSupportDevFilter = 'all'; // 'all' or devId (e.g. 'dev_jg')
+let currentSupportLayoutMode = 'feed'; // 'feed' (lista detallada) or 'grid' (matriz compacta)
+let currentSupportSearchTerm = '';
+let supportClockInterval = null;
 
 function setSupportStatusFilter(filter) {
   currentSupportFilter = filter || 'all';
@@ -12480,6 +12483,52 @@ function setSupportStatusFilter(filter) {
 function handleSupportDevFilterChange(devId) {
   currentSupportDevFilter = devId || 'all';
   renderSupportView();
+}
+
+function handleSupportSearch(term) {
+  currentSupportSearchTerm = (term || '').toLowerCase().trim();
+  renderSupportView();
+}
+
+function setSupportLayoutMode(mode) {
+  currentSupportLayoutMode = mode === 'grid' ? 'grid' : 'feed';
+  const btnFeed = document.getElementById('btnSupViewFeed');
+  const btnGrid = document.getElementById('btnSupViewGrid');
+  const container = document.getElementById('supportTicketsListContainer');
+
+  if (btnFeed) btnFeed.classList.toggle('active', currentSupportLayoutMode === 'feed');
+  if (btnGrid) btnGrid.classList.toggle('active', currentSupportLayoutMode === 'grid');
+  if (container) {
+    container.classList.toggle('mode-grid', currentSupportLayoutMode === 'grid');
+    container.classList.toggle('mode-feed', currentSupportLayoutMode === 'feed');
+  }
+}
+
+function updateSupportLiveClock() {
+  const clockEl = document.getElementById('supportLiveClock');
+  if (!clockEl) return;
+  const now = new Date();
+  clockEl.textContent = now.toLocaleTimeString('es-CO', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+  });
+}
+
+function copySupportTicketInfo(ticketId) {
+  if (!ticketId) return;
+  const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
+  if (!ticket) return;
+
+  const copyText = `[${ticket.code}] ${ticket.title} (${ticket.appName}) · Solicitado por: ${ticket.requester?.name || 'Operario'} (${ticket.requester?.area || 'Planta'}) · Responsable: ${ticket.devName}`;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(copyText).then(() => {
+      if (typeof showToast === 'function') showToast(`📋 Código ${ticket.code} copiado al portapapeles.`, 'info');
+    }).catch(() => {
+      if (typeof showToast === 'function') showToast(`Código: ${ticket.code}`, 'info');
+    });
+  } else {
+    if (typeof showToast === 'function') showToast(`Código: ${ticket.code}`, 'info');
+  }
 }
 
 function updateSupportNavBadge() {
@@ -12513,6 +12562,12 @@ function renderSupportView() {
     appState.supportTickets = [];
   }
 
+  // Iniciar reloj en vivo si no está activo
+  updateSupportLiveClock();
+  if (!supportClockInterval) {
+    supportClockInterval = setInterval(updateSupportLiveClock, 1000);
+  }
+
   // Actualizar insignias de cabecera y título
   const shieldPill = document.getElementById('supportRoleShieldPill');
   const shieldText = document.getElementById('supportRoleShieldText');
@@ -12521,7 +12576,7 @@ function renderSupportView() {
   const devFilterWrap = document.getElementById('supportDevFilterWrap');
 
   if (isAdmin) {
-    if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #1E232E 0%, #2E384D 100%)';
+    if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)';
     if (shieldText) shieldText.textContent = 'Atención Técnica de Planta · Super Admin (Jefe TI)';
     if (sectionTitle) sectionTitle.textContent = 'Bandeja Global de Solicitudes de Soporte Técnico';
     if (sectionSub) sectionSub.textContent = 'Supervisión en vivo de novedades y fallas reportadas desde planta por operarios y jefas de área hacia los desarrolladores.';
@@ -12593,6 +12648,22 @@ function renderSupportView() {
     displayTickets = displayTickets.filter(t => t.status === currentSupportFilter);
   }
 
+  // Filtro por búsqueda textual
+  if (currentSupportSearchTerm) {
+    displayTickets = displayTickets.filter(t => {
+      const term = currentSupportSearchTerm;
+      const code = (t.code || '').toLowerCase();
+      const title = (t.title || '').toLowerCase();
+      const desc = (t.description || '').toLowerCase();
+      const reqName = (t.requester?.name || '').toLowerCase();
+      const reqArea = (t.requester?.area || '').toLowerCase();
+      const appName = (t.appName || '').toLowerCase();
+      const devName = (t.devName || '').toLowerCase();
+      return code.includes(term) || title.includes(term) || desc.includes(term) ||
+             reqName.includes(term) || reqArea.includes(term) || appName.includes(term) || devName.includes(term);
+    });
+  }
+
   // Ordenar: pendientes primero, luego por fecha descendente
   displayTickets.sort((a, b) => {
     if (a.status === 'pendiente' && b.status !== 'pendiente') return -1;
@@ -12603,17 +12674,21 @@ function renderSupportView() {
   const container = document.getElementById('supportTicketsListContainer');
   if (!container) return;
 
+  container.className = `support-tickets-list-container mode-${currentSupportLayoutMode}`;
+
   if (displayTickets.length === 0) {
     container.innerHTML = `
-      <div class="support-empty-state" style="text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 16px; border: 1px dashed #CBD5E1;">
-        <div style="width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: #EEF2FF; color: #4F46E5; display: flex; align-items: center; justify-content: center; font-size: 24px;">
-          <i data-lucide="inbox"></i>
+      <div class="support-empty-state" style="text-align: center; padding: 60px 20px; background: var(--bg-card); border-radius: 20px; border: 1.5px dashed var(--border-light); grid-column: 1 / -1;">
+        <div style="width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 20px; background: rgba(99, 102, 241, 0.1); color: #4F46E5; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+          <i data-lucide="headphones"></i>
         </div>
-        <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 6px;">No hay solicitudes en esta vista</h3>
-        <p style="font-size: 13px; color: #64748B; max-width: 440px; margin: 0 auto 18px;">
-          ${currentSupportFilter !== 'all' 
-            ? `No se encontraron solicitudes con estado "${currentSupportFilter}".`
-            : 'En este momento no hay requerimientos reportados desde los aplicativos de planta.'}
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">No se encontraron solicitudes</h3>
+        <p style="font-size: 13.5px; color: var(--text-muted); max-width: 460px; margin: 0 auto 20px; line-height: 1.5;">
+          ${currentSupportSearchTerm 
+            ? `No hay coincidencias para el término "${currentSupportSearchTerm}". Intenta con otra palabra clave.`
+            : (currentSupportFilter !== 'all' 
+                ? `No hay solicitudes en la categoría "${currentSupportFilter}".`
+                : 'La bandeja de soporte técnico se encuentra al día y sin requerimientos activos de planta.')}
         </p>
         <button type="button" class="pill-btn primary-glow-btn small-glow" onclick="openNewSupportModal()">
           <i data-lucide="plus-circle"></i>
@@ -12636,11 +12711,11 @@ function renderSupportView() {
     let statusIcon = 'clock';
     if (ticket.status === 'aceptada') {
       statusClass = 'status-accepted';
-      statusLabel = 'Aceptada en Atención';
+      statusLabel = 'Aceptada en Solución';
       statusIcon = 'check-circle-2';
     } else if (ticket.status === 'rechazada') {
       statusClass = 'status-rejected';
-      statusLabel = 'Rechazada / No Procede';
+      statusLabel = 'Rechazada / No Aplica';
       statusIcon = 'x-circle';
     }
 
@@ -12669,26 +12744,36 @@ function renderSupportView() {
 
     return `
       <div class="support-ticket-card ${statusClass}" id="ticket_card_${ticket.id}">
+        
+        <!-- Header -->
         <div class="st-card-header">
           <div class="st-meta-left">
             <span class="st-code-pill">${ticket.code}</span>
-            <span class="st-app-badge" style="background: ${app.color || '#4F46E5'}15; color: ${app.color || '#4F46E5'}; border: 1px solid ${app.color || '#4F46E5'}30;">
-              <i data-lucide="layers" style="width: 12px; height: 12px;"></i>
+            <span class="st-app-badge" style="background: ${app.color || '#4F46E5'}18; color: ${app.color || '#4F46E5'}; border: 1.5px solid ${app.color || '#4F46E5'}35;">
+              <i data-lucide="layers" style="width: 13px; height: 13px;"></i>
               <span>${app.name}</span>
             </span>
             <span class="st-type-pill">${typeLabel}</span>
             <span class="st-priority-badge ${priorityClass}">${priorityLabel}</span>
           </div>
 
-          <div class="st-status-badge ${statusClass}">
-            <i data-lucide="${statusIcon}" style="width: 13px; height: 13px;"></i>
-            <span>${statusLabel}</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="st-btn-copy" onclick="copySupportTicketInfo('${ticket.id}')" title="Copiar código y datos del ticket">
+              <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
+              <span>Copiar</span>
+            </button>
+            <div class="st-status-badge ${statusClass}">
+              <i data-lucide="${statusIcon}" style="width: 13px; height: 13px;"></i>
+              <span>${statusLabel}</span>
+            </div>
           </div>
         </div>
 
+        <!-- Body -->
         <div class="st-card-body">
           <h3 class="st-ticket-title">${ticket.title}</h3>
           
+          <!-- Terminal Requester Strip -->
           <div class="st-requester-bar">
             <div class="st-req-avatar">
               <i data-lucide="user"></i>
@@ -12698,67 +12783,69 @@ function renderSupportView() {
                 <strong>${ticket.requester?.name || 'Operario STF'}</strong>
                 <span class="st-req-area">· ${ticket.requester?.area || 'Planta'}</span>
               </div>
-              <span class="st-req-time">Emitido el ${formattedDate}</span>
+              <span class="st-req-time">Emitido: ${formattedDate}</span>
             </div>
           </div>
 
+          <!-- Description Box -->
           <div class="st-description-box">
             <div class="st-desc-label">
-              <i data-lucide="file-text" style="width: 12px; height: 12px;"></i>
-              <span>Novedad reportada:</span>
+              <i data-lucide="terminal" style="width: 13px; height: 13px;"></i>
+              <span>Reporte de Planta:</span>
             </div>
             <p class="st-desc-text">${ticket.description}</p>
           </div>
 
-          <!-- Asignación automática de Desarrollador -->
+          <!-- Auto-Routed Developer Strip -->
           <div class="st-assigned-dev-strip">
             <div class="st-dev-info-left">
               <img src="${dev.avatar || 'assets/avatars/dev1.jpg'}" alt="${dev.name}" class="st-dev-avatar" onerror="this.src='assets/avatars/dev1.jpg'">
               <div>
-                <span class="st-dev-caption">Desarrollador Responsable:</span>
+                <span class="st-dev-caption">Desarrollador Oficial:</span>
                 <strong class="st-dev-name">${dev.name}</strong>
               </div>
             </div>
             <span class="st-dev-routing-tag">
-              <i data-lucide="corner-down-right" style="width: 12px; height: 12px;"></i>
-              <span>Enrutado a ${app.name}</span>
+              <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+              <span>Asignado a ${app.name}</span>
             </span>
           </div>
 
-          <!-- Cuadro de Resolución (Visible cuando fue Aceptada o Rechazada) -->
+          <!-- Sealed Resolution Box -->
           ${hasResolution ? `
             <div class="st-resolution-box ${ticket.status === 'aceptada' ? 'res-accepted' : 'res-rejected'}">
               <div class="st-res-header">
                 <div style="display: flex; align-items: center; gap: 6px;">
-                  <i data-lucide="${ticket.status === 'aceptada' ? 'check-circle' : 'alert-circle'}" style="width: 14px; height: 14px; color: ${ticket.status === 'aceptada' ? '#059669' : '#DC2626'};"></i>
-                  <strong style="font-size: 12px; color: ${ticket.status === 'aceptada' ? '#065F46' : '#991B1B'};">
-                    Respuesta Oficial Enviada al Solicitante (${ticket.resolution.resolvedBy || 'Desarrollador'}):
+                  <i data-lucide="${ticket.status === 'aceptada' ? 'check-circle' : 'alert-circle'}" style="width: 15px; height: 15px; color: ${ticket.status === 'aceptada' ? '#059669' : '#DC2626'};"></i>
+                  <strong style="font-size: 12.5px; color: ${ticket.status === 'aceptada' ? '#065F46' : '#991B1B'};">
+                    Dictamen Oficial (${ticket.resolution.resolvedBy || 'Desarrollador'}):
                   </strong>
                 </div>
                 <span class="st-res-badge">
                   <i data-lucide="send" style="width: 11px; height: 11px;"></i>
-                  <span>Notificado a Planta</span>
+                  <span>Transmitido en Vivo a Planta</span>
                 </span>
               </div>
               <p class="st-res-text">"${ticket.resolution.observation}"</p>
               ${ticket.resolution.etaHours ? `
                 <div class="st-res-eta">
-                  <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+                  <i data-lucide="clock" style="width: 13px; height: 13px;"></i>
                   <span><strong>Tiempo Estimado:</strong> ${ticket.resolution.etaHours}</span>
                 </div>
               ` : ''}
               <div class="st-res-footer-time">
-                Respondido el ${new Date(ticket.resolution.resolvedAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}
+                Sello de respuesta: ${new Date(ticket.resolution.resolvedAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}
               </div>
             </div>
           ` : ''}
         </div>
 
+        <!-- Action Footer -->
         <div class="st-card-footer">
           <div class="st-footer-left">
             <span class="st-footer-hint">
-              <i data-lucide="message-square" style="width: 12px; height: 12px;"></i>
-              <span>Toda respuesta se notifica en vivo a la persona que reportó la novedad.</span>
+              <i data-lucide="radio" style="width: 13px; height: 13px; color: #10B981;"></i>
+              <span>Toda respuesta se notifica en vivo a la pantalla del solicitante.</span>
             </span>
           </div>
 
@@ -12773,7 +12860,7 @@ function renderSupportView() {
                 <span>Aceptar Solicitud</span>
               </button>
             ` : `
-              <button type="button" class="pill-btn secondary-btn" onclick="openSupportActionModal('${ticket.id}', '${ticket.status}')" style="font-size: 12px; padding: 7px 14px;">
+              <button type="button" class="pill-btn secondary-btn" onclick="openSupportActionModal('${ticket.id}', '${ticket.status}')" style="font-size: 12px; padding: 7px 16px; border-radius: 20px;">
                 <i data-lucide="edit-3"></i>
                 <span>Modificar Respuesta Oficial</span>
               </button>
@@ -12788,6 +12875,33 @@ function renderSupportView() {
   if (window.lucide) lucide.createIcons();
 }
 
+function updateLiveOperatorPreview() {
+  const isAccept = document.getElementById('radioDecisionAccept')?.checked;
+  const obs = (document.getElementById('supActionObservation')?.value || '').trim();
+  const eta = document.getElementById('supActionEta')?.value;
+  const prevMsg = document.getElementById('sopPrevMsg');
+  const prevFooter = document.getElementById('sopPrevFooter');
+  const session = getLoggedSessionUser();
+
+  if (prevMsg) {
+    if (obs) {
+      prevMsg.textContent = isAccept
+        ? `"${obs}"`
+        : `"[SOLICITUD RECHAZADA] ${obs}"`;
+      prevMsg.style.color = isAccept ? '#F1F5F9' : '#FCA5A5';
+    } else {
+      prevMsg.textContent = 'Escribe una respuesta para visualizar la notificación en tiempo real...';
+      prevMsg.style.color = '#94A3B8';
+    }
+  }
+
+  if (prevFooter) {
+    prevFooter.textContent = isAccept
+      ? `Atendido por: ${session.name || 'Desarrollador Oficial'} · Estimado: ${eta || 'Inmediato'}`
+      : `Revisado por: ${session.name || 'Desarrollador Oficial'} · Estado: No procede`;
+  }
+}
+
 function openSupportActionModal(ticketId, preselectedAction) {
   if (!ticketId) return;
   const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
@@ -12800,11 +12914,14 @@ function openSupportActionModal(ticketId, preselectedAction) {
   const radioReject = document.getElementById('radioDecisionReject');
   const obsTextarea = document.getElementById('supActionObservation');
   const etaSelect = document.getElementById('supActionEta');
+  const prevApp = document.getElementById('sopPrevApp');
 
   if (inputId) inputId.value = ticket.id;
 
   const app = (appState.applications || []).find(a => a.id === ticket.appId) || { name: ticket.appName };
   const dev = getDeveloperById(ticket.devId) || { name: ticket.devName };
+
+  if (prevApp) prevApp.textContent = `${app.name} · TERMINAL PLANTA`;
 
   if (summaryBox) {
     summaryBox.innerHTML = `
@@ -12832,6 +12949,8 @@ function openSupportActionModal(ticketId, preselectedAction) {
   } else {
     if (obsTextarea) obsTextarea.value = '';
   }
+
+  updateLiveOperatorPreview();
 
   if (modal) modal.classList.add('show');
   if (window.lucide) lucide.createIcons();
@@ -12870,6 +12989,8 @@ function handleDecisionRadioChange(action) {
       </button>
     `).join('');
   }
+
+  updateLiveOperatorPreview();
 }
 
 function insertSupTemplate(text) {
@@ -12877,6 +12998,7 @@ function insertSupTemplate(text) {
   if (textarea) {
     textarea.value = text;
     textarea.focus();
+    updateLiveOperatorPreview();
   }
 }
 
@@ -13085,6 +13207,10 @@ if (typeof window !== 'undefined') {
   window.renderSupportView = renderSupportView;
   window.setSupportStatusFilter = setSupportStatusFilter;
   window.handleSupportDevFilterChange = handleSupportDevFilterChange;
+  window.handleSupportSearch = handleSupportSearch;
+  window.setSupportLayoutMode = setSupportLayoutMode;
+  window.copySupportTicketInfo = copySupportTicketInfo;
+  window.updateLiveOperatorPreview = updateLiveOperatorPreview;
   window.openSupportActionModal = openSupportActionModal;
   window.closeSupportActionModal = closeSupportActionModal;
   window.handleDecisionRadioChange = handleDecisionRadioChange;

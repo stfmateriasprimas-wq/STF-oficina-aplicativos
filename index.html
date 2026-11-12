@@ -34,7 +34,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=56">
+  <link rel="stylesheet" href="css/styles.css?v=57">
 </head>
 
 <body>
@@ -1704,18 +1704,37 @@
       <section class="view-panel" id="view-support">
         <div class="support-view-wrapper">
 
+          <!-- LIVE PLANT TELEMETRY COMMAND BANNER (FUTURISTIC RADAR) -->
+          <div class="support-telemetry-banner">
+            <div class="stb-left">
+              <span class="stb-radar-wrap">
+                <span class="stb-radar-ping"></span>
+                <span class="stb-radar-dot"></span>
+              </span>
+              <span class="stb-telemetry-title">TELEMETRÍA EN VIVO · ENLACE PLANTA INDUSTRIAL STF</span>
+              <span class="stb-sep">/</span>
+              <span class="stb-badge-active"><i data-lucide="radio"></i> 7 Terminales Conectadas</span>
+              <span class="stb-sep">/</span>
+              <span class="stb-badge-sla"><i data-lucide="shield-check"></i> Protocolo SLA Activo</span>
+            </div>
+            <div class="stb-right">
+              <span class="stb-pulse-tag">ENLACE ACTIVO</span>
+              <span class="stb-clock-display" id="supportLiveClock">--:--:--</span>
+            </div>
+          </div>
+
           <!-- SUPER ADMIN / DEVELOPER HEADER CARD -->
           <div class="grid-card support-header-card" style="margin-top: 0;">
             <div class="card-header">
               <div class="header-left">
                 <div class="super-admin-badge-strip">
-                  <span class="super-admin-shield-pill" id="supportRoleShieldPill" style="background: linear-gradient(135deg, #1E232E 0%, #2E384D 100%);">
+                  <span class="super-admin-shield-pill" id="supportRoleShieldPill">
                     <i data-lucide="headphones"></i>
                     <span id="supportRoleShieldText">Atención Técnica de Planta · Super Admin (Jefe TI)</span>
                   </span>
-                  <span class="auto-metric-tag" style="background: #EEF2FF; color: #4F46E5; border-color: #C7D2FE;">
-                    <i data-lucide="radio"></i>
-                    <span>Recepción de Requerimientos en Vivo</span>
+                  <span class="auto-metric-tag" style="background: rgba(99, 102, 241, 0.08); color: #4F46E5; border-color: rgba(99, 102, 241, 0.2);">
+                    <i data-lucide="zap"></i>
+                    <span>Despacho Inmediato & Auto-Enrutamiento</span>
                   </span>
                 </div>
                 <h2 class="card-title" id="supportSectionTitle">Bandeja de Solicitudes de Soporte Técnico</h2>
@@ -1731,50 +1750,58 @@
               </div>
             </div>
 
-            <!-- KPI Summary Strip -->
+            <!-- KPI Summary Strip (Futuristic HUD) -->
             <div class="support-kpi-grid">
               <div class="support-kpi-card kpi-total">
-                <div class="skpi-icon-wrap" style="background: rgba(78, 101, 255, 0.12); color: #4E65FF;">
+                <div class="skpi-glow-aura"></div>
+                <div class="skpi-icon-wrap">
                   <i data-lucide="inbox"></i>
                 </div>
                 <div class="skpi-info">
                   <span class="skpi-label">Total Solicitudes</span>
                   <strong class="skpi-value" id="kpiSupportTotal">0</strong>
+                  <span class="skpi-sub-track">Registradas en bitácora</span>
                 </div>
               </div>
 
               <div class="support-kpi-card kpi-pending">
-                <div class="skpi-icon-wrap" style="background: rgba(245, 158, 11, 0.12); color: #D97706;">
+                <div class="skpi-glow-aura"></div>
+                <div class="skpi-icon-wrap">
                   <i data-lucide="clock"></i>
                 </div>
                 <div class="skpi-info">
                   <span class="skpi-label">Pendientes por Atender</span>
-                  <strong class="skpi-value" id="kpiSupportPending" style="color: #D97706;">0</strong>
+                  <strong class="skpi-value" id="kpiSupportPending">0</strong>
+                  <span class="skpi-sub-track">Requieren dictamen</span>
                 </div>
               </div>
 
               <div class="support-kpi-card kpi-accepted">
-                <div class="skpi-icon-wrap" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+                <div class="skpi-glow-aura"></div>
+                <div class="skpi-icon-wrap">
                   <i data-lucide="check-circle-2"></i>
                 </div>
                 <div class="skpi-info">
-                  <span class="skpi-label">Aceptadas en Atención</span>
-                  <strong class="skpi-value" id="kpiSupportAccepted" style="color: #059669;">0</strong>
+                  <span class="skpi-label">Aceptadas en Solución</span>
+                  <strong class="skpi-value" id="kpiSupportAccepted">0</strong>
+                  <span class="skpi-sub-track">Respuesta enviada a planta</span>
                 </div>
               </div>
 
               <div class="support-kpi-card kpi-rejected">
-                <div class="skpi-icon-wrap" style="background: rgba(239, 68, 68, 0.12); color: #DC2626;">
+                <div class="skpi-glow-aura"></div>
+                <div class="skpi-icon-wrap">
                   <i data-lucide="x-circle"></i>
                 </div>
                 <div class="skpi-info">
                   <span class="skpi-label">Rechazadas / No Aplica</span>
-                  <strong class="skpi-value" id="kpiSupportRejected" style="color: #DC2626;">0</strong>
+                  <strong class="skpi-value" id="kpiSupportRejected">0</strong>
+                  <span class="skpi-sub-track">Causa técnica justificada</span>
                 </div>
               </div>
             </div>
 
-            <!-- Filter Bar -->
+            <!-- Filter Bar & Search Toolbar -->
             <div class="support-filters-toolbar">
               <div class="support-status-pills" id="supportStatusFilterPills">
                 <button type="button" class="filter-pill active" data-support-filter="all">
@@ -1795,21 +1822,39 @@
                 </button>
               </div>
 
-              <!-- Selector de desarrollador (visible para Admin) -->
-              <div class="support-dev-filter-wrap" id="supportDevFilterWrap">
-                <label for="selectSupportDevFilter" class="support-dev-filter-label">
-                  <i data-lucide="user"></i>
-                  <span>Bandeja de:</span>
-                </label>
-                <select id="selectSupportDevFilter" class="form-input support-dev-select" onchange="handleSupportDevFilterChange(this.value)">
-                  <option value="all">Todo el Equipo de Desarrollo</option>
-                </select>
+              <!-- Search Bar & Controls -->
+              <div class="support-toolbar-controls">
+                <div class="support-search-wrap">
+                  <i data-lucide="search"></i>
+                  <input type="text" id="inputSupportSearch" placeholder="Buscar por ticket, título u operario..." oninput="handleSupportSearch(this.value)">
+                </div>
+
+                <!-- Selector de desarrollador (visible para Admin) -->
+                <div class="support-dev-filter-wrap" id="supportDevFilterWrap">
+                  <label for="selectSupportDevFilter" class="support-dev-filter-label">
+                    <i data-lucide="user"></i>
+                    <span>Bandeja:</span>
+                  </label>
+                  <select id="selectSupportDevFilter" class="form-input support-dev-select" onchange="handleSupportDevFilterChange(this.value)">
+                    <option value="all">Todo el Equipo de Desarrollo</option>
+                  </select>
+                </div>
+
+                <!-- View Mode Toggles (Feed vs Matrix) -->
+                <div class="support-view-mode-toggles">
+                  <button type="button" class="view-mode-btn active" id="btnSupViewFeed" onclick="setSupportLayoutMode('feed')" title="Vista Lista Detallada">
+                    <i data-lucide="rows"></i>
+                  </button>
+                  <button type="button" class="view-mode-btn" id="btnSupViewGrid" onclick="setSupportLayoutMode('grid')" title="Vista Cuadrícula / Matriz">
+                    <i data-lucide="layout-grid"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Tickets List Container -->
-          <div class="support-tickets-list-container" id="supportTicketsListContainer">
+          <div class="support-tickets-list-container mode-feed" id="supportTicketsListContainer">
             <!-- Renderizado dinámico vía JavaScript -->
           </div>
 
@@ -3272,7 +3317,8 @@
               <span style="font-size: 11px; color: #6366F1; font-weight: 600;">Visible para el operario / jefa de área</span>
             </div>
             <textarea id="supActionObservation" rows="3" required class="form-input" 
-              placeholder="Escribe la respuesta formal que se enviará al solicitante (ej: causa técnica, tiempo de atención o motivo de rechazo)..."></textarea>
+              placeholder="Escribe la respuesta formal que se enviará al solicitante (ej: causa técnica, tiempo de atención o motivo de rechazo)..."
+              oninput="updateLiveOperatorPreview()"></textarea>
             
             <!-- Plantillas rápidas de respuesta -->
             <div class="sup-quick-templates" style="margin-top: 8px;">
@@ -3287,13 +3333,27 @@
           <div class="form-row" id="supActionEtaRow" style="margin-top: 10px;">
             <div class="form-group" style="flex: 1;">
               <label for="supActionEta">Tiempo Estimado de Atención / Solución</label>
-              <select id="supActionEta" class="form-input">
+              <select id="supActionEta" class="form-input" onchange="updateLiveOperatorPreview()">
                 <option value="Inmediato (15 - 30 minutos)">Inmediato (15 - 30 minutos)</option>
                 <option value="En el transcurso de la mañana (1 - 2 horas)">En el transcurso de la mañana (1 - 2 horas)</option>
                 <option value="En la jornada de la tarde">En la jornada de la tarde</option>
                 <option value="Próximo ciclo de despliegue (24 - 48h)">Próximo ciclo de despliegue (24 - 48h)</option>
                 <option value="Por definir según diagnóstico en planta">Por definir según diagnóstico en planta</option>
               </select>
+            </div>
+          </div>
+
+          <!-- Vista Previa Holográfica en Pantalla del Operario -->
+          <div class="sup-operator-preview-wrap" style="margin-top: 14px;">
+            <div class="sop-preview-header">
+              <span class="sop-dot"></span>
+              <span class="sop-title">VISTA PREVIA EN TERMINAL DEL OPERARIO (PLANTA)</span>
+              <span class="sop-tag">TRANSMISIÓN EN TIEMPO REAL</span>
+            </div>
+            <div class="sop-preview-card" id="supLiveOperatorPreview">
+              <div class="sop-app-title" id="sopPrevApp">APLICATIVO DE PLANTA</div>
+              <div class="sop-message" id="sopPrevMsg">Escribe una respuesta para visualizar la notificación en tiempo real...</div>
+              <div class="sop-footer-info" id="sopPrevFooter">Atendido por: Desarrollador Oficial · Estimado: Inmediato</div>
             </div>
           </div>
 
@@ -3427,7 +3487,7 @@
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=42"></script>
   <script src="js/sheets-sync.js?v=42"></script>
-  <script src="js/app.js?v=49"></script>
+  <script src="js/app.js?v=50"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 
