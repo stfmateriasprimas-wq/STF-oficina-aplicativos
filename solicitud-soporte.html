@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mesa de Ayuda & Soporte Técnico · STF GROUP Planta</title>
+  <meta name="description" content="Portal oficial de radicación de requerimientos técnicos y actualizaciones para aplicativos industriales de STF GROUP.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F46E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 11l19-9-9 19-2-8-8-2z'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --bg-card-hover: rgba(30, 41, 59, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --text-main: #f9fafb;
+      --text-muted: #94a3b8;
+      --accent-indigo: #6366f1;
+      --accent-purple: #8b5cf6;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.10) 0%, transparent 45%),
+        linear-gradient(180deg, #090d16 0%, #0d121f 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .support-shell {
+      width: 100%;
+      max-width: 680px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Ambient Glow Bar */
+    .support-shell::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+      z-index: 10;
+    }
+
+    .shell-header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #818cf8;
+      box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.3);
+    }
+
+    .brand-text h1 {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text h1 span {
+      background: linear-gradient(135deg, #a5b4fc, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+    }
+
+    .shell-content {
+      padding: 28px 32px 32px;
+    }
+
+    /* System Context Strip */
+    .system-context-strip {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+
+    .system-info-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sys-icon-box {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      background: rgba(99, 102, 241, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #818cf8;
+    }
+
+    .sys-name-tag {
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .sys-name-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sys-dev-tag {
+      text-align: right;
+    }
+
+    .sys-dev-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .sys-dev-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Section Title */
+    .form-group-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Option Cards (Dual Selector: Actualización vs Soporte Técnico) */
+    .type-selector-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .type-option-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .type-option-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(30, 41, 59, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .type-option-card.active-actualizacion {
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.12);
+      box-shadow: 0 0 0 1px #8b5cf6, 0 8px 20px -6px rgba(139, 92, 246, 0.35);
+    }
+
+    .type-option-card.active-soporte {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+      box-shadow: 0 0 0 1px #f59e0b, 0 8px 20px -6px rgba(245, 158, 11, 0.35);
+    }
+
+    .type-opt-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .type-opt-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-act {
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+    }
+
+    .icon-sop {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+    }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .type-option-card.active-actualizacion .radio-circle {
+      border-color: #8b5cf6;
+      background: #8b5cf6;
+    }
+
+    .type-option-card.active-soporte .radio-circle {
+      border-color: #f59e0b;
+      background: #f59e0b;
+    }
+
+    .radio-circle::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffffff;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .type-option-card.active-actualizacion .radio-circle::after,
+    .type-option-card.active-soporte .radio-circle::after {
+      opacity: 1;
+    }
+
+    .type-opt-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .type-opt-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Form Inputs */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .form-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      font-size: 13.5px;
+      color: #ffffff;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--border-focus);
+      background: rgba(30, 41, 59, 0.7);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 105px;
+      line-height: 1.5;
+    }
+
+    /* System Selector (when not pre-filtered by query param) */
+    .sys-selector-wrap {
+      margin-bottom: 20px;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #8b5cf6 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
+    }
+
+    .submit-btn:active {
+      transform: translateY(1px);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Confirmation Modal / Screen */
+    .receipt-screen {
+      display: none;
+      text-align: center;
+      padding: 24px 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .receipt-icon-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid var(--accent-emerald);
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+    }
+
+    .receipt-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .receipt-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto 24px;
+      line-height: 1.5;
+    }
+
+    .ticket-badge-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      max-width: 440px;
+      margin: 0 auto 24px;
+      text-align: left;
+    }
+
+    .tb-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+    }
+
+    .tb-row:last-child {
+      border-bottom: none;
+    }
+
+    .tb-key {
+      color: var(--text-muted);
+    }
+
+    .tb-val {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .tb-code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+      font-size: 14px;
+    }
+
+    .new-btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .new-btn-outline:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 12px 8px; }
+      .shell-header { padding: 20px 20px 16px; }
+      .shell-content { padding: 20px; }
+      .type-selector-grid { grid-template-columns: 1fr; gap: 10px; }
+      .form-row { grid-template-columns: 1fr; gap: 14px; }
+      .system-context-strip { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .sys-dev-tag { text-align: left; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="support-shell">
+    
+    <!-- Shell Header -->
+    <header class="shell-header">
+      <div class="brand-wrap">
+        <div class="brand-logo-badge">
+          <i data-lucide="headphones" style="width: 24px; height: 24px;"></i>
+        </div>
+        <div class="brand-text">
+          <h1>STF <span>Soporte & Mejoras</span></h1>
+          <p>Mesa de Ayuda Técnica Directa con el Equipo de Desarrollo</p>
+        </div>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span>Canal Activo</span>
+      </div>
+    </header>
+
+    <!-- Shell Body -->
+    <div class="shell-content">
+      
+      <!-- FORM VIEW -->
+      <form id="publicSupportForm" onsubmit="handleSupportSubmit(event)">
+        
+        <!-- System Context Banner (Auto-populated from URL or selectable) -->
+        <div class="system-context-strip" id="systemContextStrip">
+          <div class="system-info-left">
+            <div class="sys-icon-box">
+              <i data-lucide="layers" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div>
+              <div class="sys-name-tag">Aplicativo Origen:</div>
+              <div class="sys-name-val" id="dispAppName">COLCHAS (STF-COL-02)</div>
+            </div>
+          </div>
+          <div class="sys-dev-tag">
+            <div class="sys-dev-label">Programador Responsable:</div>
+            <div class="sys-dev-name" id="dispDevName">
+              <i data-lucide="shield-check" style="width: 14px; height: 14px; color: #38bdf8;"></i>
+              <span id="dispDevText">Jose Guzman</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optional System Switcher (Shown only if no valid system param was passed) -->
+        <div class="sys-selector-wrap" id="sysSelectorWrap" style="display: none;">
+          <label class="form-label" for="manualSysSelect">Selecciona tu Aplicativo o Sistema:</label>
+          <select id="manualSysSelect" class="form-select" onchange="onManualSysChange(this.value)">
+            <option value="app_colchas">COLCHAS (STF-COL-02) · Jose Guzman</option>
+            <option value="app_laboratorio">LABORATORIO (STF-LAB-03) · Jose Guzman</option>
+            <option value="app_geo">GEO UBICACION TALLERES (STF-GEO-04) · Jose Guzman</option>
+            <option value="app_calidad">CALIDAD (STF-CAL-05) · Juan David</option>
+            <option value="app_tintoreria">TINTORERIA (STF-TIN-06) · Jhon Eyder (Mocho)</option>
+            <option value="app_oficina">OFICINA - APLICATIVOS (STF-OF-00) · Jose Guzman</option>
+            <option value="app_torre">TORRE DE CONTROL (STF-TC-01) · Jose Guzman</option>
+          </select>
+        </div>
+
+        <!-- SELECTOR DE 2 OPCIONES (ACTUALIZACIÓN vs SOPORTE TÉCNICO) -->
+        <div class="form-group-title">
+          <i data-lucide="check-square" style="width: 14px; height: 14px;"></i>
+          <span>Tipo de Requerimiento:</span>
+        </div>
+
+        <div class="type-selector-grid">
+          <!-- Opción 1: Actualización -->
+          <div class="type-option-card" id="cardActualizacion" onclick="selectTicketType('actualizacion')">
+            <div class="type-opt-top">
+              <div class="type-opt-icon icon-act">
+                <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="radio-circle"></div>
+            </div>
+            <div class="type-opt-title">🔄 Actualización</div>
+            <div class="type-opt-desc">Mejora funcional, nuevos botones, campos adicionales o cambio de regla operativa.</div>
+          </div>
+
+          <!-- Opción 2: Soporte Técnico -->
+          <div class="type-option-card active-soporte" id="cardSoporte" onclick="selectTicketType('soporte')">
+            <div class="type-opt-top">
+              <div class="type-opt-icon icon-sop">
+                <i data-lucide="wrench" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="radio-circle"></div>
+            </div>
+            <div class="type-opt-title">🛠️ Soporte Técnico</div>
+            <div class="type-opt-desc">Falla en el aplicativo, error en pantalla, bloqueo, caída de conexión o lentitud.</div>
+          </div>
+        </div>
+
+        <input type="hidden" id="selectedTicketType" value="soporte">
+        <input type="hidden" id="selectedAppId" value="app_colchas">
+        <input type="hidden" id="selectedAppName" value="COLCHAS">
+        <input type="hidden" id="selectedAppCode" value="STF-COL-02">
+        <input type="hidden" id="selectedDevId" value="dev_jg">
+        <input type="hidden" id="selectedDevName" value="Jose Guzman">
+
+        <!-- Form Rows -->
+        <div class="form-row">
+          <div class="form-col">
+            <label class="form-label" for="reqName">Tu Nombre Completo *</label>
+            <input type="text" id="reqName" class="form-input" placeholder="Ej: Marta Gómez (Jefa Planta)" required>
+          </div>
+          <div class="form-col">
+            <label class="form-label" for="reqArea">Área / Módulo de Planta *</label>
+            <input type="text" id="reqArea" class="form-input" placeholder="Ej: Mesa de Corte 3 / Confección" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col" style="grid-column: span 2;">
+            <label class="form-label" for="reqTitle">Título del Requerimiento *</label>
+            <input type="text" id="reqTitle" class="form-input" placeholder="Ej: Error al registrar rollo de tela en mesa" required>
+          </div>
+        </div>
+
+        <div class="form-col" style="margin-bottom: 20px;">
+          <label class="form-label" for="reqDesc">Descripción Detallada de la Novedad *</label>
+          <textarea id="reqDesc" class="form-textarea" placeholder="Explica detalladamente qué sucede, qué mensaje aparece o qué cambio necesitas para que el desarrollador pueda atenderlo de inmediato..." required></textarea>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 22px;">
+          <div class="form-col">
+            <label class="form-label" for="reqPriority">Nivel de Impacto Operativo</label>
+            <select id="reqPriority" class="form-select">
+              <option value="media">🟡 Normal (Operación puede continuar)</option>
+              <option value="urgente">🔴 Urgente (Detiene la operación en planta)</option>
+              <option value="baja">🟢 Consulta / Sin urgencia</option>
+            </select>
+          </div>
+          <div class="form-col">
+            <label class="form-label">Canal de Transmisión</label>
+            <input type="text" class="form-input" value="Sincronización en Vivo a Desarrollo" disabled style="opacity: 0.7; cursor: default;">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn" id="btnSubmitSupport">
+          <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+          <span id="btnSubmitText">Transmitir Solicitud a Jose Guzman</span>
+        </button>
+
+      </form>
+
+      <!-- RECEIPT VIEW (Shown after successful transmission) -->
+      <div class="receipt-screen" id="receiptScreen">
+        <div class="receipt-icon-circle">
+          <i data-lucide="check" style="width: 38px; height: 38px;"></i>
+        </div>
+        <h2 class="receipt-title">¡Solicitud Radicada con Éxito!</h2>
+        <p class="receipt-desc">
+          Tu requerimiento ha sido emitido y notificado en tiempo real al programador responsable.
+        </p>
+
+        <div class="ticket-badge-box">
+          <div class="tb-row">
+            <span class="tb-key">Radicado Oficial:</span>
+            <span class="tb-val tb-code" id="recTicketCode">STF-SUP-1001</span>
+          </div>
+          <div class="tb-row">
+            <span class="tb-key">Tipo de Requerimiento:</span>
+            <span class="tb-val" id="recType">🛠️ Soporte Técnico</span>
+          </div>
+          <div class="tb-row">
+            <span class="tb-key">Aplicativo Destino:</span>
+            <span class="tb-val" id="recApp">COLCHAS</span>
+          </div>
+          <div class="tb-row">
+            <span class="tb-key">Desarrollador Asignado:</span>
+            <span class="tb-val" id="recDev" style="color: #38bdf8;">Jose Guzman</span>
+          </div>
+          <div class="tb-row">
+            <span class="tb-key">Fecha y Hora:</span>
+            <span class="tb-val" id="recDate">Ahora</span>
+          </div>
+          <div class="tb-row">
+            <span class="tb-key">Estado Actual:</span>
+            <span class="tb-val" style="color: #f59e0b;">⏳ Pendiente de Dictamen</span>
+          </div>
+        </div>
+
+        <button type="button" class="new-btn-outline" onclick="resetSupportForm()">
+          <i data-lucide="plus-circle" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+          Radicar Otra Solicitud
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Shell Footer -->
+    <div class="footer-note">
+      STF GROUP · Dirección de Tecnologías de Información y Desarrollo de Software &copy; 2026
+    </div>
+
+  </div>
+
+  <script>
+    // Configuración de Mapeo de Sistemas y Desarrolladores Oficiales
+    const SYSTEM_MAP = {
+      'colchas': { id: 'app_colchas', code: 'STF-COL-02', name: 'COLCHAS', devId: 'dev_jg', devName: 'Jose Guzman' },
+      'stf-col-02': { id: 'app_colchas', code: 'STF-COL-02', name: 'COLCHAS', devId: 'dev_jg', devName: 'Jose Guzman' },
+      
+      'laboratorio': { id: 'app_laboratorio', code: 'STF-LAB-03', name: 'LABORATORIO', devId: 'dev_jg', devName: 'Jose Guzman' },
+      'stf-lab-03': { id: 'app_laboratorio', code: 'STF-LAB-03', name: 'LABORATORIO', devId: 'dev_jg', devName: 'Jose Guzman' },
+      
+      'geo': { id: 'app_geo', code: 'STF-GEO-04', name: 'GEO UBICACION TALLERES', devId: 'dev_jg', devName: 'Jose Guzman' },
+      'talleres': { id: 'app_geo', code: 'STF-GEO-04', name: 'GEO UBICACION TALLERES', devId: 'dev_jg', devName: 'Jose Guzman' },
+      'stf-geo-04': { id: 'app_geo', code: 'STF-GEO-04', name: 'GEO UBICACION TALLERES', devId: 'dev_jg', devName: 'Jose Guzman' },
+      
+      'calidad': { id: 'app_calidad', code: 'STF-CAL-05', name: 'CALIDAD', devId: 'dev_jd', devName: 'Juan David' },
+      'stf-cal-05': { id: 'app_calidad', code: 'STF-CAL-05', name: 'CALIDAD', devId: 'dev_jd', devName: 'Juan David' },
+      
+      'tintoreria': { id: 'app_tintoreria', code: 'STF-TIN-06', name: 'TINTORERIA', devId: 'dev_je', devName: 'Jhon Eyder (Mocho)' },
+      'stf-tin-06': { id: 'app_tintoreria', code: 'STF-TIN-06', name: 'TINTORERIA', devId: 'dev_je', devName: 'Jhon Eyder (Mocho)' },
+      
+      'oficina': { id: 'app_oficina', code: 'STF-OF-00', name: 'OFICINA - APLICATIVOS', devId: 'dev_jg', devName: 'Jose Guzman' },
+      'stf-of-00': { id: 'app_oficina', code: 'STF-OF-00', name: 'OFICINA - APLICATIVOS', devId: 'dev_jg', devName: 'Jose Guzman' },
+      
+      'torre': { id: 'app_torre', code: 'STF-TC-01', name: 'TORRE DE CONTROL', devId: 'dev_jg', devName: 'Jose Guzman' },
+      'stf-tc-01': { id: 'app_torre', code: 'STF-TC-01', name: 'TORRE DE CONTROL', devId: 'dev_jg', devName: 'Jose Guzman' }
+    };
+
+    const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+
+    // Leer Parámetros de la URL al cargar
+    function initPublicPortal() {
+      const params = new URLSearchParams(window.location.search);
+      const querySys = (params.get('sistema') || params.get('app') || params.get('sys') || '').toLowerCase().trim();
+
+      if (querySys && SYSTEM_MAP[querySys]) {
+        applySystemConfig(SYSTEM_MAP[querySys]);
+        document.getElementById('sysSelectorWrap').style.display = 'none';
+      } else {
+        // Si no viene parámetro en la URL, mostrar el selector para que el usuario elija su sistema
+        document.getElementById('sysSelectorWrap').style.display = 'block';
+        applySystemConfig(SYSTEM_MAP['colchas']);
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function applySystemConfig(cfg) {
+      document.getElementById('selectedAppId').value = cfg.id;
+      document.getElementById('selectedAppName').value = cfg.name;
+      document.getElementById('selectedAppCode').value = cfg.code;
+      document.getElementById('selectedDevId').value = cfg.devId;
+      document.getElementById('selectedDevName').value = cfg.devName;
+
+      document.getElementById('dispAppName').textContent = `${cfg.name} (${cfg.code})`;
+      document.getElementById('dispDevText').textContent = cfg.devName;
+      document.getElementById('btnSubmitText').textContent = `Transmitir Solicitud a ${cfg.devName}`;
+    }
+
+    function onManualSysChange(appId) {
+      const found = Object.values(SYSTEM_MAP).find(s => s.id === appId);
+      if (found) {
+        applySystemConfig(found);
+      }
+    }
+
+    // Selección de las 2 Opciones: Actualización vs Soporte Técnico
+    function selectTicketType(type) {
+      document.getElementById('selectedTicketType').value = type;
+
+      const cardAct = document.getElementById('cardActualizacion');
+      const cardSop = document.getElementById('cardSoporte');
+
+      if (type === 'actualizacion') {
+        cardAct.className = 'type-option-card active-actualizacion';
+        cardSop.className = 'type-option-card';
+      } else {
+        cardAct.className = 'type-option-card';
+        cardSop.className = 'type-option-card active-soporte';
+      }
+    }
+
+    // Envío del Formulario
+    async function handleSupportSubmit(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('btnSubmitSupport');
+      const btnText = document.getElementById('btnSubmitText');
+      const originalText = btnText.textContent;
+
+      btn.disabled = true;
+      btnText.textContent = 'Transmitiendo en tiempo real...';
+
+      const type = document.getElementById('selectedTicketType').value;
+      const appId = document.getElementById('selectedAppId').value;
+      const appName = document.getElementById('selectedAppName').value;
+      const appCode = document.getElementById('selectedAppCode').value;
+      const devId = document.getElementById('selectedDevId').value;
+      const devName = document.getElementById('selectedDevName').value;
+
+      const reqName = document.getElementById('reqName').value.trim();
+      const reqArea = document.getElementById('reqArea').value.trim();
+      const reqTitle = document.getElementById('reqTitle').value.trim();
+      const reqDesc = document.getElementById('reqDesc').value.trim();
+      const reqPriority = document.getElementById('reqPriority').value;
+
+      const now = new Date();
+      const ticketCode = `STF-SUP-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const ticketPayload = {
+        id: `sup_${Date.now()}`,
+        code: ticketCode,
+        appId: appId,
+        appName: appName,
+        appCode: appCode,
+        devId: devId,
+        devName: devName,
+        requester: {
+          name: reqName,
+          role: 'Planta STF',
+          area: reqArea
+        },
+        type: type, // 'actualizacion' o 'soporte'
+        priority: reqPriority,
+        title: reqTitle,
+        description: reqDesc,
+        createdAt: now.toISOString(),
+        status: 'pendiente',
+        resolution: null
+      };
+
+      // 1. Guardar en almacenamiento local si comparte dominio (Oficina de Aplicativos)
+      try {
+        const raw = localStorage.getItem('STF_DATA_V1');
+        let state = raw ? JSON.parse(raw) : null;
+        if (state) {
+          if (!Array.isArray(state.supportTickets)) state.supportTickets = [];
+          state.supportTickets.unshift(ticketPayload);
+          localStorage.setItem('STF_DATA_V1', JSON.stringify(state));
+        }
+      } catch (err) {
+        console.warn('Local storage write:', err);
+      }
+
+      // 2. Emitir señal BroadcastChannel a las pestañas activas de la Oficina de Aplicativos
+      try {
+        if (window.BroadcastChannel) {
+          const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+          bc.postMessage({
+            type: 'NEW_SUPPORT_TICKET',
+            ticket: ticketPayload,
+            targetDevId: devId
+          });
+          setTimeout(() => { try { bc.close(); } catch(e){} }, 1200);
+        }
+      } catch (err) {
+        console.warn('Broadcast error:', err);
+      }
+
+      // 3. Registrar en Google Sheets (Hoja: SOLICITUDES_SOPORTE)
+      try {
+        const sheetPayload = {
+          action: 'log_support_ticket',
+          ticketId: ticketPayload.id,
+          ticketCode: ticketPayload.code,
+          type: ticketPayload.type,
+          appName: ticketPayload.appName,
+          appCode: ticketPayload.appCode,
+          requesterName: ticketPayload.requester.name,
+          requesterArea: ticketPayload.requester.area,
+          title: ticketPayload.title,
+          description: ticketPayload.description,
+          devName: ticketPayload.devName,
+          createdAt: ticketPayload.createdAt
+        };
+
+        fetch(GOOGLE_WEBAPP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sheetPayload)
+        }).catch(e => console.warn('Fetch Sheets error:', e));
+
+      } catch (err) {
+        console.warn('Sheets push:', err);
+      }
+
+      // 4. Mostrar Pantalla de Recibo y Confirmación
+      document.getElementById('publicSupportForm').style.display = 'none';
+      const receipt = document.getElementById('receiptScreen');
+      receipt.style.display = 'block';
+
+      document.getElementById('recTicketCode').textContent = ticketCode;
+      document.getElementById('recType').textContent = type === 'actualizacion' ? '🔄 Actualización' : '🛠️ Soporte Técnico';
+      document.getElementById('recApp').textContent = `${appName} (${appCode})`;
+      document.getElementById('recDev').textContent = devName;
+      document.getElementById('recDate').textContent = now.toLocaleString('es-CO', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function resetSupportForm() {
+      document.getElementById('receiptScreen').style.display = 'none';
+      const form = document.getElementById('publicSupportForm');
+      form.style.display = 'block';
+      document.getElementById('reqTitle').value = '';
+      document.getElementById('reqDesc').value = '';
+      document.getElementById('btnSubmitSupport').disabled = false;
+      
+      const devName = document.getElementById('selectedDevName').value;
+      document.getElementById('btnSubmitText').textContent = `Transmitir Solicitud a ${devName}`;
+
+      selectTicketType('soporte');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Iniciar al cargar el DOM
+    document.addEventListener('DOMContentLoaded', initPublicPortal);
+  </script>
+
+</body>
+
+</html>

@@ -274,6 +274,52 @@
     },
 
     /**
+     * Registrar nueva solicitud de soporte o actualización en la hoja SOLICITUDES_SOPORTE
+     */
+    logSupportTicket(data) {
+      const payload = {
+        action: 'log_support_ticket',
+        ticketId: data.id || ('sup_' + Date.now()),
+        ticketCode: data.code || ('STF-SUP-' + Math.floor(1000 + Math.random() * 9000)),
+        type: data.type || 'soporte',
+        appName: data.appName || 'Sistema General',
+        appCode: data.appCode || '',
+        requesterName: data.requester?.name || data.requesterName || 'Operario de Planta',
+        requesterArea: data.requester?.area || data.requesterArea || 'Planta STF',
+        title: data.title || '',
+        description: data.description || '',
+        devName: data.devName || 'Desarrollador Oficial',
+        createdAt: data.createdAt || new Date().toISOString()
+      };
+      return this.sendPayload(payload);
+    },
+
+    /**
+     * Registrar resolución/dictamen (Aceptada / Rechazada) en la hoja SOLICITUDES_SOPORTE
+     */
+    resolveSupportTicket(data) {
+      const payload = {
+        action: 'resolve_support_ticket',
+        ticketId: data.ticketId || data.ticket?.id || '',
+        ticketCode: data.ticketCode || data.ticket?.code || '',
+        decision: data.decision || 'aceptada',
+        observation: data.observation || data.resolution?.observation || '',
+        etaHours: data.etaHours || data.resolution?.etaHours || '',
+        resolvedBy: data.resolvedBy || data.resolution?.resolvedBy || 'Desarrollador Oficial',
+        type: data.ticket?.type || data.type || 'soporte',
+        appName: data.ticket?.appName || data.appName || '',
+        appCode: data.ticket?.appCode || data.appCode || '',
+        requesterName: data.ticket?.requester?.name || data.requesterName || '',
+        requesterArea: data.ticket?.requester?.area || data.requesterArea || '',
+        title: data.ticket?.title || data.title || '',
+        description: data.ticket?.description || data.description || '',
+        devName: data.ticket?.devName || data.devName || '',
+        createdAt: data.ticket?.createdAt || data.createdAt || ''
+      };
+      return this.sendPayload(payload);
+    },
+
+    /**
      * Helper de compatibilidad para registrar eventos en la Bitácora
      */
     appendBitacoraRow(data) {

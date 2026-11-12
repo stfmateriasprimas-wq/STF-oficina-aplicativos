@@ -19,7 +19,8 @@ var TABS = {
   SISTEMAS_WEB: "SISTEMAS_WEB",
   TAREAS: "CONTROL_TAREAS",
   OBSERVACIONES: "HISTORIAL_OBSERVACIONES",
-  BITACORA: "BITACORA_HISTORIAL"
+  BITACORA: "BITACORA_HISTORIAL",
+  SOPORTE: "SOLICITUDES_SOPORTE"
 };
 
 var HEADERS = {
@@ -75,6 +76,23 @@ var HEADERS = {
     "TAREA",
     "NIVEL DE IMPACTO",
     "OBSERVACION"
+  ],
+  SOPORTE: [
+    "ID_Ticket",
+    "Fecha_Solicitud",
+    "Tipo_Solicitud",
+    "Sistema",
+    "Codigo_Sistema",
+    "Solicitante",
+    "Area_Modulo",
+    "Titulo",
+    "Descripcion",
+    "Desarrollador_Responsable",
+    "Estado",
+    "Fecha_Respuesta",
+    "Observacion_Desarrollador",
+    "Tiempo_Estimado_ETA",
+    "Resuelto_Por"
   ]
 };
 
@@ -626,6 +644,8 @@ function getMasterSheet(ss, tabKey) {
     return ss.getSheetByName("HISTORIAL_OBSERVACIONES") || ss.getSheetByName("Historial_Observaciones") || ss.getSheetByName("Observaciones") || ss.insertSheet(TABS.OBSERVACIONES);
   } else if (tabKey === "BITACORA") {
     return ss.getSheetByName("BITACORA_HISTORIAL") || ss.getSheetByName("Bitacora_Cambios") || ss.getSheetByName("Ingresos_Cambios") || ss.insertSheet(TABS.BITACORA);
+  } else if (tabKey === "SOPORTE") {
+    return ss.getSheetByName("SOLICITUDES_SOPORTE") || ss.getSheetByName("Solicitudes_Soporte") || ss.getSheetByName("Soporte_Tecnico") || ss.insertSheet(TABS.SOPORTE);
   }
   return ss.getSheetByName(preferredName) || (preferredName ? ss.insertSheet(preferredName) : null);
 }
@@ -1356,6 +1376,124 @@ function doPost(e) {
       return createJsonResponse({
         status: "success",
         message: "Evento registrado en BITACORA_HISTORIAL",
+        date: dateStr
+      });
+    }
+
+    // =========================================================================
+    // ACCIÓN 7: Registrar Solicitud de Soporte / Actualización (SOLICITUDES_SOPORTE)
+    // =========================================================================
+    if (action === "log_support_ticket") {
+      var sSoporte = getMasterSheet(ss, "SOPORTE");
+      ensureExactHeaders(sSoporte, HEADERS.SOPORTE);
+
+      var ticketCode = payload.ticketCode || payload.ticketId || ("STF-SUP-" + Math.floor(1000 + Math.random() * 9000));
+      var tipoTxt = payload.type === 'actualizacion' ? 'Actualización' : 'Soporte Técnico';
+      var reqDate = payload.createdAt ? Utilities.formatDate(new Date(payload.createdAt), "America/Bogota", "yyyy-MM-dd HH:mm:ss") : dateStr;
+
+      // Estructura: 15 Columnas A:O
+      sSoporte.appendRow([
+        ticketCode,
+        reqDate,
+        tipoTxt,
+        payload.appName || '',
+        payload.appCode || '',
+        payload.requesterName || 'Operario de Planta',
+        payload.requesterArea || 'Planta STF',
+        payload.title || '',
+        payload.description || '',
+        payload.devName || 'Desarrollador Oficial',
+        'Pendiente',
+        '', // Fecha_Respuesta
+        '', // Observacion_Desarrollador
+        '', // Tiempo_Estimado_ETA
+        ''  // Resuelto_Por
+      ]);
+
+      appendBitacoraRow(
+        ss,
+        dateStr,
+        (payload.requesterName || "Planta") + " (" + (payload.appName || "Sistema") + ")",
+        payload.type === 'actualizacion' ? "SOLICITUD_ACTUALIZACION" : "SOLICITUD_SOPORTE_TECNICO",
+        payload.appName || "Planta",
+        "[" + tipoTxt.toUpperCase() + "] " + (payload.title || '') + " -> Asignado a " + (payload.devName || 'Desarrollador'),
+        "PLANTA · v1.0"
+      );
+
+      return createJsonResponse({
+        status: "success",
+        ticketCode: ticketCode,
+        message: "Solicitud de planta registrada exitosamente en SOLICITUDES_SOPORTE",
+        date: dateStr
+      });
+    }
+
+    // =========================================================================
+    // ACCIÓN 8: Oficializar Dictamen de Soporte (Aceptar / Rechazar con Observación)
+    // =========================================================================
+    if (action === "resolve_support_ticket") {
+      var sSoporte = getMasterSheet(ss, "SOPORTE");
+      ensureExactHeaders(sSoporte, HEADERS.SOPORTE);
+
+      var targetCode = String(payload.ticketCode || payload.ticketId || '').trim();
+      var lastRow = sSoporte.getLastRow();
+      var foundRow = -1;
+
+      if (lastRow > 1) {
+        var ids = sSoporte.getRange(2, 1, lastRow - 1, 1).getValues();
+        for (var r = 0; r < ids.length; r++) {
+          if (String(ids[r][0]).trim().toUpperCase() === targetCode.toUpperCase()) {
+            foundRow = r + 2;
+            break;
+          }
+        }
+      }
+
+      var decisionText = payload.decision === 'aceptada' ? 'Aceptada' : 'Rechazada';
+      var resDate = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+
+      if (foundRow > 0) {
+        // Col K(11): Estado, Col L(12): Fecha_Respuesta, Col M(13): Observacion, Col N(14): ETA, Col O(15): Resuelto_Por
+        sSoporte.getRange(foundRow, 11).setValue(decisionText);
+        sSoporte.getRange(foundRow, 12).setValue(resDate);
+        sSoporte.getRange(foundRow, 13).setValue(payload.observation || '');
+        sSoporte.getRange(foundRow, 14).setValue(payload.etaHours || '');
+        sSoporte.getRange(foundRow, 15).setValue(payload.resolvedBy || 'Desarrollador');
+      } else {
+        sSoporte.appendRow([
+          targetCode || ("STF-SUP-" + Math.floor(1000 + Math.random() * 9000)),
+          payload.createdAt || resDate,
+          payload.type === 'actualizacion' ? 'Actualización' : 'Soporte Técnico',
+          payload.appName || '',
+          payload.appCode || '',
+          payload.requesterName || 'Operario de Planta',
+          payload.requesterArea || 'Planta STF',
+          payload.title || '',
+          payload.description || '',
+          payload.devName || 'Desarrollador Oficial',
+          decisionText,
+          resDate,
+          payload.observation || '',
+          payload.etaHours || '',
+          payload.resolvedBy || 'Desarrollador'
+        ]);
+      }
+
+      appendBitacoraRow(
+        ss,
+        dateStr,
+        payload.resolvedBy || "Desarrollador",
+        payload.decision === 'aceptada' ? "SOPORTE_ACEPTADO" : "SOPORTE_RECHAZADO",
+        payload.appName || "Soporte",
+        "Ticket " + targetCode + " marcado como " + decisionText + ": " + (payload.observation || '') + (payload.etaHours ? " (ETA: " + payload.etaHours + ")" : ""),
+        "SOPORTE · v1.0"
+      );
+
+      return createJsonResponse({
+        status: "success",
+        ticketCode: targetCode,
+        decision: decisionText,
+        message: "Dictamen de soporte actualizado exitosamente en SOLICITUDES_SOPORTE",
         date: dateStr
       });
     }

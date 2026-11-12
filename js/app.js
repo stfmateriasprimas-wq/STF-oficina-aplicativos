@@ -12907,10 +12907,19 @@ function renderSupportView() {
       priorityLabel = '🟡 Media';
     }
 
-    // Type label
-    let typeLabel = '🛠️ Soporte General';
-    if (ticket.type === 'dano') typeLabel = '🚨 Daño / Bloqueo';
-    else if (ticket.type === 'actualizacion') typeLabel = '🔄 Actualización / Mejora';
+    // Type label & distinct indicator for developers
+    let typeLabel = '🛠️ Soporte Técnico';
+    let typeClass = 'st-type-soporte';
+    let typeInlineStyle = 'background: rgba(245, 158, 11, 0.14); color: #b45309; border: 1.5px solid rgba(245, 158, 11, 0.35); font-weight: 700;';
+    if (ticket.type === 'actualizacion') {
+      typeLabel = '🔄 Actualización';
+      typeClass = 'st-type-actualizacion';
+      typeInlineStyle = 'background: rgba(139, 92, 246, 0.14); color: #6d28d9; border: 1.5px solid rgba(139, 92, 246, 0.35); font-weight: 700;';
+    } else if (ticket.type === 'dano') {
+      typeLabel = '🚨 Daño Operativo';
+      typeClass = 'st-type-dano';
+      typeInlineStyle = 'background: rgba(239, 68, 68, 0.14); color: #b91c1c; border: 1.5px solid rgba(239, 68, 68, 0.35); font-weight: 700;';
+    }
 
     const formattedDate = new Date(ticket.createdAt).toLocaleString('es-CO', {
       day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
@@ -12930,7 +12939,7 @@ function renderSupportView() {
               <i data-lucide="layers" style="width: 13px; height: 13px;"></i>
               <span>${app.name}</span>
             </span>
-            <span class="st-type-pill">${typeLabel}</span>
+            <span class="st-type-pill ${typeClass}" style="${typeInlineStyle}">${typeLabel}</span>
             <span class="st-priority-badge ${priorityClass}">${priorityLabel}</span>
           </div>
 
@@ -13213,6 +13222,19 @@ function handleSupportActionSubmit(e) {
   saveData(appState);
   closeSupportActionModal();
 
+  // Sincronizar dictamen oficial en Google Sheets (Hoja: SOLICITUDES_SOPORTE)
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.resolveSupportTicket === 'function') {
+      window.SheetsSync.resolveSupportTicket({
+        ticket: ticket,
+        decision: decision,
+        observation: observation,
+        etaHours: etaHours,
+        resolvedBy: session.name
+      }).catch(err => console.warn('[SupportAction] Sync Sheets:', err));
+    }
+  } catch (e) { }
+
   // Emitir señal de broadcast en vivo a todas las terminales/usuarios y pestañas
   try {
     if (window.BroadcastChannel) {
@@ -13378,6 +13400,16 @@ function handleNewSupportTicketSubmit(e) {
   appState.supportTickets.unshift(newTicket);
   saveData(appState);
   closeNewSupportModal();
+
+  // Sincronizar solicitud de planta en Google Sheets (Hoja: SOLICITUDES_SOPORTE)
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.logSupportTicket === 'function') {
+      window.SheetsSync.logSupportTicket({
+        ...newTicket,
+        appCode: app ? app.code : ''
+      }).catch(err => console.warn('[NewSupportTicket] Sync Sheets:', err));
+    }
+  } catch (e) { }
 
   // Emitir señal de broadcast en vivo al programador asignado y a la consola Admin
   try {
