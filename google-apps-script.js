@@ -951,9 +951,20 @@ function doGet(e) {
 
         var dId = "dev_jg";
         var dLower = devName.toLowerCase();
-        if (dLower.indexOf("juan") !== -1) dId = "dev_jd";
-        else if (dLower.indexOf("mocho") !== -1 || dLower.indexOf("jhon") !== -1 || dLower.indexOf("eyder") !== -1) dId = "dev_je";
-        else if (dLower.indexOf("esteban") !== -1) dId = "dev_ee";
+        var aLower = (appName + " " + appCode).toLowerCase();
+        if (dLower.indexOf("juan") !== -1 || aLower.indexOf("calidad") !== -1) {
+          dId = "dev_jd";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Juan David";
+        } else if (dLower.indexOf("mocho") !== -1 || dLower.indexOf("jhon") !== -1 || dLower.indexOf("eyder") !== -1 || aLower.indexOf("tinto") !== -1) {
+          dId = "dev_mocho";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Jhon Eyder (Mocho)";
+        } else if (dLower.indexOf("esteban") !== -1) {
+          dId = "dev_ee";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Esteban Escobar";
+        } else {
+          dId = "dev_jg";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Jose Guzman";
+        }
 
         supportTickets.push({
           id: "sup_" + code.replace(/[^a-zA-Z0-9]/g, "_"),
@@ -1533,6 +1544,16 @@ function doPost(e) {
       var tipoTxt = payload.type === 'actualizacion' ? 'Actualización' : 'Soporte Técnico';
       var reqDate = payload.createdAt ? Utilities.formatDate(new Date(payload.createdAt), "America/Bogota", "yyyy-MM-dd HH:mm:ss") : dateStr;
 
+      // Auto-asignación garantizada por aplicativo si viene genérico o vacío
+      var resolvedDev = payload.devName || '';
+      var aNorm = String((payload.appName || '') + ' ' + (payload.appCode || '')).toLowerCase();
+      if (!resolvedDev || resolvedDev === 'Desarrollador Oficial' || resolvedDev === 'Sistema STF') {
+        if (aNorm.indexOf('calidad') !== -1) resolvedDev = 'Juan David';
+        else if (aNorm.indexOf('tinto') !== -1) resolvedDev = 'Jhon Eyder (Mocho)';
+        else if (aNorm.indexOf('esteban') !== -1) resolvedDev = 'Esteban Escobar';
+        else resolvedDev = 'Jose Guzman';
+      }
+
       // Estructura Oficial: 17 Columnas A:Q (Blindada para Tablas Nativas)
       var rowData = [
         ticketCode,
@@ -1544,7 +1565,7 @@ function doPost(e) {
         payload.requesterArea || 'Planta STF',
         payload.title || '',
         payload.description || '',
-        payload.devName || 'Desarrollador Oficial',
+        resolvedDev,
         'Pendiente',
         '', // Fecha_Respuesta
         '', // Observacion_Desarrollador

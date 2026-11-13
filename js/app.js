@@ -57,12 +57,15 @@ const CANONICAL_DEV_MAP = {
 
   // Jhon Eyder (Mocho)
   'dev_mocho': 'dev_mocho',
+  'dev_je': 'dev_mocho',
+  'je': 'dev_mocho',
   'dev_jhon_eyder': 'dev_mocho',
   'jhon@eyder': 'dev_mocho',
   'jhon.eyder': 'dev_mocho',
   'jhon.eyder@studiof.com.co': 'dev_mocho',
   'mocho': 'dev_mocho',
   'jhon': 'dev_mocho',
+  'eyder': 'dev_mocho',
   'jhon eyder': 'dev_mocho',
   'jhon eyder (mocho)': 'dev_mocho',
   '1010159672': 'dev_mocho',
@@ -195,6 +198,93 @@ function isAppAssignedToDev(app, devId) {
     : null;
   if (devObj && Array.isArray(devObj.activeProjects) && devObj.activeProjects.includes(app.id)) return true;
   return false;
+}
+
+/**
+ * Determina de forma estricta y blindada si una solicitud de soporte pertenece a un desarrollador,
+ * evaluando ID canónico, Nombre del Desarrollador y Aplicativo asignado a su cargo.
+ */
+function isTicketAssignedToDev(ticket, devId) {
+  if (!ticket || !devId) return false;
+  const targetId = resolveCanonicalDevId(devId);
+  if (!targetId) return false;
+
+  // 1. Coincidencia directa por devId del ticket
+  if (ticket.devId) {
+    const tDev = resolveCanonicalDevId(ticket.devId);
+    if (tDev === targetId) return true;
+  }
+
+  // 2. Coincidencia por devName del ticket
+  if (ticket.devName) {
+    const tName = resolveCanonicalDevId(ticket.devName);
+    if (tName === targetId) return true;
+  }
+
+  // 3. Coincidencia directa por nombre, código o ID del aplicativo a cargo
+  const appNameNorm = String(ticket.appName || '').toLowerCase();
+  const appCodeNorm = String(ticket.appCode || '').toUpperCase();
+  const appIdNorm = String(ticket.appId || '').toLowerCase();
+
+  // Jose Guzman (dev_jg): Colchas, Laboratorio, Geo Ubicación Talleres, Oficina Aplicativos
+  if (targetId === 'dev_jg') {
+    if (appNameNorm.includes('colcha') || appCodeNorm.includes('COL') || appIdNorm.includes('colcha')) return true;
+    if (appNameNorm.includes('laboratorio') || appCodeNorm.includes('LAB') || appIdNorm.includes('lab')) return true;
+    if (appNameNorm.includes('geo') || appNameNorm.includes('taller') || appCodeNorm.includes('GEO') || appIdNorm.includes('geo')) return true;
+    if (appNameNorm.includes('oficina') || appCodeNorm.includes('OF') || appIdNorm.includes('oficina')) return true;
+  }
+
+  // Juan David (dev_jd): Calidad
+  if (targetId === 'dev_jd') {
+    if (appNameNorm.includes('calidad') || appCodeNorm.includes('CAL') || appIdNorm.includes('calidad')) return true;
+  }
+
+  // Jhon Eyder Mocho (dev_mocho): Tintorería
+  if (targetId === 'dev_mocho') {
+    if (appNameNorm.includes('tinto') || appCodeNorm.includes('TIN') || appIdNorm.includes('tintoreria')) return true;
+  }
+
+  // Esteban Escobar (dev_ee)
+  if (targetId === 'dev_ee') {
+    if (ticket.devName && ticket.devName.toLowerCase().includes('esteban')) return true;
+  }
+
+  // 4. Verificación dinámica contra aplicaciones registradas en appState
+  if (window.appState && Array.isArray(window.appState.applications)) {
+    const matchedApp = window.appState.applications.find(a => 
+      a.id === ticket.appId || 
+      (ticket.appCode && a.code === ticket.appCode) || 
+      (ticket.appName && a.name.toLowerCase() === ticket.appName.toLowerCase())
+    );
+    if (matchedApp) {
+      const appDevId = resolveCanonicalDevId(matchedApp.devId);
+      if (appDevId === targetId) return true;
+      if (Array.isArray(matchedApp.devIds) && matchedApp.devIds.some(id => resolveCanonicalDevId(id) === targetId)) {
+        if (!ticket.devId || resolveCanonicalDevId(ticket.devId) === targetId) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Obtiene el listado de tickets de soporte técnico filtrado de forma rigurosa
+ * según la sesión del usuario o el programador seleccionado.
+ */
+function getScopedSupportTickets(devId) {
+  const allTickets = (window.appState && Array.isArray(window.appState.supportTickets)) ? window.appState.supportTickets : [];
+  const isAdmin = isCurrentSessionAdmin();
+
+  if (isAdmin) {
+    if (typeof currentSupportDevFilter !== 'undefined' && currentSupportDevFilter && currentSupportDevFilter !== 'all') {
+      return allTickets.filter(t => isTicketAssignedToDev(t, currentSupportDevFilter));
+    }
+    return allTickets;
+  }
+
+  const targetDevId = devId || getLoggedDevId();
+  return allTickets.filter(t => isTicketAssignedToDev(t, targetDevId));
 }
 
 function getScopedApplications() {
@@ -1017,7 +1107,7 @@ function getNotificationsData() {
 
     // 5. Solicitudes de Soporte Técnico de Planta Asignadas al Desarrollador
     const myPendingTickets = (appState.supportTickets || []).filter(t => 
-      t.status === 'pendiente' && (resolveCanonicalDevId(t.devId) === currentDevId || t.devId === currentDevId)
+      t.status === 'pendiente' && isTicketAssignedToDev(t, currentDevId)
     );
     myPendingTickets.forEach(ticket => {
       notifications.unshift({
@@ -2083,6 +2173,17 @@ function selectDeveloper(devId) {
   }
   if (typeof updateVelocitySection === 'function') {
     updateVelocitySection(currentVelocityPeriod);
+  }
+
+  // Sincronizar Bandeja de Soporte Técnico con el desarrollador seleccionado
+  if (typeof currentSupportDevFilter !== 'undefined') {
+    currentSupportDevFilter = devId;
+  }
+  if (typeof renderSupportView === 'function') {
+    renderSupportView();
+  }
+  if (typeof updateSupportNavBadge === 'function') {
+    updateSupportNavBadge();
   }
 }
 
@@ -12736,16 +12837,8 @@ function copySupportTicketInfo(ticketId) {
 function updateSupportNavBadge() {
   const badge = document.getElementById('supportNavBadge');
   if (!badge) return;
-  const isAdmin = isCurrentSessionAdmin();
-  const currentDevId = getLoggedDevId();
-  const tickets = (appState && Array.isArray(appState.supportTickets)) ? appState.supportTickets : [];
-
-  let pendingCount = 0;
-  if (isAdmin) {
-    pendingCount = tickets.filter(t => t.status === 'pendiente').length;
-  } else {
-    pendingCount = tickets.filter(t => t.status === 'pendiente' && (resolveCanonicalDevId(t.devId) === currentDevId || t.devId === currentDevId)).length;
-  }
+  const scoped = typeof getScopedSupportTickets === 'function' ? getScopedSupportTickets() : (appState && Array.isArray(appState.supportTickets) ? appState.supportTickets : []);
+  const pendingCount = scoped.filter(t => t.status === 'pendiente').length;
 
   if (pendingCount > 0) {
     badge.textContent = pendingCount;
@@ -12780,24 +12873,29 @@ function renderSupportView() {
   if (isAdmin) {
     if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)';
     if (shieldText) shieldText.textContent = 'Atención Técnica de Planta · Super Admin (Jefe TI)';
-    if (sectionTitle) sectionTitle.textContent = 'Bandeja Global de Solicitudes de Soporte Técnico';
+    if (sectionTitle) {
+      if (currentSupportDevFilter !== 'all') {
+        const filterDev = (appState.developers || []).find(d => d.id === currentSupportDevFilter);
+        sectionTitle.textContent = `Bandeja de Solicitudes · ${filterDev ? filterDev.name : 'Desarrollador'}`;
+      } else {
+        sectionTitle.textContent = 'Bandeja Global de Solicitudes de Soporte Técnico';
+      }
+    }
     if (sectionSub) sectionSub.textContent = 'Supervisión en vivo de novedades y fallas reportadas desde planta por operarios y jefas de área hacia los desarrolladores.';
     if (devFilterWrap) devFilterWrap.style.display = 'flex';
   } else {
+    const myApps = typeof getScopedApplications === 'function' ? getScopedApplications() : [];
+    const appNamesList = myApps.map(a => a.name).join(', ') || 'tus aplicativos';
+
     if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #047857 0%, #065F46 100%)';
     if (shieldText) shieldText.textContent = `Bandeja de Soporte · ${session.name}`;
     if (sectionTitle) sectionTitle.textContent = `Mis Solicitudes Asignadas (${session.name})`;
-    if (sectionSub) sectionSub.textContent = 'Novedades reportadas desde planta para tus aplicativos a cargo. Revisa, acepta o rechaza cada solicitud con respuesta directa al solicitante.';
+    if (sectionSub) sectionSub.textContent = `Novedades reportadas desde planta para tus aplicativos a cargo (${appNamesList}). Revisa, acepta o rechaza cada solicitud con respuesta directa al solicitante.`;
     if (devFilterWrap) devFilterWrap.style.display = 'none';
   }
 
-  // Filtrado de alcance según el rol (Resuelve tanto por ID como por Nombre del Desarrollador)
-  const scopedTickets = isAdmin
-    ? appState.supportTickets
-    : appState.supportTickets.filter(t => {
-        const cId = resolveCanonicalDevId(t.devId || t.devName);
-        return cId === currentDevId || t.devId === currentDevId || (t.devName && t.devName.toLowerCase().indexOf('jose') !== -1 && currentDevId === 'dev_jg');
-      });
+  // Filtrado de alcance según el rol y programador autenticado / seleccionado
+  const scopedTickets = typeof getScopedSupportTickets === 'function' ? getScopedSupportTickets() : appState.supportTickets;
 
   // KPIs
   const totalCount = scopedTickets.length;
@@ -12832,7 +12930,7 @@ function renderSupportView() {
     const teamDevs = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
     let devOptionsHtml = `<option value="all">Todo el Equipo de Desarrollo (${appState.supportTickets.length})</option>`;
     teamDevs.forEach(dev => {
-      const devTickets = appState.supportTickets.filter(t => resolveCanonicalDevId(t.devId || t.devName) === dev.id || t.devId === dev.id);
+      const devTickets = appState.supportTickets.filter(t => isTicketAssignedToDev(t, dev.id));
       const devPend = devTickets.filter(t => t.status === 'pendiente').length;
       devOptionsHtml += `<option value="${dev.id}">${dev.name} (${devTickets.length} solicitudes${devPend > 0 ? ` · ${devPend} pendientes` : ''})</option>`;
     });
@@ -13519,6 +13617,8 @@ async function resetSupportTicketsToZero() {
 
 // Global Exports
 if (typeof window !== 'undefined') {
+  window.isTicketAssignedToDev = isTicketAssignedToDev;
+  window.getScopedSupportTickets = getScopedSupportTickets;
   window.resetSupportTicketsToZero = resetSupportTicketsToZero;
   window.syncSupportWithSheets = syncSupportWithSheets;
   window.renderSupportView = renderSupportView;
