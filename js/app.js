@@ -8327,7 +8327,7 @@ function setupRealtimeTaskSync() {
 function initApp() {
   // Purgar tickets de prueba previos al corte oficial de puesta en marcha
   if (window.appState && Array.isArray(window.appState.supportTickets)) {
-    const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+    const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T16:05:00.000Z').getTime();
     const prevCount = window.appState.supportTickets.length;
     window.appState.supportTickets = window.appState.supportTickets.filter(t => {
       const tTime = new Date(t.createdAt || 0).getTime();

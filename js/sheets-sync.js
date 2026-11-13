@@ -1036,7 +1036,7 @@
 
       let mergedCount = 0;
       let hasChanges = false;
-      const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+      const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T16:05:00.000Z').getTime();
 
       // Purgar tickets locales antiguos previos al corte oficial
       const prevLen = state.supportTickets.length;
@@ -1378,7 +1378,7 @@
           }
 
           const itemTime = new Date(item.Timestamp || item.Fecha_Hora || 0).getTime();
-          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T16:05:00.000Z').getTime();
           if (itemTime > 0 && itemTime < SUPPORT_OFFICIAL_CUTOFF) {
             return; // Omitir tickets de prueba anteriores al reseteo oficial
           }

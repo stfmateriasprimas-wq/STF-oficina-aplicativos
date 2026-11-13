@@ -532,13 +532,13 @@ function getStoredData() {
           });
         }
         // Inicializar o restablecer solicitudes de soporte técnico en 0 para pruebas oficiales
-        if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V4')) {
+        if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V6')) {
           parsed.supportTickets = [];
-          localStorage.setItem('STF_SUPPORT_RESET_ZERO_V4', 'true');
+          localStorage.setItem('STF_SUPPORT_RESET_ZERO_V6', 'true');
         } else if (!Array.isArray(parsed.supportTickets)) {
           parsed.supportTickets = [];
         } else {
-          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T16:05:00.000Z').getTime();
           parsed.supportTickets = parsed.supportTickets.filter(t => {
             const time = new Date(t.createdAt || 0).getTime();
             return time >= SUPPORT_OFFICIAL_CUTOFF;

@@ -905,7 +905,7 @@ function doGet(e) {
     var sSup = getMasterSheet(ss, "SOPORTE");
     var supRows = sSup ? sSup.getDataRange().getValues() : [];
     var supportTickets = [];
-    var SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+    var SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T16:05:00.000Z').getTime();
     if (supRows.length > 1) {
       for (var sp = 1; sp < supRows.length; sp++) {
         var rowSp = supRows[sp];
