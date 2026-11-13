@@ -532,12 +532,17 @@ function getStoredData() {
           });
         }
         // Inicializar o restablecer solicitudes de soporte técnico en 0 para pruebas oficiales
-        if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V2')) {
+        if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V4')) {
           parsed.supportTickets = [];
-          localStorage.setItem('STF_SUPPORT_RESET_ZERO_V2', 'true');
+          localStorage.setItem('STF_SUPPORT_RESET_ZERO_V4', 'true');
         } else if (!Array.isArray(parsed.supportTickets)) {
           parsed.supportTickets = [];
         } else {
+          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+          parsed.supportTickets = parsed.supportTickets.filter(t => {
+            const time = new Date(t.createdAt || 0).getTime();
+            return time >= SUPPORT_OFFICIAL_CUTOFF;
+          });
           parsed.supportTickets.forEach(t => {
             if (!t.appName && t.appId) {
               const app = (parsed.applications || []).find(a => a.id === t.appId);

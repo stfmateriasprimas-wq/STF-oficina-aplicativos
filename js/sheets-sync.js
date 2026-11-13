@@ -1036,7 +1036,17 @@
 
       let mergedCount = 0;
       let hasChanges = false;
-      const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-12T18:15:00.000Z').getTime();
+      const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+
+      // Purgar tickets locales antiguos previos al corte oficial
+      const prevLen = state.supportTickets.length;
+      state.supportTickets = state.supportTickets.filter(t => {
+        const tTime = new Date(t.createdAt || 0).getTime();
+        return tTime >= SUPPORT_OFFICIAL_CUTOFF;
+      });
+      if (state.supportTickets.length !== prevLen) {
+        hasChanges = true;
+      }
 
       cloudTickets.forEach(ct => {
         const ctTime = new Date(ct.createdAt || 0).getTime();
@@ -1368,7 +1378,7 @@
           }
 
           const itemTime = new Date(item.Timestamp || item.Fecha_Hora || 0).getTime();
-          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-12T18:15:00.000Z').getTime();
+          const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
           if (itemTime > 0 && itemTime < SUPPORT_OFFICIAL_CUTOFF) {
             return; // Omitir tickets de prueba anteriores al reseteo oficial
           }

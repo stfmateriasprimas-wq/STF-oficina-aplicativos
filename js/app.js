@@ -8325,6 +8325,19 @@ function setupRealtimeTaskSync() {
 // ==========================================================================
 
 function initApp() {
+  // Purgar tickets de prueba previos al corte oficial de puesta en marcha
+  if (window.appState && Array.isArray(window.appState.supportTickets)) {
+    const SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
+    const prevCount = window.appState.supportTickets.length;
+    window.appState.supportTickets = window.appState.supportTickets.filter(t => {
+      const tTime = new Date(t.createdAt || 0).getTime();
+      return tTime >= SUPPORT_OFFICIAL_CUTOFF;
+    });
+    if (window.appState.supportTickets.length !== prevCount && typeof saveData === 'function') {
+      saveData(window.appState);
+    }
+  }
+
   // Inicializar tema visual guardado (Claro u Oscuro)
   initTheme();
 
@@ -13475,8 +13488,38 @@ async function syncSupportWithSheets() {
   if (typeof updateSupportNavBadge === 'function') updateSupportNavBadge();
 }
 
+async function resetSupportTicketsToZero() {
+  const confirmed = confirm('¿Deseas restablecer la bandeja de solicitudes de soporte técnico en 0 (limpiar pruebas)?');
+  if (!confirmed) return;
+
+  if (window.appState) {
+    window.appState.supportTickets = [];
+    if (typeof window.saveData === 'function') {
+      window.saveData(window.appState);
+    }
+  }
+
+  if (typeof renderSupportView === 'function') renderSupportView();
+  if (typeof updateSupportNavBadge === 'function') updateSupportNavBadge();
+  if (typeof updateNotificationsBadge === 'function') updateNotificationsBadge();
+
+  // Enviar orden a Google Sheets para limpiar filas de prueba de SOLICITUDES_SOPORTE
+  if (window.SheetsSync && typeof window.SheetsSync.sendPayload === 'function') {
+    try {
+      await window.SheetsSync.sendPayload({ action: 'clear_support_tickets' });
+    } catch(e) {
+      console.warn('Error solicitando limpieza remota a Sheets:', e);
+    }
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('Bandeja de soporte restablecida en 0 solicitudes oficiales.', 'success');
+  }
+}
+
 // Global Exports
 if (typeof window !== 'undefined') {
+  window.resetSupportTicketsToZero = resetSupportTicketsToZero;
   window.syncSupportWithSheets = syncSupportWithSheets;
   window.renderSupportView = renderSupportView;
   window.setSupportStatusFilter = setSupportStatusFilter;

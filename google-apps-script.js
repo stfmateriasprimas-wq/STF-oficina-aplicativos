@@ -106,12 +106,32 @@ function onOpen() {
     .createMenu('⚙️ STF SISTEMA')
     .addItem('🚀 Estabilizar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
     .addItem('🎧 Crear / Configurar Hoja SOLICITUDES_SOPORTE', 'setupSoporteSheetDirect')
+    .addItem('🧹 Limpiar Tickets de Prueba (Dejar en 0)', 'limpiarTicketsPruebaSoporte')
     .addItem('🗑️ Eliminar Hoja PORTAFOLIO_SISTEMAS', 'removePortafolioSistemasSheet')
     .addItem('📋 Reparar & Alinear Hoja CONTROL_TAREAS', 'setupTareasSheetDirect')
     .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
     .addItem('📝 Configurar Hoja HISTORIAL_OBSERVACIONES', 'setupObservacionesSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
+}
+
+/**
+ * Deja la hoja SOLICITUDES_SOPORTE en 0 registros (elimina filas de prueba conservando encabezados de fila 1)
+ */
+function limpiarTicketsPruebaSoporte() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = getMasterSheet(ss, "SOPORTE");
+  if (!sheet) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('❌ No se encontró la hoja SOLICITUDES_SOPORTE.', 'STF GROUP TI', 5);
+    return;
+  }
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+    SpreadsheetApp.getActiveSpreadsheet().toast('✅ Hoja SOLICITUDES_SOPORTE restablecida en 0 registros.', 'STF GROUP TI', 6);
+  } else {
+    SpreadsheetApp.getActiveSpreadsheet().toast('ℹ️ La hoja ya se encuentra en 0 registros.', 'STF GROUP TI', 5);
+  }
 }
 
 /**
@@ -885,6 +905,7 @@ function doGet(e) {
     var sSup = getMasterSheet(ss, "SOPORTE");
     var supRows = sSup ? sSup.getDataRange().getValues() : [];
     var supportTickets = [];
+    var SUPPORT_OFFICIAL_CUTOFF = new Date('2026-11-13T15:48:00.000Z').getTime();
     if (supRows.length > 1) {
       for (var sp = 1; sp < supRows.length; sp++) {
         var rowSp = supRows[sp];
@@ -895,6 +916,11 @@ function doGet(e) {
         var reqDateFormatted = (reqDate instanceof Date)
           ? Utilities.formatDate(reqDate, "America/Bogota", "yyyy-MM-dd HH:mm:ss")
           : String(reqDate || "").trim();
+
+        var rowTime = (reqDate instanceof Date) ? reqDate.getTime() : new Date(reqDateFormatted || 0).getTime();
+        if (rowTime > 0 && rowTime < SUPPORT_OFFICIAL_CUTOFF) {
+          continue; // Omitir tickets de prueba anteriores a la puesta en marcha oficial
+        }
 
         var typeStr = String(rowSp[2] || "soporte").toLowerCase().trim();
         var normalizedType = (typeStr.indexOf("act") !== -1) ? "actualizacion" : "soporte";
@@ -1640,6 +1666,21 @@ function doPost(e) {
         decision: decisionText,
         message: "Dictamen de soporte actualizado exitosamente en SOLICITUDES_SOPORTE",
         date: dateStr
+      });
+    }
+
+    // ACCIÓN 9: Limpiar Solicitudes de Soporte de Prueba (Dejar en 0)
+    if (action === "clear_support_tickets") {
+      var sSup = getMasterSheet(ss, "SOPORTE");
+      var deleted = 0;
+      if (sSup && sSup.getLastRow() > 1) {
+        deleted = sSup.getLastRow() - 1;
+        sSup.deleteRows(2, deleted);
+      }
+      return createJsonResponse({
+        status: "success",
+        deleted: deleted,
+        message: "Hoja SOLICITUDES_SOPORTE restablecida en 0 registros exitosamente"
       });
     }
 
