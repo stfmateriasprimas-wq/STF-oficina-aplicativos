@@ -382,14 +382,7 @@ function setupUsuariosSheet(ss) {
 }
 
 /**
- * 2. Función de eliminación de compatibilidad para PORTAFOLIO_SISTEMAS (Hoja retirada)
- */
-function setupSistemasSheet(ss, forceRealData) {
-  removePortafolioSistemasSheet();
-}
-
-/**
- * 3. Configurar y Estabilizar Hoja SISTEMAS_WEB (4 Columnas A:D)
+ * 2. Configurar y Estabilizar Hoja SISTEMAS_WEB (4 Columnas A:D)
  * Corrige "Columna 1..4" en Fila 1, elimina encabezados duplicados en Fila 2
  * y sincroniza el estado real de los 7 sistemas.
  */
@@ -1929,55 +1922,6 @@ function sendSupportConfirmationEmail(ss, payload, ticketCode, tipoTxt) {
   }
 
   return results;
-}
-
-/**
- * AUTOMATIZACIÓN 2: Disparar Notificación de Mensaje de Texto (SMS)
- */
-function sendSupportNotificationSMS(ss, payload, ticketCode, tipoTxt) {
-  var phone = String(payload.requesterPhone || "").replace(/\D/g, "");
-  if (!phone || phone.length < 7) {
-    return { sent: false, reason: "Sin número de celular válido" };
-  }
-
-  var appName = payload.appName || "Sistema Industrial";
-  var devName = payload.devName || "Jose Guzman";
-
-  // Mensaje oficial SMS conciso y claro
-  var smsText = "STF GROUP: Solicitud " + ticketCode + " (" + tipoTxt + ") para " + appName + " radicada con exito. Asignado a: " + devName + ". Estado: Pendiente.";
-
-  // Si existe configuración de pasarela SMS en ScriptProperties o variables
-  var props = PropertiesService.getScriptProperties();
-  var smsEndpoint = props.getProperty("SMS_GATEWAY_URL");
-  var smsApiKey = props.getProperty("SMS_API_KEY");
-
-  var dispatchStatus = "REGISTRADO_EN_COLA";
-
-  if (smsEndpoint && smsApiKey) {
-    try {
-      var smsPayload = {
-        to: phone,
-        message: smsText,
-        apiKey: smsApiKey
-      };
-      var resp = UrlFetchApp.fetch(smsEndpoint, {
-        method: "post",
-        contentType: "application/json",
-        payload: JSON.stringify(smsPayload),
-        muteHttpExceptions: true
-      });
-      dispatchStatus = "ENVIADO_PASARELA_HTTP_" + resp.getResponseCode();
-    } catch (e) {
-      dispatchStatus = "ERROR_PASARELA: " + e.toString();
-    }
-  }
-
-  return {
-    sent: true,
-    recipient: phone,
-    text: smsText,
-    dispatchStatus: dispatchStatus
-  };
 }
 
 /**

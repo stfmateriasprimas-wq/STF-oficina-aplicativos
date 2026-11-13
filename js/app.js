@@ -11802,6 +11802,11 @@ function renderCalendarDeliveryView() {
     renderCalendarMonthGrid(container, current, refDate);
   }
 
+  // Update footer dynamic counters
+  if (typeof updateCalendarFooterStats === 'function') {
+    updateCalendarFooterStats(typeof getScopedCalendarIntegrations === 'function' ? getScopedCalendarIntegrations() : (appState.integrations || []));
+  }
+
   // Re-create icons if Lucide is loaded
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
