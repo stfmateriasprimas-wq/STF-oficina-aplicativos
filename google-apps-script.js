@@ -914,6 +914,12 @@ function doGet(e) {
         var emailReq = String(rowSp[15] || "").trim();
         var phoneReq = String(rowSp[16] || "").trim();
 
+        var dId = "dev_jg";
+        var dLower = devName.toLowerCase();
+        if (dLower.indexOf("juan") !== -1) dId = "dev_jd";
+        else if (dLower.indexOf("mocho") !== -1 || dLower.indexOf("jhon") !== -1 || dLower.indexOf("eyder") !== -1) dId = "dev_je";
+        else if (dLower.indexOf("esteban") !== -1) dId = "dev_ee";
+
         supportTickets.push({
           id: "sup_" + code.replace(/[^a-zA-Z0-9]/g, "_"),
           code: code,
@@ -921,6 +927,8 @@ function doGet(e) {
           type: normalizedType,
           appName: appName,
           appCode: appCode,
+          devId: dId,
+          devName: devName,
           requester: {
             name: reqName,
             role: "Planta STF",
@@ -930,7 +938,6 @@ function doGet(e) {
           },
           title: title,
           description: desc,
-          devName: devName,
           status: status,
           resolution: (status !== "pendiente" && observation) ? {
             action: status,
@@ -1859,6 +1866,33 @@ function testEmailNotification() {
     SpreadsheetApp.getUi().alert("✅ Correo de prueba enviado con éxito a: " + res.recipient);
   } else {
     SpreadsheetApp.getUi().alert("⚠️ No se pudo enviar el correo: " + (res.error || res.reason));
+  }
+}
+
+/**
+ * Función de Prueba Directa y Autorización de Correo de Soporte STF
+ */
+function testSupportEmailDirect() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var payload = {
+    requesterName: "MAYA",
+    requesterArea: "CALIDAD TELAS",
+    requesterEmail: "joseoneiber711@gmail.com",
+    requesterPhone: "3116795548",
+    appName: "COLCHAS",
+    appCode: "STF-COL-02",
+    devName: "Jose Guzman",
+    title: "ACTUALIZAR VISTA PRE - SOLICITUD",
+    description: "Hola jose buen dia requiero que hagamos una actualización de la interfaz de Pre - solicitud por favor",
+    type: "actualizacion",
+    priority: "media"
+  };
+  var res = sendSupportConfirmationEmail(ss, payload, "STF-SUP-2606", "Actualización");
+  Logger.log(JSON.stringify(res));
+  if (res.requesterSent) {
+    SpreadsheetApp.getUi().alert("✅ ¡Correo de soporte enviado con éxito a: joseoneiber711@gmail.com! Revisa tu bandeja de entrada.");
+  } else {
+    SpreadsheetApp.getUi().alert("⚠️ Error al enviar: " + (res.requesterError || "Permiso de correo pendiente"));
   }
 }
 

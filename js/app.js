@@ -12778,10 +12778,13 @@ function renderSupportView() {
     if (devFilterWrap) devFilterWrap.style.display = 'none';
   }
 
-  // Filtrado de alcance según el rol
+  // Filtrado de alcance según el rol (Resuelve tanto por ID como por Nombre del Desarrollador)
   const scopedTickets = isAdmin
     ? appState.supportTickets
-    : appState.supportTickets.filter(t => resolveCanonicalDevId(t.devId) === currentDevId || t.devId === currentDevId);
+    : appState.supportTickets.filter(t => {
+        const cId = resolveCanonicalDevId(t.devId || t.devName);
+        return cId === currentDevId || t.devId === currentDevId || (t.devName && t.devName.toLowerCase().indexOf('jose') !== -1 && currentDevId === 'dev_jg');
+      });
 
   // KPIs
   const totalCount = scopedTickets.length;
@@ -12816,7 +12819,7 @@ function renderSupportView() {
     const teamDevs = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
     let devOptionsHtml = `<option value="all">Todo el Equipo de Desarrollo (${appState.supportTickets.length})</option>`;
     teamDevs.forEach(dev => {
-      const devTickets = appState.supportTickets.filter(t => resolveCanonicalDevId(t.devId) === dev.id || t.devId === dev.id);
+      const devTickets = appState.supportTickets.filter(t => resolveCanonicalDevId(t.devId || t.devName) === dev.id || t.devId === dev.id);
       const devPend = devTickets.filter(t => t.status === 'pendiente').length;
       devOptionsHtml += `<option value="${dev.id}">${dev.name} (${devTickets.length} solicitudes${devPend > 0 ? ` · ${devPend} pendientes` : ''})</option>`;
     });
@@ -12829,7 +12832,7 @@ function renderSupportView() {
 
   // Filtro por desarrollador (solo activo si es Admin)
   if (isAdmin && currentSupportDevFilter !== 'all') {
-    displayTickets = displayTickets.filter(t => resolveCanonicalDevId(t.devId) === currentSupportDevFilter || t.devId === currentSupportDevFilter);
+    displayTickets = displayTickets.filter(t => resolveCanonicalDevId(t.devId || t.devName) === currentSupportDevFilter || t.devId === currentSupportDevFilter);
   }
 
   // Filtro por estado

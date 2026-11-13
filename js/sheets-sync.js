@@ -1047,6 +1047,16 @@
         const ctCode = String(ct.code || ct.id || '').trim();
         if (!ctCode) return;
 
+        // Auto-asignar devId canónico si solo viene devName
+        if (!ct.devId && ct.devName) {
+          const s = String(ct.devName).toLowerCase();
+          if (s.indexOf('jose') !== -1 || s.indexOf('guzman') !== -1) ct.devId = 'dev_jg';
+          else if (s.indexOf('juan') !== -1) ct.devId = 'dev_jd';
+          else if (s.indexOf('mocho') !== -1 || s.indexOf('eyder') !== -1 || s.indexOf('jhon') !== -1) ct.devId = 'dev_je';
+          else if (s.indexOf('esteban') !== -1) ct.devId = 'dev_ee';
+          else ct.devId = 'dev_jg';
+        }
+
         const existingIdx = state.supportTickets.findIndex(t =>
           String(t.code || t.id || '').trim().toUpperCase() === ctCode.toUpperCase()
         );
