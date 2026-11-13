@@ -1853,6 +1853,18 @@ function sendSupportNotificationSMS(ss, payload, ticketCode, tipoTxt) {
   };
 }
 
+/**
+ * PASO 1: EJECUTAR ESTA FUNCIÓN PARA QUE GOOGLE MUESTRE LA VENTANA DE AUTORIZACIÓN
+ * (No tiene try/catch a propósito para obligar a Google a desplegar la ventana de permisos)
+ */
+function autorizarPermisoCorreo() {
+  MailApp.sendEmail(
+    "joseoneiber711@gmail.com",
+    "✅ Autorización Concedida · STF GROUP",
+    "¡Excelente! Los permisos de envío automático de correo para la Oficina de Aplicativos y Planta han sido autorizados con éxito."
+  );
+}
+
 function testEmailNotification() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var res = sendTaskAssignmentEmail(ss, {
