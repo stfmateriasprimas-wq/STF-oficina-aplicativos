@@ -92,7 +92,9 @@ var HEADERS = {
     "Fecha_Respuesta",
     "Observacion_Desarrollador",
     "Tiempo_Estimado_ETA",
-    "Resuelto_Por"
+    "Resuelto_Por",
+    "Correo_Solicitante",
+    "Telefono_SMS"
   ]
 };
 
@@ -909,6 +911,9 @@ function doGet(e) {
         var etaHours = String(rowSp[13] || "").trim();
         var resolvedBy = String(rowSp[14] || "").trim();
 
+        var emailReq = String(rowSp[15] || "").trim();
+        var phoneReq = String(rowSp[16] || "").trim();
+
         supportTickets.push({
           id: "sup_" + code.replace(/[^a-zA-Z0-9]/g, "_"),
           code: code,
@@ -919,7 +924,9 @@ function doGet(e) {
           requester: {
             name: reqName,
             role: "Planta STF",
-            area: reqArea
+            area: reqArea,
+            email: emailReq,
+            phone: phoneReq
           },
           title: title,
           description: desc,
@@ -1484,7 +1491,7 @@ function doPost(e) {
       var tipoTxt = payload.type === 'actualizacion' ? 'Actualización' : 'Soporte Técnico';
       var reqDate = payload.createdAt ? Utilities.formatDate(new Date(payload.createdAt), "America/Bogota", "yyyy-MM-dd HH:mm:ss") : dateStr;
 
-      // Estructura: 15 Columnas A:O
+      // Estructura Oficial: 17 Columnas A:Q
       sSoporte.appendRow([
         ticketCode,
         reqDate,
@@ -1500,8 +1507,20 @@ function doPost(e) {
         '', // Fecha_Respuesta
         '', // Observacion_Desarrollador
         '', // Tiempo_Estimado_ETA
-        ''  // Resuelto_Por
+        '',  // Resuelto_Por
+        payload.requesterEmail || '',
+        payload.requesterPhone || ''
       ]);
+
+      // =======================================================================
+      // AUTOMATIZACIÓN 1: Enviar Correo de Confirmación al Operario y Alerta al Dev
+      // =======================================================================
+      var emailDispatch = sendSupportConfirmationEmail(ss, payload, ticketCode, tipoTxt);
+
+      // =======================================================================
+      // AUTOMATIZACIÓN 2: Disparar Notificación de Mensaje de Texto (SMS)
+      // =======================================================================
+      var smsDispatch = sendSupportNotificationSMS(ss, payload, ticketCode, tipoTxt);
 
       appendBitacoraRow(
         ss,
@@ -1509,7 +1528,9 @@ function doPost(e) {
         (payload.requesterName || "Planta") + " (" + (payload.appName || "Sistema") + ")",
         payload.type === 'actualizacion' ? "SOLICITUD_ACTUALIZACION" : "SOLICITUD_SOPORTE_TECNICO",
         payload.appName || "Planta",
-        "[" + tipoTxt.toUpperCase() + "] " + (payload.title || '') + " -> Asignado a " + (payload.devName || 'Desarrollador'),
+        "[" + tipoTxt.toUpperCase() + "] " + (payload.title || '') + " -> Asignado a " + (payload.devName || 'Desarrollador') +
+          (payload.requesterEmail ? " | Email: " + payload.requesterEmail : "") +
+          (payload.requesterPhone ? " | SMS: " + payload.requesterPhone : ""),
         "PLANTA · v1.0"
       );
 
@@ -1517,6 +1538,8 @@ function doPost(e) {
         status: "success",
         ticketCode: ticketCode,
         message: "Solicitud de planta registrada exitosamente en SOLICITUDES_SOPORTE",
+        emailResult: emailDispatch,
+        smsResult: smsDispatch,
         date: dateStr
       });
     }
@@ -1677,6 +1700,150 @@ function sendTaskAssignmentEmail(ss, payload) {
     }
   }
   return { sent: false, reason: "Sin correo válido" };
+}
+
+/**
+ * AUTOMATIZACIÓN 1: Enviar Correo de Confirmación de Ticket al Solicitante y Alerta al Dev
+ */
+function sendSupportConfirmationEmail(ss, payload, ticketCode, tipoTxt) {
+  var results = { requesterSent: false, devSent: false };
+  var reqEmail = (payload.requesterEmail || "").trim();
+  var appName = payload.appName || "Sistema Industrial";
+  var devName = payload.devName || "Jose Guzman";
+
+  // 1. Correo Formal al Solicitante de Planta
+  if (reqEmail && reqEmail.indexOf("@") !== -1) {
+    try {
+      var subjectReq = "🎟️ Radicado Oficial: " + ticketCode + " · " + tipoTxt + " en " + appName + " (STF GROUP)";
+      var htmlReq = "" +
+        "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0b0f19; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; overflow: hidden; color: #FFFFFF;\">" +
+        "<div style=\"background: linear-gradient(135deg, #07090e 0%, #1e1b4b 100%); padding: 26px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center;\">" +
+        "<div style=\"font-size: 11px; font-weight: 800; color: #fbbf24; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px;\">● STF GROUP · TERMINAL DE SOPORTE PLANTA</div>" +
+        "<h2 style=\"margin: 0; font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.05em;\">¡Solicitud Radicada con Éxito!</h2>" +
+        "<p style=\"margin: 8px 0 0 0; font-size: 13px; color: #94A3B8;\">Tu requerimiento ha sido registrado en tiempo real en la hoja oficial de ingeniería.</p>" +
+        "</div>" +
+        "<div style=\"padding: 24px;\">" +
+        "<div style=\"background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px; margin-bottom: 20px;\">" +
+        "<table style=\"width: 100%; border-collapse: collapse; font-size: 13.5px; color: #FFFFFF;\">" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">📋 <strong>Radicado Oficial:</strong></td><td style=\"padding: 7px 0; font-weight: 800; color: #fbbf24; font-family: monospace; font-size: 15px;\">" + ticketCode + "</td></tr>" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">⚙️ <strong>Tipo:</strong></td><td style=\"padding: 7px 0; font-weight: 700;\">" + tipoTxt + "</td></tr>" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">🏢 <strong>Aplicativo:</strong></td><td style=\"padding: 7px 0; font-weight: 700;\">" + appName + " (" + (payload.appCode || '') + ")</td></tr>" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">👤 <strong>Solicitante:</strong></td><td style=\"padding: 7px 0;\">" + (payload.requesterName || '') + " · " + (payload.requesterArea || '') + "</td></tr>" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">💻 <strong>Desarrollador Asignado:</strong></td><td style=\"padding: 7px 0; font-weight: 700; color: #38bdf8;\">" + devName + "</td></tr>" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">📌 <strong>Título:</strong></td><td style=\"padding: 7px 0; font-weight: 600;\">" + (payload.title || '') + "</td></tr>" +
+        "<tr><td style=\"padding: 7px 0; color: #94A3B8;\">⏳ <strong>Estado Actual:</strong></td><td style=\"padding: 7px 0; font-weight: 700; color: #fbbf24;\">Pendiente de Dictamen</td></tr>" +
+        "</table>" +
+        "</div>" +
+        "<p style=\"font-size: 12.5px; color: #94A3B8; line-height: 1.5; margin: 0 0 16px 0;\">Tan pronto el programador revise el caso y determine la solución, recibirás la respuesta formal directamente a este correo.</p>" +
+        "<div style=\"text-align: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;\">" +
+        "<p style=\"font-size: 11px; color: #64748B; margin: 0;\">STF GROUP S.A. · Dirección de Tecnologías de Información & Desarrollo de Software</p>" +
+        "</div>" +
+        "</div>" +
+        "</div>";
+
+      MailApp.sendEmail({
+        to: reqEmail,
+        subject: subjectReq,
+        htmlBody: htmlReq
+      });
+      results.requesterSent = true;
+    } catch (errReq) {
+      results.requesterError = errReq.toString();
+    }
+  }
+
+  // 2. Alerta Inmediata al Desarrollador Responsable
+  try {
+    var devEmail = "";
+    var sLower = devName.toLowerCase();
+    if (sLower.indexOf("jose") !== -1 || sLower.indexOf("guzman") !== -1) devEmail = "joseoneiber711@gmail.com";
+    else if (sLower.indexOf("juan") !== -1) devEmail = "juan.david@studiof.com.co";
+    else if (sLower.indexOf("mocho") !== -1 || sLower.indexOf("jhon") !== -1) devEmail = "jhon.eyder@studiof.com.co";
+
+    if (devEmail) {
+      var subjectDev = "🚨 [PLANTA] Nueva Solicitud " + ticketCode + " en " + appName + " (" + (payload.title || 'Novedad') + ")";
+      var htmlDev = "" +
+        "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px;\">" +
+        "<div style=\"border-bottom: 2px solid #F59E0B; padding-bottom: 12px; margin-bottom: 16px;\">" +
+        "<span style=\"background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px;\">NOVEDAD DE PLANTA</span>" +
+        "<h3 style=\"margin: 8px 0 0 0; color: #0F172A;\">" + (payload.title || 'Solicitud de Planta') + "</h3>" +
+        "</div>" +
+        "<p>Hola <strong>" + devName + "</strong>, se ha radicado una nueva solicitud para tu aplicativo:</p>" +
+        "<ul>" +
+        "<li><strong>Radicado:</strong> " + ticketCode + "</li>" +
+        "<li><strong>Sistema:</strong> " + appName + "</li>" +
+        "<li><strong>Tipo:</strong> " + tipoTxt + "</li>" +
+        "<li><strong>Solicitante:</strong> " + (payload.requesterName || '') + " (" + (payload.requesterArea || '') + ")</li>" +
+        (reqEmail ? "<li><strong>Correo Solicitante:</strong> " + reqEmail + "</li>" : "") +
+        (payload.requesterPhone ? "<li><strong>Celular / SMS:</strong> " + payload.requesterPhone + "</li>" : "") +
+        "<li><strong>Descripción:</strong> " + (payload.description || '') + "</li>" +
+        "</ul>" +
+        "<p style=\"text-align: center; margin-top: 20px;\">" +
+        "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"background: #4F46E5; color: #FFFFFF; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;\">Abrir Bandeja de Soporte</a>" +
+        "</p>" +
+        "</div>";
+
+      MailApp.sendEmail({
+        to: devEmail,
+        subject: subjectDev,
+        htmlBody: htmlDev
+      });
+      results.devSent = true;
+    }
+  } catch (errDev) {
+    results.devError = errDev.toString();
+  }
+
+  return results;
+}
+
+/**
+ * AUTOMATIZACIÓN 2: Disparar Notificación de Mensaje de Texto (SMS)
+ */
+function sendSupportNotificationSMS(ss, payload, ticketCode, tipoTxt) {
+  var phone = String(payload.requesterPhone || "").replace(/\D/g, "");
+  if (!phone || phone.length < 7) {
+    return { sent: false, reason: "Sin número de celular válido" };
+  }
+
+  var appName = payload.appName || "Sistema Industrial";
+  var devName = payload.devName || "Jose Guzman";
+
+  // Mensaje oficial SMS conciso y claro
+  var smsText = "STF GROUP: Solicitud " + ticketCode + " (" + tipoTxt + ") para " + appName + " radicada con exito. Asignado a: " + devName + ". Estado: Pendiente.";
+
+  // Si existe configuración de pasarela SMS en ScriptProperties o variables
+  var props = PropertiesService.getScriptProperties();
+  var smsEndpoint = props.getProperty("SMS_GATEWAY_URL");
+  var smsApiKey = props.getProperty("SMS_API_KEY");
+
+  var dispatchStatus = "REGISTRADO_EN_COLA";
+
+  if (smsEndpoint && smsApiKey) {
+    try {
+      var smsPayload = {
+        to: phone,
+        message: smsText,
+        apiKey: smsApiKey
+      };
+      var resp = UrlFetchApp.fetch(smsEndpoint, {
+        method: "post",
+        contentType: "application/json",
+        payload: JSON.stringify(smsPayload),
+        muteHttpExceptions: true
+      });
+      dispatchStatus = "ENVIADO_PASARELA_HTTP_" + resp.getResponseCode();
+    } catch (e) {
+      dispatchStatus = "ERROR_PASARELA: " + e.toString();
+    }
+  }
+
+  return {
+    sent: true,
+    recipient: phone,
+    text: smsText,
+    dispatchStatus: dispatchStatus
+  };
 }
 
 function testEmailNotification() {

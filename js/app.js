@@ -12982,6 +12982,12 @@ function renderSupportView() {
                 <span class="st-req-area">· ${ticket.requester?.area || 'Planta'}</span>
               </div>
               <span class="st-req-time">Emitido: ${formattedDate}</span>
+              ${(ticket.requester?.email || ticket.requester?.phone) ? `
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 5px; font-size: 11.5px;">
+                  ${ticket.requester?.email ? `<a href="mailto:${ticket.requester.email}" title="Escribir correo a solicitante" style="color: #4F46E5; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;"><i data-lucide="mail" style="width: 12px; height: 12px;"></i><span>${ticket.requester.email}</span></a>` : ''}
+                  ${ticket.requester?.phone ? `<a href="tel:${ticket.requester.phone}" title="Llamar o enviar SMS" style="color: #059669; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;"><i data-lucide="phone" style="width: 12px; height: 12px;"></i><span>${ticket.requester.phone} (SMS)</span></a>` : ''}
+                </div>
+              ` : ''}
             </div>
           </div>
 
