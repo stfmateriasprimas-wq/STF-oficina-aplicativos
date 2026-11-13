@@ -215,21 +215,30 @@ function setupProfessionalDatabase() {
 }
 
 /**
- * Garantiza que la Fila 1 tenga exactamente los encabezados oficiales sin "Columna 1 / Columna 2"
+ * Garantiza que la Fila 1 tenga exactamente los encabezados oficiales
+ * (Blindado contra errores de Tablas Nativas de Google Sheets: nunca limpia encabezados en Fila 1)
  */
 function ensureExactHeaders(sheet, expectedHeaders) {
-  var numCols = expectedHeaders.length;
-  sheet.getRange(1, 1, 1, numCols).setValues([expectedHeaders]);
+  if (!sheet || !expectedHeaders || !expectedHeaders.length) return;
+  try {
+    var numCols = expectedHeaders.length;
+    var maxCol = Math.max(sheet.getLastColumn(), numCols);
+    if (maxCol < 1) maxCol = numCols;
 
-  // Si la hoja tenía columnas extra con "Columna 1" o vacías a la derecha, limpiar su encabezado
-  var maxCol = sheet.getLastColumn();
-  if (maxCol > numCols) {
-    for (var c = numCols + 1; c <= maxCol; c++) {
-      var val = String(sheet.getRange(1, c).getValue() || "").trim();
-      if (val.indexOf("Columna") === 0 || val === "") {
-        sheet.getRange(1, c).clearContent();
+    var currentVals = sheet.getRange(1, 1, 1, maxCol).getValues()[0];
+    for (var j = 0; j < numCols; j++) {
+      var targetVal = String(expectedHeaders[j]).trim();
+      var currentVal = String(currentVals[j] || "").trim();
+      if (currentVal !== targetVal) {
+        try {
+          sheet.getRange(1, j + 1).setValue(targetVal);
+        } catch (eCell) {
+          // Ignorar restricciones si la tabla nativa protege la celda
+        }
       }
     }
+  } catch (err) {
+    Logger.log("ensureExactHeaders safe catch: " + err.toString());
   }
 }
 
@@ -1498,8 +1507,8 @@ function doPost(e) {
       var tipoTxt = payload.type === 'actualizacion' ? 'Actualización' : 'Soporte Técnico';
       var reqDate = payload.createdAt ? Utilities.formatDate(new Date(payload.createdAt), "America/Bogota", "yyyy-MM-dd HH:mm:ss") : dateStr;
 
-      // Estructura Oficial: 17 Columnas A:Q
-      sSoporte.appendRow([
+      // Estructura Oficial: 17 Columnas A:Q (Blindada para Tablas Nativas)
+      var rowData = [
         ticketCode,
         reqDate,
         tipoTxt,
@@ -1517,7 +1526,20 @@ function doPost(e) {
         '',  // Resuelto_Por
         payload.requesterEmail || '',
         payload.requesterPhone || ''
-      ]);
+      ];
+
+      try {
+        sSoporte.appendRow(rowData);
+      } catch (eApp) {
+        try {
+          sSoporte.appendRow(rowData.slice(0, 15));
+          var newR = sSoporte.getLastRow();
+          if (payload.requesterEmail) sSoporte.getRange(newR, 16).setValue(payload.requesterEmail);
+          if (payload.requesterPhone) sSoporte.getRange(newR, 17).setValue(payload.requesterPhone);
+        } catch (eFallback) {
+          Logger.log("Row append fallback: " + eFallback.toString());
+        }
+      }
 
       // =======================================================================
       // AUTOMATIZACIÓN 1: Enviar Correo de Confirmación al Operario y Alerta al Dev
