@@ -949,26 +949,16 @@
           </div>
         </div>
 
-        <!-- Form Rows: Automatizaciones (Correo Electrónico + Mensaje de Texto SMS) -->
-        <div class="form-row">
+        <!-- Form Row: Correo Electrónico (Notificación Automática Oficial) -->
+        <div class="form-row" style="grid-template-columns: 1fr;">
           <div class="form-col">
             <label class="form-label" for="reqEmail">
               <i data-lucide="mail" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Correo Electrónico (Notificación Automática) *</span>
+              <span>Correo Electrónico (Notificación Automática de Seguimiento) *</span>
             </label>
             <div class="form-input-wrapper">
               <i data-lucide="at-sign" class="form-input-icon"></i>
-              <input type="email" id="reqEmail" class="form-input" placeholder="Ej: marta.gomez@stfgroup.com" required autocomplete="email">
-            </div>
-          </div>
-          <div class="form-col">
-            <label class="form-label" for="reqPhone">
-              <i data-lucide="phone" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Celular (Mensaje de Texto SMS) *</span>
-            </label>
-            <div class="form-input-wrapper">
-              <i data-lucide="message-square" class="form-input-icon"></i>
-              <input type="tel" id="reqPhone" class="form-input" placeholder="Ej: 310 123 4567" required autocomplete="tel">
+              <input type="email" id="reqEmail" class="form-input" placeholder="Ej: marta.gomez@stfgroup.com o personal" required autocomplete="email">
             </div>
           </div>
         </div>
@@ -1055,16 +1045,14 @@
             <span class="tb-val" id="recDate">Ahora</span>
           </div>
           <div class="tb-row">
-            <span class="tb-key">Automatizaciones:</span>
-            <span class="tb-val" id="recAutomations" style="color: #38bdf8; font-size: 12px;">✉️ Correo & 📱 SMS Enviados</span>
+            <span class="tb-key">Notificación:</span>
+            <span class="tb-val" id="recAutomations" style="color: #38bdf8; font-size: 12px;">✉️ Correo Oficial Enviado</span>
           </div>
           <div class="tb-row">
             <span class="tb-key">Estado de Atención:</span>
             <span class="tb-val" style="color: #fbbf24;">⏳ Pendiente de Dictamen</span>
           </div>
         </div>
-
-        <div id="recSmsActionWrap" style="margin-bottom: 20px;"></div>
 
         <button type="button" class="btn-new-ticket-outline" onclick="resetSupportForm()">
           <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
@@ -1200,7 +1188,6 @@
       const reqName = document.getElementById('reqName').value.trim();
       const reqArea = document.getElementById('reqArea').value.trim();
       const reqEmail = document.getElementById('reqEmail').value.trim();
-      const reqPhone = document.getElementById('reqPhone').value.trim();
       const reqTitle = document.getElementById('reqTitle').value.trim();
       const reqDesc = document.getElementById('reqDesc').value.trim();
       const reqPriority = document.getElementById('reqPriority').value;
@@ -1220,8 +1207,7 @@
           name: reqName,
           role: 'Planta STF',
           area: reqArea,
-          email: reqEmail,
-          phone: reqPhone
+          email: reqEmail
         },
         type: type,
         priority: reqPriority,
@@ -1272,7 +1258,6 @@
           requesterName: ticketPayload.requester.name,
           requesterArea: ticketPayload.requester.area,
           requesterEmail: reqEmail,
-          requesterPhone: reqPhone,
           title: ticketPayload.title,
           description: ticketPayload.description,
           devName: ticketPayload.devName,
@@ -1302,20 +1287,7 @@
       document.getElementById('recDate').textContent = now.toLocaleString('es-CO', {
         day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
       });
-      document.getElementById('recAutomations').innerHTML = `✉️ Correo enviado a <strong style="color: #ffffff;">${reqEmail}</strong><br>📱 SMS transmitido a <strong style="color: #fbbf24;">${reqPhone}</strong>`;
-
-      // Botón opcional para abrir SMS directo en el celular si el dispositivo lo soporta
-      const smsClean = reqPhone.replace(/\D/g, '');
-      const smsBody = encodeURIComponent(`STF GROUP: Solicitud ${ticketCode} (${type === 'actualizacion' ? 'Actualización' : 'Soporte Técnico'}) en ${appName} radicada exitosamente. Asignada a ${devName}.`);
-      const smsActionWrap = document.getElementById('recSmsActionWrap');
-      if (smsActionWrap) {
-        smsActionWrap.innerHTML = `
-          <a href="sms:${smsClean}?body=${smsBody}" class="btn-new-ticket-outline" style="border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; margin-right: 8px;">
-            <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>
-            <span>Ver SMS en mi Celular</span>
-          </a>
-        `;
-      }
+      document.getElementById('recAutomations').innerHTML = `✉️ Notificación oficial enviada a <strong style="color: #ffffff;">${reqEmail}</strong>`;
 
       if (window.lucide) lucide.createIcons();
     }
@@ -1327,10 +1299,7 @@
       document.getElementById('reqTitle').value = '';
       document.getElementById('reqDesc').value = '';
       document.getElementById('reqEmail').value = '';
-      document.getElementById('reqPhone').value = '';
       document.getElementById('btnSubmitSupport').disabled = false;
-      const smsActionWrap = document.getElementById('recSmsActionWrap');
-      if (smsActionWrap) smsActionWrap.innerHTML = '';
       
       const devName = document.getElementById('selectedDevName').value;
       document.getElementById('btnSubmitText').textContent = `Transmitir Solicitud a ${devName}`;

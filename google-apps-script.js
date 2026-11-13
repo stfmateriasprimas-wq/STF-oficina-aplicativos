@@ -93,8 +93,7 @@ var HEADERS = {
     "Observacion_Desarrollador",
     "Tiempo_Estimado_ETA",
     "Resuelto_Por",
-    "Correo_Solicitante",
-    "Telefono_SMS"
+    "Correo_Solicitante"
   ]
 };
 
@@ -106,6 +105,7 @@ function onOpen() {
     .createMenu('⚙️ STF SISTEMA')
     .addItem('🚀 Estabilizar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
     .addItem('🎧 Crear / Configurar Hoja SOLICITUDES_SOPORTE', 'setupSoporteSheetDirect')
+    .addItem('🗑️ Eliminar Columna Telefono_SMS de Sheets', 'eliminarColumnaTelefonoSMS')
     .addItem('🧹 Limpiar Tickets de Prueba (Dejar en 0)', 'limpiarTicketsPruebaSoporte')
     .addItem('🗑️ Eliminar Hoja PORTAFOLIO_SISTEMAS', 'removePortafolioSistemasSheet')
     .addItem('📋 Reparar & Alinear Hoja CONTROL_TAREAS', 'setupTareasSheetDirect')
@@ -113,6 +113,50 @@ function onOpen() {
     .addItem('📝 Configurar Hoja HISTORIAL_OBSERVACIONES', 'setupObservacionesSheetDirect')
     .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
     .addToUi();
+}
+
+/**
+ * Elimina la columna Q (Telefono_SMS) en la hoja SOLICITUDES_SOPORTE
+ */
+function eliminarColumnaTelefonoSMS() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = getMasterSheet(ss, "SOPORTE");
+  if (!sheet) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('❌ No se encontró la hoja SOLICITUDES_SOPORTE.', 'STF GROUP TI', 5);
+    return;
+  }
+  
+  var maxCols = Math.max(sheet.getLastColumn(), 17);
+  var headers = sheet.getRange(1, 1, 1, maxCols).getValues()[0];
+  var colIdx = -1;
+  for (var c = 0; c < headers.length; c++) {
+    var h = String(headers[c] || '').toLowerCase().trim();
+    if (h.indexOf('telefono') !== -1 || h.indexOf('sms') !== -1 || h.indexOf('celular') !== -1) {
+      colIdx = c + 1;
+      break;
+    }
+  }
+
+  if (colIdx !== -1) {
+    try {
+      sheet.deleteColumn(colIdx);
+      SpreadsheetApp.getActiveSpreadsheet().toast('✅ Columna Telefono_SMS eliminada exitosamente.', 'STF GROUP TI', 6);
+    } catch (e) {
+      try {
+        sheet.getRange(1, colIdx, sheet.getMaxRows(), 1).clearContent();
+        SpreadsheetApp.getActiveSpreadsheet().toast('✅ Contenido de columna Telefono_SMS borrado exitosamente.', 'STF GROUP TI', 6);
+      } catch (e2) {}
+    }
+  } else if (sheet.getLastColumn() >= 17) {
+    try {
+      sheet.deleteColumn(17);
+      SpreadsheetApp.getActiveSpreadsheet().toast('✅ Columna 17 (Q) eliminada exitosamente.', 'STF GROUP TI', 6);
+    } catch (e3) {
+      sheet.getRange(1, 17, sheet.getMaxRows(), 1).clearContent();
+    }
+  } else {
+    SpreadsheetApp.getActiveSpreadsheet().toast('ℹ️ La columna Telefono_SMS ya no existe en la hoja.', 'STF GROUP TI', 5);
+  }
 }
 
 /**
@@ -947,7 +991,6 @@ function doGet(e) {
         var resolvedBy = String(rowSp[14] || "").trim();
 
         var emailReq = String(rowSp[15] || "").trim();
-        var phoneReq = String(rowSp[16] || "").trim();
 
         var dId = "dev_jg";
         var dLower = devName.toLowerCase();
@@ -1554,7 +1597,7 @@ function doPost(e) {
         else resolvedDev = 'Jose Guzman';
       }
 
-      // Estructura Oficial: 17 Columnas A:Q (Blindada para Tablas Nativas)
+      // Estructura Oficial: 16 Columnas A:P (Blindada para Tablas Nativas)
       var rowData = [
         ticketCode,
         reqDate,
@@ -1571,8 +1614,7 @@ function doPost(e) {
         '', // Observacion_Desarrollador
         '', // Tiempo_Estimado_ETA
         '',  // Resuelto_Por
-        payload.requesterEmail || '',
-        payload.requesterPhone || ''
+        payload.requesterEmail || ''
       ];
 
       try {
@@ -1582,7 +1624,6 @@ function doPost(e) {
           sSoporte.appendRow(rowData.slice(0, 15));
           var newR = sSoporte.getLastRow();
           if (payload.requesterEmail) sSoporte.getRange(newR, 16).setValue(payload.requesterEmail);
-          if (payload.requesterPhone) sSoporte.getRange(newR, 17).setValue(payload.requesterPhone);
         } catch (eFallback) {
           Logger.log("Row append fallback: " + eFallback.toString());
         }
@@ -1593,11 +1634,6 @@ function doPost(e) {
       // =======================================================================
       var emailDispatch = sendSupportConfirmationEmail(ss, payload, ticketCode, tipoTxt);
 
-      // =======================================================================
-      // AUTOMATIZACIÓN 2: Disparar Notificación de Mensaje de Texto (SMS)
-      // =======================================================================
-      var smsDispatch = sendSupportNotificationSMS(ss, payload, ticketCode, tipoTxt);
-
       appendBitacoraRow(
         ss,
         dateStr,
@@ -1605,8 +1641,7 @@ function doPost(e) {
         payload.type === 'actualizacion' ? "SOLICITUD_ACTUALIZACION" : "SOLICITUD_SOPORTE_TECNICO",
         payload.appName || "Planta",
         "[" + tipoTxt.toUpperCase() + "] " + (payload.title || '') + " -> Asignado a " + (payload.devName || 'Desarrollador') +
-          (payload.requesterEmail ? " | Email: " + payload.requesterEmail : "") +
-          (payload.requesterPhone ? " | SMS: " + payload.requesterPhone : ""),
+          (payload.requesterEmail ? " | Email: " + payload.requesterEmail : ""),
         "PLANTA · v1.0"
       );
 
@@ -1615,8 +1650,16 @@ function doPost(e) {
         ticketCode: ticketCode,
         message: "Solicitud de planta registrada exitosamente en SOLICITUDES_SOPORTE",
         emailResult: emailDispatch,
-        smsResult: smsDispatch,
         date: dateStr
+      });
+    }
+
+    // ACCIÓN 10: Eliminar Columna Telefono_SMS
+    if (action === "delete_sms_column") {
+      eliminarColumnaTelefonoSMS();
+      return createJsonResponse({
+        status: "success",
+        message: "Columna Telefono_SMS procesada exitosamente"
       });
     }
 
