@@ -770,6 +770,452 @@
       letter-spacing: 0.04em;
     }
 
+    .email-highlight {
+      color: #38bdf8;
+    }
+
+    /* =========================================================================
+       GLOBAL SMOOTH TRANSITION FOR THEME SWITCHING
+       ========================================================================= */
+    body,
+    .luxury-glass-plaque,
+    .system-context-strip,
+    .type-option-card,
+    .form-input,
+    .form-select,
+    .form-textarea,
+    .cta-submit-pill,
+    .badge-secure-terminal,
+    .ticket-badge-box,
+    .bg-backdrop-overlay,
+    .bg-backdrop-img,
+    .corporate-logo-img,
+    .theme-toggle-pill {
+      transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  filter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* =========================================================================
+       FLOATING LUXURY THEME SWITCHER
+       ========================================================================= */
+    .theme-toggle-wrap {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 30;
+    }
+
+    .theme-toggle-pill {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      padding: 5px 13px 5px 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #ffffff;
+      outline: none;
+      user-select: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    }
+
+    .theme-toggle-pill:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .theme-toggle-indicator {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle-text {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .theme-toggle-indicator .icon-for-light {
+      display: none !important;
+    }
+    .theme-toggle-indicator .icon-for-dark {
+      display: block !important;
+    }
+
+    /* =========================================================================
+       INNOVATIVE LUXURY LIGHT THEME (Modo Claro de Alta Gama)
+       ========================================================================= */
+    body.theme-light {
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .theme-light .bg-backdrop-img {
+      filter: brightness(1.08) contrast(1.02) saturate(0.9);
+      opacity: 0.85;
+    }
+
+    .theme-light .bg-backdrop-overlay {
+      background: 
+        radial-gradient(circle at 50% 12%, rgba(245, 158, 11, 0.14) 0%, transparent 60%),
+        radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.08) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(248, 250, 252, 0.88) 0%, rgba(241, 245, 249, 0.96) 100%);
+    }
+
+    /* Invert white brand logo to crisp obsidian luxury black */
+    .theme-light .corporate-logo-img {
+      filter: brightness(0) drop-shadow(0 8px 20px rgba(15, 23, 42, 0.10));
+    }
+
+    .theme-light .ctl-main {
+      color: #0f172a;
+    }
+
+    .theme-light .ctl-main span {
+      color: #64748b;
+    }
+
+    .theme-light .ctl-brands {
+      color: #475569;
+    }
+
+    /* Pure Crystal White Luxury Plaque */
+    .theme-light .luxury-glass-plaque {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: var(--radius-xl);
+      box-shadow: 
+        0 25px 70px -10px rgba(15, 23, 42, 0.12),
+        0 10px 25px -5px rgba(15, 23, 42, 0.05),
+        0 0 35px rgba(245, 158, 11, 0.06),
+        inset 0 1px 1px #ffffff;
+    }
+
+    /* Brackets in light mode */
+    .theme-light .corner-bracket {
+      border: 1.5px solid rgba(15, 23, 42, 0.10);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.10), transparent);
+    }
+
+    .theme-light .corner-bracket.bottom-right {
+      background: linear-gradient(315deg, rgba(245, 158, 11, 0.08), transparent);
+    }
+
+    /* Floating toggle pill in light mode */
+    .theme-light .theme-toggle-pill {
+      background: rgba(241, 245, 249, 0.92);
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 1px #ffffff;
+    }
+
+    .theme-light .theme-toggle-pill:hover {
+      background: #ffffff;
+      border-color: #94a3b8;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+    }
+
+    .theme-light .theme-toggle-indicator {
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(217, 119, 6, 0.35);
+      color: #d97706;
+    }
+
+    .theme-light .theme-toggle-indicator .icon-for-light {
+      display: block !important;
+    }
+    .theme-light .theme-toggle-indicator .icon-for-dark {
+      display: none !important;
+    }
+
+    /* Badge Terminal */
+    .theme-light .badge-secure-terminal {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(217, 119, 6, 0.35);
+      color: #b45309;
+      box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+    }
+
+    .theme-light .secure-dot {
+      background: #d97706;
+      box-shadow: 0 0 8px #d97706;
+    }
+
+    /* Typography in light mode */
+    .theme-light .plaque-title {
+      color: #0f172a;
+      text-shadow: none;
+    }
+
+    .theme-light .plaque-subtitle {
+      color: #475569;
+    }
+
+    /* Context Strip in Light Mode */
+    .theme-light .system-context-strip {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), inset 0 1px 0 #ffffff;
+    }
+
+    .theme-light .sys-icon-avatar {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.28);
+      color: #d97706;
+    }
+
+    .theme-light .sys-caption {
+      color: #64748b;
+    }
+
+    .theme-light .sys-val {
+      color: #0f172a;
+    }
+
+    .theme-light .sys-badge-tag {
+      color: #0284c7;
+      background: #e0f2fe;
+      border-color: #bae6fd;
+    }
+
+    .theme-light .sys-dev-name span {
+      color: #64748b !important;
+    }
+
+    .theme-light .sys-dev-name strong {
+      color: #0284c7 !important;
+    }
+
+    /* Type Selectors in Light Mode */
+    .theme-light .type-section-label {
+      color: #334155;
+    }
+
+    .theme-light .type-option-card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    }
+
+    .theme-light .type-option-card:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+    }
+
+    .theme-light .type-option-card .type-opt-title {
+      color: #0f172a;
+    }
+
+    .theme-light .type-option-card .type-opt-desc {
+      color: #64748b;
+    }
+
+    .theme-light .radio-circle {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    /* Active Actualización in Light Mode (Royal Violet / Lilac) */
+    .theme-light .type-option-card.active-actualizacion {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+      box-shadow: 0 0 0 1px #7c3aed, 0 8px 24px -4px rgba(124, 58, 237, 0.25);
+    }
+
+    .theme-light .type-option-card.active-actualizacion .type-opt-title {
+      color: #6d28d9;
+    }
+
+    .theme-light .type-option-card.active-actualizacion .type-opt-desc {
+      color: #5b21b6;
+    }
+
+    .theme-light .type-option-card.active-actualizacion .icon-act {
+      background: #ede9fe;
+      color: #7c3aed;
+      border-color: #ddd6fe;
+    }
+
+    .theme-light .type-option-card.active-actualizacion .radio-circle {
+      border-color: #7c3aed;
+      background: #7c3aed;
+    }
+
+    /* Active Soporte Técnico in Light Mode (Warm Amber / Gold STF) */
+    .theme-light .type-option-card.active-soporte {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      box-shadow: 0 0 0 1px #f59e0b, 0 8px 24px -4px rgba(245, 158, 11, 0.28);
+    }
+
+    .theme-light .type-option-card.active-soporte .type-opt-title {
+      color: #b45309;
+    }
+
+    .theme-light .type-option-card.active-soporte .type-opt-desc {
+      color: #92400e;
+    }
+
+    .theme-light .type-option-card.active-soporte .icon-sop {
+      background: #fef3c7;
+      color: #d97706;
+      border-color: #fde68a;
+    }
+
+    .theme-light .type-option-card.active-soporte .radio-circle {
+      border-color: #f59e0b;
+      background: #f59e0b;
+    }
+
+    /* Form Fields in Light Mode */
+    .theme-light .form-label {
+      color: #1e293b;
+    }
+
+    .theme-light .form-input-icon {
+      color: #64748b;
+    }
+
+    .theme-light .form-input,
+    .theme-light .form-select,
+    .theme-light .form-textarea {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+
+    .theme-light .form-input::placeholder,
+    .theme-light .form-textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    .theme-light .form-input:focus,
+    .theme-light .form-select:focus,
+    .theme-light .form-textarea:focus {
+      border-color: #f59e0b;
+      background: #ffffff;
+      box-shadow: 0 0 0 3.5px rgba(245, 158, 11, 0.18), 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+
+    .theme-light .form-input:disabled {
+      background: #f1f5f9 !important;
+      color: #475569 !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: none !important;
+    }
+
+    /* Submit Button in Light Mode (Executive Obsidian Pill) */
+    .theme-light .cta-submit-pill {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      box-shadow: 
+        0 14px 28px -4px rgba(15, 23, 42, 0.32),
+        0 0 20px rgba(245, 158, 11, 0.15);
+    }
+
+    .theme-light .cta-submit-pill:hover {
+      background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+      box-shadow: 
+        0 18px 36px -4px rgba(15, 23, 42, 0.42),
+        0 0 28px rgba(245, 158, 11, 0.25);
+    }
+
+    /* Plaque Footer in Light Mode */
+    .theme-light .plaque-footer-row {
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .theme-light .footer-tls-badge {
+      color: #475569;
+    }
+
+    .theme-light .footer-tls-badge i {
+      color: #059669;
+    }
+
+    .theme-light .footer-version-pill {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+    }
+
+    .theme-light .corporate-subfooter {
+      color: #64748b;
+    }
+
+    /* Confirmation Receipt Screen in Light Mode */
+    .theme-light .receipt-title {
+      color: #0f172a;
+    }
+
+    .theme-light .receipt-desc {
+      color: #475569;
+    }
+
+    .theme-light .ticket-badge-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    }
+
+    .theme-light .tb-row {
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .theme-light .tb-key {
+      color: #64748b;
+    }
+
+    .theme-light .tb-val {
+      color: #0f172a;
+    }
+
+    .theme-light .tb-code {
+      color: #b45309;
+    }
+
+    .theme-light .email-highlight {
+      color: #0284c7 !important;
+    }
+
+    .theme-light .btn-new-ticket-outline {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+    }
+
+    .theme-light .btn-new-ticket-outline:hover {
+      background: #1e293b;
+      border-color: #1e293b;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
     @media (max-width: 600px) {
       body { padding: 16px 10px; }
       .luxury-glass-plaque { padding: 24px 20px 20px; border-radius: 20px; }
@@ -780,6 +1226,9 @@
       .system-context-strip { flex-direction: column; align-items: flex-start; gap: 10px; }
       .sys-badge-right { text-align: left; }
       .sys-dev-name { justify-content: flex-start; }
+      .theme-toggle-wrap { top: 12px; right: 12px; }
+      .theme-toggle-text { display: none; }
+      .theme-toggle-pill { padding: 5px; }
     }
   </style>
 </head>
@@ -823,6 +1272,17 @@
       <!-- Specular Glass Corner Highlights -->
       <div class="corner-bracket top-left"></div>
       <div class="corner-bracket bottom-right"></div>
+
+      <!-- Floating Theme Switcher (Modo Claro / Modo Oscuro) -->
+      <div class="theme-toggle-wrap">
+        <button type="button" class="theme-toggle-pill" id="themeToggleBtn" onclick="toggleSupportTheme()" title="Alternar Modo Claro / Modo Oscuro" aria-label="Cambiar tema">
+          <span class="theme-toggle-indicator">
+            <i data-lucide="moon" class="icon-for-dark" style="width: 13px; height: 13px;"></i>
+            <i data-lucide="sun" class="icon-for-light" style="width: 13px; height: 13px;"></i>
+          </span>
+          <span class="theme-toggle-text" id="themeToggleLabel">Modo Oscuro</span>
+        </button>
+      </div>
 
       <!-- Top Secure Terminal Pill Badge -->
       <div class="plaque-top-badge-row">
@@ -1116,8 +1576,45 @@
 
     const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
 
+    // Control de Tema Claro / Oscuro de Alta Gama
+    function initTheme() {
+      const savedTheme = localStorage.getItem('stf_support_theme') || 'dark';
+      applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+      const isLight = theme === 'light';
+      document.body.classList.toggle('theme-light', isLight);
+      document.body.classList.toggle('theme-dark', !isLight);
+      
+      const label = document.getElementById('themeToggleLabel');
+      if (label) {
+        label.textContent = isLight ? 'Modo Claro' : 'Modo Oscuro';
+      }
+      
+      const btn = document.getElementById('themeToggleBtn');
+      if (btn) {
+        btn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      }
+
+      try {
+        localStorage.setItem('stf_support_theme', isLight ? 'light' : 'dark');
+      } catch (e) {}
+
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+
+    function toggleSupportTheme() {
+      const isCurrentlyLight = document.body.classList.contains('theme-light');
+      applyTheme(isCurrentlyLight ? 'dark' : 'light');
+    }
+
     // Inicializar al cargar
     function initPublicPortal() {
+      initTheme();
+
       const params = new URLSearchParams(window.location.search);
       const querySys = (params.get('sistema') || params.get('app') || params.get('sys') || '').toLowerCase().trim();
 
@@ -1287,7 +1784,7 @@
       document.getElementById('recDate').textContent = now.toLocaleString('es-CO', {
         day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
       });
-      document.getElementById('recAutomations').innerHTML = `✉️ Notificación oficial enviada a <strong style="color: #ffffff;">${reqEmail}</strong>`;
+      document.getElementById('recAutomations').innerHTML = `✉️ Notificación oficial enviada a <strong class="email-highlight">${reqEmail}</strong>`;
 
       if (window.lucide) lucide.createIcons();
     }
