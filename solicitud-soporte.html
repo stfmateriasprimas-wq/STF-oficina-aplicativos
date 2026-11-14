@@ -186,32 +186,6 @@
       overflow: hidden;
     }
 
-    /* Glass Specular Corner Brackets (Luxury Aesthetic from Reference) */
-    .corner-bracket {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      pointer-events: none;
-      border: 1.5px solid rgba(255, 255, 255, 0.22);
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
-    }
-
-    .corner-bracket.top-left {
-      top: 14px;
-      left: 14px;
-      border-right: none;
-      border-bottom: none;
-    }
-
-    .corner-bracket.bottom-right {
-      bottom: 14px;
-      right: 14px;
-      border-left: none;
-      border-top: none;
-      background: linear-gradient(315deg, rgba(255, 255, 255, 0.10), transparent);
-    }
-
     /* Top Access Badge */
     .plaque-top-badge-row {
       display: flex;
@@ -790,7 +764,7 @@
     .bg-backdrop-overlay,
     .bg-backdrop-img,
     .corporate-logo-img,
-    .theme-toggle-pill {
+    .theme-toggle-icon-btn {
       transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                   background 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                   border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
@@ -800,153 +774,90 @@
     }
 
     /* =========================================================================
-       FLOATING LUXURY THEME SWITCHER
+       MINIMALIST FLOATING ICON-ONLY THEME SWITCHER (☀️ / 🌙)
        ========================================================================= */
-    .theme-toggle-wrap {
+    .theme-toggle-icon-btn {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      z-index: 30;
-    }
-
-    .theme-toggle-pill {
+      top: 18px;
+      right: 18px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 999px;
-      padding: 5px 13px 5px 6px;
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      color: #fbbf24;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
       cursor: pointer;
-      color: #ffffff;
       outline: none;
       user-select: none;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      z-index: 30;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .theme-toggle-pill:hover {
-      background: rgba(255, 255, 255, 0.16);
+    .theme-toggle-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
       border-color: rgba(255, 255, 255, 0.35);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      transform: scale(1.08) rotate(15deg);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
     }
 
-    .theme-toggle-indicator {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: rgba(245, 158, 11, 0.18);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      color: #fbbf24;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.25s ease;
-      flex-shrink: 0;
+    .theme-toggle-icon-btn:active {
+      transform: scale(0.95);
     }
 
-    .theme-toggle-text {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
-    .theme-toggle-indicator .icon-for-light {
+    .theme-toggle-icon-btn .icon-for-light {
       display: none !important;
     }
-    .theme-toggle-indicator .icon-for-dark {
+    .theme-toggle-icon-btn .icon-for-dark {
       display: block !important;
     }
 
     /* =========================================================================
-       INNOVATIVE LUXURY LIGHT THEME (Modo Claro de Alta Gama)
+       INNOVATIVE LUXURY LIGHT THEME (Plaque Blanca sobre Fondo Oscuro de Alta Gama)
        ========================================================================= */
     body.theme-light {
-      background-color: #f1f5f9;
-      color: #0f172a;
-    }
-
-    .theme-light .bg-backdrop-img {
-      filter: brightness(1.08) contrast(1.02) saturate(0.9);
-      opacity: 0.85;
-    }
-
-    .theme-light .bg-backdrop-overlay {
-      background: 
-        radial-gradient(circle at 50% 12%, rgba(245, 158, 11, 0.14) 0%, transparent 60%),
-        radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.08) 0%, transparent 55%),
-        linear-gradient(180deg, rgba(248, 250, 252, 0.88) 0%, rgba(241, 245, 249, 0.96) 100%);
-    }
-
-    /* Invert white brand logo to crisp obsidian luxury black */
-    .theme-light .corporate-logo-img {
-      filter: brightness(0) drop-shadow(0 8px 20px rgba(15, 23, 42, 0.10));
-    }
-
-    .theme-light .ctl-main {
-      color: #0f172a;
-    }
-
-    .theme-light .ctl-main span {
-      color: #64748b;
-    }
-
-    .theme-light .ctl-brands {
-      color: #475569;
+      background-color: var(--bg-dark);
+      color: var(--text-pure);
     }
 
     /* Pure Crystal White Luxury Plaque */
     .theme-light .luxury-glass-plaque {
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(32px) saturate(190%);
+      -webkit-backdrop-filter: blur(32px) saturate(190%);
       border: 1px solid rgba(226, 232, 240, 0.95);
       border-radius: var(--radius-xl);
       box-shadow: 
-        0 25px 70px -10px rgba(15, 23, 42, 0.12),
-        0 10px 25px -5px rgba(15, 23, 42, 0.05),
-        0 0 35px rgba(245, 158, 11, 0.06),
+        0 30px 80px rgba(0, 0, 0, 0.75),
+        0 10px 30px -5px rgba(15, 23, 42, 0.15),
+        0 0 45px rgba(245, 158, 11, 0.08),
         inset 0 1px 1px #ffffff;
     }
 
-    /* Brackets in light mode */
-    .theme-light .corner-bracket {
-      border: 1.5px solid rgba(15, 23, 42, 0.10);
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.10), transparent);
+    /* Icon-only button in Light Mode */
+    .theme-light .theme-toggle-icon-btn {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      color: #d97706;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.10), inset 0 1px 1px #ffffff;
     }
 
-    .theme-light .corner-bracket.bottom-right {
-      background: linear-gradient(315deg, rgba(245, 158, 11, 0.08), transparent);
-    }
-
-    /* Floating toggle pill in light mode */
-    .theme-light .theme-toggle-pill {
-      background: rgba(241, 245, 249, 0.92);
-      border: 1px solid #cbd5e1;
-      color: #0f172a;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 1px #ffffff;
-    }
-
-    .theme-light .theme-toggle-pill:hover {
+    .theme-light .theme-toggle-icon-btn:hover {
       background: #ffffff;
       border-color: #94a3b8;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+      transform: scale(1.08) rotate(15deg);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
     }
 
-    .theme-light .theme-toggle-indicator {
-      background: rgba(245, 158, 11, 0.14);
-      border-color: rgba(217, 119, 6, 0.35);
-      color: #d97706;
-    }
-
-    .theme-light .theme-toggle-indicator .icon-for-light {
+    .theme-light .theme-toggle-icon-btn .icon-for-light {
       display: block !important;
     }
-    .theme-light .theme-toggle-indicator .icon-for-dark {
+    .theme-light .theme-toggle-icon-btn .icon-for-dark {
       display: none !important;
     }
 
@@ -1226,9 +1137,7 @@
       .system-context-strip { flex-direction: column; align-items: flex-start; gap: 10px; }
       .sys-badge-right { text-align: left; }
       .sys-dev-name { justify-content: flex-start; }
-      .theme-toggle-wrap { top: 12px; right: 12px; }
-      .theme-toggle-text { display: none; }
-      .theme-toggle-pill { padding: 5px; }
+      .theme-toggle-icon-btn { top: 14px; right: 14px; width: 34px; height: 34px; }
     }
   </style>
 </head>
@@ -1269,20 +1178,11 @@
     <!-- The Luxury Translucent Glass Plaque (Exact aesthetic from user reference) -->
     <div class="luxury-glass-plaque">
       
-      <!-- Specular Glass Corner Highlights -->
-      <div class="corner-bracket top-left"></div>
-      <div class="corner-bracket bottom-right"></div>
-
-      <!-- Floating Theme Switcher (Modo Claro / Modo Oscuro) -->
-      <div class="theme-toggle-wrap">
-        <button type="button" class="theme-toggle-pill" id="themeToggleBtn" onclick="toggleSupportTheme()" title="Alternar Modo Claro / Modo Oscuro" aria-label="Cambiar tema">
-          <span class="theme-toggle-indicator">
-            <i data-lucide="moon" class="icon-for-dark" style="width: 13px; height: 13px;"></i>
-            <i data-lucide="sun" class="icon-for-light" style="width: 13px; height: 13px;"></i>
-          </span>
-          <span class="theme-toggle-text" id="themeToggleLabel">Modo Oscuro</span>
-        </button>
-      </div>
+      <!-- Minimalist Icon-Only Theme Switcher (☀️ / 🌙) -->
+      <button type="button" class="theme-toggle-icon-btn" id="themeToggleBtn" onclick="toggleSupportTheme()" title="Cambiar a Modo Claro / Modo Oscuro" aria-label="Cambiar tema visual">
+        <i data-lucide="moon" class="icon-for-dark" style="width: 17px; height: 17px;"></i>
+        <i data-lucide="sun" class="icon-for-light" style="width: 17px; height: 17px;"></i>
+      </button>
 
       <!-- Top Secure Terminal Pill Badge -->
       <div class="plaque-top-badge-row">
@@ -1587,14 +1487,10 @@
       document.body.classList.toggle('theme-light', isLight);
       document.body.classList.toggle('theme-dark', !isLight);
       
-      const label = document.getElementById('themeToggleLabel');
-      if (label) {
-        label.textContent = isLight ? 'Modo Claro' : 'Modo Oscuro';
-      }
-      
       const btn = document.getElementById('themeToggleBtn');
       if (btn) {
         btn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+        btn.setAttribute('title', isLight ? 'Cambiar a Modo Oscuro' : 'Cambiar a Modo Claro');
       }
 
       try {
