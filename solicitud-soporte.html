@@ -495,15 +495,30 @@
       position: relative;
       display: flex;
       align-items: center;
+      width: 100%;
     }
 
     .form-input-icon {
       position: absolute;
       left: 14px;
-      color: rgba(255, 255, 255, 0.4);
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.45);
       pointer-events: none;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      line-height: 0;
+    }
+
+    .form-input-icon svg,
+    .form-input-icon i {
+      width: 18px;
+      height: 18px;
+      display: block;
     }
 
     .form-input, .form-select, .form-textarea {
@@ -511,12 +526,28 @@
       background: var(--input-bg);
       border: 1px solid var(--input-border);
       border-radius: var(--radius-sm);
-      padding: 12px 14px 12px 40px;
+      padding: 12px 14px 12px 42px;
       font-size: 13.5px;
       color: #ffffff;
       outline: none;
       transition: all 0.2s ease;
       box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    .form-input, .form-select {
+      height: 46px;
+      line-height: normal;
+    }
+
+    .form-select {
+      padding: 0 36px 0 42px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
     }
 
     .form-input::placeholder, .form-textarea::placeholder {
@@ -535,11 +566,6 @@
       resize: vertical;
       min-height: 95px;
       line-height: 1.5;
-    }
-
-    .form-select {
-      padding-left: 14px;
-      cursor: pointer;
     }
 
     /* High-Impact CTA Pill Button (Exact Benchmark from Reference) */
@@ -1160,6 +1186,82 @@
       transform: translateY(-1px);
     }
 
+    /* =========================================================================
+       HORIZONTAL DESKTOP PC GRID & RESPONSIVE LAYOUT
+       ========================================================================= */
+    .form-horizontal-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-pane-left,
+    .form-pane-right {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Desktop PC Expanded Horizontal View (min-width: 900px) */
+    @media (min-width: 900px) {
+      .terminal-wrapper {
+        max-width: 1040px;
+      }
+
+      .luxury-glass-plaque {
+        padding: 34px 38px 28px;
+      }
+
+      .corporate-brand-header {
+        margin-bottom: 22px;
+      }
+
+      .corporate-logo-img {
+        max-width: 290px;
+      }
+
+      .plaque-title {
+        font-size: 22px;
+        letter-spacing: 0.2em;
+      }
+
+      .plaque-subtitle {
+        max-width: 600px;
+        font-size: 13.5px;
+      }
+
+      .form-horizontal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .form-pane-left,
+      .form-pane-right {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .form-pane-right .form-textarea-col {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        margin-bottom: 0;
+      }
+
+      .form-pane-right .form-textarea {
+        flex: 1;
+        min-height: 125px;
+        height: 100%;
+      }
+
+      .form-pane-right .cta-submit-pill {
+        margin-top: auto;
+      }
+    }
+
     @media (max-width: 600px) {
       body { padding: 16px 10px; }
       .luxury-glass-plaque { padding: 24px 20px 20px; border-radius: 20px; }
@@ -1276,40 +1378,6 @@
           </select>
         </div>
 
-        <!-- SELECTOR DUAL: ACTUALIZACIÓN vs SOPORTE TÉCNICO -->
-        <div class="type-section-header">
-          <span class="type-section-label">
-            <i data-lucide="check-square" style="width: 14px; height: 14px; color: var(--gold-primary);"></i>
-            <span>Tipo de Requerimiento:</span>
-          </span>
-        </div>
-
-        <div class="type-selector-grid">
-          <!-- Opción 1: Actualización -->
-          <div class="type-option-card" id="cardActualizacion" onclick="selectTicketType('actualizacion')">
-            <div class="type-opt-top">
-              <div class="type-opt-icon icon-act">
-                <i data-lucide="sparkles" style="width: 17px; height: 17px;"></i>
-              </div>
-              <div class="radio-circle"></div>
-            </div>
-            <div class="type-opt-title">🔄 Actualización</div>
-            <div class="type-opt-desc">Mejora funcional, nuevos botones, campos adicionales o ajuste de lógica.</div>
-          </div>
-
-          <!-- Opción 2: Soporte Técnico (Activo por defecto) -->
-          <div class="type-option-card active-soporte" id="cardSoporte" onclick="selectTicketType('soporte')">
-            <div class="type-opt-top">
-              <div class="type-opt-icon icon-sop">
-                <i data-lucide="wrench" style="width: 17px; height: 17px;"></i>
-              </div>
-              <div class="radio-circle"></div>
-            </div>
-            <div class="type-opt-title">🛠️ Soporte Técnico</div>
-            <div class="type-opt-desc">Falla en el aplicativo, error en pantalla, bloqueo, caída de conexión o lentitud.</div>
-          </div>
-        </div>
-
         <!-- Hidden State Inputs -->
         <input type="hidden" id="selectedTicketType" value="soporte">
         <input type="hidden" id="selectedAppId" value="app_colchas">
@@ -1318,114 +1386,159 @@
         <input type="hidden" id="selectedDevId" value="dev_jg">
         <input type="hidden" id="selectedDevName" value="Jose Guzman">
 
-        <!-- Form Rows: Identificación del Solicitante -->
-        <div class="form-row">
-          <div class="form-col">
-            <label class="form-label" for="reqName">
-              <i data-lucide="user" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Tu Nombre Completo *</span>
-              <span id="colchasAutoBadge" class="auto-badge" style="display: none;">
-                <i data-lucide="sparkles" style="width: 10px; height: 10px;"></i>
-                <span>Directorio Colchas</span>
-              </span>
-            </label>
+        <!-- Grid Horizontal de Dos Paneles (Desktop PC Horizontal / Móvil Vertical) -->
+        <div class="form-horizontal-grid">
 
-            <!-- Menú Desplegable Oficial para COLCHAS (Auto-relleno) -->
-            <div class="form-input-wrapper" id="colchasNameSelectWrap" style="display: none;">
-              <i data-lucide="user-check" class="form-input-icon"></i>
-              <select id="reqNameColchas" class="form-select" style="padding-left: 40px;" onchange="onColchasPersonnelSelect(this.value)">
-                <option value="">Cargando directorio de Colchas...</option>
-              </select>
+          <!-- PANEL IZQUIERDO: Requerimiento + Identificación del Solicitante -->
+          <div class="form-pane-left">
+
+            <!-- SELECTOR DUAL: ACTUALIZACIÓN vs SOPORTE TÉCNICO -->
+            <div class="type-section-wrap">
+              <div class="type-section-header">
+                <span class="type-section-label">
+                  <i data-lucide="check-square" style="width: 14px; height: 14px; color: var(--gold-primary);"></i>
+                  <span>Tipo de Requerimiento:</span>
+                </span>
+              </div>
+
+              <div class="type-selector-grid">
+                <!-- Opción 1: Actualización -->
+                <div class="type-option-card" id="cardActualizacion" onclick="selectTicketType('actualizacion')">
+                  <div class="type-opt-top">
+                    <div class="type-opt-icon icon-act">
+                      <i data-lucide="sparkles" style="width: 17px; height: 17px;"></i>
+                    </div>
+                    <div class="radio-circle"></div>
+                  </div>
+                  <div class="type-opt-title">🔄 Actualización</div>
+                  <div class="type-opt-desc">Mejora funcional, nuevos botones o campos.</div>
+                </div>
+
+                <!-- Opción 2: Soporte Técnico (Activo por defecto) -->
+                <div class="type-option-card active-soporte" id="cardSoporte" onclick="selectTicketType('soporte')">
+                  <div class="type-opt-top">
+                    <div class="type-opt-icon icon-sop">
+                      <i data-lucide="wrench" style="width: 17px; height: 17px;"></i>
+                    </div>
+                    <div class="radio-circle"></div>
+                  </div>
+                  <div class="type-opt-title">🛠️ Soporte Técnico</div>
+                  <div class="type-opt-desc">Falla, error en pantalla, bloqueo o lentitud.</div>
+                </div>
+              </div>
             </div>
 
-            <!-- Input Manual para Otros Sistemas -->
-            <div class="form-input-wrapper" id="generalNameInputWrap">
-              <i data-lucide="user-check" class="form-input-icon"></i>
-              <input type="text" id="reqName" class="form-input" placeholder="Ej: Maya / Marta Gómez" required autocomplete="name">
+            <!-- Campo: Tu Nombre Completo (Sin el badge de Directorio Colchas) -->
+            <div class="form-col">
+              <label class="form-label" for="reqName">
+                <i data-lucide="user" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                <span>Tu Nombre Completo *</span>
+              </label>
+
+              <!-- Menú Desplegable Oficial para COLCHAS (Auto-relleno con icono centrado) -->
+              <div class="form-input-wrapper" id="colchasNameSelectWrap" style="display: none;">
+                <i data-lucide="user-check" class="form-input-icon"></i>
+                <select id="reqNameColchas" class="form-select" onchange="onColchasPersonnelSelect(this.value)">
+                  <option value="">Cargando directorio de Colchas...</option>
+                </select>
+              </div>
+
+              <!-- Input Manual para Otros Sistemas -->
+              <div class="form-input-wrapper" id="generalNameInputWrap">
+                <i data-lucide="user-check" class="form-input-icon"></i>
+                <input type="text" id="reqName" class="form-input" placeholder="Ej: Maya / Marta Gómez" required autocomplete="name">
+              </div>
             </div>
-          </div>
 
-          <div class="form-col">
-            <label class="form-label" for="reqArea">
-              <i data-lucide="map-pin" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Área / Módulo de Planta *</span>
-              <span id="colchasAreaBadge" class="auto-badge" style="display: none;">
-                <i data-lucide="check" style="width: 10px; height: 10px;"></i>
-                <span>Auto</span>
-              </span>
-            </label>
-            <div class="form-input-wrapper">
-              <i data-lucide="building" class="form-input-icon"></i>
-              <input type="text" id="reqArea" class="form-input" placeholder="Ej: Calidad Telas / Mesa 3" required>
+            <!-- Campo: Área / Módulo de Planta -->
+            <div class="form-col">
+              <label class="form-label" for="reqArea">
+                <i data-lucide="map-pin" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                <span>Área / Módulo de Planta *</span>
+                <span id="colchasAreaBadge" class="auto-badge" style="display: none;">
+                  <i data-lucide="check" style="width: 10px; height: 10px;"></i>
+                  <span>Auto</span>
+                </span>
+              </label>
+              <div class="form-input-wrapper">
+                <i data-lucide="building" class="form-input-icon"></i>
+                <input type="text" id="reqArea" class="form-input" placeholder="Ej: Calidad Telas / Mesa 3" required>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Form Row: Correo Electrónico (Notificación Automática Oficial) -->
-        <div class="form-row" style="grid-template-columns: 1fr;">
-          <div class="form-col">
-            <label class="form-label" for="reqEmail">
-              <i data-lucide="mail" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Correo Electrónico (Notificación Automática de Seguimiento) *</span>
-              <span id="colchasEmailBadge" class="auto-badge" style="display: none;">
-                <i data-lucide="check" style="width: 10px; height: 10px;"></i>
-                <span>Auto</span>
-              </span>
-            </label>
-            <div class="form-input-wrapper">
-              <i data-lucide="at-sign" class="form-input-icon"></i>
-              <input type="email" id="reqEmail" class="form-input" placeholder="Ej: marta.gomez@stfgroup.com o personal" required autocomplete="email">
+            <!-- Campo: Correo Electrónico (Notificación Automática) -->
+            <div class="form-col">
+              <label class="form-label" for="reqEmail">
+                <i data-lucide="mail" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                <span>Correo Electrónico (Notificación de Seguimiento) *</span>
+                <span id="colchasEmailBadge" class="auto-badge" style="display: none;">
+                  <i data-lucide="check" style="width: 10px; height: 10px;"></i>
+                  <span>Auto</span>
+                </span>
+              </label>
+              <div class="form-input-wrapper">
+                <i data-lucide="at-sign" class="form-input-icon"></i>
+                <input type="email" id="reqEmail" class="form-input" placeholder="Ej: marta.gomez@stfgroup.com o personal" required autocomplete="email">
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="form-row" style="grid-template-columns: 1fr;">
-          <div class="form-col">
-            <label class="form-label" for="reqTitle">
-              <i data-lucide="tag" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Título del Requerimiento *</span>
-            </label>
-            <div class="form-input-wrapper">
-              <i data-lucide="file-text" class="form-input-icon"></i>
-              <input type="text" id="reqTitle" class="form-input" placeholder="Ej: Actualizar lectura QR de rollos" required>
+          </div>
+
+          <!-- PANEL DERECHO: Detalle del Requerimiento + Impacto + Botón de Envío -->
+          <div class="form-pane-right">
+
+            <!-- Campo: Título del Requerimiento -->
+            <div class="form-col">
+              <label class="form-label" for="reqTitle">
+                <i data-lucide="tag" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                <span>Título del Requerimiento *</span>
+              </label>
+              <div class="form-input-wrapper">
+                <i data-lucide="file-text" class="form-input-icon"></i>
+                <input type="text" id="reqTitle" class="form-input" placeholder="Ej: Actualizar lectura QR de rollos" required>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="form-col" style="margin-bottom: 16px;">
-          <label class="form-label" for="reqDesc">
-            <i data-lucide="align-left" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-            <span>Descripción Detallada de la Novedad *</span>
-          </label>
-          <textarea id="reqDesc" class="form-textarea" placeholder="Explica detalladamente qué sucede o qué ajuste necesitas para que el programador pueda atenderlo de inmediato..." required></textarea>
-        </div>
+            <!-- Campo: Descripción Detallada de la Novedad -->
+            <div class="form-col form-textarea-col">
+              <label class="form-label" for="reqDesc">
+                <i data-lucide="align-left" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                <span>Descripción Detallada de la Novedad *</span>
+              </label>
+              <textarea id="reqDesc" class="form-textarea" placeholder="Explica detalladamente qué sucede o qué ajuste necesitas para que el programador pueda atenderlo de inmediato..." required></textarea>
+            </div>
 
-        <div class="form-row" style="margin-bottom: 6px;">
-          <div class="form-col">
-            <label class="form-label" for="reqPriority">
-              <i data-lucide="alert-triangle" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Nivel de Impacto</span>
-            </label>
-            <select id="reqPriority" class="form-select">
-              <option value="media">🟡 Normal (Operación puede continuar)</option>
-              <option value="urgente">🔴 Urgente (Detiene la operación en planta)</option>
-              <option value="baja">🟢 Consulta / Sin urgencia</option>
-            </select>
-          </div>
-          <div class="form-col">
-            <label class="form-label">
-              <i data-lucide="radio" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
-              <span>Canal de Transmisión</span>
-            </label>
-            <input type="text" class="form-input" value="Sincronización en Vivo a Desarrollo" disabled style="opacity: 0.6; cursor: default; padding-left: 14px;">
-          </div>
-        </div>
+            <!-- Fila: Nivel de Impacto & Canal de Transmisión -->
+            <div class="form-row" style="margin-bottom: 0;">
+              <div class="form-col">
+                <label class="form-label" for="reqPriority">
+                  <i data-lucide="alert-triangle" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                  <span>Nivel de Impacto</span>
+                </label>
+                <select id="reqPriority" class="form-select">
+                  <option value="media">🟡 Normal (Operación continúa)</option>
+                  <option value="urgente">🔴 Urgente (Detiene la operación)</option>
+                  <option value="baja">🟢 Consulta / Sin urgencia</option>
+                </select>
+              </div>
+              <div class="form-col">
+                <label class="form-label">
+                  <i data-lucide="radio" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
+                  <span>Canal de Transmisión</span>
+                </label>
+                <input type="text" class="form-input" value="Sincronización en Vivo a Desarrollo" disabled style="opacity: 0.6; cursor: default; padding-left: 14px;">
+              </div>
+            </div>
 
-        <!-- High-Impact Luxury White Pill Action Button (Exact Reference Style) -->
-        <button type="submit" class="cta-submit-pill" id="btnSubmitSupport">
-          <span id="btnSubmitText">Transmitir Solicitud a Jose Guzman</span>
-          <i data-lucide="arrow-right" class="cta-arrow" style="width: 18px; height: 18px;"></i>
-        </button>
+            <!-- High-Impact Luxury White Pill Action Button -->
+            <button type="submit" class="cta-submit-pill" id="btnSubmitSupport">
+              <span id="btnSubmitText">Transmitir Solicitud a Jose Guzman</span>
+              <i data-lucide="arrow-right" class="cta-arrow" style="width: 18px; height: 18px;"></i>
+            </button>
+
+          </div>
+
+        </div>
 
       </form>
 
@@ -1623,13 +1736,11 @@
       const sel = document.getElementById('reqNameColchas');
       const colchasWrap = document.getElementById('colchasNameSelectWrap');
       const generalWrap = document.getElementById('generalNameInputWrap');
-      const autoBadge = document.getElementById('colchasAutoBadge');
       const reqNameColchas = document.getElementById('reqNameColchas');
       const reqNameManual = document.getElementById('reqName');
 
       if (colchasWrap) colchasWrap.style.display = 'block';
       if (generalWrap) generalWrap.style.display = 'none';
-      if (autoBadge) autoBadge.style.display = 'inline-flex';
       if (reqNameColchas) reqNameColchas.required = true;
       if (reqNameManual) reqNameManual.required = false;
 
@@ -1728,7 +1839,6 @@
       const isColchas = (cfg.id === 'app_colchas');
       const colchasWrap = document.getElementById('colchasNameSelectWrap');
       const generalWrap = document.getElementById('generalNameInputWrap');
-      const autoBadge = document.getElementById('colchasAutoBadge');
       const areaBadge = document.getElementById('colchasAreaBadge');
       const emailBadge = document.getElementById('colchasEmailBadge');
       const reqNameColchas = document.getElementById('reqNameColchas');
@@ -1737,7 +1847,6 @@
       if (isColchas) {
         if (colchasWrap) colchasWrap.style.display = 'block';
         if (generalWrap) generalWrap.style.display = 'none';
-        if (autoBadge) autoBadge.style.display = 'inline-flex';
         if (reqNameColchas) reqNameColchas.required = true;
         if (reqNameManual) reqNameManual.required = false;
 
@@ -1746,7 +1855,6 @@
       } else {
         if (colchasWrap) colchasWrap.style.display = 'none';
         if (generalWrap) generalWrap.style.display = 'block';
-        if (autoBadge) autoBadge.style.display = 'none';
         if (areaBadge) areaBadge.style.display = 'none';
         if (emailBadge) emailBadge.style.display = 'none';
         if (reqNameColchas) reqNameColchas.required = false;
