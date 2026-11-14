@@ -748,6 +748,39 @@
       color: #38bdf8;
     }
 
+    /* Auto-fill indicator badge */
+    .auto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 999px;
+      padding: 1.5px 8px;
+    }
+
+    .theme-light .auto-badge {
+      color: #059669;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+
+    @keyframes autoFillPulse {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+      50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.22); border-color: #f59e0b; }
+      100% { box-shadow: none; }
+    }
+
+    .field-auto-highlight {
+      animation: autoFillPulse 0.8s ease-out;
+    }
+
     /* =========================================================================
        GLOBAL SMOOTH TRANSITION FOR THEME SWITCHING
        ========================================================================= */
@@ -1291,16 +1324,35 @@
             <label class="form-label" for="reqName">
               <i data-lucide="user" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
               <span>Tu Nombre Completo *</span>
+              <span id="colchasAutoBadge" class="auto-badge" style="display: none;">
+                <i data-lucide="sparkles" style="width: 10px; height: 10px;"></i>
+                <span>Directorio Colchas</span>
+              </span>
             </label>
-            <div class="form-input-wrapper">
+
+            <!-- Menú Desplegable Oficial para COLCHAS (Auto-relleno) -->
+            <div class="form-input-wrapper" id="colchasNameSelectWrap" style="display: none;">
+              <i data-lucide="user-check" class="form-input-icon"></i>
+              <select id="reqNameColchas" class="form-select" style="padding-left: 40px;" onchange="onColchasPersonnelSelect(this.value)">
+                <option value="">Cargando directorio de Colchas...</option>
+              </select>
+            </div>
+
+            <!-- Input Manual para Otros Sistemas -->
+            <div class="form-input-wrapper" id="generalNameInputWrap">
               <i data-lucide="user-check" class="form-input-icon"></i>
               <input type="text" id="reqName" class="form-input" placeholder="Ej: Maya / Marta Gómez" required autocomplete="name">
             </div>
           </div>
+
           <div class="form-col">
             <label class="form-label" for="reqArea">
               <i data-lucide="map-pin" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
               <span>Área / Módulo de Planta *</span>
+              <span id="colchasAreaBadge" class="auto-badge" style="display: none;">
+                <i data-lucide="check" style="width: 10px; height: 10px;"></i>
+                <span>Auto</span>
+              </span>
             </label>
             <div class="form-input-wrapper">
               <i data-lucide="building" class="form-input-icon"></i>
@@ -1315,6 +1367,10 @@
             <label class="form-label" for="reqEmail">
               <i data-lucide="mail" style="width: 13px; height: 13px; color: var(--gold-primary);"></i>
               <span>Correo Electrónico (Notificación Automática de Seguimiento) *</span>
+              <span id="colchasEmailBadge" class="auto-badge" style="display: none;">
+                <i data-lucide="check" style="width: 10px; height: 10px;"></i>
+                <span>Auto</span>
+              </span>
             </label>
             <div class="form-input-wrapper">
               <i data-lucide="at-sign" class="form-input-icon"></i>
@@ -1507,6 +1563,138 @@
       applyTheme(isCurrentlyLight ? 'dark' : 'light');
     }
 
+    // Estado del Directorio de Operarios y Personal para COLCHAS
+    let colchasMasterData = [];
+    let isColchasMasterLoading = false;
+
+    function fetchColchasMaster() {
+      // 1. Cargar desde memoria local caché si existe
+      try {
+        const cached = localStorage.getItem('stf_colchas_master_data');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            colchasMasterData = parsed;
+            populateColchasSelect(parsed);
+          }
+        }
+      } catch (e) {}
+
+      // 2. Consulta en vivo a Google Apps Script
+      isColchasMasterLoading = true;
+      fetch(`${GOOGLE_WEBAPP_URL}?action=get_colchas_master&_t=${Date.now()}`)
+        .then(res => res.json())
+        .then(result => {
+          isColchasMasterLoading = false;
+          if (result && result.status === 'success' && Array.isArray(result.data) && result.data.length > 0) {
+            colchasMasterData = result.data;
+            try {
+              localStorage.setItem('stf_colchas_master_data', JSON.stringify(result.data));
+            } catch (e) {}
+            populateColchasSelect(result.data);
+          } else if (!colchasMasterData || colchasMasterData.length === 0) {
+            enableManualFallbackForColchas('Ingreso manual temporal');
+          }
+        })
+        .catch(err => {
+          isColchasMasterLoading = false;
+          console.warn('Carga Maestra Colchas:', err);
+          if (!colchasMasterData || colchasMasterData.length === 0) {
+            enableManualFallbackForColchas('Ingreso manual temporal');
+          }
+        });
+    }
+
+    function enableManualFallbackForColchas(reason) {
+      const colchasWrap = document.getElementById('colchasNameSelectWrap');
+      const generalWrap = document.getElementById('generalNameInputWrap');
+      const reqNameColchas = document.getElementById('reqNameColchas');
+      const reqNameManual = document.getElementById('reqName');
+
+      if (colchasWrap) colchasWrap.style.display = 'none';
+      if (generalWrap) generalWrap.style.display = 'block';
+      if (reqNameColchas) reqNameColchas.required = false;
+      if (reqNameManual) {
+        reqNameManual.required = true;
+      }
+    }
+
+    function populateColchasSelect(dataList) {
+      const sel = document.getElementById('reqNameColchas');
+      const colchasWrap = document.getElementById('colchasNameSelectWrap');
+      const generalWrap = document.getElementById('generalNameInputWrap');
+      const autoBadge = document.getElementById('colchasAutoBadge');
+      const reqNameColchas = document.getElementById('reqNameColchas');
+      const reqNameManual = document.getElementById('reqName');
+
+      if (colchasWrap) colchasWrap.style.display = 'block';
+      if (generalWrap) generalWrap.style.display = 'none';
+      if (autoBadge) autoBadge.style.display = 'inline-flex';
+      if (reqNameColchas) reqNameColchas.required = true;
+      if (reqNameManual) reqNameManual.required = false;
+
+      if (!sel) return;
+
+      const currentVal = sel.value;
+      let html = `<option value="">-- Selecciona tu nombre / operario (${dataList.length}) --</option>`;
+
+      // Ordenar alfabéticamente por nombre
+      const sorted = [...dataList].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+
+      sorted.forEach(item => {
+        if (!item.nombre) return;
+        const isSel = (item.nombre === currentVal) ? 'selected' : '';
+        html += `<option value="${escapeHtml(item.nombre)}" ${isSel}>${escapeHtml(item.nombre)}</option>`;
+      });
+
+      sel.innerHTML = html;
+    }
+
+    function onColchasPersonnelSelect(selectedName) {
+      const areaInput = document.getElementById('reqArea');
+      const emailInput = document.getElementById('reqEmail');
+      const areaBadge = document.getElementById('colchasAreaBadge');
+      const emailBadge = document.getElementById('colchasEmailBadge');
+
+      if (!selectedName) {
+        if (areaBadge) areaBadge.style.display = 'none';
+        if (emailBadge) emailBadge.style.display = 'none';
+        return;
+      }
+
+      const record = colchasMasterData.find(item => item.nombre === selectedName);
+      if (record) {
+        if (areaInput) {
+          areaInput.value = record.area || '';
+          triggerFieldAutoHighlight(areaInput);
+        }
+        if (emailInput) {
+          emailInput.value = record.correo || '';
+          triggerFieldAutoHighlight(emailInput);
+        }
+
+        if (areaBadge) areaBadge.style.display = record.area ? 'inline-flex' : 'none';
+        if (emailBadge) emailBadge.style.display = record.correo ? 'inline-flex' : 'none';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function triggerFieldAutoHighlight(el) {
+      if (!el) return;
+      el.classList.remove('field-auto-highlight');
+      void el.offsetWidth;
+      el.classList.add('field-auto-highlight');
+      setTimeout(() => el.classList.remove('field-auto-highlight'), 1000);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     // Inicializar al cargar
     function initPublicPortal() {
       initTheme();
@@ -1535,6 +1723,37 @@
       document.getElementById('dispAppName').textContent = `${cfg.name} (${cfg.code})`;
       document.getElementById('dispDevText').textContent = cfg.devName;
       document.getElementById('btnSubmitText').textContent = `Transmitir Solicitud a ${cfg.devName}`;
+
+      // Configuración Condicional: SOLO PARA COLCHAS
+      const isColchas = (cfg.id === 'app_colchas');
+      const colchasWrap = document.getElementById('colchasNameSelectWrap');
+      const generalWrap = document.getElementById('generalNameInputWrap');
+      const autoBadge = document.getElementById('colchasAutoBadge');
+      const areaBadge = document.getElementById('colchasAreaBadge');
+      const emailBadge = document.getElementById('colchasEmailBadge');
+      const reqNameColchas = document.getElementById('reqNameColchas');
+      const reqNameManual = document.getElementById('reqName');
+
+      if (isColchas) {
+        if (colchasWrap) colchasWrap.style.display = 'block';
+        if (generalWrap) generalWrap.style.display = 'none';
+        if (autoBadge) autoBadge.style.display = 'inline-flex';
+        if (reqNameColchas) reqNameColchas.required = true;
+        if (reqNameManual) reqNameManual.required = false;
+
+        // Cargar directorio de Colchas desde Google Sheets
+        fetchColchasMaster();
+      } else {
+        if (colchasWrap) colchasWrap.style.display = 'none';
+        if (generalWrap) generalWrap.style.display = 'block';
+        if (autoBadge) autoBadge.style.display = 'none';
+        if (areaBadge) areaBadge.style.display = 'none';
+        if (emailBadge) emailBadge.style.display = 'none';
+        if (reqNameColchas) reqNameColchas.required = false;
+        if (reqNameManual) reqNameManual.required = true;
+      }
+
+      if (window.lucide) lucide.createIcons();
     }
 
     function onManualSysChange(appId) {
@@ -1578,12 +1797,22 @@
       const devId = document.getElementById('selectedDevId').value;
       const devName = document.getElementById('selectedDevName').value;
 
-      const reqName = document.getElementById('reqName').value.trim();
+      const isColchas = (appId === 'app_colchas');
+      const reqName = isColchas
+        ? (document.getElementById('reqNameColchas') ? document.getElementById('reqNameColchas').value.trim() : '')
+        : (document.getElementById('reqName') ? document.getElementById('reqName').value.trim() : '');
       const reqArea = document.getElementById('reqArea').value.trim();
       const reqEmail = document.getElementById('reqEmail').value.trim();
       const reqTitle = document.getElementById('reqTitle').value.trim();
       const reqDesc = document.getElementById('reqDesc').value.trim();
       const reqPriority = document.getElementById('reqPriority').value;
+
+      if (!reqName) {
+        alert(isColchas ? 'Por favor selecciona tu nombre del directorio de Colchas.' : 'Por favor ingresa tu nombre completo.');
+        btn.disabled = false;
+        btnText.textContent = originalText;
+        return;
+      }
 
       const now = new Date();
       const ticketCode = `STF-SUP-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -1689,9 +1918,14 @@
       document.getElementById('receiptScreen').style.display = 'none';
       const form = document.getElementById('publicSupportForm');
       form.style.display = 'block';
+      if (document.getElementById('reqNameColchas')) document.getElementById('reqNameColchas').value = '';
+      if (document.getElementById('reqName')) document.getElementById('reqName').value = '';
+      if (document.getElementById('reqArea')) document.getElementById('reqArea').value = '';
       document.getElementById('reqTitle').value = '';
       document.getElementById('reqDesc').value = '';
       document.getElementById('reqEmail').value = '';
+      if (document.getElementById('colchasAreaBadge')) document.getElementById('colchasAreaBadge').style.display = 'none';
+      if (document.getElementById('colchasEmailBadge')) document.getElementById('colchasEmailBadge').style.display = 'none';
       document.getElementById('btnSubmitSupport').disabled = false;
       
       const devName = document.getElementById('selectedDevName').value;

@@ -20,7 +20,8 @@ var TABS = {
   TAREAS: "CONTROL_TAREAS",
   OBSERVACIONES: "HISTORIAL_OBSERVACIONES",
   BITACORA: "BITACORA_HISTORIAL",
-  SOPORTE: "SOLICITUDES_SOPORTE"
+  SOPORTE: "SOLICITUDES_SOPORTE",
+  MAESTRA_COLCHAS: "MAESTRA_SOLIC_STEC_COLCHAS"
 };
 
 var HEADERS = {
@@ -1093,6 +1094,45 @@ function doGet(e) {
       }
     }
     return createJsonResponse({ status: "success", observations: obsOnlyList });
+  }
+
+  // 6. Obtener Lista Maestra de Operarios / Solicitantes para COLCHAS (Auto-relleno)
+  if (action === "get_colchas_master" || action === "get_master_colchas") {
+    var sColchas = ss.getSheetByName(TABS.MAESTRA_COLCHAS || "MAESTRA_SOLIC_STEC_COLCHAS");
+    var masterList = [];
+    if (sColchas) {
+      var rows = sColchas.getDataRange().getValues();
+      if (rows && rows.length > 1) {
+        var hRow = rows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+        var idxNombre = 1; // Default Columna B (índice 1)
+        var idxArea = 3;   // Default Columna D (índice 3)
+        var idxCorreo = 4; // Default Columna E (índice 4)
+
+        for (var c = 0; c < hRow.length; c++) {
+          var h = hRow[c];
+          if (h.indexOf("nombre") !== -1 || h.indexOf("solicitante") !== -1 || h.indexOf("operario") !== -1 || h.indexOf("cliente") !== -1 || h.indexOf("personal") !== -1) idxNombre = c;
+          else if (h.indexOf("area") !== -1 || h.indexOf("área") !== -1 || h.indexOf("modulo") !== -1 || h.indexOf("módulo") !== -1 || h.indexOf("seccion") !== -1) idxArea = c;
+          else if (h.indexOf("correo") !== -1 || h.indexOf("email") !== -1 || h.indexOf("mail") !== -1) idxCorreo = c;
+        }
+
+        for (var r = 1; r < rows.length; r++) {
+          var nom = String(rows[r][idxNombre] !== undefined ? rows[r][idxNombre] : "").trim();
+          if (!nom || nom.toLowerCase() === "nombre" || nom.toLowerCase() === "tu nombre completo") continue;
+          var ar = String(rows[r][idxArea] !== undefined ? rows[r][idxArea] : "").trim();
+          var mail = String(rows[r][idxCorreo] !== undefined ? rows[r][idxCorreo] : "").trim();
+          masterList.push({
+            nombre: nom,
+            area: ar,
+            correo: mail
+          });
+        }
+      }
+    }
+    return createJsonResponse({
+      status: "success",
+      count: masterList.length,
+      data: masterList
+    });
   }
 
   return createJsonResponse({ status: "error", message: "Acción GET no reconocida" });
