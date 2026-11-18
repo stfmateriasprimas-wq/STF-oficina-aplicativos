@@ -408,7 +408,7 @@ function setupSistemasWebSheet(ss, forceClean) {
 
   var officialWebRows = [
     ["Equipo Grupal (4 Devs)", "TORRE DE CONTROL", customUrls["TORRE DE CONTROL"] || "sharepoint", "En Construcción"],
-    ["Jose Guzman", "LABORATORIO", customUrls["LABORATORIO"] || "https://stflab-calidad-textil.vercel.app/", "En Construcción"],
+    ["Edwin Diaz", "LABORATORIO", customUrls["LABORATORIO"] || "https://stflab-calidad-textil.vercel.app/", "En Construcción"],
     ["Jose Guzman", "GEO UBICACION TALLERES", customUrls["GEO UBICACION TALLERES"] || "https://stf-rastreo-calidad.vercel.app/", "En Construcción"],
     ["Jose Guzman", "OFICINA - APLICATIVOS", customUrls["OFICINA - APLICATIVOS"] || "https://stf-oficina-aplicativos.vercel.app/", "En Construcción"],
     ["Juan David", "CALIDAD", customUrls["CALIDAD"] || "", "En Producción"],
@@ -449,10 +449,10 @@ function setupTareasSheet(ss) {
   var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
 
   var officialTasks = [
-    ["Integración KPI", "LABORATORIO", "Jose Guzman", 25, "2026-11-16", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "KPI completos"],
-    ["Investigar como podemos aplicar app de laboratorio en SharePoint", "LABORATORIO", "Jose Guzman", 10, "2026-11-09", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "tenemos que crear y estabilizar el sistema de laboratorio por SharePoint para que nos quede en cuanto seguridad mas estable."],
-    ["Iniciar el ajuste de LAB.", "LABORATORIO", "Jose Guzman", 15, "2026-11-06", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
-    ["Retomar incorporacion de base de datos.", "LABORATORIO", "Jose Guzman", 20, "2026-10-29", "Auditada", "94.3% (+18.9%)", "2026-11-04 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
+    ["Integración KPI", "LABORATORIO", "Edwin Diaz", 25, "2026-11-16", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "KPI completos"],
+    ["Investigar como podemos aplicar app de laboratorio en SharePoint", "LABORATORIO", "Edwin Diaz", 10, "2026-11-09", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "tenemos que crear y estabilizar el sistema de laboratorio por SharePoint para que nos quede en cuanto seguridad mas estable."],
+    ["Iniciar el ajuste de LAB.", "LABORATORIO", "Edwin Diaz", 15, "2026-11-06", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
+    ["Retomar incorporacion de base de datos.", "LABORATORIO", "Edwin Diaz", 20, "2026-10-29", "Auditada", "94.3% (+18.9%)", "2026-11-04 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
     ["hacer indicador - juan", "CALIDAD", "Juan David", 15, "2026-10-29", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
     ["Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3% (+14.4%)", "2026-11-04 08:00:00", "Excelente arquitectura e integración limpia. Pruebas de estrés superadas."],
     ["Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0% (+14.7%)", "2026-11-04 08:00:00", "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."],

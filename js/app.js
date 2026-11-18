@@ -322,9 +322,9 @@ window.resolveCanonicalDevId = resolveCanonicalDevId;
 
 let activeSelectedDevId = !isCurrentSessionAdmin()
   ? getLoggedDevId()
-  : ((localStorage.getItem('STF_ACTIVE_DEV_ID') && localStorage.getItem('STF_ACTIVE_DEV_ID') !== 'dev_ediaz' && localStorage.getItem('STF_ACTIVE_DEV_ID') !== 'admin')
+  : (localStorage.getItem('STF_ACTIVE_DEV_ID')
     ? resolveCanonicalDevId(localStorage.getItem('STF_ACTIVE_DEV_ID'))
-    : ((appState.developers.find(d => d.role !== 'Admin' && d.id !== 'dev_ediaz') || {}).id || 'dev_jg'));
+    : 'dev_ediaz');
 let currentEditingSysId = null;
 
 // Chart Instances
@@ -1530,13 +1530,13 @@ function renderStackedDeck(devId = activeSelectedDevId) {
   }
 
   const currentDev = getDeveloperById(devId);
-  const isDevAdmin = isCurrentSessionAdmin() && ((currentDev && currentDev.role === 'Admin') || devId === 'dev_ediaz' || devId === 'all');
+  const isGlobalView = devId === 'all';
 
   let devApps = [];
   if (!isCurrentSessionAdmin()) {
     devApps = getScopedApplications();
-  } else if (isDevAdmin) {
-    // Para el ADMIN o Vista Global: Mostrar TODOS los 6 aplicativos de STF GROUP
+  } else if (isGlobalView) {
+    // Vista Global: Mostrar TODOS los aplicativos de STF GROUP
     devApps = [...appState.applications];
   } else if (devId) {
     devApps = appState.applications.filter(a => a.devId === devId || (a.devIds && a.devIds.includes(devId)));
@@ -1999,17 +1999,14 @@ function renderDevelopersSection() {
     return;
   }
 
-  // MODO ADMIN: Renderizar los desarrolladores operativos del equipo (excluyendo al Admin)
+  // MODO ADMIN: Renderizar el equipo de desarrollo completo (incluyendo al Admin con aplicativo a cargo)
   if (typeof sanitizeAndDeduplicateDevelopers === 'function') {
     appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
   }
-  const teamDevs = appState.developers.filter(dev => {
-    const isDevAdmin = dev.role === 'Admin' || dev.id === 'dev_ediaz' || dev.isAdmin || dev.roleType === 'Admin' || String(dev.role || '').toLowerCase() === 'admin';
-    return !isDevAdmin;
-  });
+  const teamDevs = appState.developers;
 
-  // Si activeSelectedDevId está asignado al Admin o no existe en la lista operativa, pre-seleccionar el primer desarrollador
-  if (teamDevs.length > 0 && (!activeSelectedDevId || activeSelectedDevId === 'dev_ediaz' || !teamDevs.some(d => d.id === activeSelectedDevId))) {
+  // Si activeSelectedDevId no existe en la lista, pre-seleccionar el primer desarrollador
+  if (teamDevs.length > 0 && (!activeSelectedDevId || !teamDevs.some(d => d.id === activeSelectedDevId))) {
     activeSelectedDevId = teamDevs[0].id;
   }
 
@@ -2043,7 +2040,7 @@ function renderDevelopersSection() {
 
         <div class="dci-info">
           <strong class="dci-name">${dev.name}</strong>
-          <span class="dci-role">${dev.role || 'Desarrollador'}</span>
+          <span class="dci-role">${dev.id === 'dev_ediaz' ? '🛡️ Admin & Desarrollo' : (dev.role || 'Desarrollador')}</span>
         </div>
 
         <div class="dci-workload">
@@ -2124,10 +2121,8 @@ function selectDeveloper(devId) {
   // Si el usuario logueado es un Desarrollador, solo puede ver su propio perfil
   if (!isCurrentSessionAdmin()) {
     devId = getLoggedDevId();
-  } else if (devId === 'dev_ediaz' || devId === 'admin') {
-    // El Administrador supervisa globalmente y no tiene tareas asignadas individuales
-    const firstDev = appState.developers.find(d => d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin);
-    devId = firstDev ? firstDev.id : 'dev_jg';
+  } else if (devId === 'admin') {
+    devId = 'dev_ediaz';
   }
   activeSelectedDevId = devId;
   localStorage.setItem('STF_ACTIVE_DEV_ID', devId);
@@ -2241,8 +2236,8 @@ function openDeveloperWebSystemsModal(devId) {
   const dev = getDeveloperById(effectiveDevId);
   if (!dev) return;
 
-  const isDevAdmin = isCurrentSessionAdmin() && ((dev && dev.role === 'Admin') || effectiveDevId === 'dev_ediaz' || effectiveDevId === 'all');
-  const assigned = isDevAdmin
+  const isGlobalView = effectiveDevId === 'all';
+  const assigned = isGlobalView
     ? appState.applications
     : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
 
@@ -2344,15 +2339,17 @@ function updateQuickDevStrip() {
   const tagsContainer = document.getElementById('selectedDevProjectsTags');
 
   // Find all projects assigned to this developer (or all if Admin)
-  const isDevAdmin = isCurrentSessionAdmin() && ((dev && dev.role === 'Admin') || effectiveDevId === 'dev_ediaz' || effectiveDevId === 'all');
-  const assigned = isDevAdmin
+  const isGlobalView = effectiveDevId === 'all';
+  const assigned = isGlobalView
     ? appState.applications
     : appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
 
   if (nameEl) nameEl.textContent = dev.name;
   if (roleEl) {
-    if (isDevAdmin) {
+    if (isGlobalView) {
       roleEl.textContent = `🛡️ Director TI / Admin · Supervisión Total (${assigned.length} Sistemas)`;
+    } else if (dev.id === 'dev_ediaz') {
+      roleEl.textContent = `🛡️ Admin & Desarrollo · ${assigned.length} Sistema a Cargo (${assigned.map(a => a.name).join(', ')})`;
     } else {
       roleEl.textContent = `${dev.role} · ${assigned.length} Sistema${assigned.length !== 1 ? 's' : ''}`;
     }
@@ -5216,7 +5213,7 @@ function autoBalancePhaseWeights() {
 
 function openNewProjectModal() {
   const devSelect = document.getElementById('newSysDev');
-  const realDevs = appState.developers.filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin && d.roleType !== 'Admin');
+  const realDevs = appState.developers || [];
   devSelect.innerHTML = realDevs.map(d => `<option value="${d.id}">${d.name} (${d.role})</option>`).join('');
 
   // Set default deadline (1 month from now)
@@ -6402,9 +6399,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   // Group filtered items by developer (sorted descending: most recent assignment at the top, oldest at the bottom)
   const devGroups = [];
-  const activeTeamDevs = (appState.developers || []).filter(d => {
-    return d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin && d.roleType !== 'Admin' && String(d.role || '').toLowerCase() !== 'admin';
-  });
+  const activeTeamDevs = appState.developers || [];
 
   const currentDevId = getLoggedDevId();
   const canonLogged = resolveCanonicalDevId(currentDevId);
@@ -6844,7 +6839,6 @@ function autoSelectDevForApp(appId) {
   } else {
     // Buscar en los desarrolladores cuál tiene este appId en sus activeProjects
     const devMatch = (appState.developers || []).find(d =>
-      d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin &&
       Array.isArray(d.activeProjects) && d.activeProjects.includes(appId)
     );
     if (devMatch) {
@@ -6902,9 +6896,9 @@ function openAssignIntegrationModal(preselectedAppId) {
   }
 
   if (devSelect) {
-    const realDevs = appState.developers.filter(dev => dev.role !== 'Admin' && dev.id !== 'dev_ediaz' && !dev.isAdmin && dev.roleType !== 'Admin');
+    const realDevs = appState.developers || [];
     devSelect.innerHTML = realDevs.map(dev => `
-      <option value="${dev.id}">${dev.name} (${dev.role})</option>
+      <option value="${dev.id}">${dev.name} (${dev.id === 'dev_ediaz' ? 'Admin / Laboratorio' : dev.role})</option>
     `).join('');
   }
 
@@ -7361,7 +7355,7 @@ function renderTaskObservationsFeed() {
   // Actualizar selector de desarrolladores
   const devSelect = document.getElementById('obsFilterDev');
   if (devSelect) {
-    const realDevs = (appState.developers || []).filter(dev => dev.role !== 'Admin' && dev.id !== 'dev_ediaz');
+    const realDevs = appState.developers || [];
 
     if (isAdmin) {
       devSelect.innerHTML = `
@@ -10294,7 +10288,7 @@ function renderAnalyticsView() {
   const workloadGrid = document.getElementById('teamWorkloadBreakdownGrid');
 
   if (workloadCtx) {
-    const devsList = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
+    const devsList = appState.developers || [];
     const allTasks = appState.integrations || [];
 
     const devData = devsList.map(dev => {
@@ -11898,7 +11892,7 @@ function renderOripioSidebar() {
 
   // 2. Team Navigation
   if (teamNav && Array.isArray(appState.developers)) {
-    const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz' && d.role !== 'Admin');
+    const teamDevs = appState.developers;
 
     let teamHtml = `
       <button type="button" 
@@ -11959,7 +11953,7 @@ function renderOripioHeader() {
 
   // Stacked Team Avatars
   if (stackedAvatarsEl && Array.isArray(appState.developers)) {
-    const teamDevs = appState.developers.filter(d => d.id !== 'dev_ediaz');
+    const teamDevs = appState.developers;
     stackedAvatarsEl.innerHTML = teamDevs.map(dev => `
       <img src="${dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}" 
            alt="${dev.name}" 
@@ -12976,7 +12970,7 @@ function renderSupportView() {
   // Actualizar selector de desarrollador si es Super Admin
   const devSelect = document.getElementById('selectSupportDevFilter');
   if (isAdmin && devSelect) {
-    const teamDevs = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
+    const teamDevs = appState.developers || [];
     let devOptionsHtml = `<option value="all">Todo el Equipo de Desarrollo (${appState.supportTickets.length})</option>`;
     teamDevs.forEach(dev => {
       const devTickets = appState.supportTickets.filter(t => isTicketAssignedToDev(t, dev.id));
@@ -13461,7 +13455,7 @@ function openNewSupportModal() {
   }
 
   if (devSelect) {
-    const teamDevs = (appState.developers || []).filter(d => d.role !== 'Admin' && d.id !== 'dev_ediaz');
+    const teamDevs = appState.developers || [];
     devSelect.innerHTML = teamDevs.map(dev => `
       <option value="${dev.id}">${dev.name}</option>
     `).join('');
@@ -13503,7 +13497,6 @@ function handleNewSupAppChange(appId) {
     targetDevId = resolveCanonicalDevId(app.devIds[0]) || app.devIds[0];
   } else {
     const devMatch = (appState.developers || []).find(d =>
-      d.role !== 'Admin' && d.id !== 'dev_ediaz' && !d.isAdmin &&
       Array.isArray(d.activeProjects) && d.activeProjects.includes(appId)
     );
     if (devMatch) {

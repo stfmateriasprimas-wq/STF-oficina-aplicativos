@@ -67,7 +67,7 @@ const STF_REAL_DATA = {
       codeQuality: 93,
       sprintsCompleted: 16,
       score: "9.5 / 10",
-      activeProjects: ["app_colchas", "app_laboratorio", "app_geo", "app_oficina", "app_torre"]
+      activeProjects: ["app_colchas", "app_geo", "app_oficina", "app_torre"]
     },
     {
       id: "dev_jd",
@@ -112,18 +112,18 @@ const STF_REAL_DATA = {
       id: "dev_ediaz",
       name: "Edwin Diaz",
       username: "ediaz",
-      role: "Admin",
+      role: "Admin & Desarrollo",
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
       email: "edwin.diaz@studiof.com.co",
       onTimeDelivery: 99,
       codeQuality: 98,
       sprintsCompleted: 24,
       score: "9.9 / 10",
-      activeProjects: ["app_torre", "app_colchas", "app_laboratorio", "app_calidad", "app_tintoreria", "app_geo"]
+      activeProjects: ["app_laboratorio", "app_torre"]
     }
   ],
 
-  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheet  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheets)
+  // Aplicativos Reales de STF GROUP en Desarrollo y Producción (Sincronizados con Google Sheets)
   applications: [
     {
       id: "app_torre",
@@ -156,7 +156,7 @@ const STF_REAL_DATA = {
       name: "LABORATORIO",
       category: "Control Textil",
       description: "Módulo técnico para registro de pruebas de laboratorio: solidez de color, encogimiento, resistencia de fibras y fichas técnicas textiles.",
-      devId: "dev_jg",
+      devId: "dev_ediaz",
       deadline: "2026-11-30",
       priority: "Media",
       status: "ontime",
@@ -484,17 +484,22 @@ function getStoredData() {
             target.username = officialDev.username;
             target.role = officialDev.role;
             if (officialDev.email) target.email = officialDev.email;
-            if (!Array.isArray(target.activeProjects)) {
-              target.activeProjects = [...(officialDev.activeProjects || [])];
-            } else {
-              (officialDev.activeProjects || []).forEach(pId => {
-                if (!target.activeProjects.includes(pId)) target.activeProjects.push(pId);
-              });
-            }
+            target.activeProjects = [...(officialDev.activeProjects || [])];
           } else {
             parsed.developers.push(JSON.parse(JSON.stringify(officialDev)));
           }
         });
+
+        // Reasignación oficial de LABORATORIO a Edwin Diaz (Admin) y desvinculación de Jose Guzman
+        const jgDev = parsed.developers.find(d => d.id === 'dev_jg');
+        if (jgDev && Array.isArray(jgDev.activeProjects)) {
+          jgDev.activeProjects = jgDev.activeProjects.filter(p => p !== 'app_laboratorio');
+        }
+        const ediazUser = parsed.developers.find(d => d.id === 'dev_ediaz');
+        if (ediazUser) {
+          ediazUser.activeProjects = ['app_laboratorio', 'app_torre'];
+          ediazUser.role = 'Admin & Desarrollo';
+        }
         // Asegurar que applications e integrations sean arrays válidos con los enlaces reales oficiales
         if (!Array.isArray(parsed.applications) || parsed.applications.length === 0) {
           parsed.applications = JSON.parse(JSON.stringify(STF_REAL_DATA.applications));
