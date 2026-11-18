@@ -801,19 +801,23 @@ function getStoredData() {
               item.createdDate = `${todayStr} 08:00:00`;
             }
 
-            // Si startDate era el default '2026-10-19' o no existe, corregirla al día de creación real
-            if (!item.startDate || item.startDate === '2026-10-19') {
-              item.startDate = createdDay;
-            }
-
-            // Si la tarea se montó hoy, su deadline no puede ser anterior a hoy (corrige tareas en falso desfase)
-            if (!item.deadline || (createdDay === todayStr && item.deadline < todayStr)) {
-              item.deadline = todayStr;
-            }
-
-            // Asegurar hora de entrega oficial de reunión
-            if (!item.deliveryTime) {
-              item.deliveryTime = '11:00';
+            const isEvaluated = item.status === 'evaluated' || (String(item.status || '').toLowerCase().includes('audit'));
+            if (!isEvaluated) {
+              // Toda tarea activa en desarrollo asignada para esta entrega se alinea a hoy
+              if (!item.startDate || item.startDate === '2026-10-19' || item.startDate < todayStr) {
+                item.startDate = todayStr;
+              }
+              if (!item.deadline || item.deadline < todayStr) {
+                item.deadline = todayStr;
+              }
+              item.deliveryTime = '13:00';
+            } else {
+              if (!item.startDate || item.startDate === '2026-10-19') {
+                item.startDate = createdDay;
+              }
+              if (!item.deliveryTime) {
+                item.deliveryTime = '11:00';
+              }
             }
           });
 

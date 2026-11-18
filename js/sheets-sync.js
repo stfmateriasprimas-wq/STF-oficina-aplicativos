@@ -879,13 +879,16 @@
           }
         }
 
-        // REGLA CRÍTICA STF: Si la tarea fue creada hoy o recientemente, la fecha de entrega no puede ser anterior
-        if (!cleanDeadline || (cleanCreatedDay === systemTodayStr && cleanDeadline < cleanCreatedDay)) {
-          cleanDeadline = cleanCreatedDay;
+        // REGLA CRÍTICA STF: Si la tarea está en desarrollo/progreso (no auditada) y su fecha quedó en el pasado, se normaliza a hoy
+        if (!isEval && (!cleanDeadline || cleanDeadline < systemTodayStr)) {
+          cleanDeadline = systemTodayStr;
+        }
+        if (!isEval && (!cleanStartDate || cleanStartDate < systemTodayStr || cleanStartDate === '2026-10-19')) {
+          cleanStartDate = systemTodayStr;
         }
 
         // 4. Hora oficial de la reunión de entrega
-        let cleanDeliveryTime = task.deliveryTime || task.Hora_Entrega || '11:00';
+        let cleanDeliveryTime = task.deliveryTime || task.Hora_Entrega || '13:00';
 
         // Parsear calificación limpia (corrige 0.943% -> 94.3%)
         let rawEvalStr = String(task.evaluation || task.Evaluacion_Calidad || '95').replace(',', '.');
@@ -917,17 +920,15 @@
           }
 
           if (cleanCreatedDate) existing.createdDate = cleanCreatedDate;
-          if (!existing.startDate || existing.startDate === '2026-10-19') {
-            existing.startDate = cleanStartDate;
+          if (!isEval && (!existing.startDate || existing.startDate < systemTodayStr || existing.startDate === '2026-10-19')) {
+            existing.startDate = systemTodayStr;
           }
-          if (cleanDeadline) {
-            if (cleanCreatedDay === systemTodayStr && cleanDeadline < cleanCreatedDay) {
-              existing.deadline = cleanCreatedDay;
-            } else {
-              existing.deadline = cleanDeadline;
-            }
+          if (!isEval && (!existing.deadline || existing.deadline < systemTodayStr)) {
+            existing.deadline = systemTodayStr;
+          } else if (cleanDeadline) {
+            existing.deadline = cleanDeadline;
           }
-          if (cleanDeliveryTime) existing.deliveryTime = cleanDeliveryTime;
+          if (!existing.deliveryTime) existing.deliveryTime = cleanDeliveryTime;
           if (cleanNotes && (!existing.description || existing.description === 'Integración técnica operativa en planta de confección.' || existing.description === 'Integración asignada desde Google Sheets.')) {
             existing.description = cleanNotes;
           }

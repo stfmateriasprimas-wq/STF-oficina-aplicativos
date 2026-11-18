@@ -9,6 +9,21 @@ if (appState) {
   if (!Array.isArray(appState.integrations)) {
     appState.integrations = [];
   }
+  // Saneamiento de fechas reales STF para garantizar que tareas montadas hoy no aparezcan en desfase
+  const todayStr = '2026-11-18';
+  appState.integrations.forEach(item => {
+    const isEvaluated = item.status === 'evaluated' || (String(item.status || '').toLowerCase().includes('audit'));
+    if (!isEvaluated) {
+      if (!item.startDate || item.startDate === '2026-10-19' || item.startDate < todayStr) {
+        item.startDate = todayStr;
+      }
+      if (!item.deadline || item.deadline < todayStr) {
+        item.deadline = todayStr;
+      }
+      item.deliveryTime = '13:00';
+    }
+  });
+
   if (typeof sanitizeAndDeduplicateDevelopers === 'function' && Array.isArray(appState.developers)) {
     appState.developers = sanitizeAndDeduplicateDevelopers(appState.developers);
   }

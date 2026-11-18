@@ -857,8 +857,9 @@ function doGet(e) {
 
         var todayBogota = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
         var createdDay = createdDate ? createdDate.substring(0, 10) : todayBogota;
-        // Si la tarea se registró hoy o recientemente, su deadline no puede ser anterior a la fecha de creación
-        if (createdDay === todayBogota && deadline < todayBogota) {
+        var isTaskEvaluated = (status.toLowerCase().indexOf("audit") !== -1 || status.toLowerCase().indexOf("aprob") !== -1);
+        // Si la tarea está activa (en progreso) y su deadline quedó en fecha pasada (ej. 16 nov):
+        if (!isTaskEvaluated && deadline < todayBogota) {
           deadline = todayBogota;
         }
 
@@ -890,10 +891,10 @@ function doGet(e) {
           developer: devName,
           devId: dId,
           weight: weight,
-          startDate: createdDay || todayBogota,
+          startDate: (!isTaskEvaluated && (!createdDay || createdDay < todayBogota)) ? todayBogota : (createdDay || todayBogota),
           createdDate: createdDate || (todayBogota + " 08:00:00"),
           deadline: deadline,
-          deliveryTime: "11:00",
+          deliveryTime: "13:00",
           status: status,
           evaluation: evaluation,
           notes: notes
