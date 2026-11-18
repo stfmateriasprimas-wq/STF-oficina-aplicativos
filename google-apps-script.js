@@ -855,11 +855,33 @@ function doGet(e) {
           : String(rawRegDate || "").trim();
         var notes = String(hasIdCol ? (row[9] || "") : (row[8] || "")).trim();
 
+        var dId = "dev_jg";
+        var dLower = devName.toLowerCase();
+        var aLower = (appName || "").toLowerCase();
+        if (dLower.indexOf("edwin") !== -1 || aLower.indexOf("lab") !== -1) {
+          dId = "dev_ediaz";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Edwin Diaz";
+        } else if (dLower.indexOf("juan") !== -1 || aLower.indexOf("calidad") !== -1) {
+          dId = "dev_jd";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Juan David";
+        } else if (dLower.indexOf("mocho") !== -1 || dLower.indexOf("jhon") !== -1 || dLower.indexOf("eyder") !== -1 || aLower.indexOf("tinto") !== -1) {
+          dId = "dev_mocho";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Jhon Eyder (Mocho)";
+        } else if (dLower.indexOf("esteban") !== -1) {
+          dId = "dev_ee";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Esteban Escobar";
+        } else {
+          dId = "dev_jg";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Jose Guzman";
+        }
+
         tasks.push({
           id: tId,
           name: tName,
           appName: appName,
           devName: devName,
+          developer: devName,
+          devId: dId,
           weight: weight,
           deadline: deadline,
           status: status,
@@ -985,11 +1007,15 @@ function doGet(e) {
         var resolvedBy = String(rowSp[14] || "").trim();
 
         var emailReq = String(rowSp[15] || "").trim();
+        var phoneReq = String(rowSp[16] || "").trim();
 
         var dId = "dev_jg";
         var dLower = devName.toLowerCase();
         var aLower = (appName + " " + appCode).toLowerCase();
-        if (dLower.indexOf("juan") !== -1 || aLower.indexOf("calidad") !== -1) {
+        if (dLower.indexOf("edwin") !== -1 || aLower.indexOf("lab") !== -1) {
+          dId = "dev_ediaz";
+          if (!devName || devName === "Desarrollador Oficial") devName = "Edwin Diaz";
+        } else if (dLower.indexOf("juan") !== -1 || aLower.indexOf("calidad") !== -1) {
           dId = "dev_jd";
           if (!devName || devName === "Desarrollador Oficial") devName = "Juan David";
         } else if (dLower.indexOf("mocho") !== -1 || dLower.indexOf("jhon") !== -1 || dLower.indexOf("eyder") !== -1 || aLower.indexOf("tinto") !== -1) {

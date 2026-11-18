@@ -290,8 +290,246 @@ const STF_REAL_DATA = {
     }
   ],
 
-  // Integraciones y Tareas Oficiales Inicializadas en 0 para Arranque Real de Pruebas en Planta
-  integrations: [],
+  // Integraciones y Tareas Oficiales Ponderadas por Desarrollador y Sistema
+  integrations: [
+    // --- Edwin Diaz (Admin & Desarrollo) ---
+    {
+      id: "int_edwin_01",
+      name: "Arquitectura y Especificación de Ensayos Textiles",
+      appId: "app_laboratorio",
+      appName: "LABORATORIO",
+      devId: "dev_ediaz",
+      devName: "Edwin Diaz",
+      startDate: "2026-11-10",
+      deadline: "2026-11-20",
+      deliveryTime: "10:00",
+      weight: 15,
+      status: "in_progress",
+      description: "Modelado de datos para control de densidad, fibras textiles y solidez de color.",
+      evaluation: null,
+      observations: []
+    },
+    {
+      id: "int_edwin_02",
+      name: "Levantamiento de Requisitos y Fórmulas de Encogimiento",
+      appId: "app_laboratorio",
+      appName: "LABORATORIO",
+      devId: "dev_ediaz",
+      devName: "Edwin Diaz",
+      startDate: "2026-11-01",
+      deadline: "2026-11-09",
+      deliveryTime: "08:30",
+      weight: 10,
+      status: "evaluated",
+      description: "Validación de cálculos de laboratorio textil y porcentajes de encogimiento de tela.",
+      evaluation: {
+        evalDate: "2026-11-09",
+        onTime: true,
+        qualityScore: 98,
+        pointsAdded: 9.8,
+        notes: "Aprobación técnica de fórmulas y pruebas de solidez por jefatura de laboratorio."
+      },
+      observations: []
+    },
+    {
+      id: "int_edwin_03",
+      name: "Supervisión de Despliegue y Roles de Seguridad TI",
+      appId: "app_torre",
+      appName: "TORRE DE CONTROL",
+      devId: "dev_ediaz",
+      devName: "Edwin Diaz",
+      startDate: "2026-11-12",
+      deadline: "2026-11-25",
+      deliveryTime: "11:00",
+      weight: 15,
+      status: "in_progress",
+      description: "Auditoría de seguridad y matriz de permisos por perfil operativo.",
+      evaluation: null,
+      observations: []
+    },
+
+    // --- Jose Guzman ---
+    {
+      id: "int_jose_01",
+      name: "Calibración y Lectura QR en Mesas de Confección",
+      appId: "app_colchas",
+      appName: "COLCHAS",
+      devId: "dev_jg",
+      devName: "Jose Guzman",
+      startDate: "2026-11-02",
+      deadline: "2026-11-10",
+      deliveryTime: "09:00",
+      weight: 20,
+      status: "evaluated",
+      description: "Validado en planta con operarios en mesas de corte y costura.",
+      evaluation: {
+        evalDate: "2026-11-10",
+        onTime: true,
+        qualityScore: 96,
+        pointsAdded: 19.2,
+        notes: "Lectura QR rápida sin retraso en línea de producción."
+      },
+      observations: []
+    },
+    {
+      id: "int_jose_02",
+      name: "Integración API de Geolocalización Satelital",
+      appId: "app_geo",
+      appName: "GEO UBICACION TALLERES",
+      devId: "dev_jg",
+      devName: "Jose Guzman",
+      startDate: "2026-11-05",
+      deadline: "2026-11-18",
+      deliveryTime: "11:30",
+      weight: 20,
+      status: "in_progress",
+      description: "Mapeo satelital en vivo de talleres de confección y maquila externa.",
+      evaluation: null,
+      observations: []
+    },
+    {
+      id: "int_jose_03",
+      name: "Sincronización en Vivo con Google Sheets",
+      appId: "app_oficina",
+      appName: "OFICINA - APLICATIVOS",
+      devId: "dev_jg",
+      devName: "Jose Guzman",
+      startDate: "2026-11-03",
+      deadline: "2026-11-12",
+      deliveryTime: "10:00",
+      weight: 25,
+      status: "evaluated",
+      description: "Sincronización automática de tareas, sistemas y solicitudes de soporte.",
+      evaluation: {
+        evalDate: "2026-11-12",
+        onTime: true,
+        qualityScore: 97,
+        pointsAdded: 24.3,
+        notes: "Integración bidireccional estable con Sheets y WebApp."
+      },
+      observations: []
+    },
+
+    // --- Juan David ---
+    {
+      id: "int_juan_01",
+      name: "Módulo de Auditoría AQL en Línea de Confección",
+      appId: "app_calidad",
+      appName: "CALIDAD",
+      devId: "dev_jd",
+      devName: "Juan David",
+      startDate: "2026-11-01",
+      deadline: "2026-11-08",
+      deliveryTime: "08:00",
+      weight: 25,
+      status: "evaluated",
+      description: "Auditoría AQL por muestreo estadístico y categorización de defectos.",
+      evaluation: {
+        evalDate: "2026-11-08",
+        onTime: true,
+        qualityScore: 95,
+        pointsAdded: 23.8,
+        notes: "Inspección de prendas y muestreo AQL aprobado con planta."
+      },
+      observations: []
+    },
+    {
+      id: "int_juan_02",
+      name: "Interfaz Móvil para Inspectores de Calidad",
+      appId: "app_calidad",
+      appName: "CALIDAD",
+      devId: "dev_jd",
+      devName: "Juan David",
+      startDate: "2026-11-10",
+      deadline: "2026-11-22",
+      deliveryTime: "10:00",
+      weight: 20,
+      status: "in_progress",
+      description: "Captura de no conformidades con interfaz táctil responsiva para tabletas.",
+      evaluation: null,
+      observations: []
+    },
+
+    // --- Jhon Eyder (Mocho) ---
+    {
+      id: "int_mocho_01",
+      name: "Control de Dosificación de Recetas Químicas",
+      appId: "app_tintoreria",
+      appName: "TINTORERIA",
+      devId: "dev_mocho",
+      devName: "Jhon Eyder (Mocho)",
+      startDate: "2026-11-01",
+      deadline: "2026-11-07",
+      deliveryTime: "08:00",
+      weight: 20,
+      status: "evaluated",
+      description: "Dosificación automatizada de colorantes y químicos por barca.",
+      evaluation: {
+        evalDate: "2026-11-07",
+        onTime: true,
+        qualityScore: 92,
+        pointsAdded: 18.4,
+        notes: "Recetas y curvas de temperatura de teñido validadas en planta textil."
+      },
+      observations: []
+    },
+    {
+      id: "int_mocho_02",
+      name: "Registro de Barcas de Teñido y Partidas de Tela",
+      appId: "app_tintoreria",
+      appName: "TINTORERIA",
+      devId: "dev_mocho",
+      devName: "Jhon Eyder (Mocho)",
+      startDate: "2026-11-09",
+      deadline: "2026-11-20",
+      deliveryTime: "12:00",
+      weight: 20,
+      status: "in_progress",
+      description: "Control de tiempo y temperatura en barcas de teñido continuo.",
+      evaluation: null,
+      observations: []
+    },
+
+    // --- Esteban Escobar ---
+    {
+      id: "int_esteban_01",
+      name: "Tableros de Control Operativo y KPIs de Producción",
+      appId: "app_torre",
+      appName: "TORRE DE CONTROL",
+      devId: "dev_ee",
+      devName: "Esteban Escobar",
+      startDate: "2026-11-08",
+      deadline: "2026-11-21",
+      deliveryTime: "11:00",
+      weight: 20,
+      status: "in_progress",
+      description: "Consolidación de indicadores de eficiencia y ritmo operativo en planta.",
+      evaluation: null,
+      observations: []
+    },
+    {
+      id: "int_esteban_02",
+      name: "Modelado de Métricas de Rendimiento por Área",
+      appId: "app_torre",
+      appName: "TORRE DE CONTROL",
+      devId: "dev_ee",
+      devName: "Esteban Escobar",
+      startDate: "2026-11-01",
+      deadline: "2026-11-06",
+      deliveryTime: "08:30",
+      weight: 15,
+      status: "evaluated",
+      description: "Estructuración de datos para reportes gerenciales de productividad.",
+      evaluation: {
+        evalDate: "2026-11-06",
+        onTime: true,
+        qualityScore: 94,
+        pointsAdded: 14.1,
+        notes: "Modelado validado con dirección de operaciones."
+      },
+      observations: []
+    }
+  ],
 
   // Solicitudes de Soporte Técnico en Planta (Bandeja por Desarrollador iniciada en 0 para pruebas oficiales)
   supportTickets: []
@@ -521,20 +759,51 @@ function getStoredData() {
             }
           });
         }
-        // Mantener integraciones asignadas por el Super Admin (o inicializar array vacío)
-        if (!Array.isArray(parsed.integrations)) {
-          parsed.integrations = [];
+        // Sincronizar y alinear integraciones oficiales por desarrollador
+        if (!Array.isArray(parsed.integrations) || parsed.integrations.length === 0) {
+          parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations || []));
         } else {
           parsed.integrations.forEach(item => {
             if (!item.appName && item.appId) {
               const app = (parsed.applications || []).find(a => a.id === item.appId);
               if (app) item.appName = app.name;
             }
-            if (!item.devName && item.devId) {
+            if (typeof window !== 'undefined' && typeof window.resolveCanonicalDevId === 'function') {
+              if (item.devId) item.devId = window.resolveCanonicalDevId(item.devId);
+            }
+            if (item.devId) {
               const dev = (parsed.developers || []).find(d => d.id === item.devId);
               if (dev) item.devName = dev.name;
+            } else if (item.devName) {
+              const dev = (parsed.developers || []).find(d => d.name.toLowerCase() === item.devName.toLowerCase());
+              if (dev) {
+                item.devId = dev.id;
+                item.devName = dev.name;
+              }
+            } else if (item.appId) {
+              const app = (parsed.applications || []).find(a => a.id === item.appId);
+              if (app && app.devId) {
+                item.devId = app.devId;
+                const dev = (parsed.developers || []).find(d => d.id === app.devId);
+                if (dev) item.devName = dev.name;
+              }
             }
           });
+
+          // Garantizar que todos los desarrolladores tengan sus tareas asignadas reflejadas
+          if (Array.isArray(STF_REAL_DATA.developers)) {
+            STF_REAL_DATA.developers.forEach(dev => {
+              const devHasTasks = parsed.integrations.some(i => i.devId === dev.id || (i.devName && i.devName.toLowerCase() === dev.name.toLowerCase()));
+              if (!devHasTasks) {
+                const baseTasksForDev = (STF_REAL_DATA.integrations || []).filter(i => i.devId === dev.id);
+                baseTasksForDev.forEach(bt => {
+                  if (!parsed.integrations.some(ex => ex.id === bt.id || ex.name.toLowerCase().trim() === bt.name.toLowerCase().trim())) {
+                    parsed.integrations.push(JSON.parse(JSON.stringify(bt)));
+                  }
+                });
+              }
+            });
+          }
         }
         // Inicializar o restablecer solicitudes de soporte técnico en 0 para pruebas oficiales
         if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V6')) {

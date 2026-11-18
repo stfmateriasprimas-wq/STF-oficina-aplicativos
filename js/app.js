@@ -82,15 +82,16 @@ const CANONICAL_DEV_MAP = {
 
 function resolveCanonicalDevId(input) {
   if (!input) return null;
+  const strip = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   if (typeof input === 'string') {
-    const clean = input.trim().toLowerCase();
+    const clean = strip(input);
     if (CANONICAL_DEV_MAP[clean]) return CANONICAL_DEV_MAP[clean];
     const devs = (appState && Array.isArray(appState.developers)) ? appState.developers : [];
     const found = devs.find(d =>
-      (d.id && d.id.toLowerCase() === clean) ||
-      (d.username && d.username.toLowerCase() === clean) ||
-      (d.email && d.email.toLowerCase() === clean) ||
-      (d.name && d.name.toLowerCase() === clean)
+      (d.id && strip(d.id) === clean) ||
+      (d.username && strip(d.username) === clean) ||
+      (d.email && strip(d.email) === clean) ||
+      (d.name && strip(d.name) === clean)
     );
     return found ? found.id : input;
   }
@@ -100,23 +101,24 @@ function resolveCanonicalDevId(input) {
       input.id,
       input.email,
       input.name,
-      localStorage.getItem('STF_LOGGED_USERNAME'),
-      localStorage.getItem('STF_ACTIVE_DEV_ID')
+      input.devId,
+      input.developer,
+      input.devName
     ];
     for (const c of candidates) {
       if (!c) continue;
-      const clean = String(c).trim().toLowerCase();
+      const clean = strip(c);
       if (CANONICAL_DEV_MAP[clean]) return CANONICAL_DEV_MAP[clean];
     }
     const devs = (appState && Array.isArray(appState.developers)) ? appState.developers : [];
     for (const c of candidates) {
       if (!c) continue;
-      const clean = String(c).trim().toLowerCase();
+      const clean = strip(c);
       const found = devs.find(d =>
-        (d.id && d.id.toLowerCase() === clean) ||
-        (d.username && d.username.toLowerCase() === clean) ||
-        (d.email && d.email.toLowerCase() === clean) ||
-        (d.name && d.name.toLowerCase() === clean)
+        (d.id && strip(d.id) === clean) ||
+        (d.username && strip(d.username) === clean) ||
+        (d.email && strip(d.email) === clean) ||
+        (d.name && strip(d.name) === clean)
       );
       if (found) return found.id;
     }
@@ -124,6 +126,53 @@ function resolveCanonicalDevId(input) {
   }
   return 'dev_jg';
 }
+
+function isTaskAssignedToDev(task, devIdOrObj) {
+  if (!task || !devIdOrObj) return false;
+  const targetId = typeof devIdOrObj === 'string' ? devIdOrObj : devIdOrObj.id;
+  const targetCanon = resolveCanonicalDevId(targetId);
+  const targetDev = getDeveloperById(targetCanon || targetId);
+
+  const strip = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const targetName = targetDev ? strip(targetDev.name) : '';
+  const targetUser = targetDev ? strip(targetDev.username) : '';
+
+  // 1. Direct ID match or Canonical ID match
+  const tIdCanon = resolveCanonicalDevId(task.devId);
+  if (tIdCanon && targetCanon && tIdCanon === targetCanon) return true;
+  if (task.devId && task.devId === targetId) return true;
+  if (targetUser && strip(task.devId) === targetUser) return true;
+
+  // 2. Canonical resolution on devName or developer field
+  if (task.devName) {
+    const tNameCanon = resolveCanonicalDevId(task.devName);
+    if (tNameCanon && targetCanon && tNameCanon === targetCanon) return true;
+    if (targetName && strip(task.devName) === targetName) return true;
+    if (targetUser && strip(task.devName) === targetUser) return true;
+  }
+  if (task.developer) {
+    const tDevCanon = resolveCanonicalDevId(task.developer);
+    if (tDevCanon && targetCanon && tDevCanon === targetCanon) return true;
+    if (targetName && strip(task.developer) === targetName) return true;
+    if (targetUser && strip(task.developer) === targetUser) return true;
+  }
+
+  // 3. Fallback: match by app assignment if devId is missing or generic on task
+  if ((!task.devId || task.devId === 'dev_auto' || task.devId === 'sin_asignar') && task.appId) {
+    if (targetDev && Array.isArray(targetDev.activeProjects) && targetDev.activeProjects.includes(task.appId)) {
+      return true;
+    }
+    const matchedApp = (appState && Array.isArray(appState.applications))
+      ? appState.applications.find(a => a.id === task.appId || a.code === task.appId)
+      : null;
+    if (matchedApp && typeof isAppAssignedToDev === 'function' && isAppAssignedToDev(matchedApp, targetCanon || targetId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+window.isTaskAssignedToDev = isTaskAssignedToDev;
 
 // Sesión autenticada y anclaje de Columna 2 (Usuario) y Columna 3 (Rol)
 const savedLoggedUserJson = localStorage.getItem('STF_LOGGED_USER');
@@ -308,11 +357,7 @@ function getScopedIntegrations() {
   const allInts = (appState && Array.isArray(appState.integrations)) ? appState.integrations : [];
   if (isCurrentSessionAdmin()) return allInts;
   const devId = getLoggedDevId();
-  return allInts.filter(t => {
-    const c1 = resolveCanonicalDevId(t.devId);
-    const c2 = resolveCanonicalDevId(devId);
-    return (c1 && c2 && c1 === c2) || t.devId === devId;
-  });
+  return allInts.filter(t => isTaskAssignedToDev(t, devId));
 }
 
 window.isCurrentSessionAdmin = isCurrentSessionAdmin;
@@ -5672,7 +5717,7 @@ function updateExecutiveReportPreview() {
     if (isAdminDev) {
       filteredTasks = (appState.integrations || []).slice();
     } else {
-      filteredTasks = filteredTasks.filter(t => t.devId === devId);
+      filteredTasks = filteredTasks.filter(t => isTaskAssignedToDev(t, devId));
     }
   }
   if (appId !== 'all') {
@@ -6325,6 +6370,17 @@ function renderIntegrationsList(filter = activeIntFilter) {
     openedDevFolders.add(getLoggedDevId());
     const canon = resolveCanonicalDevId(getLoggedDevId());
     if (canon) openedDevFolders.add(canon);
+  } else {
+    // Si hay un desarrollador seleccionado activamente, asegurar que su carpeta esté desplegada
+    if (activeSelectedDevId) {
+      openedDevFolders.add(activeSelectedDevId);
+      const canon = resolveCanonicalDevId(activeSelectedDevId);
+      if (canon) openedDevFolders.add(canon);
+    }
+    // Si no hay carpetas seleccionadas manualmente, desplegar todas por defecto para máxima visibilidad
+    if (openedDevFolders.size === 0) {
+      (appState.developers || []).forEach(d => openedDevFolders.add(d.id));
+    }
   }
 
   // Update counter badges
@@ -6380,11 +6436,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   allDevIds.forEach(dId => {
     const allTasksForDev = integrations
-      .filter(i => {
-        const c1 = resolveCanonicalDevId(i.devId);
-        const c2 = resolveCanonicalDevId(dId);
-        return (c1 && c2 && c1 === c2) || (i.devId === dId);
-      })
+      .filter(i => isTaskAssignedToDev(i, dId))
       .sort((a, b) => {
         const da = new Date(a.startDate || '2026-01-01').getTime();
         const db = new Date(b.startDate || '2026-01-01').getTime();
@@ -6408,11 +6460,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
     : activeTeamDevs.filter(d => resolveCanonicalDevId(d.id) === canonLogged || d.id === currentDevId);
 
   targetDevs.forEach(dev => {
-    const devTasks = filtered.filter(i => {
-      const c1 = resolveCanonicalDevId(i.devId);
-      const c2 = resolveCanonicalDevId(dev.id);
-      return (c1 && c2 && c1 === c2) || (i.devId === dev.id);
-    });
+    const devTasks = filtered.filter(i => isTaskAssignedToDev(i, dev));
     if (filter === 'all' || devTasks.length > 0) {
       devTasks.sort((a, b) => {
         // 1. Tareas asignadas / en proceso van DE PRIMERAS
@@ -6434,9 +6482,8 @@ function renderIntegrationsList(filter = activeIntFilter) {
 
   // Check for any developer not in appState.developers
   filtered.forEach(item => {
-    const cItem = resolveCanonicalDevId(item.devId);
-    if (!targetDevs.some(d => resolveCanonicalDevId(d.id) === cItem || d.id === item.devId)) {
-      let group = devGroups.find(g => resolveCanonicalDevId(g.dev.id) === cItem || g.dev.id === item.devId);
+    if (!targetDevs.some(d => isTaskAssignedToDev(item, d))) {
+      let group = devGroups.find(g => isTaskAssignedToDev(item, g.dev));
       if (!group) {
         group = { dev: getDeveloperById(item.devId), tasks: [] };
         devGroups.push(group);
@@ -6510,16 +6557,8 @@ function renderIntegrationsList(filter = activeIntFilter) {
       else pCount++;
     });
 
-    const totalAllDevTasks = integrations.filter(i => {
-      const c1 = resolveCanonicalDevId(i.devId);
-      const c2 = resolveCanonicalDevId(dev.id);
-      return (c1 && c2 && c1 === c2) || (i.devId === dev.id);
-    }).length;
-    const completedAllDevTasks = integrations.filter(i => {
-      const c1 = resolveCanonicalDevId(i.devId);
-      const c2 = resolveCanonicalDevId(dev.id);
-      return ((c1 && c2 && c1 === c2) || (i.devId === dev.id)) && i.status === 'evaluated';
-    }).length;
+    const totalAllDevTasks = integrations.filter(i => isTaskAssignedToDev(i, dev)).length;
+    const completedAllDevTasks = integrations.filter(i => isTaskAssignedToDev(i, dev) && i.status === 'evaluated').length;
     const devRate = totalAllDevTasks > 0 ? Math.round((completedAllDevTasks / totalAllDevTasks) * 100) : 0;
     const hasRisk = oCount > 0;
 
@@ -7608,7 +7647,7 @@ function openNewObservationModal(preselectedTaskId) {
 
   let tasks = appState.integrations || [];
   if (!isAdmin && loggedDevId) {
-    tasks = tasks.filter(t => resolveCanonicalDevId(t.devId) === loggedDevId || t.id === preselectedTaskId);
+    tasks = tasks.filter(t => isTaskAssignedToDev(t, loggedDevId) || t.id === preselectedTaskId);
   }
 
   if (tasks.length === 0) {
@@ -10292,7 +10331,7 @@ function renderAnalyticsView() {
     const allTasks = appState.integrations || [];
 
     const devData = devsList.map(dev => {
-      const devTasks = allTasks.filter(t => t.devId === dev.id || (t.developer || '').toLowerCase().includes(dev.name.toLowerCase()));
+      const devTasks = allTasks.filter(t => isTaskAssignedToDev(t, dev));
       const activeTasks = devTasks.filter(t => t.status !== 'done' && t.status !== 'evaluated');
       const completedTasks = devTasks.filter(t => t.status === 'done' || t.status === 'evaluated');
 
@@ -11750,20 +11789,12 @@ function getScopedCalendarIntegrations() {
   // Filter by role if dev logged in
   if (!isAdmin) {
     const loggedId = getLoggedDevId();
-    const canon = resolveCanonicalDevId(loggedId);
-    list = list.filter(i => {
-      const taskCanon = resolveCanonicalDevId(i.devId);
-      return i.devId === loggedId || i.devId === canon || (taskCanon && taskCanon === canon) || (taskCanon && taskCanon === loggedId);
-    });
+    list = list.filter(i => isTaskAssignedToDev(i, loggedId));
   }
 
   // Filter by Developer selector
   if (calDeliveryDevFilter !== 'all') {
-    const canonFilter = resolveCanonicalDevId(calDeliveryDevFilter);
-    list = list.filter(i => {
-      const taskCanon = resolveCanonicalDevId(i.devId);
-      return i.devId === calDeliveryDevFilter || i.devId === canonFilter || (taskCanon && taskCanon === canonFilter);
-    });
+    list = list.filter(i => isTaskAssignedToDev(i, calDeliveryDevFilter));
   }
 
   // Filter by App selector
@@ -11906,7 +11937,7 @@ function renderOripioSidebar() {
     `;
 
     teamDevs.forEach(dev => {
-      const devTasks = (appState.integrations || []).filter(i => i.devId === dev.id);
+      const devTasks = (appState.integrations || []).filter(i => isTaskAssignedToDev(i, dev));
       const isActive = calDeliveryDevFilter === dev.id;
       teamHtml += `
         <button type="button" 

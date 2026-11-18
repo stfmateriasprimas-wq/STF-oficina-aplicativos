@@ -697,7 +697,8 @@
      */
     findDev(nameOrId) {
       if (!nameOrId || !window.appState || !Array.isArray(window.appState.developers)) return null;
-      const t = String(nameOrId).toLowerCase().trim();
+      const clean = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const t = clean(nameOrId);
       if (typeof window.resolveCanonicalDevId === 'function') {
         const canonId = window.resolveCanonicalDevId(nameOrId);
         if (canonId) {
@@ -705,13 +706,12 @@
           if (byCanon) return byCanon;
         }
       }
-      return window.appState.developers.find(d =>
-        d.id.toLowerCase() === t ||
-        d.name.toLowerCase() === t ||
-        t.includes(d.name.toLowerCase()) ||
-        d.name.toLowerCase().includes(t) ||
-        (d.username && d.username.toLowerCase() === t)
-      ) || null;
+      return window.appState.developers.find(d => {
+        const dId = clean(d.id);
+        const dName = clean(d.name);
+        const dUser = clean(d.username);
+        return dId === t || dName === t || t.includes(dName) || dName.includes(t) || dUser === t;
+      }) || null;
     },
 
     /**
@@ -864,9 +864,21 @@
         const rawDate = String(task.evalDate || task.createdDate || task.Fecha_Registro || '2026-11-05').split(' ')[0];
 
         if (existing) {
-          if (!existing.appName && appObj) existing.appName = appObj.name;
-          if (!existing.devName && devObj) existing.devName = devObj.name;
-          if (!existing.devId && devObj) existing.devId = devObj.id;
+          if (appObj) {
+            existing.appId = appObj.id;
+            existing.appName = appObj.name;
+          }
+          if (devObj) {
+            existing.devId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(devObj.id) : devObj.id;
+            existing.devName = devObj.name;
+          } else if (task.devId) {
+            existing.devId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(task.devId) : task.devId;
+            if (task.devName) existing.devName = task.devName;
+          } else if (appObj && appObj.devId && (!existing.devId || existing.devId === 'dev_jg')) {
+            existing.devId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(appObj.devId) : appObj.devId;
+            const appDev = this.findDev(existing.devId);
+            if (appDev) existing.devName = appDev.name;
+          }
           if (cleanDeadline) existing.deadline = cleanDeadline;
           if (task.deliveryTime && !existing.deliveryTime) existing.deliveryTime = task.deliveryTime;
           if (cleanNotes && (!existing.description || existing.description === 'Integración técnica operativa en planta de confección.' || existing.description === 'Integración asignada desde Google Sheets.')) {
@@ -888,13 +900,27 @@
             existing.evaluation.qualityScore = parsedScore;
           }
         } else {
+          let targetDevId = 'dev_jg';
+          let targetDevName = 'Jose Guzman';
+          if (devObj) {
+            targetDevId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(devObj.id) : devObj.id;
+            targetDevName = devObj.name;
+          } else if (task.devId) {
+            targetDevId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(task.devId) : task.devId;
+            targetDevName = task.devName || task.developer || 'Desarrollador';
+          } else if (appObj && appObj.devId) {
+            targetDevId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(appObj.devId) : appObj.devId;
+            const appDev = this.findDev(targetDevId);
+            targetDevName = appDev ? appDev.name : (task.devName || task.developer || 'Desarrollador');
+          }
+
           const newTask = {
             id: tId,
             name: tName,
-            appId: appObj ? appObj.id : 'app_torre',
-            appName: appObj ? appObj.name : 'Torre de Control',
-            devId: devObj ? (window.resolveCanonicalDevId ? window.resolveCanonicalDevId(devObj.id) : devObj.id) : 'dev_jg',
-            devName: devObj ? devObj.name : 'Jose Guzman',
+            appId: appObj ? appObj.id : (task.appId || 'app_torre'),
+            appName: appObj ? appObj.name : (task.appName || 'Torre de Control'),
+            devId: targetDevId,
+            devName: targetDevName,
             startDate: task.startDate || '2026-10-19',
             deadline: cleanDeadline,
             deliveryTime: task.deliveryTime || '10:00',
@@ -918,6 +944,10 @@
       if (count > 0 && typeof window.saveData === 'function') {
         window.saveData(state);
       }
+      if (typeof window.refreshAllViews === 'function') {
+        window.refreshAllViews();
+      }
+      return count;
       return count;
     },
 
@@ -1302,11 +1332,12 @@
             );
 
             if (!existing) {
+              const fallbackDevId = (appObj && appObj.devId) ? (window.resolveCanonicalDevId ? window.resolveCanonicalDevId(appObj.devId) : appObj.devId) : 'dev_jg';
               const newTask = {
                 id: item.Timestamp ? `int_${item.Timestamp}` : `int_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
                 name: taskName,
                 appId: appObj ? appObj.id : 'app_torre',
-                devId: devObj ? devObj.id : 'dev_jg',
+                devId: devObj ? devObj.id : fallbackDevId,
                 startDate: '2026-10-19',
                 deadline: deadline,
                 weight: weight,
@@ -1401,13 +1432,14 @@
           );
 
           if (!existingTicket) {
+            const fallbackDevId = (appObj && appObj.devId) ? (window.resolveCanonicalDevId ? window.resolveCanonicalDevId(appObj.devId) : appObj.devId) : 'dev_jg';
             const newTicketObj = {
               id: 'sup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
               code: cleanCode,
               appId: appObj ? appObj.id : 'app_colchas',
               appName: appName || (appObj ? appObj.name : 'COLCHAS'),
               appCode: appObj ? appObj.code : 'STF-COL-02',
-              devId: devObj ? devObj.id : 'dev_jg',
+              devId: devObj ? devObj.id : fallbackDevId,
               devName: targetDevName,
               requester: {
                 name: reqName,
