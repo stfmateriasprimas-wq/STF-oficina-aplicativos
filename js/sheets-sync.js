@@ -725,7 +725,9 @@
         return { success: false, message: 'Google Sheets no conectado.' };
       }
 
-      this.setSyncingState(true);
+      if (!silent) {
+        this.setSyncingState(true);
+      }
 
       try {
         let syncedCount = 0;
@@ -786,11 +788,16 @@
         const timeStr = now.toLocaleDateString('es-CO') + ' ' + now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
         localStorage.setItem(STORAGE_KEYS.LAST_SYNC, timeStr);
 
-        this.setSyncingState(false);
-        this.updateUiStatus();
+        if (!silent) {
+          this.setSyncingState(false);
+          this.updateUiStatus();
+        }
 
-        // Refrescar todas las vistas en pantalla
-        if (typeof window.refreshAllViews === 'function') {
+        // Refrescar vistas en pantalla SOLO si hubo cambios reales en los datos o si la sincronización fue manual
+        const hasRealChanges = (syncedCount > 0 || phaseUpdatesCount > 0 || syncedObsCount > 0);
+        if (hasRealChanges && typeof window.refreshAllViews === 'function') {
+          window.refreshAllViews();
+        } else if (!silent && typeof window.refreshAllViews === 'function') {
           window.refreshAllViews();
         }
 
@@ -806,7 +813,7 @@
 
         return { success: true, syncedCount, phaseUpdatesCount, syncedObsCount };
       } catch (err) {
-        this.setSyncingState(false);
+        if (!silent) this.setSyncingState(false);
         console.warn('[SheetsSync] Error en pullCloudData:', err);
         return { success: false, message: err.message };
       }
@@ -990,13 +997,14 @@
         }
       });
 
-      if (count > 0 && typeof window.saveData === 'function') {
-        window.saveData(state);
+      if (count > 0) {
+        if (typeof window.saveData === 'function') {
+          window.saveData(state);
+        }
+        if (typeof window.refreshAllViews === 'function') {
+          window.refreshAllViews();
+        }
       }
-      if (typeof window.refreshAllViews === 'function') {
-        window.refreshAllViews();
-      }
-      return count;
       return count;
     },
 

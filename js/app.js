@@ -762,7 +762,7 @@ function startAutomatedNotificationPolling() {
   const initialNotifs = getNotificationsData();
   initialNotifs.forEach(n => lastKnownNotifIds.add(n.id));
 
-  // Sondeo en tiempo real continuo cada 6 segundos para capturar solicitudes de planta en vivo
+  // Sondeo en segundo plano silencioso y fluido cada 25 segundos
   automatedPollingInterval = setInterval(async () => {
     try {
       if (window.SheetsSync && typeof window.SheetsSync.pullCloudData === 'function') {
@@ -772,17 +772,17 @@ function startAutomatedNotificationPolling() {
     } catch (err) {
       console.warn('[Polling Automatizado]', err);
     }
-  }, 6000);
+  }, 25000);
 }
 
 function checkAndAlertNewNotifications() {
   const currentNotifs = getNotificationsData();
-  renderNotificationsDropdown();
 
   // Detectar notificaciones nuevas que no estaban en el sondeo anterior
   const brandNewNotifs = currentNotifs.filter(n => !lastKnownNotifIds.has(n.id) && !readNotificationsSet.has(n.id));
 
   if (brandNewNotifs.length > 0) {
+    renderNotificationsDropdown();
     const latest = brandNewNotifs[0];
     triggerNotificationAlert({
       title: latest.title,
