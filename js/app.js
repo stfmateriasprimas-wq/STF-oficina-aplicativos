@@ -8186,6 +8186,36 @@ window.deleteTaskObservationFromModal = deleteTaskObservationFromModal;
 window.openAddNoteFromTaskObsModal = openAddNoteFromTaskObsModal;
 
 // ==========================================================================
+// EXPANDABLE FLOATING SIDEBAR DRAWER (STF LOGO TOGGLE)
+// ==========================================================================
+
+function toggleSidebarExpansion() {
+  const sidebar = document.getElementById('appFloatingSidebar') || document.querySelector('.floating-sidebar');
+  if (!sidebar) return;
+  const isExpanded = sidebar.classList.toggle('expanded');
+  try {
+    localStorage.setItem('stf_sidebar_expanded', isExpanded ? 'true' : 'false');
+  } catch (e) {}
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+function initSidebarState() {
+  try {
+    const isExpanded = localStorage.getItem('stf_sidebar_expanded') === 'true';
+    const sidebar = document.getElementById('appFloatingSidebar') || document.querySelector('.floating-sidebar');
+    if (sidebar && isExpanded && window.innerWidth > 768) {
+      sidebar.classList.add('expanded');
+    }
+  } catch (e) {}
+}
+
+window.toggleSidebarExpansion = toggleSidebarExpansion;
+window.initSidebarState = initSidebarState;
+
+// ==========================================================================
 // TEMA VISUAL: MODO CLARO & MODO OSCURO (EJECUTIVO DE ALTO CONTRASTE)
 // ==========================================================================
 
@@ -8226,6 +8256,11 @@ function applyTheme(theme, showNotice = false) {
   if (sidebarBtn) {
     sidebarBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
     sidebarBtn.classList.toggle('active-dark', isDark);
+  }
+
+  const sidebarThemeText = document.getElementById('sidebarThemeText');
+  if (sidebarThemeText) {
+    sidebarThemeText.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
   }
 
   // Actualizar botones de configuración
@@ -8441,6 +8476,9 @@ function initApp() {
 
   // Inicializar tema visual guardado (Claro u Oscuro)
   initTheme();
+
+  // Inicializar estado del menú lateral expandible
+  initSidebarState();
 
   // Lucide icons
   lucide.createIcons();
