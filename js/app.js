@@ -3254,36 +3254,105 @@ function getSTFLaborDaysMetrics(startDateOrStr, endDateOrStr) {
   };
 }
 
-function getSTFDeadlineDiagnosis(deadlineStr, refDate = (typeof getSystemReferenceDate === 'function' ? getSystemReferenceDate() : new Date())) {
+function getSTFDeadlineDiagnosis(deadlineStr, refDate = (typeof getSystemReferenceDate === 'function' ? getSystemReferenceDate() : new Date()), deliveryTimeStr = '11:00', createdDateStr = '') {
   if (!deadlineStr) {
     return {
       isOverdue: false,
+      isToday: false,
       workdaysDiff: 0,
       calendarDaysDiff: 0,
       countdownText: 'Sin límite fijado',
+      countdownBadgeText: 'Sin fecha',
+      friendlyStatusText: 'Sin fecha',
       status: 'ontime'
     };
   }
 
-  const dTarget = new Date(deadlineStr + (deadlineStr.length === 10 ? 'T23:59:59' : ''));
-  const dRef = refDate || new Date();
+  const dRef = refDate instanceof Date ? refDate : (parseSafeDate(refDate) || new Date());
+  const refMidnight = new Date(dRef.getFullYear(), dRef.getMonth(), dRef.getDate(), 0, 0, 0);
 
-  const targetMidnight = new Date(dTarget.getFullYear(), dTarget.getMonth(), dTarget.getDate());
-  const refMidnight = new Date(dRef.getFullYear(), dRef.getMonth(), dRef.getDate());
+  let dTarget = parseSafeDate(deadlineStr);
+  if (!dTarget) {
+    dTarget = new Date(deadlineStr + (deadlineStr.length === 10 ? 'T23:59:59' : ''));
+  }
+  let targetMidnight = new Date(dTarget.getFullYear(), dTarget.getMonth(), dTarget.getDate(), 0, 0, 0);
+
+  // Parsear fecha real de creación
+  let createdMidnight = null;
+  if (createdDateStr) {
+    const dCreated = parseSafeDate(createdDateStr);
+    if (dCreated) {
+      createdMidnight = new Date(dCreated.getFullYear(), dCreated.getMonth(), dCreated.getDate(), 0, 0, 0);
+    }
+  }
+
+  // REGLA CRÍTICA STF: Si la tarea fue creada hoy, no puede nacer en retraso (si deadline < hoy, se alinea a hoy)
+  const isCreatedToday = createdMidnight && createdMidnight.getTime() === refMidnight.getTime();
+  if (isCreatedToday && targetMidnight.getTime() < refMidnight.getTime()) {
+    targetMidnight = new Date(refMidnight.getTime());
+  }
 
   const diffMs = targetMidnight.getTime() - refMidnight.getTime();
   const rawCalendarDiff = Math.round(diffMs / 86400000);
 
+  const cleanTimeStr = deliveryTimeStr || '11:00';
+  const parts = String(cleanTimeStr).split(':');
+  const meetingH = parseInt(parts[0], 10) || 11;
+  const meetingM = parseInt(parts[1], 10) || 0;
+  const meetingExact = new Date(targetMidnight.getFullYear(), targetMidnight.getMonth(), targetMidnight.getDate(), meetingH, meetingM, 0);
+  const timeFormatted = (typeof formatTime12h === 'function') ? formatTime12h(cleanTimeStr) : cleanTimeStr;
+
+  // CASO 1: VENCE HOY
   if (rawCalendarDiff === 0) {
-    return {
-      isOverdue: false,
-      workdaysDiff: 1,
-      calendarDaysDiff: 1,
-      countdownText: 'Vence Hoy (Turno 6am-1pm)',
-      status: 'ontime'
-    };
+    const diffMinutes = Math.round((meetingExact.getTime() - dRef.getTime()) / 60000);
+
+    if (diffMinutes > 0) {
+      // Aún no es la hora de la reunión hoy
+      const hrs = Math.floor(diffMinutes / 60);
+      const mins = diffMinutes % 60;
+      let leftStr = '';
+      if (hrs > 0 && mins > 0) leftStr = `${hrs}h ${mins}m`;
+      else if (hrs > 0) leftStr = `${hrs}h`;
+      else leftStr = `${mins}m`;
+
+      return {
+        isOverdue: false,
+        isToday: true,
+        workdaysDiff: 0,
+        calendarDaysDiff: 0,
+        diffMinutes,
+        meetingTimeStr: cleanTimeStr,
+        countdownText: `Quedan ${leftStr} para reunión de entrega (${timeFormatted})`,
+        countdownBadgeText: `Quedan ${leftStr} para reunión`,
+        friendlyStatusText: 'Por entregar',
+        status: diffMinutes <= 30 ? 'risk' : 'ontime'
+      };
+    } else {
+      // La hora de la reunión ya pasó hoy
+      const overdueMin = Math.abs(diffMinutes);
+      const ovHrs = Math.floor(overdueMin / 60);
+      const ovMins = overdueMin % 60;
+      let overdueStr = '';
+      if (ovHrs > 0 && ovMins > 0) overdueStr = `+${ovHrs}h ${ovMins}m`;
+      else if (ovHrs > 0) overdueStr = `+${ovHrs}h`;
+      else overdueStr = `+${ovMins}m`;
+
+      return {
+        isOverdue: true,
+        isToday: true,
+        workdaysDiff: 0,
+        calendarDaysDiff: 0,
+        diffMinutes,
+        meetingTimeStr: cleanTimeStr,
+        countdownText: `⚠️ Desfase: ${overdueStr} tras hora de reunión (${timeFormatted})`,
+        countdownBadgeText: `Desfase (${overdueStr})`,
+        friendlyStatusText: `Desfase (${overdueStr})`,
+        status: 'risk'
+      };
+    }
   }
 
+  // CASO 2: VENCE EN EL PASADO (solo si la tarea no fue creada hoy)
   if (rawCalendarDiff < 0) {
     const pastMetrics = getSTFLaborDaysMetrics(addCalendarDays(targetMidnight, 1), refMidnight);
     const overdueWorkdays = Math.max(1, pastMetrics.workdays);
@@ -3291,21 +3360,33 @@ function getSTFDeadlineDiagnosis(deadlineStr, refDate = (typeof getSystemReferen
 
     return {
       isOverdue: true,
+      isToday: false,
       workdaysDiff: -overdueWorkdays,
       calendarDaysDiff: -overdueCalendar,
-      countdownText: `⚠️ ${overdueWorkdays}d hábil${overdueWorkdays > 1 ? 'es' : ''} retraso`,
+      diffMinutes: rawCalendarDiff * 1440,
+      meetingTimeStr: cleanTimeStr,
+      countdownText: `⚠️ Vencida hace ${overdueWorkdays} día${overdueWorkdays > 1 ? 's' : ''} hábil${overdueWorkdays > 1 ? 'es' : ''}`,
+      countdownBadgeText: `Vencida hace ${overdueWorkdays} d`,
+      friendlyStatusText: `Desfase (+${overdueWorkdays}d háb.)`,
       status: 'risk'
     };
   }
 
+  // CASO 3: VENCE EN DÍAS FUTUROS
   const futureMetrics = getSTFLaborDaysMetrics(addCalendarDays(refMidnight, 1), targetMidnight);
   const remainingWorkdays = Math.max(1, futureMetrics.workdays);
+  const daysText = remainingWorkdays === 1 ? '1 día hábil' : `${remainingWorkdays} días hábiles`;
 
   return {
     isOverdue: false,
+    isToday: false,
     workdaysDiff: remainingWorkdays,
     calendarDaysDiff: rawCalendarDiff,
-    countdownText: `En ${remainingWorkdays}d hábil${remainingWorkdays > 1 ? 'es' : ''} (${rawCalendarDiff}d corr.)`,
+    diffMinutes: rawCalendarDiff * 1440,
+    meetingTimeStr: cleanTimeStr,
+    countdownText: `Quedan ${daysText} para reunión (${timeFormatted})`,
+    countdownBadgeText: remainingWorkdays === 1 ? `Reunión Mañana` : `Quedan ${remainingWorkdays} días`,
+    friendlyStatusText: remainingWorkdays <= 2 ? 'Por entregar' : 'Ritmo óptimo',
     status: remainingWorkdays <= 2 ? 'risk' : 'ontime'
   };
 }
@@ -6218,10 +6299,16 @@ function getSystemReferenceDate() {
 
 function calculateIntegrationTimeProgress(integration) {
   const refDate = getSystemReferenceDate();
-  const dStart = parseSafeDate(integration.startDate) || new Date('2026-10-19T00:00:00');
-  const dEnd = parseSafeDate(integration.deadline) || new Date('2026-11-15T23:59:59');
 
-  const dlDiag = getSTFDeadlineDiagnosis(integration.deadline, refDate);
+  // Fecha real de inicio (si startDate era el default '2026-10-19' o falta, usar createdDate)
+  let rawStart = integration.startDate;
+  if (!rawStart || rawStart === '2026-10-19') {
+    rawStart = integration.createdDate || integration.created_at || (integration.evaluation && integration.evaluation.evalDate);
+  }
+  const dStart = parseSafeDate(rawStart) || refDate;
+  const dEnd = parseSafeDate(integration.deadline) || refDate;
+
+  const dlDiag = getSTFDeadlineDiagnosis(integration.deadline, refDate, integration.deliveryTime, integration.createdDate);
   const totalMetrics = getSTFLaborDaysMetrics(dStart, dEnd);
   const totalWorkdays = Math.max(1, totalMetrics.workdays);
 
@@ -6248,7 +6335,9 @@ function calculateIntegrationTimeProgress(integration) {
       timeBurnRate: 100,
       expectedProgress: 100,
       isOverdue: false,
-      countdownText: 'Completada y Sumada al Sistema'
+      isToday: false,
+      countdownText: 'Completada y Sumada al Sistema',
+      countdownBadgeText: 'Completada'
     };
   }
 
@@ -6256,19 +6345,50 @@ function calculateIntegrationTimeProgress(integration) {
     const daysOverdue = Math.abs(workdaysRemaining);
     return {
       status: 'risk',
-      statusText: `Retraso (+${daysOverdue}d háb.)`,
-      friendlyStatusText: `Desfase (+${daysOverdue}d háb.)`,
+      statusText: dlDiag.isToday ? dlDiag.friendlyStatusText : `Retraso (+${daysOverdue}d háb.)`,
+      friendlyStatusText: dlDiag.friendlyStatusText,
       badgeClass: 'risk',
-      totalDays: totalMetrics.calendarDays,
+      totalDays: Math.max(1, totalMetrics.calendarDays),
       totalWorkdays,
-      elapsedDays: totalMetrics.calendarDays + Math.abs(dlDiag.calendarDaysDiff),
-      elapsedWorkdays: totalWorkdays + daysOverdue,
+      elapsedDays: dlDiag.isToday ? 1 : totalMetrics.calendarDays + Math.abs(dlDiag.calendarDaysDiff),
+      elapsedWorkdays: dlDiag.isToday ? 1 : totalWorkdays + daysOverdue,
       daysRemaining: dlDiag.calendarDaysDiff,
       workdaysRemaining,
       timeBurnRate: 100,
       expectedProgress: 100,
       isOverdue: true,
-      countdownText: `⚠️ Vencida hace ${daysOverdue} día${daysOverdue > 1 ? 's' : ''} hábil${daysOverdue > 1 ? 'es' : ''}`
+      isToday: dlDiag.isToday,
+      diffMinutes: dlDiag.diffMinutes,
+      countdownText: dlDiag.countdownText,
+      countdownBadgeText: dlDiag.countdownBadgeText
+    };
+  }
+
+  // Caso: Vence Hoy y está en curso dentro de la jornada / antes de la reunión
+  if (dlDiag.isToday) {
+    // Cálculo de avance de la jornada STF (Turno 6:00 AM a 1:00 PM = 420 min)
+    const shiftStart = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), 6, 0, 0);
+    const elapsedMin = Math.max(0, Math.round((refDate.getTime() - shiftStart.getTime()) / 60000));
+    const shiftBurn = Math.min(100, Math.max(15, Math.round((elapsedMin / 420) * 100)));
+
+    return {
+      status: 'ontime',
+      statusText: 'Entrega Hoy',
+      friendlyStatusText: dlDiag.friendlyStatusText || 'Por entregar',
+      badgeClass: (dlDiag.diffMinutes && dlDiag.diffMinutes <= 45) ? 'risk' : 'ontime',
+      isToday: true,
+      totalDays: 1,
+      totalWorkdays: 1,
+      elapsedDays: 1,
+      elapsedWorkdays: 1,
+      daysRemaining: 0,
+      workdaysRemaining: 0,
+      diffMinutes: dlDiag.diffMinutes,
+      timeBurnRate: shiftBurn,
+      expectedProgress: shiftBurn,
+      isOverdue: false,
+      countdownText: dlDiag.countdownText,
+      countdownBadgeText: dlDiag.countdownBadgeText
     };
   }
 
@@ -6276,7 +6396,7 @@ function calculateIntegrationTimeProgress(integration) {
     return {
       status: 'risk',
       statusText: 'En Riesgo (>75% Tiempo)',
-      friendlyStatusText: 'Por entregar',
+      friendlyStatusText: dlDiag.friendlyStatusText || 'Por entregar',
       badgeClass: 'risk',
       totalDays: totalMetrics.calendarDays,
       totalWorkdays,
@@ -6287,14 +6407,16 @@ function calculateIntegrationTimeProgress(integration) {
       timeBurnRate,
       expectedProgress,
       isOverdue: false,
-      countdownText: `Quedan ${workdaysRemaining} día${workdaysRemaining !== 1 ? 's' : ''} hábil${workdaysRemaining !== 1 ? 'es' : ''} (Turno 6am-1pm)`
+      isToday: false,
+      countdownText: dlDiag.countdownText,
+      countdownBadgeText: dlDiag.countdownBadgeText
     };
   }
 
   return {
     status: 'ontime',
     statusText: 'En Tiempo (Ritmo Óptimo)',
-    friendlyStatusText: 'Ritmo óptimo',
+    friendlyStatusText: dlDiag.friendlyStatusText || 'Ritmo óptimo',
     badgeClass: 'ontime',
     totalDays: totalMetrics.calendarDays,
     totalWorkdays,
@@ -6305,7 +6427,9 @@ function calculateIntegrationTimeProgress(integration) {
     timeBurnRate,
     expectedProgress,
     isOverdue: false,
-    countdownText: `Quedan ${workdaysRemaining} día${workdaysRemaining !== 1 ? 's' : ''} hábil${workdaysRemaining !== 1 ? 'es' : ''} para entrega`
+    isToday: false,
+    countdownText: dlDiag.countdownText,
+    countdownBadgeText: dlDiag.countdownBadgeText
   };
 }
 
@@ -6551,7 +6675,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
     tasks.forEach(item => {
       const isEval = item.status === 'evaluated';
       const diag = calculateIntegrationTimeProgress(item);
-      const isOver = !isEval && (diag.isOverdue || diag.daysRemaining < 0);
+      const isOver = !isEval && diag.isOverdue;
       if (isEval) dCount++;
       else if (isOver) oCount++;
       else pCount++;
@@ -6572,7 +6696,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
       const app = appState.applications.find(a => a.id === item.appId) || { name: 'Sistema General', iconColor: '#4E65FF' };
       const diag = calculateIntegrationTimeProgress(item);
       const isEvaluated = item.status === 'evaluated';
-      const isOverdue = !isEvaluated && (diag.isOverdue || diag.daysRemaining < 0);
+      const isOverdue = !isEvaluated && diag.isOverdue;
       const appColor = app.iconColor || '#4E65FF';
       const consecutiveNum = devConsecutiveMap.get(item.id) || 1;
 
@@ -6587,14 +6711,15 @@ function renderIntegrationsList(filter = activeIntFilter) {
         cornerBadgeClass = 'badge-completed';
         cornerBadgeContent = '<i data-lucide="check" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
         cornerBadgeTitle = `Tarea #${consecutiveNum} · Solucionada & Auditada`;
-      } else if (isOverdue || diag.daysRemaining < 0) {
+      } else if (isOverdue) {
         cardLevel = 'red';
         cornerBadgeClass = 'badge-overdue';
         cornerBadgeContent = '<i data-lucide="x" style="width: 17px; height: 17px; stroke-width: 3.2px;"></i>';
         const overdueDays = Math.abs(diag.daysRemaining);
-        cornerBadgeTitle = `Tarea #${consecutiveNum} · Vencida / Desfase (${overdueDays} d)`;
+        const overdueTitle = diag.isToday ? diag.friendlyStatusText : `Vencida / Desfase (${overdueDays} d)`;
+        cornerBadgeTitle = `Tarea #${consecutiveNum} · ${overdueTitle}`;
       } else {
-        // Tarea asignada en desarrollo / recién asignada -> Borde AMARILLO y de primera
+        // Tarea asignada en desarrollo / recién asignada / entrega hoy -> Borde AMARILLO y de primera
         cardLevel = 'yellow';
         cornerBadgeClass = 'badge-process';
         cornerBadgeContent = `<span>${consecutiveNum}</span>`;
@@ -6610,26 +6735,34 @@ function renderIntegrationsList(filter = activeIntFilter) {
             <span>Completada</span>
           </span>
         `;
-      } else if (diag.isOverdue) {
-        const overdueDays = Math.abs(diag.daysRemaining);
+      } else if (isOverdue) {
         countdownBadgeHtml = `
           <span class="friendly-deadline-pill overdue">
             <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i>
-            <span>Vencida hace ${overdueDays} d</span>
+            <span>${diag.countdownBadgeText || `Desfase (${diag.friendlyStatusText})`}</span>
           </span>
         `;
-      } else if (diag.badgeClass === 'risk') {
+      } else if (diag.isToday) {
+        countdownBadgeHtml = `
+          <span class="friendly-deadline-pill today" style="background: rgba(245, 158, 11, 0.12); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.28); font-weight: 700;">
+            <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+            <span>${diag.countdownBadgeText || 'Reunión Hoy'}</span>
+          </span>
+        `;
+      } else if (diag.badgeClass === 'risk' || (diag.daysRemaining <= 2 && diag.daysRemaining > 0)) {
+        const dCount = diag.daysRemaining || diag.workdaysRemaining || 1;
         countdownBadgeHtml = `
           <span class="friendly-deadline-pill risk">
             <i data-lucide="hourglass" style="width: 12px; height: 12px;"></i>
-            <span>Quedan ${diag.daysRemaining} días</span>
+            <span>Quedan ${dCount} día${dCount !== 1 ? 's' : ''}</span>
           </span>
         `;
       } else {
+        const dCount = diag.daysRemaining || diag.workdaysRemaining || 3;
         countdownBadgeHtml = `
           <span class="friendly-deadline-pill ontime">
             <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
-            <span>Quedan ${diag.daysRemaining} días</span>
+            <span>Quedan ${dCount} día${dCount !== 1 ? 's' : ''}</span>
           </span>
         `;
       }
@@ -6767,7 +6900,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
               <div class="int-time-header">
                 <div class="int-time-dates">
                   <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
-                  <span>${formatShortDate(item.startDate)} → ${formatShortDate(item.deadline)}</span>
+                  <span>${diag.isToday ? `Hoy (${formatShortDate(item.startDate)}) · Reunión ${formatTime12h(item.deliveryTime || '11:00')}` : `${formatShortDate(item.startDate)} → ${formatShortDate(item.deadline)}`}</span>
                 </div>
                 ${countdownBadgeHtml}
               </div>
@@ -6781,7 +6914,7 @@ function renderIntegrationsList(filter = activeIntFilter) {
                 <div class="int-bar-labels">
                   <span class="int-label-spent">
                     <i data-lucide="clock" style="width: 11px; height: 11px; margin-right: 3px;"></i>
-                    Día ${diag.elapsedDays} de ${diag.totalDays} (${diag.timeBurnRate}%)
+                    ${diag.isToday ? `Jornada de Hoy (${diag.timeBurnRate}%)` : `Día ${diag.elapsedDays} de ${diag.totalDays} (${diag.timeBurnRate}%)`}
                   </span>
                   <span class="int-label-expected">
                     Avance esperado: <strong>${diag.expectedProgress}%</strong>

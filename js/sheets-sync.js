@@ -837,11 +837,39 @@
         const rawStatus = String(task.status || task.Estado || '').toLowerCase();
         const isEval = rawStatus.includes('audit') || rawStatus.includes('aprob') || rawStatus === 'evaluated';
 
-        // Normalizar fecha de entrega a YYYY-MM-DD
-        let cleanDeadline = task.deadline || task.Fecha_Entrega || '2026-11-15';
-        if (typeof cleanDeadline === 'string' && (cleanDeadline.includes('Mon Nov') || cleanDeadline.includes('Nov 09') || cleanDeadline.includes('Nov 9'))) {
-          cleanDeadline = '2026-11-09';
-        } else {
+        // Fecha de referencia actual del sistema STF
+        const systemTodayStr = (typeof getSystemReferenceDate === 'function') 
+          ? getSystemReferenceDate().toISOString().substring(0, 10) 
+          : '2026-11-18';
+
+        // 1. Obtener y normalizar Fecha y Hora de Creación / Registro Real
+        let rawRegDate = task.createdDate || task.Fecha_Registro || task.created_at || '';
+        let cleanCreatedDate = '';
+        let cleanCreatedDay = '';
+        if (rawRegDate) {
+          const dReg = new Date(rawRegDate);
+          if (!isNaN(dReg.getTime())) {
+            cleanCreatedDate = String(rawRegDate).trim();
+            const y = dReg.getFullYear();
+            const m = String(dReg.getMonth() + 1).padStart(2, '0');
+            const d = String(dReg.getDate()).padStart(2, '0');
+            cleanCreatedDay = `${y}-${m}-${d}`;
+          }
+        }
+        if (!cleanCreatedDay) {
+          cleanCreatedDay = systemTodayStr;
+          cleanCreatedDate = `${systemTodayStr} 08:00:00`;
+        }
+
+        // 2. Fecha de inicio (startDate): La fecha real de creación, nunca 19 de octubre fijo
+        let cleanStartDate = task.startDate;
+        if (!cleanStartDate || cleanStartDate === '2026-10-19') {
+          cleanStartDate = cleanCreatedDay;
+        }
+
+        // 3. Normalizar fecha de entrega a YYYY-MM-DD
+        let cleanDeadline = task.deadline || task.Fecha_Entrega;
+        if (cleanDeadline) {
           const dObj = new Date(cleanDeadline);
           if (!isNaN(dObj.getTime())) {
             const y = dObj.getFullYear();
@@ -850,6 +878,14 @@
             cleanDeadline = `${y}-${m}-${d}`;
           }
         }
+
+        // REGLA CRÍTICA STF: Si la tarea fue creada hoy o recientemente, la fecha de entrega no puede ser anterior
+        if (!cleanDeadline || (cleanCreatedDay === systemTodayStr && cleanDeadline < cleanCreatedDay)) {
+          cleanDeadline = cleanCreatedDay;
+        }
+
+        // 4. Hora oficial de la reunión de entrega
+        let cleanDeliveryTime = task.deliveryTime || task.Hora_Entrega || '11:00';
 
         // Parsear calificación limpia (corrige 0.943% -> 94.3%)
         let rawEvalStr = String(task.evaluation || task.Evaluacion_Calidad || '95').replace(',', '.');
@@ -861,7 +897,7 @@
         const tWeight = Number(task.weight || task['Ponderacion_%']) || 15;
         const parsedPoints = parseFloat(((tWeight * (parsedScore / 100))).toFixed(1));
         const cleanNotes = String(task.notes || task.Observaciones_Auditoria || 'Implementación en planta validada con los operarios. Operatividad estable.').trim();
-        const rawDate = String(task.evalDate || task.createdDate || task.Fecha_Registro || '2026-11-05').split(' ')[0];
+        const rawDate = String(task.evalDate || task.createdDate || task.Fecha_Registro || cleanCreatedDay).split(' ')[0];
 
         if (existing) {
           if (appObj) {
@@ -879,8 +915,19 @@
             const appDev = this.findDev(existing.devId);
             if (appDev) existing.devName = appDev.name;
           }
-          if (cleanDeadline) existing.deadline = cleanDeadline;
-          if (task.deliveryTime && !existing.deliveryTime) existing.deliveryTime = task.deliveryTime;
+
+          if (cleanCreatedDate) existing.createdDate = cleanCreatedDate;
+          if (!existing.startDate || existing.startDate === '2026-10-19') {
+            existing.startDate = cleanStartDate;
+          }
+          if (cleanDeadline) {
+            if (cleanCreatedDay === systemTodayStr && cleanDeadline < cleanCreatedDay) {
+              existing.deadline = cleanCreatedDay;
+            } else {
+              existing.deadline = cleanDeadline;
+            }
+          }
+          if (cleanDeliveryTime) existing.deliveryTime = cleanDeliveryTime;
           if (cleanNotes && (!existing.description || existing.description === 'Integración técnica operativa en planta de confección.' || existing.description === 'Integración asignada desde Google Sheets.')) {
             existing.description = cleanNotes;
           }
@@ -921,9 +968,10 @@
             appName: appObj ? appObj.name : (task.appName || 'Torre de Control'),
             devId: targetDevId,
             devName: targetDevName,
-            startDate: task.startDate || '2026-10-19',
+            startDate: cleanStartDate,
+            createdDate: cleanCreatedDate,
             deadline: cleanDeadline,
-            deliveryTime: task.deliveryTime || '10:00',
+            deliveryTime: cleanDeliveryTime,
             weight: tWeight,
             status: isEval ? 'evaluated' : 'in_progress',
             description: cleanNotes || 'Integración asignada desde Google Sheets.',

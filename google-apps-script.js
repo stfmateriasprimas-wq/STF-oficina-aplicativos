@@ -311,7 +311,7 @@ function ensureExactHeaders(sheet, expectedHeaders) {
  * Normaliza cualquier formato de fecha a 'YYYY-MM-DD' estricto para evitar errores en Google Sheets
  */
 function formatDateToYMD(val) {
-  if (!val) return "2026-11-15";
+  if (!val) return Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
   if (val instanceof Date) {
     return Utilities.formatDate(val, "America/Bogota", "yyyy-MM-dd");
   }
@@ -855,6 +855,13 @@ function doGet(e) {
           : String(rawRegDate || "").trim();
         var notes = String(hasIdCol ? (row[9] || "") : (row[8] || "")).trim();
 
+        var todayBogota = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
+        var createdDay = createdDate ? createdDate.substring(0, 10) : todayBogota;
+        // Si la tarea se registró hoy o recientemente, su deadline no puede ser anterior a la fecha de creación
+        if (createdDay === todayBogota && deadline < todayBogota) {
+          deadline = todayBogota;
+        }
+
         var dId = "dev_jg";
         var dLower = devName.toLowerCase();
         var aLower = (appName || "").toLowerCase();
@@ -883,10 +890,12 @@ function doGet(e) {
           developer: devName,
           devId: dId,
           weight: weight,
+          startDate: createdDay || todayBogota,
+          createdDate: createdDate || (todayBogota + " 08:00:00"),
           deadline: deadline,
+          deliveryTime: "11:00",
           status: status,
           evaluation: evaluation,
-          createdDate: createdDate,
           notes: notes
         });
       }

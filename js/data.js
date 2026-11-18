@@ -788,6 +788,33 @@ function getStoredData() {
                 if (dev) item.devName = dev.name;
               }
             }
+
+            // Normalización de tiempos y fechas reales STF (creación vs reunión de entrega)
+            const todayStr = '2026-11-18';
+            let createdDay = todayStr;
+            if (item.createdDate) {
+              const dC = new Date(item.createdDate);
+              if (!isNaN(dC.getTime())) {
+                createdDay = `${dC.getFullYear()}-${String(dC.getMonth() + 1).padStart(2, '0')}-${String(dC.getDate()).padStart(2, '0')}`;
+              }
+            } else {
+              item.createdDate = `${todayStr} 08:00:00`;
+            }
+
+            // Si startDate era el default '2026-10-19' o no existe, corregirla al día de creación real
+            if (!item.startDate || item.startDate === '2026-10-19') {
+              item.startDate = createdDay;
+            }
+
+            // Si la tarea se montó hoy, su deadline no puede ser anterior a hoy (corrige tareas en falso desfase)
+            if (!item.deadline || (createdDay === todayStr && item.deadline < todayStr)) {
+              item.deadline = todayStr;
+            }
+
+            // Asegurar hora de entrega oficial de reunión
+            if (!item.deliveryTime) {
+              item.deliveryTime = '11:00';
+            }
           });
 
           // Garantizar que todos los desarrolladores tengan sus tareas asignadas reflejadas
