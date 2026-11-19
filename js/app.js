@@ -5455,7 +5455,7 @@ function handleCreateNewProject(e) {
     webUrl: webUrl || `https://stf-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.vercel.app`,
     devId: devId,
     deadline: deadline,
-    deliveryTime: deliveryTime,
+    deliveryTime: '13:00',
     priority: priority,
     status: 'ontime',
     iconColor: '#4E65FF',
