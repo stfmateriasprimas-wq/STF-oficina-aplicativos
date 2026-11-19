@@ -5127,7 +5127,7 @@ function openDevScorecardModal(devId) {
     devImgEl.src = dev.avatar;
     if (isSelf) {
       devImgEl.style.cursor = 'pointer';
-      devImgEl.title = `Haz clic para actualizar tu foto de perfil`;
+      devImgEl.title = 'Haz clic para cambiar tu foto de perfil';
       devImgEl.onclick = (e) => openUpdateDevPhotoModal(dev.id, e);
     } else {
       devImgEl.style.cursor = 'default';
@@ -12140,6 +12140,351 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
         <div class="h-timeline-top">
           <div class="h-active-phase-tag">
             <span class="h-phase-pill-num">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
+            <strong class="h-phase-name-text" title="${activePhase.name}">${activePhase.name}</strong>
+          </div>
+          <div class="h-progress-metric">
+            <span class="h-progress-percent" style="color: ${app.iconColor};">${progress}%</span>
+            <span class="h-progress-sub">Avance</span>
+          </div>
+        </div>
+
+        <div class="h-stepper-container">
+          <div class="h-stepper-line-track">
+            <div class="h-stepper-line-fill" style="width: ${progress}%; background: linear-gradient(90deg, ${app.iconColor}, ${app.iconColor}EE);"></div>
+          </div>
+          <div class="h-stepper-steps">
+            ${stepperStepsHtml}
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna 3: Fecha Límite Comprometida de Entrega -->
+      <div class="h-col-metrics">
+        <div class="h-metric-badge h-deadline-badge ${isOverdue ? 'metric-alert' : ''}" title="Fecha Límite Comprometida: ${deadlineDisplay}">
+          <i data-lucide="calendar"></i>
+          <div class="h-deadline-body">
+            <span class="h-deadline-label">${isProd ? 'Estado en Planta' : (isOverdue ? 'Retraso Crítico' : 'Fecha Límite')}</span>
+            <strong class="h-deadline-val">${deadlineDisplay}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna 4: Responsable Asignado -->
+      <div class="h-col-team">
+        ${app.isGroupProject ? `
+          <div class="h-team-group-wrap" title="Desarrollo colaborativo grupal (4 devs)">
+            <div class="stacked-team-avatars">
+              ${(app.devIds || ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee']).map(dId => {
+    const d = getDeveloperById(dId);
+    return d ? `<img src="${d.avatar}" alt="${d.name}" class="mini-team-av" title="${d.name}">` : '';
+  }).join('')}
+            </div>
+            <div class="h-team-labels">
+              <strong class="h-dev-title">Equipo Grupal</strong>
+              <span class="h-dev-sub">4 Desarrolladores</span>
+            </div>
+          </div>
+        ` : `
+          <div class="h-team-single-wrap" title="Responsable Asignado">
+            <img src="${dev.avatar}" alt="${dev.name}" class="h-dev-avatar" title="${dev.name}">
+            <div class="h-team-labels">
+              <strong class="h-dev-title">${dev.name}</strong>
+              <span class="h-dev-sub">${dev.role || 'Desarrollador'}</span>
+            </div>
+          </div>
+        `}
+      </div>
+
+      <!-- Columna 5: Acciones -->
+      <div class="h-col-actions" onclick="event.stopPropagation();">
+        ${webBtnHtml}
+        ${isAdmin ? `
+          <button class="h-audit-action-btn admin-btn" onclick="openSystemDetailModal('${app.id}')" title="Auditar fases de ${app.name}">
+            <i data-lucide="clipboard-check"></i>
+            <span>Auditar</span>
+          </button>
+        ` : `
+          <button class="h-audit-action-btn dev-btn" onclick="openSystemDetailModal('${app.id}')" title="Ver fases de ${app.name}">
+            <i data-lucide="eye"></i>
+            <span>Ver Fases</span>
+          </button>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+
+window.setProjectsViewMode = setProjectsViewMode;
+window.handleProjectSearch = handleProjectSearch;
+window.clearProjectSearch = clearProjectSearch;
+window.openAppTasksDrawer = openAppTasksDrawer;
+window.renderProjectsView = renderProjectsView;
+
+// Developer Management & Sheets Real-Time Sync Exports
+window.openNewDeveloperModal = openNewDeveloperModal;
+window.closeNewDeveloperModal = closeNewDeveloperModal;
+window.selectNewDevAvatar = selectNewDevAvatar;
+window.handleCreateDeveloperSubmit = handleCreateDeveloperSubmit;
+window.deleteDeveloperUser = deleteDeveloperUser;
+window.manualSyncUsersWithSheets = manualSyncUsersWithSheets;
+window.renderDevelopersFullView = renderDevelopersFullView;
+window.renderHeaderDevDropdown = renderHeaderDevDropdown;
+
+// Dynamic Project Phases Builder Exports
+window.applyPhasePreset = applyPhasePreset;
+window.addNewProjectPhaseRow = addNewProjectPhaseRow;
+window.removeNewProjectPhaseRow = removeNewProjectPhaseRow;
+window.autoBalancePhaseWeights = autoBalancePhaseWeights;
+window.onPhaseBuilderChange = onPhaseBuilderChange;
+window.renderNewProjectPhases = renderNewProjectPhases;
+
+// ==========================================================================
+// CRONOGRAMA & CALENDARIO FUTURISTA DE ENTREGAS (Estilo Cron / Amie / Notion)
+// Sincronizado reactivamente con Motor Laboral STF & LocalStorage & Google Sheets
+// ==========================================================================
+
+let calDeliveryCurrentDate = null;
+let calDeliveryViewMode = 'week'; // Default to compact Week view as requested!
+let calDeliveryDevFilter = 'all';
+let calDeliveryAppFilter = 'all';
+let calDeliveryStatusFilter = 'all';
+let calDeliverySearchQuery = '';
+let draggedTaskId = null;
+
+function getMondayOfWeek(d) {
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = date.getDay(); // 0 is Sunday, 1 is Monday...
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function getWeekNumber(d) {
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
+}
+
+function formatMonthYearEs(d) {
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  return {
+    month: months[d.getMonth()],
+    year: d.getFullYear()
+  };
+}
+
+/**
+ * Formats task date range as [DD/MM — DD/MM], e.g. "28/11 — 30/12"
+ */
+/**
+ * Converts 24h "HH:MM" string to 12h format "hh:mm AM/PM"
+ */
+function formatTime12h(timeStr) {
+  if (!timeStr) return '10:00 AM';
+  const parts = String(timeStr).split(':');
+  let h = parseInt(parts[0], 10);
+  if (isNaN(h)) return '10:00 AM';
+  const m = parts[1] || '00';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  h = h ? h : 12;
+  return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+}
+
+function formatTaskDateRange(task) {
+  if (!task) return 'Jornada STF';
+
+  const formatDM = (dateVal) => {
+    if (!dateVal) return null;
+    const str = String(dateVal).trim();
+    if (str.length >= 10 && str.includes('-')) {
+      const parts = str.substring(0, 10).split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}`;
+      }
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${day}/${month}`;
+    }
+    return null;
+  };
+
+  const endDM = formatDM(task.deadline);
+  let startDM = formatDM(task.startDate || task.createdAt);
+
+  // If startDM is missing, calculate 7 days prior to deadline
+  if (!startDM && endDM && task.deadline) {
+    const dStr = task.deadline.substring(0, 10) + 'T12:00:00';
+    const endD = new Date(dStr);
+    if (!isNaN(endD.getTime())) {
+      const prevD = new Date(endD);
+      prevD.setDate(prevD.getDate() - 7);
+      const day = String(prevD.getDate()).padStart(2, '0');
+      const month = String(prevD.getMonth() + 1).padStart(2, '0');
+      startDM = `${day}/${month}`;
+    }
+  }
+
+  if (startDM && endDM) {
+    return `${startDM} — ${endDM}`;
+  } else if (endDM) {
+    return `Hasta ${endDM}`;
+  }
+  return 'Turno 6am - 1pm';
+}
+
+function getScopedCalendarIntegrations() {
+  const isAdmin = isCurrentSessionAdmin();
+  let list = Array.isArray(appState.integrations) ? [...appState.integrations] : [];
+
+  // Filter by role if dev logged in
+  if (!isAdmin) {
+    const loggedId = getLoggedDevId();
+    list = list.filter(i => isTaskAssignedToDev(i, loggedId));
+  }
+
+  // Filter by Developer selector
+  if (calDeliveryDevFilter !== 'all') {
+    list = list.filter(i => isTaskAssignedToDev(i, calDeliveryDevFilter));
+  }
+
+  // Filter by App selector
+  if (calDeliveryAppFilter !== 'all') {
+    list = list.filter(i => i.appId === calDeliveryAppFilter);
+  }
+
+  // Filter by Search Query
+  if (calDeliverySearchQuery && calDeliverySearchQuery.trim()) {
+    const q = calDeliverySearchQuery.trim().toLowerCase();
+    list = list.filter(i =>
+      (i.name && i.name.toLowerCase().includes(q)) ||
+      (i.appName && i.appName.toLowerCase().includes(q)) ||
+      (i.devName && i.devName.toLowerCase().includes(q))
+    );
+  }
+
+  // Filter by Status
+  if (calDeliveryStatusFilter === 'risk') {
+    list = list.filter(i => {
+      if (i.status === 'evaluated') return false;
+      const diag = getSTFDeadlineDiagnosis(i.deadline);
+      return diag.isOverdue || diag.status === 'risk';
+    });
+  } else if (calDeliveryStatusFilter === 'done') {
+    list = list.filter(i => i.status === 'evaluated');
+  } else if (calDeliveryStatusFilter === 'active') {
+    list = list.filter(i => i.status !== 'evaluated');
+  }
+
+  return list;
+}
+
+function renderCalendarDeliveryView() {
+  const container = document.getElementById('futCalGridOuter');
+  if (!container) return;
+
+  const refDate = getSystemReferenceDate();
+  const current = calDeliveryCurrentDate || refDate;
+  const my = formatMonthYearEs(current);
+
+  // Update Month Title
+  const titleEl = document.getElementById('futCalMonthHeading');
+  if (titleEl) {
+    titleEl.textContent = `${my.month} ${my.year}`;
+  }
+
+  // Render Left Panels (Projects & Team Navigation)
+  renderOripioSidebar();
+
+  // Render Top Header Workspace Details (Breadcrumbs, Title, Avatars)
+  renderOripioHeader();
+
+  // Mode buttons active state
+  const btnDay = document.getElementById('btnModeDay');
+  const btnWeek = document.getElementById('btnModeWeek');
+  const btnMonth = document.getElementById('btnModeMonth');
+  if (btnDay) btnDay.classList.toggle('active', calDeliveryViewMode === 'day');
+  if (btnWeek) btnWeek.classList.toggle('active', calDeliveryViewMode === 'week');
+  if (btnMonth) btnMonth.classList.toggle('active', calDeliveryViewMode === 'month');
+
+  // Render according to active view mode
+  if (calDeliveryViewMode === 'week') {
+    renderCalendarWeekGrid(container, current, refDate);
+  } else if (calDeliveryViewMode === 'day') {
+    renderCalendarDayGrid(container, current, refDate);
+  } else {
+    renderCalendarMonthGrid(container, current, refDate);
+  }
+
+  // Update footer dynamic counters
+  if (typeof updateCalendarFooterStats === 'function') {
+    updateCalendarFooterStats(typeof getScopedCalendarIntegrations === 'function' ? getScopedCalendarIntegrations() : (appState.integrations || []));
+  }
+
+  // Re-create icons if Lucide is loaded
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+function renderOripioSidebar() {
+  const projectsNav = document.getElementById('oripioProjectsNav');
+  const teamNav = document.getElementById('oripioTeamNav');
+
+  // 1. Projects Navigation
+  if (projectsNav && Array.isArray(appState.applications)) {
+    const allTasksCount = (appState.integrations || []).length;
+    let projHtml = `
+      <button type="button" 
+              class="oripio-nav-item ${calDeliveryAppFilter === 'all' ? 'active' : ''}" 
+              onclick="selectCalendarProject('all')" 
+              title="Todos los Sistemas">
+        <span class="oripio-nav-icon">📁</span>
+        <span class="oripio-nav-text">Todos los Sistemas</span>
+        <span class="oripio-nav-badge">${allTasksCount}</span>
+      </button>
+    `;
+
+    appState.applications.forEach(app => {
+      const taskCount = (appState.integrations || []).filter(i => i.appId === app.id).length;
+      const isActive = calDeliveryAppFilter === app.id;
+      const appColor = app.iconColor || '#3B82F6';
+
+      let icon = '🔹';
+      if (app.id.includes('colchas')) icon = '🛏️';
+      else if (app.id.includes('laboratorio')) icon = '🧪';
+      else if (app.id.includes('geo')) icon = '📍';
+      else if (app.id.includes('torre')) icon = '🗼';
+      else if (app.id.includes('oficina')) icon = '🏢';
+
+      projHtml += `
+        <button type="button" 
+                class="oripio-nav-item ${isActive ? 'active' : ''}" 
+                onclick="selectCalendarProject('${app.id}')"
+                title="${app.name}">
+          <span class="oripio-nav-dot" style="background: ${appColor};"></span>
+          <span class="oripio-nav-text">${app.name}</span>
+          <span class="oripio-nav-badge">${taskCount}</span>
+        </button>
+      `;
+    });
+
+    projectsNav.innerHTML = projHtml;
+  }
+
+  // 2. Team Navigation
+  if (teamNav && Array.isArray(appState.developers)) {
     const teamDevs = appState.developers;
 
     let teamHtml = `
