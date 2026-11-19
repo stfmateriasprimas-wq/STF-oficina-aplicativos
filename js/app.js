@@ -5007,9 +5007,77 @@ function openSystemDetailModal(appId) {
     btnCancel.textContent = isAdmin ? 'Cerrar' : 'Cerrar Vista';
   }
 
+  // Actualizar botón de transición de ciclo (Puesta en Planta / Pasar a Producción)
+  updateModalStageActionButtons(app);
+
   lucide.createIcons();
 
   document.getElementById('modalSystemDetail').classList.add('show');
+}
+
+function updateModalStageActionButtons(app, overrideAllDone) {
+  const wrap = document.getElementById('modalSysStageActionWrap');
+  if (!wrap) return;
+  const isAdmin = isCurrentSessionAdmin();
+  if (!app) {
+    wrap.innerHTML = '';
+    return;
+  }
+  const stageInfo = getAppPipelineStageInfo(app);
+  const totalPhases = Array.isArray(app.phases) ? app.phases.length : 0;
+  const completedPhases = Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0;
+  const is100 = overrideAllDone !== undefined ? overrideAllDone : (totalPhases > 0 && completedPhases === totalPhases);
+
+  if (stageInfo.stageId === 'stage_core') {
+    if (isAdmin && is100) {
+      wrap.innerHTML = `
+        <button type="button" class="modal-stage-action-btn btn-stage-yellow" onclick="handlePromoteToPlantTestFromModal()" title="100% de fases completadas. Clic para enviar a Puesta en Planta (Prueba)">
+          <i data-lucide="flask-conical"></i>
+          <span>Puesta en Planta</span>
+        </button>
+      `;
+    } else {
+      wrap.innerHTML = '';
+    }
+  } else if (stageInfo.stageId === 'stage_qa') {
+    if (isAdmin) {
+      wrap.innerHTML = `
+        <button type="button" class="modal-stage-action-btn btn-stage-green" onclick="handlePromoteToProductionFromModal()" title="Activo en Periodo de Prueba. Clic para promover a Producción Oficial">
+          <i data-lucide="rocket"></i>
+          <span>Pasar a Producción</span>
+        </button>
+      `;
+    } else {
+      wrap.innerHTML = `
+        <span class="h-stage-pill pill-qa-active">
+          <i data-lucide="flask-conical"></i>
+          <span>En Periodo de Prueba</span>
+        </span>
+      `;
+    }
+  } else if (stageInfo.stageId === 'stage_prod') {
+    wrap.innerHTML = `
+      <span class="h-stage-pill pill-prod-active">
+        <i data-lucide="shield-check"></i>
+        <span>En Producción Oficial</span>
+      </span>
+    `;
+  }
+  if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+}
+
+function handlePromoteToPlantTestFromModal() {
+  if (!currentEditingSysId) return;
+  const appId = currentEditingSysId;
+  closeSystemDetailModal();
+  handlePromoteToPlantTest(appId);
+}
+
+function handlePromoteToProductionFromModal() {
+  if (!currentEditingSysId) return;
+  const appId = currentEditingSysId;
+  closeSystemDetailModal();
+  handlePromoteToProduction(appId);
 }
 
 function onPhaseCheckboxToggle() {
@@ -5033,11 +5101,15 @@ function onPhaseCheckboxToggle() {
   });
 
   const countEl = document.getElementById('modalSysCompletedCount');
+  const totalCount = (app.phases || []).length || 6;
   if (countEl) {
-    countEl.textContent = `${checkedCount}/${(app.phases || []).length || 6} Fases`;
+    countEl.textContent = `${checkedCount}/${totalCount} Fases`;
   }
 
   updateModalProgressDisplay(currentWeight);
+
+  const isAllChecked = (totalCount > 0 && checkedCount === totalCount);
+  updateModalStageActionButtons(app, isAllChecked);
 }
 
 function updateModalProgressDisplay(progressVal) {
@@ -9106,9 +9178,16 @@ function getAppPipelineStageInfo(app) {
   const id = String(app.id || '').toLowerCase();
   const name = String(app.name || '').toUpperCase();
 
-  // Si tiene override explícito a Puesta en Planta
+  // Si tiene stage explícito definido (Persistido tras promoción del Admin)
+  if (app.pipelineStage === 'stage_prod' || app.isProduction === true) {
+    return { stageId: 'stage_prod', order: 0 };
+  }
   if (app.pipelineStage === 'stage_qa') {
     return { stageId: 'stage_qa', order: 1 };
+  }
+  if (app.pipelineStage === 'stage_core') {
+    const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
+    return { stageId: 'stage_core', order: coreIdx !== -1 ? coreIdx : 10 };
   }
 
   // 3. En Producción (En Vivo): CALIDAD, TINTORERIA, COLCHAS
@@ -9132,6 +9211,9 @@ function getAppPipelineStageInfo(app) {
 function isAppInLiveProduction(app) {
   return getAppPipelineStageInfo(app).stageId === 'stage_prod';
 }
+
+window.getAppPipelineStageInfo = getAppPipelineStageInfo;
+window.isAppInLiveProduction = isAppInLiveProduction;
 
 let currentActiveView = 'dashboard';
 window.currentActiveView = currentActiveView;
@@ -12109,8 +12191,75 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
     `;
   }
 
-  const statusClass = isProd ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime');
-  const statusText = isProd ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo');
+  const stageInfo = getAppPipelineStageInfo(app);
+  const totalPhases = Array.isArray(app.phases) ? app.phases.length : 0;
+  const completedPhases = Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0;
+  const allPhasesDone = totalPhases > 0 && completedPhases === totalPhases;
+
+  let statusClass = 'status-ontime';
+  let statusText = 'En Tiempo';
+  if (isProd) {
+    statusClass = 'status-done';
+    statusText = 'En Producción';
+  } else if (stageInfo.stageId === 'stage_qa') {
+    statusClass = 'status-ontime';
+    statusText = 'En Prueba';
+  } else if (app.status === 'risk') {
+    statusClass = 'status-risk';
+    statusText = 'En Riesgo';
+  }
+
+  // Botón de transición de etapa de ciclo industrial (Bajo el botón Auditar)
+  let stageActionBtnHtml = '';
+  if (stageInfo.stageId === 'stage_core') {
+    if (allPhasesDone) {
+      if (isAdmin) {
+        stageActionBtnHtml = `
+          <button type="button" class="h-stage-btn btn-stage-yellow active-pulse" onclick="handlePromoteToPlantTest('${app.id}', event)" title="100% de fases completadas. Clic para enviar a Puesta en Planta (Prueba)">
+            <i data-lucide="flask-conical"></i>
+            <span>Puesta en Planta</span>
+          </button>
+        `;
+      } else {
+        stageActionBtnHtml = `
+          <button type="button" class="h-stage-btn btn-stage-yellow" onclick="handlePromoteDisabledClick(event, '${escapeHtml(app.name)}', ${completedPhases}, ${totalPhases}, false)" title="100% completado. Pendiente de envío a Puesta en Planta por Dirección TI">
+            <i data-lucide="clock"></i>
+            <span>Puesta en Planta</span>
+          </button>
+        `;
+      }
+    } else {
+      stageActionBtnHtml = `
+        <button type="button" class="h-stage-btn btn-stage-yellow is-disabled" onclick="handlePromoteDisabledClick(event, '${escapeHtml(app.name)}', ${completedPhases}, ${totalPhases}, ${isAdmin})" title="Requiere completar el 100% de las fases (${completedPhases}/${totalPhases}) para enviar a Puesta en Planta">
+          <i data-lucide="lock"></i>
+          <span>Puesta en Planta</span>
+        </button>
+      `;
+    }
+  } else if (stageInfo.stageId === 'stage_qa') {
+    if (isAdmin) {
+      stageActionBtnHtml = `
+        <button type="button" class="h-stage-btn btn-stage-green active-pulse" onclick="handlePromoteToProduction('${app.id}', event)" title="Activo en Periodo de Prueba. Clic para pasar oficialmente a Producción">
+          <i data-lucide="rocket"></i>
+          <span>Pasar a Producción</span>
+        </button>
+      `;
+    } else {
+      stageActionBtnHtml = `
+        <span class="h-stage-pill pill-qa-active" title="Sistema en Periodo de Prueba en Planta">
+          <i data-lucide="flask-conical"></i>
+          <span>En Prueba</span>
+        </span>
+      `;
+    }
+  } else if (stageInfo.stageId === 'stage_prod') {
+    stageActionBtnHtml = `
+      <span class="h-stage-pill pill-prod-active" title="Sistema operando activamente en Producción">
+        <i data-lucide="shield-check"></i>
+        <span>En Producción</span>
+      </span>
+    `;
+  }
 
   return `
     <div class="h-system-row-card ${(!isProd && app.status === 'risk') ? 'is-risk' : ''} ${isProd ? 'is-prod' : ''}" style="--app-accent: ${app.iconColor};" onclick="openSystemDetailModal('${app.id}')">
@@ -12195,7 +12344,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
         `}
       </div>
 
-      <!-- Columna 5: Acciones -->
+      <!-- Columna 5: Acciones (Auditar y Paso a Puesta en Planta / Producción) -->
       <div class="h-col-actions" onclick="event.stopPropagation();">
         ${webBtnHtml}
         ${isAdmin ? `
@@ -12209,10 +12358,180 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
             <span>Ver Fases</span>
           </button>
         `}
+        ${stageActionBtnHtml}
       </div>
     </div>
   `;
 }
+
+// Transición Oficial de Etapas del Ciclo de Vida Industrial (1. En Construcción -> 2. Puesta en Planta -> 3. En Producción)
+function handlePromoteToPlantTest(appId, event) {
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Solo la Dirección TI (Admin) puede autorizar el paso a Puesta en Planta.', 'warning');
+    return;
+  }
+
+  const app = (appState.applications || []).find(a => a.id === appId);
+  if (!app) {
+    showToast('⚠️ Aplicativo no encontrado.', 'error');
+    return;
+  }
+
+  const totalPhases = Array.isArray(app.phases) ? app.phases.length : 0;
+  const completedPhases = Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0;
+
+  if (totalPhases > 0 && completedPhases < totalPhases) {
+    showToast(`⚠️ Requiere el 100% de las fases completadas (${completedPhases}/${totalPhases}). Audita el sistema para certificar las fases restantes.`, 'warning');
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `¿Deseas enviar "${app.name}" a 2. PUESTA EN PLANTA (Periodo de Prueba)?\n\n` +
+    `✓ Fases de desarrollo completadas al 100% (${completedPhases}/${totalPhases}).\n` +
+    `✓ El sistema pasará a validación en campo con operarios y pruebas activas en planta STF.`
+  );
+  if (!confirmed) return;
+
+  app.pipelineStage = 'stage_qa';
+  app.isProduction = false;
+  app.plantTestStartDate = new Date().toISOString();
+
+  // Historial de auditoría local
+  if (!Array.isArray(appState.auditLogs)) appState.auditLogs = [];
+  appState.auditLogs.unshift({
+    id: 'log_' + Date.now(),
+    type: 'stage_promotion',
+    appId: app.id,
+    appName: app.name,
+    fromStage: 'stage_core',
+    toStage: 'stage_qa',
+    date: new Date().toISOString(),
+    author: 'Admin Edwin Diaz',
+    note: `Sistema promovido a 2. Puesta en Planta (Periodo de Prueba) con 100% de fases completadas.`
+  });
+
+  // Abrir automáticamente el grupo 2. PUESTA EN PLANTA para visualización inmediata
+  if (typeof stageAccordionState === 'object') {
+    stageAccordionState.stage_qa = true;
+  }
+
+  // Guardar estado local
+  saveData(appState);
+
+  // Sincronizar en Google Sheets
+  if (window.SheetsSync) {
+    if (typeof window.SheetsSync.syncFullState === 'function') {
+      window.SheetsSync.syncFullState(appState);
+    }
+    if (typeof window.SheetsSync.logPhaseUpdate === 'function') {
+      window.SheetsSync.logPhaseUpdate({
+        appName: app.name,
+        phaseId: 'PUESTA_PLANTA',
+        phaseName: 'Puesta en Planta (Prueba)',
+        progress: 100,
+        slaStatus: 'Puesta en Planta',
+        completed: true,
+        developer: 'Admin Edwin Diaz',
+        notes: 'Promovido por Admin a 2. Puesta en Planta (Periodo de Prueba)'
+      });
+    }
+  }
+
+  // Refrescar vistas en vivo
+  refreshAllViews();
+
+  showToast(`🚀 ¡"${app.name}" ha sido enviado a Puesta en Planta (Periodo de Prueba)!`, 'success');
+}
+
+function handlePromoteToProduction(appId, event) {
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Solo la Dirección TI (Admin) puede autorizar el paso a Producción.', 'warning');
+    return;
+  }
+
+  const app = (appState.applications || []).find(a => a.id === appId);
+  if (!app) {
+    showToast('⚠️ Aplicativo no encontrado.', 'error');
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `¿Deseas promover oficialmente "${app.name}" a 3. EN PRODUCCIÓN?\n\n` +
+    `✓ Periodo de prueba en planta validado satisfactoriamente.\n` +
+    `✓ El aplicativo quedará formalmente activo y en producción operativa en STF Group.`
+  );
+  if (!confirmed) return;
+
+  app.pipelineStage = 'stage_prod';
+  app.isProduction = true;
+  app.productionStartDate = new Date().toISOString();
+
+  // Historial de auditoría local
+  if (!Array.isArray(appState.auditLogs)) appState.auditLogs = [];
+  appState.auditLogs.unshift({
+    id: 'log_' + Date.now(),
+    type: 'stage_promotion',
+    appId: app.id,
+    appName: app.name,
+    fromStage: 'stage_qa',
+    toStage: 'stage_prod',
+    date: new Date().toISOString(),
+    author: 'Admin Edwin Diaz',
+    note: `Sistema promovido oficialmente a 3. En Producción tras periodo de prueba en planta.`
+  });
+
+  // Abrir automáticamente el grupo 3. EN PRODUCCIÓN
+  if (typeof stageAccordionState === 'object') {
+    stageAccordionState.stage_prod = true;
+  }
+
+  // Guardar estado local
+  saveData(appState);
+
+  // Sincronizar en Google Sheets
+  if (window.SheetsSync) {
+    if (typeof window.SheetsSync.syncFullState === 'function') {
+      window.SheetsSync.syncFullState(appState);
+    }
+    if (typeof window.SheetsSync.logPhaseUpdate === 'function') {
+      window.SheetsSync.logPhaseUpdate({
+        appName: app.name,
+        phaseId: 'PRODUCCION_OFICIAL',
+        phaseName: 'En Producción Oficial',
+        progress: 100,
+        slaStatus: 'En Producción',
+        completed: true,
+        developer: 'Admin Edwin Diaz',
+        notes: 'Despliegue productivo oficial en planta STF Group'
+      });
+    }
+  }
+
+  // Refrescar vistas en vivo
+  refreshAllViews();
+
+  showToast(`🎉 ¡"${app.name}" está oficialmente En Producción en STF Group!`, 'success');
+}
+
+function handlePromoteDisabledClick(event, appName, completed, total, isAdmin) {
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+  if (isAdmin) {
+    showToast(`🔒 "${appName}": Requiere completar el 100% de las fases de desarrollo (${completed}/${total} completadas) para habilitar el paso a Puesta en Planta. Haz clic en "Auditar" para certificar las fases restantes.`, 'info');
+  } else {
+    showToast(`ℹ️ "${appName}": En desarrollo activo (${completed}/${total} fases). El paso a Puesta en Planta será aprobado por la Dirección TI al cumplir el 100%.`, 'info');
+  }
+}
+
+window.handlePromoteToPlantTest = handlePromoteToPlantTest;
+window.handlePromoteToProduction = handlePromoteToProduction;
+window.handlePromoteDisabledClick = handlePromoteDisabledClick;
+window.handlePromoteToPlantTestFromModal = handlePromoteToPlantTestFromModal;
+window.handlePromoteToProductionFromModal = handlePromoteToProductionFromModal;
+window.renderHorizontalSystemCardHtml = renderHorizontalSystemCardHtml;
 
 
 window.setProjectsViewMode = setProjectsViewMode;
@@ -13406,7 +13725,7 @@ if (typeof window !== 'undefined') {
 // ==========================================================================
 
 let currentSupportFilter = 'all'; // 'all', 'pendiente', 'aceptada', 'rechazada'
-let currentSupportDevFilter = 'all'; // 'all' or devId (e.g. 'dev_jg')
+var currentSupportDevFilter = 'all'; // 'all' or devId (e.g. 'dev_jg')
 let currentSupportLayoutMode = 'feed'; // 'feed' (lista detallada) or 'grid' (matriz compacta)
 let currentSupportSearchTerm = '';
 let supportClockInterval = null;

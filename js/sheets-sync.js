@@ -386,7 +386,7 @@
 
         const slaLabel = isProd
           ? 'En Producción'
-          : (app.status === 'risk' ? 'En Riesgo' : 'En Construcción');
+          : (stageInfo.stageId === 'stage_qa' ? 'Puesta en Planta' : (app.status === 'risk' ? 'En Riesgo' : 'En Construcción'));
 
         const leaderName = (app.isGroupProject || app.id === 'app_torre')
           ? 'Equipo Grupal (4 Devs)'
@@ -1217,14 +1217,35 @@
         const appObj = this.findApp(sName);
         if (!appObj) return;
 
-        // Sincronizar estado SLA si viene válido
+        // Sincronizar estado SLA y ciclo de planta (stage) si viene válido
         if (sys.slaStatus) {
           const slaLow = String(sys.slaStatus).toLowerCase();
+          if (slaLow.includes('planta') || slaLow.includes('prueba') || slaLow.includes('puesta')) {
+            appObj.pipelineStage = 'stage_qa';
+            appObj.isProduction = false;
+            updated = true;
+          } else if (slaLow.includes('producc')) {
+            appObj.pipelineStage = 'stage_prod';
+            appObj.isProduction = true;
+            updated = true;
+          } else if (slaLow.includes('construcc')) {
+            appObj.pipelineStage = 'stage_core';
+            appObj.isProduction = false;
+            updated = true;
+          }
           if (slaLow.includes('riesgo')) {
             appObj.status = 'risk';
             updated = true;
-          } else if (slaLow.includes('producc') || slaLow.includes('tiempo') || slaLow.includes('construcc')) {
+          } else if (slaLow.includes('producc') || slaLow.includes('tiempo') || slaLow.includes('construcc') || slaLow.includes('planta')) {
             if (appObj.id !== 'app_geo') appObj.status = 'ontime';
+          }
+        }
+
+        if (sys.stageId && ['stage_core', 'stage_qa', 'stage_prod'].includes(sys.stageId)) {
+          if (appObj.pipelineStage !== sys.stageId) {
+            appObj.pipelineStage = sys.stageId;
+            if (sys.stageId === 'stage_prod') appObj.isProduction = true;
+            updated = true;
           }
         }
 

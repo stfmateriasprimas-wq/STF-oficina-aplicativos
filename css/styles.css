@@ -10930,6 +10930,165 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   transform: translateY(-1px);
 }
 
+/* Botones y Badges de Transición de Ciclo Industrial (En Construcción -> Puesta en Planta -> En Producción) */
+.h-stage-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.h-stage-btn i,
+.h-stage-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* Botón Amarillo: 1. En Construcción -> 2. Puesta en Planta */
+.h-stage-btn.btn-stage-yellow {
+  background: #FEF08A;
+  color: #854D0E;
+  border: 1.5px solid #FACC15;
+  box-shadow: 0 2px 6px rgba(234, 179, 8, 0.2);
+}
+
+.h-stage-btn.btn-stage-yellow:hover:not(.is-disabled) {
+  background: #FDE047;
+  color: #713F12;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35);
+}
+
+.h-stage-btn.btn-stage-yellow.active-pulse {
+  animation: pulse-stage-yellow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-stage-yellow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.18);
+  }
+}
+
+.h-stage-btn.btn-stage-yellow.is-disabled {
+  background: #FEF9C3;
+  color: #A16207;
+  opacity: 0.55;
+  border: 1.5px dashed #FDE047;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Botón Verde: 2. Puesta en Planta -> 3. En Producción */
+.h-stage-btn.btn-stage-green {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1.5px solid #22C55E;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.2);
+}
+
+.h-stage-btn.btn-stage-green:hover {
+  background: #BBF7D0;
+  color: #14532D;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+}
+
+.h-stage-btn.btn-stage-green.active-pulse {
+  animation: pulse-stage-green 2s infinite ease-in-out;
+}
+
+@keyframes pulse-stage-green {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+  }
+}
+
+/* Pills de Estado en Ciclo Industrial */
+.h-stage-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.h-stage-pill i,
+.h-stage-pill svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.h-stage-pill.pill-prod-active {
+  background: #F0FDF4;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.h-stage-pill.pill-qa-active {
+  background: #FEFCE8;
+  color: #A16207;
+  border: 1px solid #FEF08A;
+}
+
+/* Botón de etapa dentro del Modal de Auditoría */
+.modal-stage-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-stage-action-btn.btn-stage-yellow {
+  background: #FEF08A;
+  color: #854D0E;
+  border: 1.5px solid #FACC15;
+}
+
+.modal-stage-action-btn.btn-stage-yellow:hover {
+  background: #FDE047;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35);
+}
+
+.modal-stage-action-btn.btn-stage-green {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1.5px solid #22C55E;
+}
+
+.modal-stage-action-btn.btn-stage-green:hover {
+  background: #BBF7D0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+}
+
 /* Responsive Breakpoints */
 @media (max-width: 1360px) {
   .h-system-row-card {
@@ -10963,7 +11122,9 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     width: 100%;
   }
   .h-col-actions .h-web-action-btn,
-  .h-col-actions .h-audit-action-btn {
+  .h-col-actions .h-audit-action-btn,
+  .h-col-actions .h-stage-btn,
+  .h-col-actions .h-stage-pill {
     flex: 1;
   }
   .h-stage-nav-bar {
