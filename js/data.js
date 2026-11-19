@@ -58,6 +58,7 @@ const STF_REAL_DATA = {
   developers: [
     {
       id: "dev_jg",
+      idPassword: "159",
       name: "Jose Guzman",
       username: "jose@guzman",
       role: "desarrollador",
@@ -71,6 +72,7 @@ const STF_REAL_DATA = {
     },
     {
       id: "dev_jd",
+      idPassword: "2222",
       name: "Juan David",
       username: "juan@david",
       role: "desarrollador",
@@ -84,6 +86,7 @@ const STF_REAL_DATA = {
     },
     {
       id: "dev_ee",
+      idPassword: "1111",
       name: "Esteban Escobar",
       username: "esteban@escobar",
       role: "desarrollador",
@@ -97,6 +100,7 @@ const STF_REAL_DATA = {
     },
     {
       id: "dev_mocho",
+      idPassword: "4444",
       name: "Jhon Eyder (Mocho)",
       username: "jhon@eyder",
       role: "desarrollador",
@@ -110,6 +114,7 @@ const STF_REAL_DATA = {
     },
     {
       id: "dev_ediaz",
+      idPassword: "Admin",
       name: "Edwin Diaz",
       username: "ediaz",
       role: "Admin & Desarrollo",
@@ -592,16 +597,16 @@ function sanitizeAndDeduplicateDevelopers(devList) {
   const canonicalAliases = {
     'dev_jg': 'dev_jg', 'dev_jose_guzman': 'dev_jg', 'dev_jose': 'dev_jg',
     'jose@guzman': 'dev_jg', 'jose.guzman': 'dev_jg', 'joseoneiber711@gmail.com': 'dev_jg',
-    'jose': 'dev_jg', 'jose guzman': 'dev_jg', '1073524622': 'dev_jg', 'jg': 'dev_jg', 'jguzman': 'dev_jg',
+    'jose': 'dev_jg', 'jose guzman': 'dev_jg', '159': 'dev_jg', '1073524622': 'dev_jg', 'jg': 'dev_jg', 'jguzman': 'dev_jg',
     'dev_jd': 'dev_jd', 'dev_juan_david': 'dev_jd', 'juan@david': 'dev_jd',
     'juan.david': 'dev_jd', 'juan.david@studiof.com.co': 'dev_jd', 'juan': 'dev_jd',
-    'juan david': 'dev_jd', '1107047649': 'dev_jd', 'jd': 'dev_jd',
+    'juan david': 'dev_jd', '2222': 'dev_jd', '1107047649': 'dev_jd', 'jd': 'dev_jd',
     'dev_ee': 'dev_ee', 'dev_esteban_escobar': 'dev_ee', 'esteban@escobar': 'dev_ee',
     'esteban.escobar': 'dev_ee', 'esteban.escobar@studiof.com.co': 'dev_ee', 'esteban': 'dev_ee',
     'esteban escobar': 'dev_ee', '1111': 'dev_ee', 'ee': 'dev_ee',
     'dev_mocho': 'dev_mocho', 'dev_jhon_eyder': 'dev_mocho', 'jhon@eyder': 'dev_mocho',
     'jhon.eyder': 'dev_mocho', 'jhon.eyder@studiof.com.co': 'dev_mocho', 'mocho': 'dev_mocho',
-    'jhon': 'dev_mocho', 'jhon eyder': 'dev_mocho', 'jhon eyder (mocho)': 'dev_mocho', '1010159672': 'dev_mocho',
+    'jhon': 'dev_mocho', 'jhon eyder': 'dev_mocho', 'jhon eyder (mocho)': 'dev_mocho', '4444': 'dev_mocho', '1010159672': 'dev_mocho',
     'dev_ediaz': 'dev_ediaz', 'dev_edwin_diaz': 'dev_ediaz', 'ediaz': 'dev_ediaz',
     'edwin.diaz@studiof.com.co': 'dev_ediaz', 'edwin': 'dev_ediaz', 'edwin diaz': 'dev_ediaz', 'admin': 'dev_ediaz'
   };
@@ -721,6 +726,7 @@ function getStoredData() {
             target.name = officialDev.name;
             target.username = officialDev.username;
             target.role = officialDev.role;
+            target.idPassword = officialDev.idPassword;
             if (officialDev.email) target.email = officialDev.email;
             target.activeProjects = [...(officialDev.activeProjects || [])];
           } else {

@@ -46,6 +46,7 @@ const CANONICAL_DEV_MAP = {
   'joseoneiber711@gmail.com': 'dev_jg',
   'jose': 'dev_jg',
   'jose guzman': 'dev_jg',
+  '159': 'dev_jg',
   '1073524622': 'dev_jg',
   'jg': 'dev_jg',
   'jguzman': 'dev_jg',
@@ -58,6 +59,7 @@ const CANONICAL_DEV_MAP = {
   'juan.david@studiof.com.co': 'dev_jd',
   'juan': 'dev_jd',
   'juan david': 'dev_jd',
+  '2222': 'dev_jd',
   '1107047649': 'dev_jd',
   'jd': 'dev_jd',
 
@@ -85,6 +87,7 @@ const CANONICAL_DEV_MAP = {
   'eyder': 'dev_mocho',
   'jhon eyder': 'dev_mocho',
   'jhon eyder (mocho)': 'dev_mocho',
+  '4444': 'dev_mocho',
   '1010159672': 'dev_mocho',
 
   // Edwin Diaz (Admin)

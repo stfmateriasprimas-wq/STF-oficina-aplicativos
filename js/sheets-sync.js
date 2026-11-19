@@ -491,11 +491,11 @@
       const payload = {
         action: 'sync_users',
         users: usersList || [
-          { id: "1073524622", username: "jose@guzman", role: "desarrollador", email: "joseoneiber711@gmail.com" },
-          { id: "1107047649", username: "juan@david", role: "desarrollador", email: "" },
-          { id: "1111", username: "esteban@escobar", role: "desarrollador", email: "" },
-          { id: "1010159672", username: "jhon@eyder", role: "desarrollador", email: "" },
-          { id: "Admin", username: "ediaz", role: "Admin", email: "edwin.diaz@studiof.com.co" }
+          { id: "159", idPassword: "159", username: "jose@guzman", role: "desarrollador", email: "joseoneiber711@gmail.com", name: "Jose Guzman" },
+          { id: "2222", idPassword: "2222", username: "juan@david", role: "desarrollador", email: "juan.david@studiof.com.co", name: "Juan David" },
+          { id: "1111", idPassword: "1111", username: "esteban@escobar", role: "desarrollador", email: "esteban.escobar@studiof.com.co", name: "Esteban Escobar" },
+          { id: "4444", idPassword: "4444", username: "jhon@eyder", role: "desarrollador", email: "jhon.eyder@studiof.com.co", name: "Jhon Eyder (Mocho)" },
+          { id: "Admin", idPassword: "Admin", username: "ediaz", role: "Admin", email: "edwin.diaz@studiof.com.co", name: "Edwin Diaz" }
         ]
       };
       return await this.sendPayload(payload);

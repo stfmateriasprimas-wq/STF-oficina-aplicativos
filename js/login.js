@@ -180,7 +180,7 @@ function togglePasswordVisibility(inputId, btn) {
 const STF_USERS_CREDENTIALS = [
   {
     id: "dev_jg",
-    idPassword: "1937",
+    idPassword: "159",
     username: "jose@guzman",
     role: "desarrollador",
     name: "Jose Guzman",
@@ -189,7 +189,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_jd",
-    idPassword: "4444",
+    idPassword: "2222",
     username: "juan@david",
     role: "desarrollador",
     name: "Juan David",
@@ -198,7 +198,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_ee",
-    idPassword: "ee",
+    idPassword: "1111",
     username: "esteban@escobar",
     role: "desarrollador",
     name: "Esteban Escobar",
@@ -207,7 +207,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_mocho",
-    idPassword: "Mocho",
+    idPassword: "4444",
     username: "jhon@eyder",
     role: "desarrollador",
     name: "Jhon Eyder (Mocho)",

@@ -342,7 +342,7 @@ function formatDateToYMD(val) {
 }
 
 /**
- * 1. Configurar y Estabilizar Hoja USUARIOS (6 Columnas A:F)
+ * 1. Configurar y Estabilizar Hoja USUARIOS (7 Columnas A:G)
  */
 function setupUsuariosSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.USUARIOS, ["Usuarios"]);
@@ -350,13 +350,13 @@ function setupUsuariosSheet(ss) {
 
   if (s.getLastRow() <= 1) {
     var defaultUsers = [
-      ["1073524622", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman", "ACTIVO"],
-      ["1107047649", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David", "ACTIVO"],
-      ["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar", "ACTIVO"],
-      ["1010159672", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)", "ACTIVO"],
-      ["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN"]
+      ["159", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman", "ACTIVO", ""],
+      ["2222", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David", "ACTIVO", ""],
+      ["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar", "ACTIVO", ""],
+      ["4444", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)", "ACTIVO", ""],
+      ["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN", ""]
     ];
-    s.getRange(2, 1, defaultUsers.length, 6).setValues(defaultUsers);
+    s.getRange(2, 1, defaultUsers.length, 7).setValues(defaultUsers);
   } else {
     // Asegurar que todas las filas existentes tengan Nombre_Completo (Col E) y Estado (Col F)
     var rows = s.getDataRange().getValues();
