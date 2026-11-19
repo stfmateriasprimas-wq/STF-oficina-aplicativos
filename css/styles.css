@@ -3469,7 +3469,9 @@ body:has(.modal-backdrop.show) .floating-sidebar,
    ========================================================================== */
 .view-panel {
   display: none;
-  animation: fadeInView 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .view-panel.active {
@@ -5765,7 +5767,6 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 
 .dev-folder-card.is-open .dev-folder-body {
   display: block;
-  animation: folderDropdownOpen 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes folderDropdownOpen {
@@ -5829,11 +5830,14 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   border: 1px solid #E6EDF5;
   border-radius: 22px;
   box-shadow: 0 6px 20px -3px rgba(148, 163, 184, 0.12), 0 2px 6px -1px rgba(148, 163, 184, 0.05);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .integration-item-card:hover {
@@ -6236,6 +6240,8 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   border-radius: 999px;
   overflow: hidden;
   position: relative;
+  contain: paint;
+  transform: translateZ(0);
 }
 
 .int-bar-fill {
@@ -6264,13 +6270,16 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: barShimmer 2.4s infinite;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 50%, transparent 100%);
+  animation: barShimmer 3.2s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  pointer-events: none;
 }
 
 @keyframes barShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% { transform: translateX(-100%) translateZ(0); }
+  100% { transform: translateX(100%) translateZ(0); }
 }
 
 .int-bar-labels {

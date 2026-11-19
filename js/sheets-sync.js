@@ -1231,16 +1231,17 @@
           const currentLocalProg = typeof window.calculateAppProgress === 'function' ? window.calculateAppProgress(appObj) : -1;
           if (currentLocalProg !== cloudProg) {
             let acc = 0;
+            let phasesActuallyChanged = false;
             appObj.phases.forEach(ph => {
               const w = Number(ph.weight) || 0;
-              if (acc + w <= cloudProg) {
-                ph.completed = true;
-                acc += w;
-              } else {
-                ph.completed = false;
+              const shouldBeCompleted = (acc + w <= cloudProg);
+              if (ph.completed !== shouldBeCompleted) {
+                ph.completed = shouldBeCompleted;
+                phasesActuallyChanged = true;
               }
+              if (shouldBeCompleted) acc += w;
             });
-            updated = true;
+            if (phasesActuallyChanged) updated = true;
           }
         }
       });
@@ -1342,7 +1343,7 @@
         }
       });
 
-      if (typeof window.saveData === 'function') {
+      if (count > 0 && typeof window.saveData === 'function') {
         window.saveData(window.appState);
       }
       return count;
@@ -1481,7 +1482,17 @@
           const appObj = this.findApp(appName);
           const devObj = this.findDev(targetDevName);
           const dateStr = item.Timestamp || item.Fecha_Hora || new Date().toISOString();
-          const cleanCode = 'STF-SUP-' + (item.Timestamp ? String(new Date(item.Timestamp).getTime()).slice(-4) : '3491');
+          let parsedCodeNum = '3491';
+          if (item.Timestamp) {
+            const tTime = new Date(item.Timestamp).getTime();
+            if (!isNaN(tTime)) {
+              parsedCodeNum = String(tTime).slice(-4);
+            } else {
+              const digits = String(item.Timestamp).replace(/\D/g, '');
+              parsedCodeNum = digits ? digits.slice(-4) : '3491';
+            }
+          }
+          const cleanCode = 'STF-SUP-' + parsedCodeNum;
 
           const existingTicket = state.supportTickets.find(t =>
             (t.title && t.title.toLowerCase() === title.toLowerCase()) ||

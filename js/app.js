@@ -1394,10 +1394,11 @@ function applyRoleBasedUI() {
     });
   }
 
-  // 5. Banner Principal de Bienvenida
+  // 5. Banner Principal de Bienvenida (Solo actualizar si estamos en la vista de Dashboard o inicio)
   const titleEl = document.getElementById('mainWelcomeTitle');
   const subtitleEl = document.getElementById('mainWelcomeSubtitle');
-  if (titleEl && subtitleEl) {
+  const activeViewName = (typeof window.currentActiveView !== 'undefined' && window.currentActiveView) ? window.currentActiveView : 'dashboard';
+  if (titleEl && subtitleEl && activeViewName === 'dashboard') {
     if (isAdmin) {
       titleEl.innerHTML = 'Estado de Desarrollo · <span class="text-gradient">STF GROUP</span>';
       subtitleEl.textContent = 'Supervisión en tiempo real del progreso de software, fases de desarrollo y rendimiento de ingeniería.';
@@ -7002,7 +7003,12 @@ function renderIntegrationsList(filter = activeIntFilter) {
     `;
   }).join('');
 
-  container.innerHTML = toolbarHtml + foldersHtml;
+  const newHtml = toolbarHtml + foldersHtml;
+  if (container.innerHTML === newHtml && container.children.length > 0) {
+    // Si el contenido visual no ha cambiado, no tocar el DOM ni recrear iconos para evitar parpadeos
+    return;
+  }
+  container.innerHTML = newHtml;
   lucide.createIcons();
 }
 
@@ -9074,6 +9080,9 @@ function isAppInLiveProduction(app) {
   return getAppPipelineStageInfo(app).stageId === 'stage_prod';
 }
 
+let currentActiveView = 'dashboard';
+window.currentActiveView = currentActiveView;
+
 function switchView(viewName) {
   const isAdmin = isCurrentSessionAdmin();
   const session = getLoggedSessionUser();
@@ -9086,26 +9095,31 @@ function switchView(viewName) {
     viewName = 'dashboard';
   }
 
+  const isSameView = (currentActiveView === viewName);
+  currentActiveView = viewName;
+  window.currentActiveView = viewName;
+
   // Update sidebar active state
   document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === viewName);
   });
 
-  // Switch visible section
-  document.querySelectorAll('.view-panel').forEach(panel => {
-    panel.classList.remove('active');
-  });
-
+  // Switch visible section without re-triggering animations if already active
   const targetPanel = document.getElementById(`view-${viewName}`);
-  if (targetPanel) {
+  if (!isSameView) {
+    document.querySelectorAll('.view-panel').forEach(panel => {
+      panel.classList.remove('active', 'show');
+    });
+    if (targetPanel) {
+      targetPanel.classList.add('show', 'active');
+    }
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
+  } else if (targetPanel && !targetPanel.classList.contains('active')) {
     targetPanel.classList.add('show', 'active');
-  }
-
-  // Desplazar automáticamente al inicio en móviles y escritorios para una navegación fluida
-  try {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (e) {
-    window.scrollTo(0, 0);
   }
 
   // Actualizar banner superior con título y contexto acorde a la sección activa y al rol
