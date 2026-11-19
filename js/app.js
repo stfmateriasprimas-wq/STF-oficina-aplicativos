@@ -5117,7 +5117,13 @@ function openDevScorecardModal(devId) {
 
   document.getElementById('devModalName').textContent = dev.name;
   document.getElementById('devModalRole').textContent = `${dev.role} · STF GROUP`;
-  document.getElementById('devModalImg').src = dev.avatar;
+  const devImgEl = document.getElementById('devModalImg');
+  if (devImgEl) {
+    devImgEl.src = dev.avatar;
+    devImgEl.style.cursor = 'pointer';
+    devImgEl.title = `Haz clic para actualizar la foto de ${dev.name}`;
+    devImgEl.onclick = (e) => openUpdateDevPhotoModal(dev.id, e);
+  }
 
   document.getElementById('devKpiOnTime').textContent = `${dev.onTimeDelivery}%`;
   document.getElementById('devKpiQuality').textContent = `${dev.codeQuality}%`;
@@ -9879,8 +9885,11 @@ function renderDevelopersFullView() {
       <div class="dev-row-card" data-dev-id="${dev.id}">
         <!-- Perfil e Identidad Horizontal -->
         <div class="dev-row-profile">
-          <div class="dev-avatar-wrap">
+          <div class="dev-avatar-wrap" onclick="openUpdateDevPhotoModal('${dev.id}', event)" title="Clic para actualizar foto de ${dev.name}">
             <img src="${avatarUrl}" alt="${dev.name}" class="dev-row-avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'">
+            <button type="button" class="dev-avatar-edit-overlay" onclick="openUpdateDevPhotoModal('${dev.id}', event)" title="Actualizar foto de ${dev.name}">
+              <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
+            </button>
             <span class="dev-online-status" title="Activo en STF Systems"></span>
           </div>
           <div class="dev-row-meta">
@@ -9896,8 +9905,12 @@ function renderDevelopersFullView() {
           </div>
         </div>
 
-        <!-- Acciones: Eliminar Usuario exclusivo de Super Admin -->
+        <!-- Acciones: Actualizar Foto & Eliminar Usuario -->
         <div class="dev-row-actions">
+          <button type="button" class="btn-action-photo-dev" onclick="openUpdateDevPhotoModal('${dev.id}', event)" title="Actualizar foto de ${dev.name}">
+            <i data-lucide="camera" style="width: 14px; height: 14px;"></i>
+            <span>Actualizar Foto</span>
+          </button>
           ${isProtectedAdmin ? `
             <span class="dev-protected-badge" title="Cuenta principal de administración protegida">
               <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
@@ -9946,6 +9959,49 @@ function renderHeaderDevDropdown() {
   }).join('');
 }
 
+/**
+ * Utilidad de compresión y recorte cuadrado de fotos a 160x160 para avatares
+ */
+function compressAndOptimizeImage(file, maxWidth = 160, maxHeight = 160, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('No se proporcionó ningún archivo'));
+    if (!file.type || !file.type.startsWith('image/')) {
+      return reject(new Error('El archivo seleccionado debe ser una imagen válida (JPG, PNG, WEBP o GIF).'));
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Error al leer el archivo de imagen.'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('No se pudo decodificar el formato de la imagen.'));
+      img.onload = () => {
+        try {
+          // Recorte cuadrado centrado (aspect ratio 1:1)
+          const minDim = Math.min(img.width, img.height);
+          const startX = (img.width - minDim) / 2;
+          const startY = (img.height - minDim) / 2;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = maxWidth;
+          canvas.height = maxHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, maxWidth, maxHeight);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function openNewDeveloperModal() {
   const modal = document.getElementById('modalCreateDeveloper');
   if (!modal) return;
@@ -9957,8 +10013,18 @@ function openNewDeveloperModal() {
     img.classList.toggle('selected', idx === 0);
   });
 
+  const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
   const avatarInput = document.getElementById('newDevAvatarUrl');
-  if (avatarInput) avatarInput.value = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
+  if (avatarInput) avatarInput.value = defaultAvatar;
+
+  const avatarPreview = document.getElementById('newDevAvatarPreview');
+  if (avatarPreview) avatarPreview.src = defaultAvatar;
+
+  const customUrlInput = document.getElementById('newDevCustomUrlInput');
+  if (customUrlInput) customUrlInput.value = '';
+
+  const fileInput = document.getElementById('newDevFileInput');
+  if (fileInput) fileInput.value = '';
 
   // Mostrar modal con transición CSS
   modal.classList.add('show');
@@ -9984,6 +10050,262 @@ function selectNewDevAvatar(imgEl, src) {
   if (imgEl) imgEl.classList.add('selected');
   const avatarInput = document.getElementById('newDevAvatarUrl');
   if (avatarInput) avatarInput.value = src;
+  const avatarPreview = document.getElementById('newDevAvatarPreview');
+  if (avatarPreview) avatarPreview.src = src;
+  const customUrlInput = document.getElementById('newDevCustomUrlInput');
+  if (customUrlInput) customUrlInput.value = '';
+}
+
+async function handleNewDevFileSelect(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  try {
+    const optimizedBase64 = await compressAndOptimizeImage(file, 160, 160, 0.82);
+    const avatarPreview = document.getElementById('newDevAvatarPreview');
+    if (avatarPreview) avatarPreview.src = optimizedBase64;
+    const avatarInput = document.getElementById('newDevAvatarUrl');
+    if (avatarInput) avatarInput.value = optimizedBase64;
+    const customUrlInput = document.getElementById('newDevCustomUrlInput');
+    if (customUrlInput) customUrlInput.value = '';
+    document.querySelectorAll('#avatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+    showToast('📷 Foto cargada y optimizada con éxito.');
+  } catch (err) {
+    alert(err.message || 'Error al procesar la imagen seleccionada.');
+  }
+}
+
+function handleNewDevUrlInput(url) {
+  const clean = (url || '').trim();
+  if (!clean) return;
+  const avatarInput = document.getElementById('newDevAvatarUrl');
+  if (avatarInput) avatarInput.value = clean;
+  const avatarPreview = document.getElementById('newDevAvatarPreview');
+  if (avatarPreview) {
+    avatarPreview.src = clean;
+  }
+  document.querySelectorAll('#avatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+}
+
+// ==========================================================================
+// ACTUALIZAR FOTO DE DESARROLLADOR EXISTENTE
+// ==========================================================================
+
+let currentEditingPhotoDevId = null;
+
+function openUpdateDevPhotoModal(devId, event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+
+  const dev = getDeveloperById(devId);
+  if (!dev) {
+    showToast('⚠️ No se encontró la información del desarrollador.');
+    return;
+  }
+
+  currentEditingPhotoDevId = dev.id;
+
+  const modal = document.getElementById('modalUpdateDevPhoto');
+  if (!modal) return;
+
+  const subtitle = document.getElementById('updatePhotoDevSubtitle');
+  if (subtitle) subtitle.textContent = `Desarrollador: ${dev.name} (${dev.role || 'Desarrollador'})`;
+
+  const devName = document.getElementById('updatePhotoDevName');
+  if (devName) devName.textContent = dev.name;
+
+  const preview = document.getElementById('updatePhotoPreviewImg');
+  const currentAvatar = dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120';
+  if (preview) preview.src = currentAvatar;
+
+  const urlInput = document.getElementById('updatePhotoUrlInput');
+  if (urlInput) urlInput.value = '';
+
+  const fileInput = document.getElementById('updatePhotoFileInput');
+  if (fileInput) fileInput.value = '';
+
+  // Marcar coincidencia si es una de las opciones rápidas
+  document.querySelectorAll('#updateAvatarPickerRow .avatar-option').forEach(img => {
+    img.classList.toggle('selected', img.src === currentAvatar);
+  });
+
+  // Configurar Drag & Drop
+  const dropZone = document.getElementById('updatePhotoDropZone');
+  if (dropZone && !dropZone._dragConfigured) {
+    dropZone._dragConfigured = true;
+    ['dragenter', 'dragover'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+      });
+    });
+    dropZone.addEventListener('drop', async (e) => {
+      const dt = e.dataTransfer;
+      const file = dt && dt.files && dt.files[0];
+      if (file) {
+        try {
+          const optimized = await compressAndOptimizeImage(file, 160, 160, 0.82);
+          const p = document.getElementById('updatePhotoPreviewImg');
+          if (p) p.src = optimized;
+          document.querySelectorAll('#updateAvatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+          showToast('📷 Foto seleccionada. Haz clic en "Guardar Foto" para aplicarla.');
+        } catch (err) {
+          alert(err.message || 'Error cargando la foto arrastrada.');
+        }
+      }
+    });
+  }
+
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeUpdateDevPhotoModal() {
+  const modal = document.getElementById('modalUpdateDevPhoto');
+  if (modal) {
+    modal.classList.remove('show');
+    setTimeout(() => {
+      if (!modal.classList.contains('show')) modal.style.display = 'none';
+    }, 250);
+  }
+}
+
+async function handleUpdatePhotoFileSelect(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  try {
+    const optimized = await compressAndOptimizeImage(file, 160, 160, 0.82);
+    const p = document.getElementById('updatePhotoPreviewImg');
+    if (p) p.src = optimized;
+    document.querySelectorAll('#updateAvatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+    showToast('📷 Foto seleccionada. Haz clic en "Guardar Foto" para aplicarla.');
+  } catch (err) {
+    alert(err.message || 'Error al procesar la imagen.');
+  }
+}
+
+function applyUpdatePhotoFromUrl() {
+  const input = document.getElementById('updatePhotoUrlInput');
+  const url = input ? input.value.trim() : '';
+  if (!url) {
+    showToast('⚠️ Ingresa una URL de imagen válida.');
+    return;
+  }
+  const preview = document.getElementById('updatePhotoPreviewImg');
+  if (preview) {
+    preview.src = url;
+    document.querySelectorAll('#updateAvatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+    showToast('📷 Vista previa actualizada.');
+  }
+}
+
+function selectUpdateDevAvatar(imgEl, src) {
+  document.querySelectorAll('#updateAvatarPickerRow .avatar-option').forEach(img => img.classList.remove('selected'));
+  if (imgEl) imgEl.classList.add('selected');
+  const preview = document.getElementById('updatePhotoPreviewImg');
+  if (preview) preview.src = src;
+}
+
+async function saveUpdatedDevPhoto() {
+  if (!currentEditingPhotoDevId) return;
+
+  const preview = document.getElementById('updatePhotoPreviewImg');
+  const newAvatar = preview ? preview.src : null;
+
+  if (!newAvatar) {
+    showToast('⚠️ Por favor selecciona o sube una foto primero.');
+    return;
+  }
+
+  const dev = getDeveloperById(currentEditingPhotoDevId);
+  if (!dev) {
+    showToast('⚠️ No se encontró al desarrollador en el estado.');
+    return;
+  }
+
+  const btnSave = document.getElementById('btnSaveUpdatedPhoto');
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<span>Guardando...</span>';
+  }
+
+  try {
+    // 1. Actualizar desarrollador en appState
+    dev.avatar = newAvatar;
+
+    // Si coincide con el usuario actualmente logueado en la sesión
+    const loggedDevId = getLoggedDevId();
+    if (loggedDevId && (loggedDevId === dev.id || (typeof resolveCanonicalDevId === 'function' && resolveCanonicalDevId(loggedDevId) === resolveCanonicalDevId(dev.id)))) {
+      const headerAvatar = document.getElementById('headerUserAvatar');
+      if (headerAvatar) headerAvatar.src = newAvatar;
+      const dropAvatar = document.getElementById('dropdownSessionAvatar');
+      if (dropAvatar) dropAvatar.src = newAvatar;
+
+      // Actualizar sesión en localStorage
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('STF_SESSION_USER') || '{}');
+        storedUser.avatar = newAvatar;
+        localStorage.setItem('STF_SESSION_USER', JSON.stringify(storedUser));
+      } catch (e) {}
+    }
+
+    // Actualizar también en el store de credenciales
+    try {
+      let creds = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
+      creds.forEach(c => {
+        if (c.id === dev.id || (dev.username && c.username && c.username.toLowerCase() === dev.username.toLowerCase())) {
+          c.avatar = newAvatar;
+        }
+      });
+      localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(creds));
+    } catch (e) {}
+
+    // 2. Guardar en almacenamiento local
+    saveData(appState);
+
+    // 3. Sincronizar en Google Sheets (hoja Usuarios y Bitácora)
+    if (window.SheetsSync) {
+      if (typeof window.SheetsSync.pushUsersToSheets === 'function') {
+        window.SheetsSync.pushUsersToSheets().catch(err => console.warn('[SheetsSync] Error sincronizando usuarios con nueva foto:', err));
+      }
+      if (typeof window.SheetsSync.logSystemUpdate === 'function') {
+        window.SheetsSync.logSystemUpdate({
+          eventType: 'ACTUALIZAR_FOTO_DESARROLLADOR',
+          appName: 'Directorio de Desarrolladores',
+          developer: dev.name,
+          description: `Se actualizó la foto de perfil del desarrollador ${dev.name} (${dev.role || 'Desarrollador'}).`
+        });
+      }
+    }
+
+    // 4. Refrescar vistas activas
+    renderDevelopersFullView();
+    renderHeaderDevDropdown();
+    if (typeof renderDevelopersSection === 'function') renderDevelopersSection();
+    if (typeof renderIntegrationsList === 'function') renderIntegrationsList();
+    if (typeof updateQuickDevStrip === 'function') updateQuickDevStrip();
+
+    closeUpdateDevPhotoModal();
+    showToast(`📸 ¡Foto de perfil de ${dev.name} actualizada con éxito!`);
+  } catch (err) {
+    console.error('Error guardando foto de desarrollador:', err);
+    showToast('⚠️ Ocurrió un error al guardar la foto.');
+  } finally {
+    if (btnSave) {
+      btnSave.disabled = false;
+      btnSave.innerHTML = '<i data-lucide="check"></i> <span>Guardar Foto</span>';
+    }
+    if (window.lucide) lucide.createIcons();
+  }
 }
 
 async function handleCreateDeveloperSubmit(e) {
@@ -13909,4 +14231,13 @@ if (typeof window !== 'undefined') {
   window.handleNewSupAppChange = handleNewSupAppChange;
   window.handleNewSupportTicketSubmit = handleNewSupportTicketSubmit;
   window.updateSupportNavBadge = updateSupportNavBadge;
+  window.openUpdateDevPhotoModal = openUpdateDevPhotoModal;
+  window.closeUpdateDevPhotoModal = closeUpdateDevPhotoModal;
+  window.handleUpdatePhotoFileSelect = handleUpdatePhotoFileSelect;
+  window.applyUpdatePhotoFromUrl = applyUpdatePhotoFromUrl;
+  window.selectUpdateDevAvatar = selectUpdateDevAvatar;
+  window.saveUpdatedDevPhoto = saveUpdatedDevPhoto;
+  window.handleNewDevFileSelect = handleNewDevFileSelect;
+  window.handleNewDevUrlInput = handleNewDevUrlInput;
+  window.compressAndOptimizeImage = compressAndOptimizeImage;
 }

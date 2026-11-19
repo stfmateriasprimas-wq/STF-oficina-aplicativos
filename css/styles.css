@@ -17579,3 +17579,98 @@ body.dark-mode .st-btn-reject {
     width: 100% !important;
   }
 }
+
+/* ==========================================================================
+   ACTUALIZACIÓN & GESTIÓN DE FOTOS DE DESARROLLADORES
+   ========================================================================== */
+.dev-avatar-wrap {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.dev-avatar-edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.65);
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  backdrop-filter: blur(2px);
+  z-index: 3;
+}
+
+.dev-avatar-wrap:hover .dev-avatar-edit-overlay {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.btn-action-photo-dev {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-action-photo-dev:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4F46E5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
+}
+
+.modal-card-update-photo {
+  max-width: 490px;
+  width: 95%;
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.photo-dropzone {
+  border: 2px dashed #CBD5E1;
+  border-radius: 16px;
+  padding: 20px 16px;
+  text-align: center;
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.photo-dropzone:hover,
+.photo-dropzone.dragover {
+  border-color: #4E65FF;
+  background: #EEF2FF;
+  box-shadow: 0 0 0 4px rgba(78, 101, 255, 0.12);
+}
+
+.btn-subir-foto-action:hover {
+  background: #E0E7FF !important;
+  border-color: #A5B4FC !important;
+  color: #4338CA !important;
+  transform: translateY(-1px);
+}
+

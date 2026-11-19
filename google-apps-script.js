@@ -31,7 +31,8 @@ var HEADERS = {
     "Rol",
     "Correo",
     "Nombre_Completo",
-    "Estado"
+    "Estado",
+    "Avatar"
   ],
   SISTEMAS: [
     "Codigo",
@@ -771,7 +772,7 @@ function doGet(e) {
     if (uRows.length > 1) {
       // Detección dinámica de índices de columna por encabezado
       var hRow = uRows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
-      var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxStatus = -1;
+      var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxStatus = -1, idxAvatar = -1;
 
       for (var c = 0; c < hRow.length; c++) {
         var h = hRow[c];
@@ -781,26 +782,30 @@ function doGet(e) {
         else if (idxEmail === -1 && (h.indexOf("correo") !== -1 || h.indexOf("email") !== -1 || h.indexOf("mail") !== -1)) idxEmail = c;
         else if (idxName === -1 && (h.indexOf("nombre") !== -1 || h.indexOf("name") !== -1 || h.indexOf("desarrollador") !== -1)) idxName = c;
         else if (idxStatus === -1 && (h.indexOf("estado") !== -1 || h.indexOf("status") !== -1 || h.indexOf("activo") !== -1)) idxStatus = c;
+        else if (idxAvatar === -1 && (h.indexOf("avatar") !== -1 || h.indexOf("foto") !== -1 || h.indexOf("img") !== -1 || h.indexOf("imagen") !== -1)) idxAvatar = c;
       }
 
-      // Fallback a posiciones predeterminadas A..F
+      // Fallback a posiciones predeterminadas A..G
       if (idxPass === -1) idxPass = 0;
       if (idxUser === -1) idxUser = 1;
       if (idxRole === -1) idxRole = 2;
       if (idxEmail === -1) idxEmail = 3;
       if (idxName === -1) idxName = 4;
       if (idxStatus === -1) idxStatus = 5;
+      if (idxAvatar === -1 && hRow.length > 6) idxAvatar = 6;
 
       for (var r = 1; r < uRows.length; r++) {
         var uLogin = String(uRows[r][idxUser] !== undefined ? uRows[r][idxUser] : "").trim();
         if (!uLogin || uLogin.toLowerCase() === "usuario_logueo" || uLogin.toLowerCase() === "usuario") continue;
+        var userAvatar = (idxAvatar !== -1 && idxAvatar < uRows[r].length) ? String(uRows[r][idxAvatar] || "").trim() : "";
         usersList.push({
           idPassword: String(uRows[r][idxPass] !== undefined ? uRows[r][idxPass] : "").trim(),
           username: uLogin,
           role: String(uRows[r][idxRole] || "desarrollador").trim(),
           email: String(uRows[r][idxEmail] || "").trim(),
           name: idxName < uRows[r].length ? String(uRows[r][idxName] || "").trim() : "",
-          status: idxStatus < uRows[r].length ? String(uRows[r][idxStatus] || "ACTIVO").trim() : "ACTIVO"
+          status: idxStatus < uRows[r].length ? String(uRows[r][idxStatus] || "ACTIVO").trim() : "ACTIVO",
+          avatar: userAvatar
         });
       }
     }
@@ -1397,7 +1402,7 @@ function doPost(e) {
         ensureExactHeaders(sU, HEADERS.USUARIOS);
         var lastRU = sU.getLastRow();
         if (lastRU > 1) {
-          sU.getRange(2, 1, lastRU - 1, Math.max(6, sU.getLastColumn())).clearContent();
+          sU.getRange(2, 1, lastRU - 1, Math.max(7, sU.getLastColumn())).clearContent();
         }
         var uMatrix = [];
         for (var u = 0; u < users.length; u++) {
@@ -1409,11 +1414,12 @@ function doPost(e) {
             roleStr,
             usr.email || "",
             usr.name || usr.username || "",
-            String(roleStr).toLowerCase() === "admin" ? "ADMIN" : "ACTIVO"
+            String(roleStr).toLowerCase() === "admin" ? "ADMIN" : "ACTIVO",
+            usr.avatar || ""
           ]);
         }
-        sU.getRange(2, 1, uMatrix.length, 6).setValues(uMatrix);
-        formatCorporateSheet(sU, "#0F172A", [120, 160, 130, 240, 180, 100]);
+        sU.getRange(2, 1, uMatrix.length, 7).setValues(uMatrix);
+        formatCorporateSheet(sU, "#0F172A", [120, 160, 130, 240, 180, 100, 240]);
 
         appendBitacoraRow(
           ss,

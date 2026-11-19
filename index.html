@@ -226,9 +226,15 @@
               <div class="dropdown-session-header" id="dropdownSessionHeader">
                 <div class="dsh-label">Sesión Autenticada:</div>
                 <div class="dsh-user-row">
-                  <img src="" id="dropdownSessionAvatar" class="dsh-avatar" alt="Sesión">
-                  <div class="dsh-info">
-                    <strong id="dropdownSessionName">Edwin Diaz</strong>
+                  <div style="position: relative; cursor: pointer;" onclick="openUpdateDevPhotoModal(getLoggedDevId(), event)" title="Clic para cambiar tu foto de perfil">
+                    <img src="" id="dropdownSessionAvatar" class="dsh-avatar" alt="Sesión">
+                    <span style="position: absolute; bottom: 0; right: 0; width: 17px; height: 17px; border-radius: 50%; background: #4E65FF; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 9px; border: 1.5px solid #FFF;">📷</span>
+                  </div>
+                  <div class="dsh-info" style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <strong id="dropdownSessionName">Edwin Diaz</strong>
+                      <button type="button" onclick="openUpdateDevPhotoModal(getLoggedDevId(), event)" style="background: none; border: none; color: #38BDF8; font-size: 11px; cursor: pointer; text-decoration: underline; font-weight: 600; padding: 0;">Cambiar foto</button>
+                    </div>
                     <span id="dropdownSessionRole" style="color: #F5C542;">🛡️ Admin · ediaz</span>
                   </div>
                 </div>
@@ -2121,20 +2127,52 @@
 
           <div class="form-group">
             <label
-              style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Seleccionar
-              Avatar del Desarrollador</label>
-            <div class="avatar-picker-row" id="avatarPickerRow" style="display: flex; gap: 12px; align-items: center;">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120"
-                class="avatar-option selected" onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="avatar-option"
-                onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120" class="avatar-option"
-                onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="avatar-option"
-                onclick="selectNewDevAvatar(this, this.src)">
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120" class="avatar-option"
-                onclick="selectNewDevAvatar(this, this.src)">
+              style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Foto de Perfil / Avatar del Desarrollador *</label>
+            
+            <div class="avatar-upload-box" style="display: flex; gap: 16px; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px 18px; border-radius: 16px;">
+              <div class="avatar-preview-wrapper" style="position: relative; width: 66px; height: 66px; flex-shrink: 0;">
+                <img id="newDevAvatarPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120"
+                  alt="Avatar preview" style="width: 66px; height: 66px; border-radius: 50%; object-fit: cover; border: 2.5px solid #4E65FF; box-shadow: 0 4px 12px rgba(78,101,255,0.2);">
+                <button type="button" onclick="document.getElementById('newDevFileInput').click()"
+                  style="position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; border-radius: 50%; background: #4E65FF; color: #FFF; border: 2px solid #FFF; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15);" title="Subir foto desde tu equipo">
+                  <i data-lucide="camera" style="width: 13px; height: 13px;"></i>
+                </button>
+              </div>
+
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                  <button type="button" class="btn-subir-foto-action" onclick="document.getElementById('newDevFileInput').click()"
+                    style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <i data-lucide="upload" style="width: 14px; height: 14px;"></i>
+                    <span>Subir Foto del Equipo</span>
+                  </button>
+                  <span style="font-size: 11.5px; color: #64748B;">JPG, PNG o WEBP (se auto-optimiza)</span>
+                </div>
+                <input type="file" id="newDevFileInput" accept="image/*" style="display: none;" onchange="handleNewDevFileSelect(event)">
+                
+                <input type="text" id="newDevCustomUrlInput" class="form-input" placeholder="O pega una URL de foto (https://...)"
+                  style="padding: 7px 12px; font-size: 12px; border-radius: 8px; border: 1px solid #CBD5E1; width: 100%; box-sizing: border-box;"
+                  oninput="handleNewDevUrlInput(this.value)">
+              </div>
             </div>
+
+            <!-- Avatares Rápidos Predeterminados -->
+            <div style="margin-top: 10px;">
+              <span style="font-size: 11.5px; font-weight: 600; color: #64748B; display: block; margin-bottom: 6px;">O selecciona un avatar rápido:</span>
+              <div class="avatar-picker-row" id="avatarPickerRow" style="display: flex; gap: 10px; align-items: center;">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120"
+                  class="avatar-option selected" onclick="selectNewDevAvatar(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="avatar-option"
+                  onclick="selectNewDevAvatar(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120" class="avatar-option"
+                  onclick="selectNewDevAvatar(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="avatar-option"
+                  onclick="selectNewDevAvatar(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120" class="avatar-option"
+                  onclick="selectNewDevAvatar(this, this.src)">
+              </div>
+            </div>
+
             <input type="hidden" id="newDevAvatarUrl"
               value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120">
           </div>
@@ -2158,6 +2196,88 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Actualizar Foto de Perfil de Desarrollador -->
+  <div class="modal-backdrop" id="modalUpdateDevPhoto">
+    <div class="modal-card modal-card-update-photo">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="m-icon-pill icon-blue" style="width: 44px; height: 44px; border-radius: 14px;">
+              <i data-lucide="camera" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+              <h2 class="modal-title" style="font-size: 19px; margin-bottom: 2px;">Actualizar Foto de Perfil</h2>
+              <p class="modal-subtitle" id="updatePhotoDevSubtitle" style="font-size: 12.5px; color: #64748B;">Desarrollador: -</p>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeUpdateDevPhotoModal()" aria-label="Cerrar modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+        <!-- Preview Central Grande -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="position: relative; width: 110px; height: 110px;">
+            <img id="updatePhotoPreviewImg" src="" alt="Foto"
+              style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #4E65FF; box-shadow: 0 8px 24px -4px rgba(78,101,255,0.35);">
+            <button type="button" onclick="document.getElementById('updatePhotoFileInput').click()"
+              style="position: absolute; bottom: 4px; right: 4px; width: 34px; height: 34px; border-radius: 50%; background: #4E65FF; color: #FFF; border: 3px solid #FFF; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.18);"
+              title="Seleccionar foto">
+              <i data-lucide="upload" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+          <span id="updatePhotoDevName" style="font-size: 15px; font-weight: 700; color: #1E293B;"></span>
+          <span style="font-size: 12px; color: #64748B;">Vista previa en tiempo real</span>
+        </div>
+
+        <!-- Zona Drag & Drop / Selección de Archivo -->
+        <div id="updatePhotoDropZone" class="photo-dropzone" onclick="document.getElementById('updatePhotoFileInput').click()">
+          <i data-lucide="image-plus" style="width: 32px; height: 32px; color: #4E65FF; margin: 0 auto 8px; display: block;"></i>
+          <p style="font-size: 13.5px; font-weight: 600; color: #1E293B; margin-bottom: 4px;">Haz clic aquí o arrastra tu foto</p>
+          <span style="font-size: 11.5px; color: #64748B;">Admite archivos JPG, PNG, WEBP o GIF (auto-recorte cuadrado)</span>
+          <input type="file" id="updatePhotoFileInput" accept="image/*" style="display: none;" onchange="handleUpdatePhotoFileSelect(event)">
+        </div>
+
+        <!-- Opción URL directa -->
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">O pega un enlace web directo de imagen:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="updatePhotoUrlInput" class="form-input" placeholder="https://ejemplo.com/mifoto.jpg"
+              style="flex: 1; padding: 10px 14px; font-size: 12.5px; border-radius: 10px; border: 1px solid #CBD5E1;">
+            <button type="button" onclick="applyUpdatePhotoFromUrl()"
+              style="padding: 10px 16px; background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">
+              Probar
+            </button>
+          </div>
+        </div>
+
+        <!-- Galería rápida de avatares -->
+        <div>
+          <span style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">O selecciona un avatar oficial:</span>
+          <div class="avatar-picker-row" id="updateAvatarPickerRow" style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120" class="avatar-option" onclick="selectUpdateDevAvatar(this, this.src)">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="avatar-option" onclick="selectUpdateDevAvatar(this, this.src)">
+            <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120" class="avatar-option" onclick="selectUpdateDevAvatar(this, this.src)">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="avatar-option" onclick="selectUpdateDevAvatar(this, this.src)">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120" class="avatar-option" onclick="selectUpdateDevAvatar(this, this.src)">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 16px 24px; background: #F8FAFC; border-top: 1px solid #EEF2F6; display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" class="pill-btn" onclick="closeUpdateDevPhotoModal()" style="padding: 10px 18px; border-radius: 12px; border: 1px solid #E2E8F0; background: #FFF; font-weight: 600; cursor: pointer;">
+          Cancelar
+        </button>
+        <button type="button" class="pill-btn primary-btn" id="btnSaveUpdatedPhoto" onclick="saveUpdatedDevPhoto()" style="padding: 10px 22px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <i data-lucide="check"></i>
+          <span>Guardar Foto</span>
+        </button>
+      </div>
     </div>
   </div>
 

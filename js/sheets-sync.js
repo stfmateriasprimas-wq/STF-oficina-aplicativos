@@ -514,7 +514,8 @@
           username: dev.username || dev.id,
           role: dev.role || 'desarrollador',
           email: dev.email || '',
-          name: dev.name
+          name: dev.name,
+          avatar: dev.avatar || ''
         };
       });
 
@@ -576,6 +577,7 @@
         const role = String(u.role || 'desarrollador').trim();
         const email = String(u.email || '').trim();
         const nameFromSheet = String(u.name || '').trim();
+        const avatarFromSheet = String(u.avatar || '').trim();
 
         if (!username && !idPassword && !nameFromSheet) return;
         if (username) validCloudUsernames.add(username.toLowerCase());
@@ -607,6 +609,7 @@
           match.email = email || match.email;
           match.idPassword = idPassword || match.idPassword;
           if (nameFromSheet && nameFromSheet.split(' ').length >= 2) match.name = nameFromSheet;
+          if (avatarFromSheet) match.avatar = avatarFromSheet;
         } else {
           // Crear nuevo desarrollador importado desde la hoja de Sheets
           const cleanName = nameFromSheet || username.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -617,7 +620,7 @@
             idPassword: idPassword,
             role: role,
             email: email,
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+            avatar: avatarFromSheet || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
             onTimeDelivery: 94,
             codeQuality: 95,
             sprintsCompleted: 4,
