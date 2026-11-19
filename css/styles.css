@@ -7025,94 +7025,22 @@ body:has(.modal-backdrop.show) .floating-sidebar,
 /* 4. Teléfonos Inteligentes & Móviles (<= 768px: iPhone, Galaxy, Pixel, etc.) */
 @media (max-width: 768px) {
   body {
-    padding: max(26px, calc(env(safe-area-inset-top, 0px) + 20px)) 12px calc(80px + env(safe-area-inset-bottom, 12px)) 12px !important;
+    padding: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) 12px calc(24px + env(safe-area-inset-bottom, 12px)) 12px !important;
     overflow-x: hidden !important;
     width: 100% !important;
   }
 
-  .app-container {
-    flex-direction: column !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    gap: 12px !important;
-    overflow-x: hidden !important;
-  }
-
-  .main-viewport {
-    width: 100% !important;
-    max-width: 100% !important;
-    gap: 12px !important;
-  }
-
-  /* Barra de Navegación Flotante Inferior estilo App Móvil Nativa */
-  .stf-mf-trigger,
-  #stfMobileFrameTrigger {
+  /* ELIMINAR BARRA FLOTANTE INFERIOR EN MÓVIL (Sustituida al 100% por el Menú Hamburguesa Superior) */
+  .floating-sidebar {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
-    opacity: 0 !important;
   }
 
-  .floating-sidebar {
-    position: fixed !important;
-    top: auto !important;
-    bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
-    left: 10px !important;
-    right: 10px !important;
-    width: calc(100% - 20px) !important;
-    height: 56px !important;
-    z-index: 9999 !important;
-    background: rgba(255, 255, 255, 0.94) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(226, 232, 240, 0.9) !important;
-    border-radius: 28px !important;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-    padding: 4px 12px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    margin: 0 !important;
-  }
-
-  .sidebar-logo {
-    display: none !important;
-  }
-
-  .sidebar-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-around !important;
-    width: calc(100% - 44px) !important;
-    gap: 4px !important;
-  }
-
+  .sidebar-logo,
+  .sidebar-nav,
   .sidebar-footer {
-    display: flex !important;
-    margin: 0 !important;
-  }
-
-  .nav-btn {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important;
-    font-size: 15px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .nav-btn.is-hidden,
-  .nav-btn[style*="display: none"] {
     display: none !important;
-  }
-
-  .sidebar-footer .nav-btn {
-    width: 36px !important;
-    height: 36px !important;
-    color: #EF4444 !important;
   }
 
   /* Encabezado Superior Móvil Armónico */
@@ -7121,21 +7049,22 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     z-index: 1000 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
-    margin-top: 6px !important;
-    margin-bottom: 6px !important;
+    gap: 8px !important;
+    margin-top: 4px !important;
+    margin-bottom: 8px !important;
     width: 100% !important;
   }
 
   .header-search {
     width: 100% !important;
     max-width: 100% !important;
+    order: 1 !important;
   }
 
   .search-input-wrapper {
-    padding: 9px 14px !important;
-    border-radius: 14px !important;
-    height: 42px !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    height: 40px !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
   }
 
@@ -7143,75 +7072,91 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     font-size: 13px !important;
   }
 
+  /* Fila 2 de Acciones Móvil (Organizada exactamente según los recuadros verdes ASI) */
   .header-actions {
     width: 100% !important;
     max-width: 100% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 2px 2px 4px 2px !important;
     gap: 8px !important;
-    scrollbar-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    flex-wrap: nowrap !important;
+    order: 2 !important;
   }
 
-  .header-actions .pill-btn {
-    padding: 7px 12px !important;
-    font-size: 11.5px !important;
-    border-radius: 12px !important;
-    flex-shrink: 0 !important;
-    height: 38px !important;
-  }
-
-  .header-actions .sheets-sync-pill {
-    padding: 6px 12px !important;
-    font-size: 11.5px !important;
-    font-weight: 700 !important;
-    border-radius: 12px !important;
-    flex-shrink: 0 !important;
-    height: 38px !important;
-    background: #FFFFFF !important;
-    border: 1px solid #E2E8F0 !important;
+  /* 1. Recuadro Verde Izquierdo: Botón Menú Hamburguesa [ ▢ ] */
+  .mobile-menu-btn {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 7px !important;
-  }
-
-  .notification-btn {
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 50% !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 12px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #1E293B !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
+    cursor: pointer !important;
+    padding: 0 !important;
     flex-shrink: 0 !important;
+    order: 1 !important;
+    transition: all 0.18s ease !important;
+  }
+  .mobile-menu-btn:active {
+    transform: scale(0.94);
+    background: #F1F5F9 !important;
+  }
+  .mobile-menu-btn i,
+  .mobile-menu-btn svg {
+    width: 22px !important;
+    height: 22px !important;
+    stroke-width: 2.2px;
   }
 
+  /* 2. Recuadro Verde Central: Tarjeta de Usuario [ ________________ ] */
   .header-dev-selector-wrapper {
-    flex-shrink: 0 !important;
-    margin-left: auto !important;
+    display: flex !important;
+    order: 2 !important;
+    flex: 1 1 auto !important;
+    margin: 0 !important;
+    min-width: 0 !important;
   }
 
   .header-user-btn {
-    padding: 4px 10px 4px 4px !important;
-    height: 38px !important;
-    gap: 7px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 4px 10px 4px 6px !important;
+    height: 40px !important;
+    gap: 8px !important;
     border-radius: 12px !important;
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
+    min-width: 0 !important;
   }
 
   .header-user-btn .user-avatar {
-    width: 28px !important;
-    height: 28px !important;
+    width: 30px !important;
+    height: 30px !important;
     border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    object-fit: cover !important;
   }
 
-  .header-user-text strong {
-    font-size: 11.5px !important;
-    white-space: nowrap !important;
-    max-width: 110px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+  .header-user-text {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+    line-height: 1.15 !important;
   }
 
   .user-tag-caption {
@@ -7219,7 +7164,78 @@ body:has(.modal-backdrop.show) .floating-sidebar,
     white-space: nowrap !important;
   }
 
+  .header-user-text strong {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    color: #1E293B !important;
+  }
+
   .header-dropdown-icon {
+    display: none !important;
+  }
+
+  /* 3. Primer Círculo Verde Derecho: Modo Oscuro ( ◯ ) */
+  .theme-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    order: 3 !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 50% !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #1E293B !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+  }
+
+  /* 4. Segundo Círculo Verde Derecho: Notificaciones ( ◯ ) */
+  .header-notifications-wrapper {
+    display: flex !important;
+    order: 4 !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+  }
+
+  .notification-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 50% !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #1E293B !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05) !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+  }
+
+  /* ELIMINAR Apartado Sheets Conectado en móvil (señalado con X rojas) */
+  .sheets-sync-pill,
+  #btnOpenSheetsModal,
+  .header-actions .sheets-sync-pill {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Ocultar botones de acciones de escritorio del header en móvil (ahora accesibles en el menú hamburguesa) */
+  #btnNewProject,
+  #btnAssignTask,
+  #btnExportReport {
     display: none !important;
   }
 
@@ -8406,13 +8422,7 @@ body:has(.modal-backdrop.show) .floating-sidebar,
   }
 
   .floating-sidebar {
-    top: auto !important;
-    height: 52px !important;
-    bottom: max(6px, env(safe-area-inset-bottom, 6px)) !important;
-    left: 6px !important;
-    right: 6px !important;
-    width: calc(100% - 12px) !important;
-    padding: 2px 8px !important;
+    display: none !important;
   }
 
   .nav-btn {
@@ -17892,3 +17902,474 @@ body.dark-mode .st-btn-reject {
   transform: translateY(-1px);
 }
 
+
+
+/* ==========================================================================
+   MOBILE DRAWER & HAMBURGER MENU (STF INDUSTRIAL SYSTEM)
+   ========================================================================== */
+.mobile-menu-btn {
+  display: none;
+}
+
+.mobile-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10001;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mobile-drawer-backdrop.show {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 320px;
+  max-width: 86vw;
+  background: #FFFFFF;
+  z-index: 10002;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.mobile-drawer.open {
+  transform: translateX(0);
+}
+
+body.drawer-open {
+  overflow: hidden !important;
+}
+
+.mobile-drawer-header {
+  padding: 16px 18px 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E2E8F0;
+  background: linear-gradient(135deg, rgba(78, 101, 255, 0.06), rgba(146, 230, 167, 0.06));
+}
+
+.mobile-drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drawer-logo-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4E65FF, #92E6A7);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: -0.5px;
+  box-shadow: 0 4px 12px rgba(78, 101, 255, 0.25);
+}
+
+.drawer-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+.drawer-brand-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1E293B;
+  letter-spacing: 0.3px;
+}
+.drawer-brand-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.mobile-drawer-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.mobile-drawer-close-btn:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+/* User card in mobile drawer */
+.mobile-drawer-user-card {
+  margin: 12px 14px 6px 14px;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mduc-avatar-wrap {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.mduc-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+.mduc-online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10B981;
+  border: 2px solid #FFFFFF;
+}
+.mduc-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.mduc-info strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mduc-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4E65FF;
+}
+.mduc-photo-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.mduc-photo-btn:hover {
+  color: #4E65FF;
+  border-color: #CBD5E1;
+}
+
+/* Nav links inside drawer */
+.mobile-drawer-nav-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 14px;
+  scrollbar-width: thin;
+}
+.drawer-section-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94A3B8;
+  padding: 8px 8px 4px 8px;
+}
+.mobile-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+.drawer-nav-item:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+.drawer-nav-item.active {
+  background: linear-gradient(135deg, rgba(78, 101, 255, 0.12), rgba(146, 230, 167, 0.12));
+  color: #4E65FF;
+  font-weight: 700;
+}
+.drawer-nav-item.active .dni-icon-wrap {
+  background: #4E65FF;
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(78, 101, 255, 0.28);
+}
+.dni-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #F1F5F9;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+.dni-icon-wrap i,
+.dni-icon-wrap svg {
+  width: 17px;
+  height: 17px;
+}
+.dni-badge {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Admin quick action buttons in drawer */
+.mobile-drawer-admin-section {
+  padding: 4px 14px 8px 14px;
+}
+.drawer-admin-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.drawer-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.drawer-action-btn.primary {
+  background: linear-gradient(135deg, #4E65FF, #6B7CFF);
+  color: #FFFFFF;
+  border: none;
+  box-shadow: 0 4px 12px rgba(78, 101, 255, 0.25);
+}
+
+/* Sheets card in Drawer */
+.mobile-drawer-sheets-card {
+  margin: 6px 14px 10px 14px;
+  padding: 10px 12px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.mobile-drawer-sheets-card:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+.mdsc-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mdsc-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.mdsc-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1E293B;
+}
+.mdsc-sub {
+  font-size: 10px;
+  color: #64748B;
+}
+
+/* Drawer Footer */
+.mobile-drawer-footer {
+  padding: 12px 14px;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  gap: 8px;
+  background: #F8FAFC;
+}
+.drawer-footer-btn {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.drawer-footer-btn:hover {
+  background: #F1F5F9;
+}
+.drawer-footer-btn.logout {
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.drawer-footer-btn.logout:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn,
+  .mobile-drawer,
+  .mobile-drawer-backdrop {
+    display: none !important;
+  }
+}
+
+
+/* Dark Mode styles for Mobile Drawer & Mobile Menu Button */
+body.dark-mode .mobile-menu-btn {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+}
+body.dark-mode .mobile-drawer {
+  background: #0F172A;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+}
+body.dark-mode .mobile-drawer-header {
+  border-color: #1E293B;
+  background: linear-gradient(135deg, rgba(78, 101, 255, 0.12), rgba(30, 41, 59, 0.85));
+}
+body.dark-mode .drawer-brand-title {
+  color: #F8FAFC;
+}
+body.dark-mode .drawer-brand-sub {
+  color: #94A3B8;
+}
+body.dark-mode .mobile-drawer-close-btn {
+  background: #1E293B;
+  border-color: #334155;
+  color: #94A3B8;
+}
+body.dark-mode .mobile-drawer-close-btn:hover {
+  background: #334155;
+  color: #F8FAFC;
+}
+body.dark-mode .mobile-drawer-user-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+body.dark-mode .mduc-avatar {
+  border-color: #1E293B;
+}
+body.dark-mode .mduc-info strong {
+  color: #F8FAFC;
+}
+body.dark-mode .mduc-photo-btn {
+  background: #0F172A;
+  border-color: #334155;
+  color: #94A3B8;
+}
+body.dark-mode .drawer-nav-item {
+  color: #94A3B8;
+}
+body.dark-mode .drawer-nav-item:hover {
+  background: #1E293B;
+  color: #F8FAFC;
+}
+body.dark-mode .drawer-nav-item.active {
+  background: rgba(78, 101, 255, 0.18);
+  color: #818CF8;
+}
+body.dark-mode .drawer-nav-item.active .dni-icon-wrap {
+  background: #4E65FF;
+  color: #FFFFFF;
+}
+body.dark-mode .dni-icon-wrap {
+  background: #1E293B;
+  color: #94A3B8;
+}
+body.dark-mode .mobile-drawer-sheets-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+body.dark-mode .mdsc-title {
+  color: #F8FAFC;
+}
+body.dark-mode .mobile-drawer-footer {
+  background: #0B1120;
+  border-color: #1E293B;
+}
+body.dark-mode .drawer-footer-btn {
+  background: #1E293B;
+  border-color: #334155;
+  color: #F8FAFC;
+}
+body.dark-mode .drawer-footer-btn:hover {
+  background: #334155;
+}
+body.dark-mode .drawer-action-btn {
+  background: #1E293B;
+  border-color: #334155;
+  color: #F8FAFC;
+}

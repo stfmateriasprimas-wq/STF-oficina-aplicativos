@@ -2250,7 +2250,52 @@ function renderHeaderSessionUser() {
       ? '<span style="color:#F59E0B; font-weight:600;">🛡️ Admin · ' + (session.username || 'ediaz') + '</span>'
       : '<span style="color:#38BDF8; font-weight:600;">👨‍💻 Desarrollador · ' + (session.username || '') + '</span>';
   }
+
+  // Sincronizar datos de la tarjeta de usuario en el menú hamburguesa móvil
+  const mdAvatar = document.getElementById('mobileDrawerUserAvatar');
+  const mdName = document.getElementById('mobileDrawerUserName');
+  const mdRole = document.getElementById('mobileDrawerUserRole');
+  const mdAdminSection = document.getElementById('mobileDrawerAdminSection');
+  const mdTasksLabel = document.getElementById('mobileDrawerTasksLabel');
+
+  if (mdAvatar) mdAvatar.src = session.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face';
+  if (mdName) mdName.textContent = session.name || 'Usuario';
+  if (mdRole) mdRole.textContent = isAdmin ? '🛡️ Super Admin' : '💻 Desarrollador STF';
+  if (mdAdminSection) mdAdminSection.style.display = isAdmin ? 'block' : 'none';
+  if (mdTasksLabel) mdTasksLabel.textContent = isAdmin ? 'Integraciones & Tareas Oficiales' : 'Mis Tareas & Entregables';
 }
+
+function openMobileDrawer() {
+  const drawer = document.getElementById('mobileDrawer');
+  const backdrop = document.getElementById('mobileDrawerBackdrop');
+  if (drawer && backdrop) {
+    drawer.classList.add('open');
+    backdrop.classList.add('show');
+    document.body.classList.add('drawer-open');
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function closeMobileDrawer() {
+  const drawer = document.getElementById('mobileDrawer');
+  const backdrop = document.getElementById('mobileDrawerBackdrop');
+  if (drawer && backdrop) {
+    drawer.classList.remove('open');
+    backdrop.classList.remove('show');
+    document.body.classList.remove('drawer-open');
+  }
+}
+
+function switchViewMobile(viewName) {
+  if (typeof switchView === 'function') {
+    switchView(viewName);
+  }
+  closeMobileDrawer();
+}
+
+window.openMobileDrawer = openMobileDrawer;
+window.closeMobileDrawer = closeMobileDrawer;
+window.switchViewMobile = switchViewMobile;
 
 function logoutApp() {
   localStorage.removeItem('STF_LOGGED_USER');
@@ -9339,6 +9384,10 @@ function switchView(viewName) {
 
   // Update sidebar active state
   document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === viewName);
+  });
+  // Update mobile drawer active state
+  document.querySelectorAll('.mobile-drawer-nav .drawer-nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === viewName);
   });
 

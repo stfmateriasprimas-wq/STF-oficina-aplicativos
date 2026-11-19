@@ -34,13 +34,126 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=59">
+  <link rel="stylesheet" href="css/styles.css?v=60">
 </head>
 
 <body>
 
   <!-- Backdrop desenfocado para cerrar menú de notificaciones en móvil y desktop -->
   <div class="notif-dropdown-backdrop" id="notifDropdownBackdrop" onclick="closeNotificationsDropdown()"></div>
+
+  <!-- Backdrop y Menú Hamburguesa Móvil (Slide-in Drawer) -->
+  <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" onclick="closeMobileDrawer()"></div>
+  <aside class="mobile-drawer" id="mobileDrawer" aria-label="Menú Móvil Principal">
+    <div class="mobile-drawer-header">
+      <div class="mobile-drawer-brand">
+        <div class="drawer-logo-badge">STF</div>
+        <div class="drawer-brand-text">
+          <span class="drawer-brand-title">STF GROUP</span>
+          <span class="drawer-brand-sub">Oficina TI Móvil</span>
+        </div>
+      </div>
+      <button type="button" class="mobile-drawer-close-btn" onclick="closeMobileDrawer()" aria-label="Cerrar menú">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <!-- Tarjeta de Usuario en Drawer -->
+    <div class="mobile-drawer-user-card" id="mobileDrawerUserCard">
+      <div class="mduc-avatar-wrap">
+        <img src="" alt="Usuario" id="mobileDrawerUserAvatar" class="mduc-avatar">
+        <span class="mduc-online-dot"></span>
+      </div>
+      <div class="mduc-info">
+        <strong id="mobileDrawerUserName">Usuario</strong>
+        <span id="mobileDrawerUserRole" class="mduc-role">Desarrollador</span>
+      </div>
+      <button type="button" class="mduc-photo-btn" onclick="openUpdateDevPhotoModal(getLoggedDevId(), event); closeMobileDrawer();" title="Cambiar mi foto">
+        <i data-lucide="camera"></i>
+      </button>
+    </div>
+
+    <!-- Navegación del Sistema (Todas las secciones) -->
+    <div class="mobile-drawer-nav-section">
+      <span class="drawer-section-title">Navegación del Sistema</span>
+      <nav class="mobile-drawer-nav">
+        <button type="button" class="drawer-nav-item active" data-view="dashboard" onclick="switchViewMobile('dashboard')">
+          <div class="dni-icon-wrap"><i data-lucide="home"></i></div>
+          <span class="dni-label">Inicio / Resumen General</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="projects" onclick="switchViewMobile('projects')">
+          <div class="dni-icon-wrap"><i data-lucide="layers"></i></div>
+          <span class="dni-label">Aplicativos & Módulos</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="tasks" onclick="switchViewMobile('tasks')">
+          <div class="dni-icon-wrap"><i data-lucide="check-square"></i></div>
+          <span class="dni-label" id="mobileDrawerTasksLabel">Mis Tareas & Entregables</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="calendar" onclick="switchViewMobile('calendar')">
+          <div class="dni-icon-wrap"><i data-lucide="calendar"></i></div>
+          <span class="dni-label">Cronograma & Calendario</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="developers" onclick="switchViewMobile('developers')">
+          <div class="dni-icon-wrap"><i data-lucide="users"></i></div>
+          <span class="dni-label">Equipo de Desarrollo</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="analytics" onclick="switchViewMobile('analytics')">
+          <div class="dni-icon-wrap"><i data-lucide="bar-chart-3"></i></div>
+          <span class="dni-label">Métricas y Efectividad</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="support" onclick="switchViewMobile('support')" id="btnMobileDrawerSupport">
+          <div class="dni-icon-wrap"><i data-lucide="headphones"></i></div>
+          <span class="dni-label">Bandeja Soporte Técnico</span>
+          <span class="dni-badge" id="mobileDrawerSupportBadge" style="display: none;">0</span>
+        </button>
+        <button type="button" class="drawer-nav-item" data-view="settings" onclick="switchViewMobile('settings')">
+          <div class="dni-icon-wrap"><i data-lucide="settings"></i></div>
+          <span class="dni-label">Ajustes del Sistema</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Acciones de Administración (Solo Admin) -->
+    <div class="mobile-drawer-admin-section" id="mobileDrawerAdminSection" style="display: none;">
+      <span class="drawer-section-title">Acciones de Jefatura (Admin)</span>
+      <div class="drawer-admin-btns">
+        <button type="button" class="drawer-action-btn primary" onclick="closeMobileDrawer(); document.getElementById('btnNewProject')?.click();">
+          <i data-lucide="plus"></i>
+          <span>Nuevo Aplicativo</span>
+        </button>
+        <button type="button" class="drawer-action-btn" onclick="closeMobileDrawer(); document.getElementById('btnAssignTask')?.click();">
+          <i data-lucide="check-square"></i>
+          <span>Asignar Tarea</span>
+        </button>
+        <button type="button" class="drawer-action-btn" onclick="closeMobileDrawer(); document.getElementById('btnExportReport')?.click();">
+          <i data-lucide="file-spreadsheet"></i>
+          <span>Reporte Ejecutivo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tarjeta de Estado Google Sheets -->
+    <div class="mobile-drawer-sheets-card" onclick="closeMobileDrawer(); openSheetsModal();" title="Ver sincronización con Google Sheets">
+      <div class="mdsc-icon"><i data-lucide="table"></i></div>
+      <div class="mdsc-info">
+        <span class="mdsc-title">Base de Datos Google Sheets</span>
+        <span class="mdsc-sub">Sincronización en Tiempo Real</span>
+      </div>
+      <span class="sheets-live-dot online" id="mobileDrawerSheetsDot"></span>
+    </div>
+
+    <!-- Footer Móvil con Modo Oscuro y Logout -->
+    <div class="mobile-drawer-footer">
+      <button type="button" class="drawer-footer-btn" onclick="toggleDarkTheme()">
+        <i data-lucide="moon" id="mobileDrawerThemeIcon"></i>
+        <span id="mobileDrawerThemeText">Modo Oscuro</span>
+      </button>
+      <button type="button" class="drawer-footer-btn logout" onclick="logoutApp()">
+        <i data-lucide="log-out"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
 
   <!-- App Wrapper with subtle background tone -->
   <div class="app-container">
@@ -126,6 +239,11 @@
         </div>
 
         <div class="header-actions">
+          <!-- Botón Menú Hamburguesa Móvil (Visible solo en <= 768px, sustituye la barra inferior) -->
+          <button type="button" class="mobile-menu-btn" id="btnMobileMenu" onclick="openMobileDrawer()" aria-label="Abrir Menú de Navegación" title="Menú">
+            <i data-lucide="menu"></i>
+          </button>
+
           <button class="pill-btn primary-glow-btn" id="btnNewProject">
             <i data-lucide="plus"></i>
             <span>Nuevo Aplicativo</span>
