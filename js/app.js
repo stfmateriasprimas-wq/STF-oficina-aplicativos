@@ -1193,14 +1193,23 @@ function getNotificationsData() {
   return notifications;
 }
 
-function markAllNotificationsRead() {
+function markAllNotificationsRead(silent = false) {
   const notifications = getNotificationsData();
-  notifications.forEach(n => readNotificationsSet.add(n.id));
+  notifications.forEach(n => {
+    readNotificationsSet.add(n.id);
+    lastKnownNotifIds.add(n.id);
+  });
   try {
     localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
   } catch (e) { }
+  const badgeEl = document.getElementById('notificationBadgeCount');
+  if (badgeEl) {
+    badgeEl.textContent = '0';
+    badgeEl.style.display = 'none';
+    badgeEl.classList.remove('pulse-badge');
+  }
   renderNotificationsDropdown();
-  if (typeof showToast === 'function') {
+  if (!silent && typeof showToast === 'function') {
     showToast('✓ Todas las notificaciones han sido marcadas como leídas');
   }
 }
@@ -1208,6 +1217,7 @@ function markAllNotificationsRead() {
 function markSingleNotificationRead(notifId) {
   if (notifId) {
     readNotificationsSet.add(notifId);
+    lastKnownNotifIds.add(notifId);
     try {
       localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
     } catch (e) { }
@@ -8705,6 +8715,32 @@ function initApp() {
     // (como los tabs de la baraja en Safari iOS) se dibujen por encima
     if (notifEl.parentElement !== document.body) {
       document.body.appendChild(notifEl);
+    }
+
+    // AUTOMATIZACIÓN: Al abrir la campanita, marcar automáticamente todas las notificaciones actuales como leídas
+    // y remover el número rojo del badge. Solo se volverá a mostrar cuando ingresen notificaciones verdaderamente nuevas.
+    const notifications = getNotificationsData();
+    let hasNewReads = false;
+    notifications.forEach(n => {
+      if (!readNotificationsSet.has(n.id)) {
+        readNotificationsSet.add(n.id);
+        hasNewReads = true;
+      }
+      lastKnownNotifIds.add(n.id);
+    });
+
+    if (hasNewReads) {
+      try {
+        localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
+      } catch (e) { }
+    }
+
+    // Ocultar inmediatamente el badge rojo de la campana
+    const badgeEl = document.getElementById('notificationBadgeCount');
+    if (badgeEl) {
+      badgeEl.textContent = '0';
+      badgeEl.style.display = 'none';
+      badgeEl.classList.remove('pulse-badge');
     }
 
     renderNotificationsDropdown();
