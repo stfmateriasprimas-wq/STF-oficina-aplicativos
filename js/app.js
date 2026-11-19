@@ -9,6 +9,31 @@ if (appState) {
   if (!Array.isArray(appState.integrations)) {
     appState.integrations = [];
   }
+  // Purgar de forma estricta tareas de demo/mock antiguas para asegurar datos 100% reales de planta
+  appState.integrations = appState.integrations.filter(t => {
+    if (!t) return false;
+    const tid = String(t.id || '');
+    if (/^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(tid)) return false;
+    const tName = String(t.name || '').toLowerCase();
+    if (
+      tName.includes('calibración y lectura qr') ||
+      tName.includes('calibracion y lectura qr') ||
+      tName.includes('geolocalización satelital') ||
+      tName.includes('geolocalizacion satelital') ||
+      tName.includes('sincronización en vivo con google sheets') ||
+      tName.includes('sincronizacion en vivo con google sheets') ||
+      tName.includes('arquitectura y especificación de ensayos textiles') ||
+      tName.includes('levantamiento de requisitos y fórmulas') ||
+      tName.includes('gateway de autenticación & roles') ||
+      tName.includes('conexión báscula digital') ||
+      tName.includes('automatización de recetas químicas') ||
+      tName.includes('servicio de notificaciones en tiempo real') ||
+      tName.includes('módulo gps & trazabilidad')
+    ) {
+      return false;
+    }
+    return true;
+  });
   // Saneamiento de fechas reales STF para garantizar que tareas montadas hoy no aparezcan en desfase
   const todayStr = '2026-11-18';
   appState.integrations.forEach(item => {

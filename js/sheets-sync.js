@@ -859,6 +859,20 @@
       const state = window.appState;
       if (!Array.isArray(state.integrations)) state.integrations = [];
 
+      // Si Google Sheets trae tareas reales, purgar de inmediato tareas de mock o que no existan en la hoja
+      if (tasksList.length > 0) {
+        const cloudTaskIds = new Set(tasksList.map(t => String(t.id || t.ID_Tarea || '').trim()).filter(Boolean));
+        const cloudTaskNames = new Set(tasksList.map(t => String(t.name || t.Tarea || '').trim().toLowerCase()).filter(Boolean));
+
+        state.integrations = state.integrations.filter(item => {
+          if (!item) return false;
+          const itemId = String(item.id || '');
+          if (/^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(itemId)) return false;
+          const itemName = String(item.name || '').trim().toLowerCase();
+          return cloudTaskIds.has(itemId) || cloudTaskNames.has(itemName);
+        });
+      }
+
       let count = 0;
       tasksList.forEach(task => {
         const tName = (task.name || task.Tarea || '').trim();
@@ -987,8 +1001,8 @@
             existing.evaluation.qualityScore = parsedScore;
           }
         } else {
-          let targetDevId = 'dev_jg';
-          let targetDevName = 'Jose Guzman';
+          let targetDevId = null;
+          let targetDevName = '';
           if (devObj) {
             targetDevId = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(devObj.id) : devObj.id;
             targetDevName = devObj.name;

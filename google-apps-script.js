@@ -450,17 +450,13 @@ function setupTareasSheet(ss) {
   var nowStr = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
 
   var officialTasks = [
-    ["Integración KPI", "LABORATORIO", "Edwin Diaz", 25, "2026-11-16", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "KPI completos"],
-    ["Investigar como podemos aplicar app de laboratorio en SharePoint", "LABORATORIO", "Edwin Diaz", 10, "2026-11-09", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "tenemos que crear y estabilizar el sistema de laboratorio por SharePoint para que nos quede en cuanto seguridad mas estable."],
-    ["Iniciar el ajuste de LAB.", "LABORATORIO", "Edwin Diaz", 15, "2026-11-06", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
-    ["Retomar incorporacion de base de datos.", "LABORATORIO", "Edwin Diaz", 20, "2026-10-29", "Auditada", "94.3% (+18.9%)", "2026-11-04 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
-    ["hacer indicador - juan", "CALIDAD", "Juan David", 15, "2026-10-29", "Auditada", "94.3% (+14.1%)", "2026-11-05 08:00:00", "Implementación en planta validada con los operarios. Operatividad estable."],
-    ["Gateway de Autenticación & Roles Operativos", "TORRE DE CONTROL", "Jose Guzman", 15, "2026-10-12", "Auditada", "96.3% (+14.4%)", "2026-11-04 08:00:00", "Excelente arquitectura e integración limpia. Pruebas de estrés superadas."],
-    ["Conexión Báscula Digital & Pesaje de Telas", "COLCHAS", "Jose Guzman", 15, "2026-10-24", "Auditada", "98.0% (+14.7%)", "2026-11-04 08:00:00", "Auditada & Aprobada por Jefatura TI. Operando al 100% en línea de Colchas."],
-    ["Auditoría AQL Móvil & Muestreo en Planta", "CALIDAD", "Juan David", 20, "2026-10-22", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "Desarrollo de interfaz táctil para auditores de calidad en mesa de corte con cálculo automático de tablas militares estándar AQL."],
-    ["Automatización de Recetas Químicas en Barcas", "TINTORERIA", "Jhon Eyder (Mocho)", 15, "2026-10-28", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "Algoritmo de cálculo de dosificación de tintes y reactivos según el peso del lote de tela a teñir."],
-    ["Módulo GPS & Trazabilidad de Talleres Satélites", "GEO UBICACION TALLERES", "Jose Guzman", 20, "2026-10-18", "Auditada", "94.3% (+18.9%)", "2026-11-04 08:00:00", "Módulo de rastreo validado e integrado con éxito."],
-    ["Servicio de Notificaciones en Tiempo Real (WebSockets)", "TORRE DE CONTROL", "Esteban Escobar", 10, "2026-10-26", "En Progreso", "Pendiente de Auditoría", "2026-11-07 07:03:48", "Infraestructura de alertas críticas en Torre de Control ante paradas de línea de producción o retrasos en planta."]
+    ["revision y ajuste de indicadores de calidad, ejecucion en calculo", "CALIDAD", "Juan David", 15, "2026-11-19", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."],
+    ["PANEL DE PLANEACION, ADMIN, PLANEA PERSONAL ACTIVO, METAS, CALCUJLO PARTICIPOATIVO POR ACTIVIDAD DIARIA", "CALIDAD", "Juan David", 15, "2026-11-22", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."],
+    ["INDICADORES DE  CALIDAD TELAS", "CALIDAD", "Juan David", 15, "2026-11-19", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."],
+    ["REVISION DE LISTAS, INVESTIGACION DE ECOSISTEMA  Y ASISTENCIA IA", "TORRE DE CONTROL", "esteban escobar", 15, "2026-11-19", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."],
+    ["revision de cuadro control de piso", "CALIDAD", "Juan David", 15, "2026-11-19", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."],
+    ["implementacion de dasboart  de control de piso", "TINTORERIA", "Jhon Eyder (Mocho)", 15, "2026-11-19", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."],
+    ["validacion de modulo de inventario", "TINTORERIA", "Jhon Eyder (Mocho)", 15, "2026-11-19", "En Progreso", "Pendiente de Auditoría", "2026-11-18 15:03:19", "En desarrollo activo en planta."]
   ];
 
   if (s.getLastRow() <= 1) {
