@@ -229,14 +229,23 @@ const STF_USERS_CREDENTIALS = [
 function getActiveUsersCredentials() {
   const map = new Map();
 
+  let customAvatars = {};
+  try {
+    customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+  } catch (e) {}
+
   // 1. Usuarios base oficiales
   STF_USERS_CREDENTIALS.forEach(u => {
-    map.set(u.username.toLowerCase(), { ...u });
+    const custom = customAvatars[u.id] || customAvatars[u.username.toLowerCase()];
+    map.set(u.username.toLowerCase(), {
+      ...u,
+      avatar: custom || u.avatar
+    });
   });
 
-  // 2. Usuarios registrados en el sistema (STF_GROUP_REAL_DATA_V6)
+  // 2. Usuarios registrados en el sistema (STF_GROUP_REAL_DATA_V8 con fallback a claves anteriores)
   try {
-    const raw = localStorage.getItem('STF_GROUP_REAL_DATA_V6');
+    const raw = localStorage.getItem('STF_GROUP_REAL_DATA_V8') || localStorage.getItem('STF_GROUP_REAL_DATA_V7') || localStorage.getItem('STF_GROUP_REAL_DATA_V6');
     if (raw) {
       const data = JSON.parse(raw);
       if (Array.isArray(data.developers)) {
@@ -245,6 +254,7 @@ function getActiveUsersCredentials() {
           const uLower = d.username.toLowerCase();
           const existing = map.get(uLower) || {};
           const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uLower);
+          const custom = customAvatars[d.id] || customAvatars[uLower] || (baseUser && customAvatars[baseUser.id]);
           map.set(uLower, {
             id: (baseUser && baseUser.id) || existing.id || d.id,
             idPassword: d.idPassword || existing.idPassword || (baseUser && baseUser.idPassword) || '123456',
@@ -252,13 +262,13 @@ function getActiveUsersCredentials() {
             role: d.roleType || d.role || existing.role || 'desarrollador',
             name: (baseUser && baseUser.name) || d.name || existing.name || d.username,
             email: d.email || existing.email || (baseUser && baseUser.email) || '',
-            avatar: (baseUser && baseUser.avatar) || d.avatar || existing.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar: custom || d.avatar || existing.avatar || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
           });
         });
       }
     }
   } catch (e) {
-    console.warn('Error reading STF_GROUP_REAL_DATA_V6 in login:', e);
+    console.warn('Error reading STF_GROUP_REAL_DATA_V8 in login:', e);
   }
 
   // 3. Usuarios de Google Sheets en tiempo real (STF_USERS_CREDENTIALS_STORE) -> MÁXIMA PRIORIDAD
@@ -272,6 +282,7 @@ function getActiveUsersCredentials() {
           const uLower = su.username.toLowerCase();
           const existing = map.get(uLower) || {};
           const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uLower);
+          const custom = customAvatars[su.id] || customAvatars[uLower] || (baseUser && customAvatars[baseUser.id]);
           map.set(uLower, {
             id: (baseUser && baseUser.id) || existing.id || su.id || `dev_${uLower.replace(/[^a-z0-9]/g, '_')}`,
             idPassword: su.idPassword !== undefined && su.idPassword !== '' ? su.idPassword : (existing.idPassword || '123456'),
@@ -279,7 +290,7 @@ function getActiveUsersCredentials() {
             role: su.role || existing.role || 'desarrollador',
             name: su.name || (baseUser && baseUser.name) || existing.name || su.username,
             email: su.email || existing.email || (baseUser && baseUser.email) || '',
-            avatar: (baseUser && baseUser.avatar) || existing.avatar || su.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar: custom || su.avatar || existing.avatar || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
           });
         });
       }
@@ -323,6 +334,11 @@ async function autoPullUsersFromSheets(silent = true) {
           credsStore = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
         } catch(e) {}
 
+        let customAvatars = {};
+        try {
+          customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+        } catch(e) {}
+
         data.users.forEach(u => {
           const uName = String(u.username || '').trim();
           const uPass = String(u.idPassword !== undefined ? u.idPassword : '').trim();
@@ -333,6 +349,9 @@ async function autoPullUsersFromSheets(silent = true) {
 
           const baseUser = STF_USERS_CREDENTIALS.find(b => b.username.toLowerCase() === uName.toLowerCase());
           const match = credsStore.find(c => c.username && c.username.toLowerCase() === uName.toLowerCase());
+          const custom = customAvatars[uName.toLowerCase()] || (baseUser && customAvatars[baseUser.id]);
+          const effectiveAvatar = u.avatar || custom || (match && match.avatar) || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+
           if (match) {
             match.idPassword = uPass || match.idPassword;
             match.role = uRole || match.role;
@@ -340,8 +359,8 @@ async function autoPullUsersFromSheets(silent = true) {
             if (uFullName) match.name = uFullName;
             if (baseUser) {
               match.id = baseUser.id;
-              match.avatar = baseUser.avatar;
             }
+            match.avatar = effectiveAvatar;
           } else {
             const cleanName = uFullName || (baseUser && baseUser.name) || uName.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             credsStore.push({
@@ -351,7 +370,7 @@ async function autoPullUsersFromSheets(silent = true) {
               role: uRole,
               name: cleanName,
               email: uEmail || (baseUser && baseUser.email) || '',
-              avatar: (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+              avatar: effectiveAvatar
             });
           }
         });

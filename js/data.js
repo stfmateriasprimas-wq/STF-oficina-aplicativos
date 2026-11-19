@@ -728,6 +728,15 @@ function getStoredData() {
           }
         });
 
+        // Preservar y aplicar avatares personalizados guardados en el almacenamiento persistente
+        try {
+          const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+          parsed.developers.forEach(d => {
+            const custom = customAvatars[d.id] || (d.username && customAvatars[d.username.toLowerCase()]) || (d.name && customAvatars[d.name]);
+            if (custom) d.avatar = custom;
+          });
+        } catch (e) {}
+
         // Reasignación oficial de LABORATORIO a Edwin Diaz (Admin) y desvinculación de Jose Guzman
         const jgDev = parsed.developers.find(d => d.id === 'dev_jg');
         if (jgDev && Array.isArray(jgDev.activeProjects)) {
@@ -872,6 +881,13 @@ function getStoredData() {
 
   // Guardar datos reales oficiales
   purgePhantomAppsFromState(STF_REAL_DATA);
+  try {
+    const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+    STF_REAL_DATA.developers.forEach(d => {
+      const custom = customAvatars[d.id] || (d.username && customAvatars[d.username.toLowerCase()]) || (d.name && customAvatars[d.name]);
+      if (custom) d.avatar = custom;
+    });
+  } catch (e) {}
   STF_REAL_DATA.integrations = [];
   saveData(STF_REAL_DATA);
   return STF_REAL_DATA;

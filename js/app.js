@@ -1571,6 +1571,8 @@ function refreshAllViews() {
   if (typeof renderCapsuleProgressBar === 'function') renderCapsuleProgressBar();
   if (typeof renderSystemsTable === 'function') renderSystemsTable();
   if (typeof renderDevelopersSection === 'function') renderDevelopersSection();
+  if (typeof renderDevelopersFullView === 'function') renderDevelopersFullView();
+  if (typeof renderHeaderDevDropdown === 'function') renderHeaderDevDropdown();
   if (typeof renderIntegrationsList === 'function') renderIntegrationsList(activeIntFilter);
   if (typeof renderCalendarDeliveryView === 'function') renderCalendarDeliveryView();
   if (typeof renderTaskObservationsFeed === 'function') renderTaskObservationsFeed();
@@ -9074,10 +9076,37 @@ function initApp() {
 
   // Auto-sincronización bidireccional cuando el usuario regresa a la pestaña del navegador
   window.addEventListener('focus', () => {
-    const devsView = document.getElementById('view-developers');
-    if (devsView && devsView.classList.contains('active')) {
-      if (window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
-        window.SheetsSync.pullUsersFromSheets(true);
+    if (window.SheetsSync && typeof window.SheetsSync.pullUsersFromSheets === 'function') {
+      window.SheetsSync.pullUsersFromSheets(true);
+    }
+  });
+
+  // Sincronización instantánea entre pestañas abiertas del navegador (ej. Admin y Desarrollador)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'STF_AVATAR_SYNC_PING' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        if (data && data.avatar && appState && Array.isArray(appState.developers)) {
+          const canonical = typeof resolveCanonicalDevId === 'function' ? resolveCanonicalDevId(data.devId || data.username) : (data.devId || data.username);
+          const target = appState.developers.find(d =>
+            d.id === canonical ||
+            d.id === data.devId ||
+            (d.username && data.username && d.username.toLowerCase() === data.username.toLowerCase())
+          );
+          if (target && target.avatar !== data.avatar) {
+            target.avatar = data.avatar;
+            try {
+              const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+              customAvatars[target.id] = data.avatar;
+              if (target.username) customAvatars[target.username.toLowerCase()] = data.avatar;
+              localStorage.setItem('STF_DEV_CUSTOM_AVATARS', JSON.stringify(customAvatars));
+            } catch (errCustom) {}
+            saveData(appState);
+            refreshAllViews();
+          }
+        }
+      } catch (errStorage) {
+        console.warn('Error syncing avatar from storage event:', errStorage);
       }
     }
   });
@@ -10412,6 +10441,15 @@ async function saveUpdatedDevPhoto() {
     // 1. Actualizar desarrollador en appState
     dev.avatar = newAvatar;
 
+    // Guardar en el almacenamiento dedicado y permanente de avatares
+    try {
+      const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+      customAvatars[dev.id] = newAvatar;
+      if (dev.username) customAvatars[dev.username.toLowerCase()] = newAvatar;
+      if (dev.name) customAvatars[dev.name] = newAvatar;
+      localStorage.setItem('STF_DEV_CUSTOM_AVATARS', JSON.stringify(customAvatars));
+    } catch (e) {}
+
     // Si coincide con el usuario actualmente logueado en la sesión
     const loggedDevId = getLoggedDevId();
     if (loggedDevId && (loggedDevId === dev.id || (typeof resolveCanonicalDevId === 'function' && resolveCanonicalDevId(loggedDevId) === resolveCanonicalDevId(dev.id)))) {
@@ -10420,10 +10458,11 @@ async function saveUpdatedDevPhoto() {
       const dropAvatar = document.getElementById('dropdownSessionAvatar');
       if (dropAvatar) dropAvatar.src = newAvatar;
 
-      // Actualizar sesión en localStorage
+      // Actualizar sesión en localStorage (STF_LOGGED_USER y STF_SESSION_USER)
       try {
-        const storedUser = JSON.parse(localStorage.getItem('STF_SESSION_USER') || '{}');
+        const storedUser = JSON.parse(localStorage.getItem('STF_LOGGED_USER') || '{}');
         storedUser.avatar = newAvatar;
+        localStorage.setItem('STF_LOGGED_USER', JSON.stringify(storedUser));
         localStorage.setItem('STF_SESSION_USER', JSON.stringify(storedUser));
       } catch (e) {}
     }
@@ -10442,7 +10481,17 @@ async function saveUpdatedDevPhoto() {
     // 2. Guardar en almacenamiento local
     saveData(appState);
 
-    // 3. Sincronizar en Google Sheets (hoja Usuarios y Bitácora)
+    // 3. Emitir evento inmediato para sincronizar pestañas abiertas del navegador en tiempo real
+    try {
+      localStorage.setItem('STF_AVATAR_SYNC_PING', JSON.stringify({
+        devId: dev.id,
+        username: dev.username,
+        avatar: newAvatar,
+        ts: Date.now()
+      }));
+    } catch (e) {}
+
+    // 4. Sincronizar en Google Sheets (hoja Usuarios y Bitácora con payload estructurado)
     if (window.SheetsSync) {
       if (typeof window.SheetsSync.pushUsersToSheets === 'function') {
         window.SheetsSync.pushUsersToSheets().catch(err => console.warn('[SheetsSync] Error sincronizando usuarios con nueva foto:', err));
@@ -10452,7 +10501,7 @@ async function saveUpdatedDevPhoto() {
           eventType: 'ACTUALIZAR_FOTO_DESARROLLADOR',
           appName: 'Directorio de Desarrolladores',
           developer: dev.name,
-          description: `Se actualizó la foto de perfil del desarrollador ${dev.name} (${dev.role || 'Desarrollador'}).`
+          description: `AVATAR_UPDATE::${JSON.stringify({ devId: dev.id, username: dev.username, avatar: newAvatar })}`
         });
       }
     }

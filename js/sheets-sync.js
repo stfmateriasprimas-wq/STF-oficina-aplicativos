@@ -609,9 +609,27 @@
           match.email = email || match.email;
           match.idPassword = idPassword || match.idPassword;
           if (nameFromSheet && nameFromSheet.split(' ').length >= 2) match.name = nameFromSheet;
-          if (avatarFromSheet) match.avatar = avatarFromSheet;
+          if (avatarFromSheet) {
+            match.avatar = avatarFromSheet;
+            try {
+              const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+              customAvatars[match.id] = avatarFromSheet;
+              if (match.username) customAvatars[match.username.toLowerCase()] = avatarFromSheet;
+              localStorage.setItem('STF_DEV_CUSTOM_AVATARS', JSON.stringify(customAvatars));
+            } catch (e) {}
+          } else {
+            try {
+              const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+              const saved = customAvatars[match.id] || (match.username && customAvatars[match.username.toLowerCase()]);
+              if (saved) match.avatar = saved;
+            } catch (e) {}
+          }
         } else {
           // Crear nuevo desarrollador importado desde la hoja de Sheets
+          let customAvatars = {};
+          try {
+            customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+          } catch (e) {}
           const cleanName = nameFromSheet || username.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           const newDev = {
             id: canonicalId || `dev_${username.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
@@ -620,7 +638,7 @@
             idPassword: idPassword,
             role: role,
             email: email,
-            avatar: avatarFromSheet || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+            avatar: avatarFromSheet || customAvatars[canonicalId] || (username && customAvatars[username.toLowerCase()]) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
             onTimeDelivery: 94,
             codeQuality: 95,
             sprintsCompleted: 4,
@@ -769,7 +787,17 @@
           // get_all_data puede no existir si el script desplegado es v2.6 anterior, usamos fallback
         }
 
+        // 1.1 Sincronizar siempre directorio de usuarios y fotos de perfil desde Google Sheets
+        let usersSynced = false;
+        try {
+          const userRes = await this.pullUsersFromSheets(true);
+          if (userRes && userRes.success) usersSynced = true;
+        } catch (errUsers) {
+          console.warn('[SheetsSync] Error trayendo usuarios en pullCloudData:', errUsers);
+        }
+
         // 2. Consultar siempre la Bitácora de Cambios (get_updates) para sincronizar tickets de soporte en tiempo real
+        let avatarChangesCount = 0;
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -781,6 +809,7 @@
               const result = this.mergeUpdatesFromBitacora(json.data);
               syncedCount += (result.taskCount || 0);
               phaseUpdatesCount += (result.phaseCount || 0);
+              avatarChangesCount += (result.avatarChangesCount || 0);
             }
           }
         } catch (e) {
@@ -797,7 +826,7 @@
         }
 
         // Refrescar vistas en pantalla SOLO si hubo cambios reales en los datos o si la sincronización fue manual
-        const hasRealChanges = (syncedCount > 0 || phaseUpdatesCount > 0 || syncedObsCount > 0);
+        const hasRealChanges = (syncedCount > 0 || phaseUpdatesCount > 0 || syncedObsCount > 0 || avatarChangesCount > 0 || usersSynced);
         if (hasRealChanges && typeof window.refreshAllViews === 'function') {
           window.refreshAllViews();
         } else if (!silent && typeof window.refreshAllViews === 'function') {
@@ -1377,12 +1406,13 @@
      * Extraer y cargar solicitudes y fases registradas en la Bitácora de Google Sheets
      */
     mergeUpdatesFromBitacora(updates) {
-      if (!Array.isArray(updates) || updates.length === 0 || !window.appState) return { taskCount: 0, phaseCount: 0 };
+      if (!Array.isArray(updates) || updates.length === 0 || !window.appState) return { taskCount: 0, phaseCount: 0, avatarChangesCount: 0 };
       const state = window.appState;
       if (!Array.isArray(state.integrations)) state.integrations = [];
 
       let taskCount = 0;
       let phaseCount = 0;
+      let avatarChangesCount = 0;
 
       const taskRegex = /Tarea '([^']+)' asignada a ([^(]+)\(\+\s*(\d+)% avance,\s*plazo:\s*([^)]+)\)/;
       const phaseRegex = /Fase '([^']+)' actualizada al (\d+)% \(Completada:\s*([^)]+)\)/;
@@ -1587,13 +1617,48 @@
             }
           }
         }
+
+        // F. Cargar Actualizaciones de Foto de Perfil en Tiempo Real (Cross-Device)
+        if (evType === 'ACTUALIZAR_FOTO_DESARROLLADOR' || desc.includes('AVATAR_UPDATE::')) {
+          try {
+            let pData = null;
+            if (desc.includes('AVATAR_UPDATE::')) {
+              const rawJson = desc.split('AVATAR_UPDATE::')[1].trim();
+              pData = JSON.parse(rawJson);
+            }
+            if (pData && pData.avatar && Array.isArray(state.developers)) {
+              const canonical = window.resolveCanonicalDevId ? window.resolveCanonicalDevId(pData.devId || pData.username) : (pData.devId || pData.username);
+              const targetDev = state.developers.find(d =>
+                d.id === canonical ||
+                d.id === pData.devId ||
+                (d.username && pData.username && d.username.toLowerCase() === pData.username.toLowerCase())
+              );
+              if (targetDev && targetDev.avatar !== pData.avatar) {
+                targetDev.avatar = pData.avatar;
+                try {
+                  const customAvatars = JSON.parse(localStorage.getItem('STF_DEV_CUSTOM_AVATARS') || '{}');
+                  customAvatars[targetDev.id] = pData.avatar;
+                  if (targetDev.username) customAvatars[targetDev.username.toLowerCase()] = pData.avatar;
+                  localStorage.setItem('STF_DEV_CUSTOM_AVATARS', JSON.stringify(customAvatars));
+                } catch (e) {}
+                avatarChangesCount++;
+              }
+            }
+          } catch (errAv) {
+            console.warn('[SheetsSync] Error procesando avatar desde bitacora:', errAv);
+          }
+        }
       });
 
-      if ((taskCount > 0 || phaseCount > 0)) {
+      if ((taskCount > 0 || phaseCount > 0 || avatarChangesCount > 0)) {
         if (typeof window.saveData === 'function') {
           window.saveData(state);
         } else {
           try { localStorage.setItem('STF_DATA_V1', JSON.stringify(state)); } catch(e){}
+        }
+
+        if (avatarChangesCount > 0 && typeof window.refreshAllViews === 'function') {
+          window.refreshAllViews();
         }
 
         if (typeof window.renderSupportView === 'function') {
@@ -1607,7 +1672,7 @@
         }
       }
 
-      return { taskCount, phaseCount };
+      return { taskCount, phaseCount, avatarChangesCount };
     },
 
     /**
