@@ -20,7 +20,9 @@ if (appState) {
       if (!item.deadline || item.deadline < todayStr) {
         item.deadline = todayStr;
       }
-      item.deliveryTime = '13:00';
+      if (!item.deliveryTime) {
+        item.deliveryTime = '13:00';
+      }
     }
   });
 
@@ -1050,6 +1052,24 @@ function getNotificationsData() {
     });
     const devObj = getDeveloperById(currentDevId);
 
+    // Notificaciones directas asignadas al desarrollador (ej. Reprogramaciones de reunión)
+    if (Array.isArray(appState.notifications)) {
+      appState.notifications.forEach(notif => {
+        const canonTarget = resolveCanonicalDevId(notif.targetDevId);
+        if (notif.targetDevId === currentDevId || notif.targetDevId === canonCurrent || canonTarget === canonCurrent) {
+          notifications.unshift({
+            ...notif,
+            action: () => {
+              if (typeof switchView === 'function') switchView('calendar');
+              if (notif.taskId && typeof openTaskObservationsModal === 'function') {
+                openTaskObservationsModal(notif.taskId);
+              }
+            }
+          });
+        }
+      });
+    }
+
     devTasks.forEach(task => {
       const app = allApps.find(a => a.id === task.appId);
       const appName = app ? app.name : 'Sistema';
@@ -1057,17 +1077,43 @@ function getNotificationsData() {
       // Observaciones de la bitácora de la tarea para el desarrollador
       if (Array.isArray(task.observations) && task.observations.length > 0) {
         task.observations.forEach(obs => {
+          const isResched = obs.type === 'reschedule';
+          const isBlock = obs.type === 'bloqueo';
+
+          let iconName = 'message-square';
+          let iconBg = '#EFF6FF';
+          let iconColor = '#2563EB';
+          let tagText = 'Observación en Tarea';
+          let tagBg = '#DBEAFE';
+          let tagColor = '#1D4ED8';
+
+          if (isResched) {
+            iconName = 'alarm-clock';
+            iconBg = '#FEF3C7';
+            iconColor = '#D97706';
+            tagText = '⏰ Cambio de Hora de Reunión';
+            tagBg = '#FDE68A';
+            tagColor = '#92400E';
+          } else if (isBlock) {
+            iconName = 'alert-octagon';
+            iconBg = '#FEE2E2';
+            iconColor = '#DC2626';
+            tagText = '⚠️ Bloqueo en Tarea';
+            tagBg = '#FECACA';
+            tagColor = '#B91C1C';
+          }
+
           notifications.unshift({
             id: `notif_dev_obs_${obs.id}`,
-            type: 'task_obs_dev',
-            icon: obs.type === 'bloqueo' ? 'alert-octagon' : 'message-square',
-            iconBg: obs.type === 'bloqueo' ? '#FEE2E2' : '#EFF6FF',
-            iconColor: obs.type === 'bloqueo' ? '#DC2626' : '#2563EB',
-            tag: obs.type === 'bloqueo' ? '⚠️ Bloqueo en Tarea' : 'Observación en Tarea',
-            tagColor: obs.type === 'bloqueo' ? '#B91C1C' : '#1D4ED8',
-            tagBg: obs.type === 'bloqueo' ? '#FECACA' : '#DBEAFE',
-            title: `Observación: ${task.name}`,
-            sub: `${obs.author || 'Equipo'}: "${obs.text}"`,
+            type: isResched ? 'meeting_rescheduled' : 'task_obs_dev',
+            icon: iconName,
+            iconBg: iconBg,
+            iconColor: iconColor,
+            tag: tagText,
+            tagColor: tagColor,
+            tagBg: tagBg,
+            title: isResched ? `⏰ Cambio de Hora: ${task.name}` : `Observación: ${task.name}`,
+            sub: `${obs.author || 'Dirección TI'}: "${obs.text}"`,
             time: obs.date || 'Reciente',
             action: () => {
               if (typeof switchMainTab === 'function') switchMainTab('view-tasks');
@@ -13023,7 +13069,7 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
           <td class="o-cell-td is-rest-col" data-drop-date="${iso}"
               ondragover="handleCalendarDragOver(event)"
               ondragleave="handleCalendarDragLeave(event)"
-              ondrop="handleCalendarDrop(event, '${iso}')">
+              ondrop="handleCalendarDrop(event, '${iso}', ${slot.hour})">
         `;
 
         // Render non-working banner once in slot 10 AM (slotIdx 4)
@@ -13043,14 +13089,11 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
 
       // Regular working day: Place tasks into their exact delivery meeting hour!
       const dayTasks = tasksByDay[iso] || [];
-      const cellTasks = dayTasks.filter((task, tIdx) => {
-        let taskH = 10;
+      const cellTasks = dayTasks.filter((task) => {
+        let taskH = 13;
         if (task.deliveryTime) {
           const parts = String(task.deliveryTime).split(':');
           taskH = parseInt(parts[0], 10);
-        } else {
-          const defaultSlots = [10, 9, 11, 12, 8];
-          taskH = defaultSlots[tIdx % defaultSlots.length];
         }
         return taskH === slot.hour;
       });
@@ -13058,9 +13101,10 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
       html += `
         <td class="o-cell-td"
             data-drop-date="${iso}"
+            data-drop-hour="${slot.hour}"
             ondragover="handleCalendarDragOver(event)"
             ondragleave="handleCalendarDragLeave(event)"
-            ondrop="handleCalendarDrop(event, '${iso}')">
+            ondrop="handleCalendarDrop(event, '${iso}', ${slot.hour})">
       `;
 
       if (cellTasks.length > 0) {
@@ -13097,10 +13141,11 @@ function renderCalendarWeekGrid(container, currentDate, refDate) {
    Render Event Card in Oripio SaaS Pastel Style with [DD/MM — DD/MM] Strip
    ========================================================================== */
 function renderOripioEventCard(task, dayIso, timeSlotLabel) {
+  const isAdmin = isCurrentSessionAdmin();
   const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
   const diag = getSTFDeadlineDiagnosis(task.deadline);
   const dateRangeStr = formatTaskDateRange(task);
-  const meetingTime12h = formatTime12h(task.deliveryTime || '10:00');
+  const meetingTime12h = formatTime12h(task.deliveryTime || '13:00');
 
   // Determine pastel theme matching reference image
   let themeClass = 'card-theme-blue';
@@ -13123,11 +13168,11 @@ function renderOripioEventCard(task, dayIso, timeSlotLabel) {
   return `
     <div class="oripio-event-card ${themeClass}"
          id="futCard_${task.id}"
-         draggable="true"
-         ondragstart="handleCalendarDragStart(event, '${task.id}')"
+         draggable="${isAdmin ? 'true' : 'false'}"
+         ondragstart="${isAdmin ? `handleCalendarDragStart(event, '${task.id}')` : 'event.preventDefault()'}"
          ondragend="handleCalendarDragEnd(event)"
          onclick="openTaskObservationsModal('${task.id}')"
-         title="${task.name} · Vigencia: ${dateRangeStr} · Responsable: ${dev.name} · Clic para bitácora, arrastra para mover">
+         title="${task.name} · Vigencia: ${dateRangeStr} · Responsable: ${dev.name} ${isAdmin ? '· Clic en ⏰ o arrastra a otra hora para reprogramar reunión' : '· Clic para ver qué hacer'}">
       
       <!-- Top Strip with [DD/MM — DD/MM] format and meeting delivery time -->
       <div class="oec-top-strip">
@@ -13135,8 +13180,10 @@ function renderOripioEventCard(task, dayIso, timeSlotLabel) {
           <i data-lucide="calendar" style="width: 10px; height: 10px;"></i>
           ${dateRangeStr}
         </span>
-        <span class="oec-time-pill" title="Hora de reunión de entrega con el desarrollador">
-          ⏰ ${meetingTime12h}
+        <span class="oec-time-pill ${isAdmin ? 'is-clickable' : ''}" 
+              onclick="${isAdmin ? `event.stopPropagation(); openRescheduleMeetingModal('${task.id}', event);` : ''}"
+              title="${isAdmin ? 'Clic para reprogramar hora de reunión' : 'Hora de reunión de entrega'}">
+          ⏰ ${meetingTime12h} ${isAdmin ? '<i data-lucide="pencil" style="width: 8px; height: 8px; margin-left: 2px; opacity: 0.7;"></i>' : ''}
         </span>
         ${diag.isOverdue ? '<span class="oec-status-badge oec-badge-danger">Retraso</span>' : ''}
         ${task.status === 'evaluated' ? '<span class="oec-status-badge oec-badge-success">Auditada</span>' : ''}
@@ -13337,6 +13384,11 @@ function renderCalendarDayGrid(container, currentDate, refDate) {
    Drag & Drop Handlers with STF Non-Working Days Protection
    ========================================================================== */
 function handleCalendarDragStart(e, taskId) {
+  if (!isCurrentSessionAdmin()) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    showToast('⚠️ Solo la Dirección TI (Admin) puede mover reuniones en el calendario.', 'warning');
+    return false;
+  }
   draggedTaskId = taskId;
   e.dataTransfer.setData('text/plain', taskId);
   e.dataTransfer.effectAllowed = 'move';
@@ -13351,6 +13403,7 @@ function handleCalendarDragEnd(e) {
 }
 
 function handleCalendarDragOver(e) {
+  if (!isCurrentSessionAdmin()) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   const col = e.currentTarget;
@@ -13366,18 +13419,26 @@ function handleCalendarDragLeave(e) {
   }
 }
 
-function handleCalendarDrop(e, targetDateStr) {
+function handleCalendarDrop(e, targetDateStr, targetHour) {
   e.preventDefault();
   const col = e.currentTarget;
   if (col) col.classList.remove('drag-over');
 
-  const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Solo la Dirección TI (Admin) puede reprogramar y mover reuniones.', 'warning');
+    return;
+  }
+
+  const taskId = (e.dataTransfer ? e.dataTransfer.getData('text/plain') : null) || draggedTaskId;
   if (!taskId || !targetDateStr) return;
 
-  // VERIFY SUNDAY / HOLIDAY PROTECTION: No activities scheduled on non-working days!
-  const hol = checkColombianHoliday(targetDateStr);
   const targetDateObj = parseSafeDate(targetDateStr);
   const isSunday = targetDateObj && targetDateObj.getDay() === 0;
+  const hol = checkColombianHoliday(targetDateStr);
+
+  const targetTimeStr = (targetHour !== undefined && targetHour !== null)
+    ? `${String(targetHour).padStart(2, '0')}:00`
+    : null;
 
   if (isSunday || hol.isHoliday) {
     // Automatically find the next working day
@@ -13394,15 +13455,20 @@ function handleCalendarDrop(e, targetDateStr) {
     const adjustedIso = formatIsoDate(nextWorkDate);
     const dayReason = isSunday ? 'Los domingos son de descanso oficial en STF' : `El ${hol.name || 'festivo'} no es laborable`;
     showToast(`⚠️ ${dayReason}. La entrega fue ajustada automáticamente al siguiente día hábil (${formatShortDate(adjustedIso)}).`, 'warning');
-    handleMoveTaskToDate(taskId, adjustedIso);
+    handleMoveTaskToDate(taskId, adjustedIso, targetTimeStr);
     return;
   }
 
-  handleMoveTaskToDate(taskId, targetDateStr);
+  handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr);
 }
 
 function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
   if (!appState || !Array.isArray(appState.integrations)) return;
+
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Solo la Dirección TI (Admin) puede reprogramar y mover reuniones.', 'warning');
+    return;
+  }
 
   const task = appState.integrations.find(i => i.id === taskId);
   if (!task) {
@@ -13411,13 +13477,25 @@ function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
   }
 
   const oldDate = task.deadline;
-  task.deadline = targetDateStr;
+  const oldTime = task.deliveryTime || '13:00';
+
+  const dateChanged = targetDateStr && targetDateStr !== oldDate;
+  const timeChanged = targetTimeStr && targetTimeStr !== oldTime;
+
+  if (!dateChanged && !timeChanged) {
+    return; // No hubo cambios
+  }
+
+  if (targetDateStr) {
+    task.deadline = targetDateStr;
+  }
   if (targetTimeStr) {
     task.deliveryTime = targetTimeStr;
   }
 
-  // Add observation tracking the rescheduled date
-  if (!Array.isArray(task.observations)) task.observations = [];
+  const newTime = task.deliveryTime || '13:00';
+  const newDate = task.deadline;
+
   const session = getLoggedSessionUser();
   const now = new Date();
   const timestampStr = now.toLocaleString('es-CO', {
@@ -13425,50 +13503,107 @@ function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
     hour: '2-digit', minute: '2-digit'
   });
 
-  const rescheduleObsText = `📅 Fecha de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(targetDateStr)}.`;
-  const rescheduleObsId = `obs_${Date.now()}`;
+  const dev = getDeveloperById(task.devId);
+  const devName = dev ? dev.name : (task.devName || 'Desarrollador');
+  const app = getApplicationById(task.appId) || { name: task.appName || 'Sistema' };
 
+  // Textos descriptivos diferenciados de la reprogramación
+  let rescheduleObsText = '';
+  let notifTitle = '';
+  let notifSub = '';
+
+  if (dateChanged && timeChanged) {
+    rescheduleObsText = `⏰ Reunión reprogramada por Dirección TI: Nueva cita el ${formatShortDate(newDate)} a las ${formatTime12h(newTime)} (Antes: ${formatShortDate(oldDate)} a las ${formatTime12h(oldTime)}).`;
+    notifTitle = `⏰ Cambio de Hora y Fecha: ${task.name}`;
+    notifSub = `Dirección TI reprogramó tu reunión de entrega para el ${formatShortDate(newDate)} a las ${formatTime12h(newTime)} (${app.name}). Prepárate para la sustentación.`;
+  } else if (timeChanged) {
+    rescheduleObsText = `⏰ Hora de reunión reprogramada por Dirección TI: Nueva hora ${formatTime12h(newTime)} (Antes: ${formatTime12h(oldTime)}) para la entrega del ${formatShortDate(newDate)}.`;
+    notifTitle = `⏰ Cambio de Hora de Reunión: ${task.name}`;
+    notifSub = `Dirección TI reprogramó tu reunión de entrega para hoy a las ${formatTime12h(newTime)} (Antes: ${formatTime12h(oldTime)}) en ${app.name}.`;
+  } else {
+    rescheduleObsText = `📅 Fecha de entrega reprogramada en el Calendario oficial STF: del ${formatShortDate(oldDate)} al ${formatShortDate(newDate)} (${formatTime12h(newTime)}).`;
+    notifTitle = `📅 Cambio de Fecha: ${task.name}`;
+    notifSub = `Dirección TI reprogramó la fecha de entrega para el ${formatShortDate(newDate)} a las ${formatTime12h(newTime)} (${app.name}).`;
+  }
+
+  const rescheduleObsId = `obs_resched_${Date.now()}`;
+
+  // 1. Agregar observación a la bitácora de la tarea
+  if (!Array.isArray(task.observations)) task.observations = [];
   task.observations.unshift({
     id: rescheduleObsId,
-    author: session.name || 'Jefe TI',
+    author: session.name || 'Jefe TI (Edwin Diaz)',
     role: session.role || 'Admin',
     date: timestampStr,
     text: rescheduleObsText,
     type: 'reschedule',
-    isAutoGenerated: true
+    isAutoGenerated: true,
+    oldTime: oldTime,
+    newTime: newTime,
+    oldDate: oldDate,
+    newDate: newDate,
+    targetDevId: task.devId
   });
 
-  // Save state immediately
+  // 2. Agregar notificación directa al Desarrollador asignado
+  if (!Array.isArray(appState.notifications)) {
+    appState.notifications = [];
+  }
+
+  const notifId = `notif_meet_change_${task.id}_${Date.now()}`;
+  appState.notifications.unshift({
+    id: notifId,
+    type: 'meeting_rescheduled',
+    targetDevId: task.devId,
+    icon: 'alarm-clock',
+    iconBg: '#FEF3C7',
+    iconColor: '#D97706',
+    tag: '⏰ Cambio de Hora de Reunión',
+    tagColor: '#B45309',
+    tagBg: '#FDE68A',
+    title: notifTitle,
+    sub: notifSub,
+    time: 'Ahora',
+    timestamp: Date.now(),
+    read: false,
+    taskId: task.id,
+    action: () => {
+      if (typeof switchView === 'function') switchView('calendar');
+      if (typeof openTaskObservationsModal === 'function') openTaskObservationsModal(task.id);
+    }
+  });
+
+  // Asegurar que NO esté marcada como leída para que active el contador rojo y sonido
+  if (typeof readNotificationsSet !== 'undefined' && readNotificationsSet.has(notifId)) {
+    readNotificationsSet.delete(notifId);
+  }
+
+  // Guardar estado local
   saveData(appState);
 
-  // Sound alert
+  // Sonido de alerta
   if (typeof isSoundEnabled !== 'undefined' && isSoundEnabled && typeof playNotificationSound === 'function') {
     playNotificationSound();
   }
 
-  showToast(`📅 "${task.name}" reprogramada para el ${formatShortDate(targetDateStr)} (Vigencia: ${formatTaskDateRange(task)}).`);
+  showToast(`⏰ ¡Reunión de "${task.name}" reprogramada a las ${formatTime12h(newTime)}! Notificación enviada a ${devName}.`, 'success');
 
-  // Refresh reactive views
-  renderCalendarDeliveryView();
-  if (typeof renderIntegrationsList === 'function') renderIntegrationsList();
-  if (typeof updateHeaderStatChips === 'function') updateHeaderStatChips();
-  if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
+  // Refrescar vistas reactivas del sistema
+  refreshAllViews();
 
-  // Push to Sheets if connected (tanto fila directa como sync total de estado)
+  // Sincronizar en Google Sheets
   if (window.SheetsSync) {
     if (typeof window.SheetsSync.logTaskObservation === 'function') {
-      const app = getApplicationById(task.appId) || { name: task.appName || 'Sistema' };
-      const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador' };
       window.SheetsSync.logTaskObservation({
         date: timestampStr,
-        appName: app.name || task.appName || 'Sistema',
-        developer: session.name || dev.name || 'Desarrollador',
+        appName: app.name || 'Sistema',
+        developer: session.name || 'Dirección TI',
         taskName: task.name,
-        impact: 'NORMAL',
+        impact: 'ALTO',
         observation: rescheduleObsText,
         taskId: task.id,
         obsId: rescheduleObsId,
-        type: 'avance'
+        type: 'ajuste'
       });
     }
     if (typeof window.SheetsSync.syncFullState === 'function') {
@@ -13480,105 +13615,126 @@ function handleMoveTaskToDate(taskId, targetDateStr, targetTimeStr) {
 }
 
 /* ==========================================================================
-   Quick Reschedule Modal Handlers
+   Reschedule Meeting Modal Handlers (Exclusivo Super Admin)
    ========================================================================== */
-function openQuickRescheduleModal(taskId) {
-  const modal = document.getElementById('modalQuickReschedule');
-  if (!modal) return;
+function openRescheduleMeetingModal(taskId, event) {
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
 
-  const task = appState.integrations.find(i => i.id === taskId);
-  if (!task) return;
-
-  document.getElementById('rescheduleTaskId').value = taskId;
-  document.getElementById('rescheduleTaskTitle').textContent = task.name;
-  document.getElementById('rescheduleTaskSub').textContent = `Vigencia actual: ${formatTaskDateRange(task)} · Jornada STF Lun-Sáb 6am-1pm`;
-
-  const customInput = document.getElementById('rescheduleCustomDate');
-  if (customInput) customInput.value = task.deadline || formatIsoDate(new Date());
-
-  const customTime = document.getElementById('rescheduleCustomTime');
-  if (customTime) customTime.value = task.deliveryTime || '10:00';
-
-  const pillsContainer = document.getElementById('rescheduleQuickPills');
-  if (pillsContainer) {
-    const ref = getSystemReferenceDate();
-    const today = new Date(ref);
-    const tomorrow = new Date(ref); tomorrow.setDate(tomorrow.getDate() + 1);
-    const in3Days = new Date(ref); in3Days.setDate(in3Days.getDate() + 3);
-    const nextSaturday = new Date(ref);
-    const diffSat = (6 - nextSaturday.getDay() + 7) % 7 || 7;
-    nextSaturday.setDate(nextSaturday.getDate() + diffSat);
-
-    const nextMonday = new Date(ref);
-    const diffMon = (8 - nextMonday.getDay()) % 7 || 7;
-    nextMonday.setDate(nextMonday.getDate() + diffMon);
-
-    const options = [
-      { label: 'Hoy', date: formatIsoDate(today), sub: 'Entrega prioritaria' },
-      { label: 'Mañana', date: formatIsoDate(tomorrow), sub: 'Próxima jornada' },
-      { label: 'En 3 días', date: formatIsoDate(in3Days), sub: 'Avance programado' },
-      { label: 'Sábado Laboral', date: formatIsoDate(nextSaturday), sub: 'Turno STF 6am-1pm' },
-      { label: 'Próximo Lunes', date: formatIsoDate(nextMonday), sub: 'Inicio de semana' }
-    ];
-
-    pillsContainer.innerHTML = options.map(opt => `
-      <button type="button" class="reschedule-quick-btn" onclick="selectQuickRescheduleDate('${opt.date}')">
-        <strong>${opt.label} (${formatShortDate(opt.date)})</strong>
-        <span class="rq-sub">${opt.sub}</span>
-      </button>
-    `).join('');
-  }
-
-  updateRescheduleSlaPreview(task.deadline);
-  customInput?.addEventListener('input', () => updateRescheduleSlaPreview(customInput.value));
-
-  modal.classList.add('show');
-}
-
-function selectQuickRescheduleDate(dateStr) {
-  const customInput = document.getElementById('rescheduleCustomDate');
-  if (customInput) customInput.value = dateStr;
-  updateRescheduleSlaPreview(dateStr);
-}
-
-function updateRescheduleSlaPreview(dateStr) {
-  const preview = document.getElementById('rescheduleSlaPreview');
-  if (!preview) return;
-  if (!dateStr) {
-    preview.innerHTML = 'Selecciona una fecha para calcular el SLA.';
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Solo la Dirección TI (Admin) puede reprogramar y mover reuniones.', 'warning');
     return;
   }
-  const diag = getSTFDeadlineDiagnosis(dateStr);
-  const hol = checkColombianHoliday(dateStr);
-  const dObj = parseSafeDate(dateStr);
-  const isSun = dObj && dObj.getDay() === 0;
 
-  let warn = '';
-  if (isSun) warn = '<span style="color:#DC2626; font-weight:700;"> · ⚠️ Domingo es día de descanso STF</span>';
-  else if (hol.isHoliday) warn = `<span style="color:#DC2626; font-weight:700;"> · ⚠️ Festivo (${hol.name})</span>`;
+  const task = (appState.integrations || []).find(i => i.id === taskId);
+  if (!task) {
+    showToast('⚠️ No se encontró la tarea seleccionada.', 'warning');
+    return;
+  }
 
-  preview.innerHTML = `<strong>Pronóstico STF:</strong> ${diag.countdownText}${warn} · Medición oficial de cumplimiento TI.`;
+  const modal = document.getElementById('modalRescheduleMeeting');
+  if (!modal) return;
+
+  const app = getApplicationById(task.appId) || { name: task.appName || 'Sistema' };
+  const dev = getDeveloperById(task.devId) || { name: task.devName || 'Desarrollador', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' };
+
+  const idInput = document.getElementById('reschedTaskId');
+  if (idInput) idInput.value = task.id;
+
+  const sysEl = document.getElementById('reschedTaskSystem');
+  if (sysEl) sysEl.textContent = (app.name || 'SISTEMA').toUpperCase();
+
+  const wEl = document.getElementById('reschedTaskWeight');
+  if (wEl) wEl.textContent = `Peso: ${task.weight || 15}%`;
+
+  const titleEl = document.getElementById('reschedTaskTitle');
+  if (titleEl) titleEl.textContent = task.name;
+
+  const devAvatarEl = document.getElementById('reschedDevAvatar');
+  if (devAvatarEl) devAvatarEl.src = dev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+
+  const devNameEl = document.getElementById('reschedDevName');
+  if (devNameEl) devNameEl.textContent = dev.name;
+
+  const dateInput = document.getElementById('reschedDateInput');
+  if (dateInput) {
+    dateInput.value = task.deadline || formatIsoDate(new Date());
+  }
+
+  const timeInput = document.getElementById('reschedTimeInput');
+  if (timeInput) {
+    timeInput.value = task.deliveryTime || '13:00';
+  }
+
+  // Actualizar texto del botón de confirmación con el nombre del desarrollador
+  const btnConfirmText = document.getElementById('btnConfirmRescheduleText');
+  if (btnConfirmText) {
+    btnConfirmText.textContent = `Guardar y Notificar a ${dev.name.split(' ')[0]}`;
+  }
+
+  updateQuickReschedChipActive(task.deliveryTime || '13:00');
+
+  modal.classList.add('show');
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+function closeRescheduleMeetingModal() {
+  const modal = document.getElementById('modalRescheduleMeeting');
+  if (modal) modal.classList.remove('show');
+}
+
+function selectQuickReschedTime(timeStr) {
+  const timeInput = document.getElementById('reschedTimeInput');
+  if (timeInput) timeInput.value = timeStr;
+  updateQuickReschedChipActive(timeStr);
+}
+
+function updateQuickReschedChipActive(timeStr) {
+  const chips = document.querySelectorAll('.resched-quick-chip');
+  chips.forEach(chip => {
+    const chipText = chip.textContent || '';
+    const formatted = formatTime12h(timeStr);
+    chip.classList.toggle('is-active', chipText.includes(formatted) || (chip.getAttribute('onclick') || '').includes(timeStr));
+  });
+}
+
+function submitRescheduleMeetingModal() {
+  if (!isCurrentSessionAdmin()) {
+    showToast('⚠️ Solo la Dirección TI (Admin) puede reprogramar reuniones.', 'warning');
+    return;
+  }
+
+  const taskId = document.getElementById('reschedTaskId')?.value;
+  const newDate = document.getElementById('reschedDateInput')?.value;
+  const newTime = document.getElementById('reschedTimeInput')?.value;
+
+  if (!taskId || !newDate) {
+    showToast('⚠️ Debes seleccionar una fecha válida para la reunión.', 'warning');
+    return;
+  }
+
+  closeRescheduleMeetingModal();
+  handleMoveTaskToDate(taskId, newDate, newTime || '13:00');
+}
+
+function openQuickRescheduleModal(taskId) {
+  openRescheduleMeetingModal(taskId);
 }
 
 function closeQuickRescheduleModal() {
+  closeRescheduleMeetingModal();
   const modal = document.getElementById('modalQuickReschedule');
   if (modal) modal.classList.remove('show');
 }
 
 function confirmQuickRescheduleSubmit() {
-  const taskId = document.getElementById('rescheduleTaskId')?.value;
-  const customInput = document.getElementById('rescheduleCustomDate');
-  const targetDate = customInput ? customInput.value : null;
-  const customTime = document.getElementById('rescheduleCustomTime');
-  const targetTime = customTime ? customTime.value : '10:00';
+  submitRescheduleMeetingModal();
+}
 
-  if (!taskId || !targetDate) {
-    showToast('⚠️ Selecciona una fecha válida.', 'warning');
-    return;
-  }
-
-  closeQuickRescheduleModal();
-  handleMoveTaskToDate(taskId, targetDate, targetTime);
+function selectQuickRescheduleDate(dateStr) {
+  const customInput = document.getElementById('reschedDateInput') || document.getElementById('rescheduleCustomDate');
+  if (customInput) customInput.value = dateStr;
 }
 
 /* ==========================================================================
@@ -13652,6 +13808,10 @@ window.openQuickRescheduleModal = openQuickRescheduleModal;
 window.closeQuickRescheduleModal = closeQuickRescheduleModal;
 window.confirmQuickRescheduleSubmit = confirmQuickRescheduleSubmit;
 window.selectQuickRescheduleDate = selectQuickRescheduleDate;
+window.openRescheduleMeetingModal = openRescheduleMeetingModal;
+window.closeRescheduleMeetingModal = closeRescheduleMeetingModal;
+window.selectQuickReschedTime = selectQuickReschedTime;
+window.submitRescheduleMeetingModal = submitRescheduleMeetingModal;
 
 /**
  * Proactive Meeting Alert System:

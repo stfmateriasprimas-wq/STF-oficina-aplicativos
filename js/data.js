@@ -810,7 +810,9 @@ function getStoredData() {
               if (!item.deadline || item.deadline < todayStr) {
                 item.deadline = todayStr;
               }
-              item.deliveryTime = '13:00';
+              if (!item.deliveryTime) {
+                item.deliveryTime = '13:00';
+              }
             } else {
               if (!item.startDate || item.startDate === '2026-10-19') {
                 item.startDate = createdDay;

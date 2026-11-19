@@ -14844,6 +14844,63 @@ body.dark-mode .tomh-val-time {
   letter-spacing: -0.01em;
 }
 
+.oec-time-pill {
+  font-size: 9.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.oec-time-pill.is-clickable {
+  cursor: pointer;
+}
+
+.oec-time-pill.is-clickable:hover {
+  background: #FFFFFF;
+  color: #D97706;
+  border-color: #F59E0B;
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+}
+
+.resched-quick-chip {
+  padding: 5px 10px;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.resched-quick-chip:hover {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #FCD34D;
+  transform: translateY(-1px);
+}
+
+.resched-quick-chip.is-active {
+  background: #F59E0B;
+  color: #FFFFFF;
+  border-color: #D97706;
+}
+
+.o-cell-td.drag-over {
+  background: #FEF9C3 !important;
+  border: 1.5px dashed #EAB308 !important;
+  box-shadow: inset 0 0 10px rgba(234, 179, 8, 0.25);
+}
+
 .oec-status-badge {
   font-size: 8px;
   font-weight: 800;

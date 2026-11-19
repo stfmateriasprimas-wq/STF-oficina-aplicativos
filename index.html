@@ -2200,6 +2200,93 @@
     </div>
   </div>
 
+  <!-- MODAL: Reprogramar Hora de Reunión en Calendario STF (Exclusivo Admin) -->
+  <div class="modal-backdrop" id="modalRescheduleMeeting">
+    <div class="modal-card modal-card-reschedule" style="max-width: 480px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 45px rgba(0,0,0,0.18);">
+      <div class="modal-header" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); padding: 18px 22px; border-bottom: 1px solid #FCD34D;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 42px; height: 42px; border-radius: 12px; background: #FFFFFF; color: #D97706; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(217,119,6,0.15);">
+            <i data-lucide="alarm-clock" style="width: 22px; height: 22px;"></i>
+          </div>
+          <div>
+            <h2 class="modal-title" style="font-size: 17px; font-weight: 800; color: #78350F; margin: 0;">Reprogramar Hora de Reunión</h2>
+            <p class="modal-subtitle" style="font-size: 12px; color: #92400E; margin: 2px 0 0 0;">Gestión ejecutiva de entregas en planta STF</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeRescheduleMeetingModal()" aria-label="Cerrar modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 22px; display: flex; flex-direction: column; gap: 16px;">
+        <!-- Card Context Box -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 14px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span id="reschedTaskSystem" style="font-size: 11px; font-weight: 750; color: #2563EB; background: #EFF6FF; padding: 3px 8px; border-radius: 6px;">SISTEMA</span>
+            <span id="reschedTaskWeight" style="font-size: 11px; font-weight: 700; color: #64748B;">Peso: 15%</span>
+          </div>
+          <h4 id="reschedTaskTitle" style="margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #1E293B; line-height: 1.35;">Título de la tarea</h4>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <img id="reschedDevAvatar" src="" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid #CBD5E1;">
+            <span id="reschedDevName" style="font-size: 12px; font-weight: 700; color: #475569;">Desarrollador</span>
+          </div>
+        </div>
+
+        <input type="hidden" id="reschedTaskId" value="">
+
+        <!-- Fecha de la reunión -->
+        <div class="form-group">
+          <label for="reschedDateInput" style="font-size: 12px; font-weight: 750; color: #334155; display: block; margin-bottom: 6px;">
+            <i data-lucide="calendar" style="width: 13px; height: 13px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+            Fecha de Entrega
+          </label>
+          <input type="date" id="reschedDateInput" class="form-input" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #CBD5E1; font-size: 13.5px; font-weight: 600;">
+        </div>
+
+        <!-- Hora de la reunión -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label for="reschedTimeInput" style="font-size: 12px; font-weight: 750; color: #334155; margin: 0;">
+              <i data-lucide="clock" style="width: 13px; height: 13px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+              Nueva Hora de Reunión
+            </label>
+            <span style="font-size: 11px; color: #64748B;">Jornada STF: 6:00 AM - 1:00 PM</span>
+          </div>
+          <input type="time" id="reschedTimeInput" class="form-input" value="10:00" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #CBD5E1; font-size: 15px; font-weight: 750; color: #1E293B;">
+          
+          <!-- Chips Rápidos de Horas Típicas STF -->
+          <div style="margin-top: 10px;">
+            <span style="font-size: 11px; font-weight: 600; color: #64748B; display: block; margin-bottom: 6px;">Horas de entrega recomendadas:</span>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" class="resched-quick-chip" onclick="selectQuickReschedTime('08:00')">08:00 AM</button>
+              <button type="button" class="resched-quick-chip" onclick="selectQuickReschedTime('09:00')">09:00 AM</button>
+              <button type="button" class="resched-quick-chip" onclick="selectQuickReschedTime('10:00')">10:00 AM</button>
+              <button type="button" class="resched-quick-chip" onclick="selectQuickReschedTime('11:00')">11:00 AM</button>
+              <button type="button" class="resched-quick-chip" onclick="selectQuickReschedTime('12:00')">12:00 PM</button>
+              <button type="button" class="resched-quick-chip" onclick="selectQuickReschedTime('13:00')">01:00 PM (Fin Turno)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner Informativo de Notificación Automática -->
+        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px; padding: 11px 14px; display: flex; align-items: flex-start; gap: 10px;">
+          <i data-lucide="bell-ring" style="width: 16px; height: 16px; color: #2563EB; flex-shrink: 0; margin-top: 2px;"></i>
+          <span style="font-size: 11.5px; color: #1E40AF; line-height: 1.45;">
+            <strong>Notificación Automática:</strong> Al guardar, la campanita del desarrollador se activará de inmediato con una alerta sonora y el badge rojo informándole del nuevo horario fijado.
+          </span>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 22px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="pill-btn secondary-btn" onclick="closeRescheduleMeetingModal()">Cancelar</button>
+        <button type="button" class="pill-btn primary-glow-btn" id="btnConfirmReschedule" onclick="submitRescheduleMeetingModal()" style="background: linear-gradient(135deg, #F59E0B, #D97706); border: none; box-shadow: 0 4px 12px rgba(217,119,6,0.3);">
+          <i data-lucide="check"></i>
+          <span id="btnConfirmRescheduleText">Guardar y Notificar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: Actualizar Foto de Perfil de Desarrollador -->
   <div class="modal-backdrop" id="modalUpdateDevPhoto">
     <div class="modal-card modal-card-update-photo">
