@@ -2151,7 +2151,7 @@ function sendSupportResolutionEmail(ss, payload, ticketCode, decisionText, resDa
     "</div>" +
 
     // Botón para acceder
-    "<div style=\"text-align: center; margin-24px 0;\">" +
+    "<div style=\"text-align: center; margin: 24px 0;\">" +
     "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4F46E5; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);\">Ingresar a la Plataforma STF</a>" +
     "</div>" +
 

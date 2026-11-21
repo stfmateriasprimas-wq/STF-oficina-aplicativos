@@ -14866,7 +14866,11 @@ function openSupportActionModal(ticketId, preselectedAction) {
       clearSupportActionImage();
     }
   } else {
-    if (obsTextarea) obsTextarea.value = '';
+    if (obsTextarea) {
+      obsTextarea.value = decision === 'aceptada'
+        ? '✅ Solicitud recibida y aceptada. Se procede con la atención técnica en planta.'
+        : '❌ El requerimiento ya se encuentra solventado en la última versión estable (ver evidencia adjunta).';
+    }
     clearSupportActionImage();
   }
 
@@ -14946,20 +14950,19 @@ function handleSupportActionSubmit(e) {
 
   const isAccept = document.getElementById('radioDecisionAccept')?.checked;
   const decision = isAccept ? 'aceptada' : 'rechazada';
-  const observation = (document.getElementById('supActionObservation')?.value || '').trim();
+  let observation = (document.getElementById('supActionObservation')?.value || '').trim();
   const etaHours = isAccept ? document.getElementById('supActionEta')?.value : null;
-  const requesterEmail = (document.getElementById('supActionRequesterEmail')?.value || '').trim();
+  const requesterEmail = (document.getElementById('supActionRequesterEmail')?.value || ticket.requester?.email || ticket.requesterEmail || '').trim();
 
   if (!observation) {
-    if (typeof showToast === 'function') {
-      showToast('⚠️ Debes ingresar una observación o respuesta para el solicitante de planta.', 'warning');
-    }
-    return;
+    observation = isAccept
+      ? '✅ Solicitud recibida y aceptada. Se procede con la atención técnica en planta.'
+      : '❌ Solicitud revisada y no procedente / solventada previamente en planta.';
   }
 
   if (!requesterEmail || requesterEmail.indexOf('@') === -1) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ Por favor ingresa un correo electrónico válido para notificar al solicitante.', 'warning');
+      showToast('⚠️ Por favor ingresa o confirma el correo electrónico del solicitante para despachar la notificación.', 'warning');
     }
     const emailField = document.getElementById('supActionRequesterEmail');
     if (emailField) {
