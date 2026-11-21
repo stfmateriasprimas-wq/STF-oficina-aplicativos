@@ -14563,11 +14563,28 @@ function formatFileSizeHelper(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+function triggerSupportActionImageBrowse(e) {
+  if (e) {
+    if (e.target && (e.target.closest('#supDropzonePreview') || e.target.closest('label[for="supActionImageInput"]'))) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const inputEl = document.getElementById('supActionImageInput');
+  if (inputEl) {
+    inputEl.value = '';
+    inputEl.click();
+  }
+}
+
 function handleSupportActionImageSelect(e) {
   const file = e.target.files && e.target.files[0];
   if (file) {
     processSupportActionImageFile(file);
   }
+  // Limpiar valor para permitir volver a seleccionar la misma foto si se desea
+  try { e.target.value = ''; } catch(err){}
 }
 
 function processSupportActionImageFile(file) {
@@ -15029,6 +15046,7 @@ function handleSupportActionSubmit(e) {
 }
 
 // Exponer funciones globalmente
+window.triggerSupportActionImageBrowse = triggerSupportActionImageBrowse;
 window.handleSupportActionImageSelect = handleSupportActionImageSelect;
 window.clearSupportActionImage = clearSupportActionImage;
 window.viewSupportEvidence = viewSupportEvidence;
