@@ -1628,43 +1628,111 @@ let activeDeckApps = [];
 // Paletas oficiales y armónicas para cada sistema de STF GROUP
 const DECK_SYSTEM_PALETTES = {
   app_torre: {
-    bg: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", // Royal Violet
+    bg: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", // Royal Violet (Púrpura)
     shadow: "0 12px 26px -4px rgba(124, 58, 237, 0.45)"
   },
+  app_geo: {
+    bg: "linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)", // Ruby Red (Rojo Carmesí)
+    shadow: "0 12px 26px -4px rgba(225, 29, 72, 0.45)"
+  },
+  app_oficina: {
+    bg: "linear-gradient(135deg, #10B981 0%, #059669 100%)", // Emerald Green (Verde Esmeralda Oficial - Imagen 2)
+    shadow: "0 12px 26px -4px rgba(16, 185, 129, 0.45)"
+  },
   app_colchas: {
-    bg: "linear-gradient(135deg, #FFA947 0%, #FF8D1D 100%)", // Sunset Orange
+    bg: "linear-gradient(135deg, #FFA947 0%, #FF8D1D 100%)", // Sunset Orange (Naranja Atardecer)
     shadow: "0 12px 26px -4px rgba(255, 141, 29, 0.45)"
   },
   app_laboratorio: {
-    bg: "linear-gradient(135deg, #6B88FF 0%, #4D6DFF 100%)", // Electric Blue
+    bg: "linear-gradient(135deg, #6B88FF 0%, #4D6DFF 100%)", // Electric Blue (Azul Eléctrico)
     shadow: "0 12px 26px -4px rgba(77, 109, 255, 0.48)"
   },
   app_calidad: {
-    bg: "linear-gradient(135deg, #10B981 0%, #059669 100%)", // Emerald Green
-    shadow: "0 12px 26px -4px rgba(16, 185, 129, 0.45)"
-  },
-  app_tintoreria: {
-    bg: "linear-gradient(135deg, #06B6D4 0%, #0284C7 100%)", // Cyan Ocean
+    bg: "linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)", // Cyan Ocean (Azul Océano)
     shadow: "0 12px 26px -4px rgba(2, 132, 199, 0.45)"
   },
-  app_geo: {
-    bg: "linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)", // Ruby Red
-    shadow: "0 12px 26px -4px rgba(225, 29, 72, 0.45)"
+  app_tintoreria: {
+    bg: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)", // Indigo Purple (Índigo Textil)
+    shadow: "0 12px 26px -4px rgba(109, 40, 217, 0.45)"
   }
 };
 
 const DEFAULT_DECK_GRADIENTS = [
-  { bg: "linear-gradient(135deg, #6B88FF 0%, #4D6DFF 100%)", shadow: "0 12px 26px -4px rgba(77, 109, 255, 0.48)" },
-  { bg: "linear-gradient(135deg, #FFA947 0%, #FF8D1D 100%)", shadow: "0 12px 26px -4px rgba(255, 141, 29, 0.45)" },
   { bg: "linear-gradient(135deg, #10B981 0%, #059669 100%)", shadow: "0 12px 26px -4px rgba(16, 185, 129, 0.45)" },
-  { bg: "linear-gradient(135deg, #06B6D4 0%, #0284C7 100%)", shadow: "0 12px 26px -4px rgba(2, 132, 199, 0.45)" },
+  { bg: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", shadow: "0 12px 26px -4px rgba(124, 58, 237, 0.45)" },
   { bg: "linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)", shadow: "0 12px 26px -4px rgba(225, 29, 72, 0.45)" },
-  { bg: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", shadow: "0 12px 26px -4px rgba(124, 58, 237, 0.45)" }
+  { bg: "linear-gradient(135deg, #FFA947 0%, #FF8D1D 100%)", shadow: "0 12px 26px -4px rgba(255, 141, 29, 0.45)" },
+  { bg: "linear-gradient(135deg, #6B88FF 0%, #4D6DFF 100%)", shadow: "0 12px 26px -4px rgba(77, 109, 255, 0.48)" },
+  { bg: "linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)", shadow: "0 12px 26px -4px rgba(2, 132, 199, 0.45)" }
 ];
 
 function getAppDeckPalette(app, idx) {
-  if (app && DECK_SYSTEM_PALETTES[app.id]) return DECK_SYSTEM_PALETTES[app.id];
+  if (!app) return DEFAULT_DECK_GRADIENTS[idx % DEFAULT_DECK_GRADIENTS.length];
+
+  // 1. Coincidencia directa por ID
+  if (app.id && DECK_SYSTEM_PALETTES[app.id]) return DECK_SYSTEM_PALETTES[app.id];
+
+  // 2. Coincidencia estricta por nombre o código para blindar cualquier aplicativo
+  const nameNorm = String(app.name || '').toLowerCase().replace(/[\s_-]+/g, '');
+  const codeNorm = String(app.code || '').toLowerCase().replace(/[\s_-]+/g, '');
+
+  if (nameNorm.includes('torre') || codeNorm.includes('tc01') || codeNorm.includes('torre')) {
+    return DECK_SYSTEM_PALETTES.app_torre;
+  }
+  if (nameNorm.includes('colchas') || codeNorm.includes('col') || codeNorm.includes('colchas')) {
+    return DECK_SYSTEM_PALETTES.app_colchas;
+  }
+  if (nameNorm.includes('oficina') || nameNorm.includes('aplicativo') || codeNorm.includes('of') || codeNorm.includes('oficina')) {
+    return DECK_SYSTEM_PALETTES.app_oficina;
+  }
+  if (nameNorm.includes('geo') || nameNorm.includes('taller') || codeNorm.includes('geo')) {
+    return DECK_SYSTEM_PALETTES.app_geo;
+  }
+  if (nameNorm.includes('laboratorio') || nameNorm.includes('lab') || codeNorm.includes('lab')) {
+    return DECK_SYSTEM_PALETTES.app_laboratorio;
+  }
+  if (nameNorm.includes('calidad') || codeNorm.includes('calidad')) {
+    return DECK_SYSTEM_PALETTES.app_calidad;
+  }
+  if (nameNorm.includes('tintoreria') || nameNorm.includes('tinto') || codeNorm.includes('tintoreria')) {
+    return DECK_SYSTEM_PALETTES.app_tintoreria;
+  }
+
+  // 3. Si tiene color de ícono propio
+  if (app.iconColor) {
+    return {
+      bg: `linear-gradient(135deg, ${app.iconColor} 0%, ${app.iconColor}D9 100%)`,
+      shadow: `0 12px 26px -4px ${app.iconColor}66`
+    };
+  }
+
   return DEFAULT_DECK_GRADIENTS[idx % DEFAULT_DECK_GRADIENTS.length];
+}
+
+window.getAppDeckPalette = getAppDeckPalette;
+window.DECK_SYSTEM_PALETTES = DECK_SYSTEM_PALETTES;
+window.getActiveDeckApps = () => activeDeckApps;
+
+let currentFocusedAppId = null;
+
+function saveDeckActiveApp(devId, appId) {
+  try {
+    const key = 'STF_DECK_ACTIVE_APP_' + (devId || 'default');
+    if (appId) {
+      localStorage.setItem(key, appId);
+    } else {
+      localStorage.removeItem(key);
+    }
+  } catch (e) {}
+}
+
+function getDeckActiveApp(devId) {
+  try {
+    const key = 'STF_DECK_ACTIVE_APP_' + (devId || 'default');
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
 }
 
 function renderStackedDeck(devId = activeSelectedDevId) {
@@ -1695,11 +1763,34 @@ function renderStackedDeck(devId = activeSelectedDevId) {
     devApps = [...appState.applications];
   }
 
+  // Persistencia de la app activa y orden de la baraja
+  const devKey = !isCurrentSessionAdmin() ? getLoggedDevId() : (devId || 'all');
+  let targetActiveId = getDeckActiveApp(devKey);
+
+  // Si no hay tarjeta guardada para Jose Guzman, su aplicativo por defecto oficial es COLCHAS (Imagen 2 de referencia)
+  if (!targetActiveId && (devKey === 'dev_jg' || getLoggedDevId() === 'dev_jg')) {
+    targetActiveId = 'app_colchas';
+  } else if (!targetActiveId && currentFocusedAppId && devApps.some(a => a.id === currentFocusedAppId)) {
+    targetActiveId = currentFocusedAppId;
+  }
+
+  if (targetActiveId && devApps.some(a => a.id === targetActiveId)) {
+    const idx = devApps.findIndex(a => a.id === targetActiveId);
+    if (idx > 0) {
+      const chosen = devApps.splice(idx, 1)[0];
+      devApps.unshift(chosen);
+    }
+    currentFocusedAppId = targetActiveId;
+  } else if (devApps.length > 0) {
+    currentFocusedAppId = devApps[0].id;
+  }
+
   activeDeckApps = devApps;
   renderDeckFromList(activeDeckApps);
+  if (typeof updateOverviewChart === 'function') {
+    updateOverviewChart();
+  }
 }
-
-let currentFocusedAppId = null;
 
 function cycleStackedDeckByAppId(appId) {
   const idx = activeDeckApps.findIndex(a => a.id === appId);
@@ -1710,6 +1801,8 @@ function cycleStackedDeckByAppId(appId) {
   }
   // Sincronizar y enfocar en tiempo real el sistema en la Curva de Avance vs Estimado
   currentFocusedAppId = appId;
+  const devKey = !isCurrentSessionAdmin() ? getLoggedDevId() : (activeSelectedDevId || 'all');
+  saveDeckActiveApp(devKey, appId);
   if (typeof updateOverviewChart === 'function') {
     updateOverviewChart();
   }
@@ -1717,6 +1810,8 @@ function cycleStackedDeckByAppId(appId) {
 
 function selectDeckAppForOverview(appId) {
   currentFocusedAppId = appId;
+  const devKey = !isCurrentSessionAdmin() ? getLoggedDevId() : (activeSelectedDevId || 'all');
+  saveDeckActiveApp(devKey, appId);
   if (typeof updateOverviewChart === 'function') {
     updateOverviewChart();
   }
@@ -1725,6 +1820,8 @@ function selectDeckAppForOverview(appId) {
 function clearOverviewAppFocus(e) {
   if (e) e.stopPropagation();
   currentFocusedAppId = null;
+  const devKey = !isCurrentSessionAdmin() ? getLoggedDevId() : (activeSelectedDevId || 'all');
+  saveDeckActiveApp(devKey, null);
   if (typeof updateOverviewChart === 'function') {
     updateOverviewChart();
   }
@@ -1737,6 +1834,8 @@ function cycleStackedDeckNext(e) {
   activeDeckApps.push(first);
   renderDeckFromList(activeDeckApps);
   currentFocusedAppId = activeDeckApps[0]?.id || null;
+  const devKey = !isCurrentSessionAdmin() ? getLoggedDevId() : (activeSelectedDevId || 'all');
+  saveDeckActiveApp(devKey, currentFocusedAppId);
   if (typeof updateOverviewChart === 'function') {
     updateOverviewChart();
   }
@@ -1749,6 +1848,8 @@ function cycleStackedDeckPrev(e) {
   activeDeckApps.unshift(last);
   renderDeckFromList(activeDeckApps);
   currentFocusedAppId = activeDeckApps[0]?.id || null;
+  const devKey = !isCurrentSessionAdmin() ? getLoggedDevId() : (activeSelectedDevId || 'all');
+  saveDeckActiveApp(devKey, currentFocusedAppId);
   if (typeof updateOverviewChart === 'function') {
     updateOverviewChart();
   }
