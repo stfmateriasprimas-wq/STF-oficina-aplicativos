@@ -3712,41 +3712,43 @@
 
             <!-- Zona Drag & Drop / File Input compatible 100% PC y Móvil -->
             <div class="sup-image-dropzone" id="supImageDropzone"
-                 onclick="triggerSupportActionImageBrowse(event)"
-                 style="border: 2px dashed #818CF8; border-radius: 14px; padding: 18px 14px; text-align: center; cursor: pointer; background: #F8FAFC; transition: all 0.2s; position: relative;">
-              <input type="file" id="supActionImageInput" accept="image/*,image/jpeg,image/png,image/webp" 
-                     style="position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; z-index: -1;" 
-                     onchange="handleSupportActionImageSelect(event)">
+                 style="position: relative; overflow: hidden; border: 2.5px dashed #6366F1; border-radius: 14px; padding: 20px 14px; text-align: center; background: #F8FAFC; transition: all 0.2s;">
               
-              <div id="supDropzonePrompt" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; color: #4F46E5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);">
-                  <i data-lucide="image-plus" style="width: 22px; height: 22px;"></i>
+              <!-- ESTADO 1: PROMPT INICIAL CON INPUT REAL NATIVO AL 100% -->
+              <div id="supDropzonePrompt" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <!-- El input nativo cubre exactamente toda la caja para recibir el toque o clic directo del sistema -->
+                <input type="file" id="supActionImageInput" accept="image/*,image/jpeg,image/png,image/webp" 
+                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5;" 
+                       onchange="handleSupportActionImageSelect(event)">
+                
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; color: #4F46E5; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2); pointer-events: none;">
+                  <i data-lucide="image-plus" style="width: 24px; height: 24px;"></i>
                 </div>
-                <div>
-                  <div style="font-size: 13px; font-weight: 800; color: #1E293B; margin-bottom: 3px;">
+                
+                <div style="pointer-events: none;">
+                  <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 3px;">
                     Cargar Foto o Captura de Solución
                   </div>
                   <div style="font-size: 11.5px; color: #64748B;">
-                    Toca el botón para elegir de tu <strong>Galería</strong> o explorador
+                    Toca aquí para abrir tu <strong>Galería</strong> o seleccionar archivo
                   </div>
                 </div>
 
-                <!-- Botón nativo que abre la Galería en Móvil y PC -->
-                <label for="supActionImageInput" class="pill-btn primary-glow-btn" 
-                       onclick="event.stopPropagation();"
-                       style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 20px; font-size: 12.5px; margin-top: 4px; cursor: pointer; border-radius: 24px; font-weight: 700; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);">
-                  <i data-lucide="camera" style="width: 15px; height: 15px;"></i>
+                <!-- Botón visual que recibe el toque/clic directo -->
+                <div class="pill-btn primary-glow-btn" 
+                     style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; font-size: 13px; margin-top: 4px; border-radius: 24px; font-weight: 700; pointer-events: none; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);">
+                  <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
                   <span>Abrir Galería / Seleccionar Foto</span>
-                </label>
+                </div>
 
-                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">
+                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px; pointer-events: none;">
                   💡 En PC también puedes pegar capturas directamente con <strong>Ctrl + V</strong>
                 </div>
               </div>
 
-              <!-- Preview de la foto adjunta -->
-              <div id="supDropzonePreview" onclick="event.stopPropagation();"
-                   style="display: none; align-items: center; justify-content: space-between; background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 10px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+              <!-- ESTADO 2: PREVIEW DE FOTO CARGADA -->
+              <div id="supDropzonePreview" 
+                   style="display: none; position: relative; z-index: 10; align-items: center; justify-content: space-between; background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 10px 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
                 <div style="display: flex; align-items: center; gap: 12px; overflow: hidden; text-align: left;">
                   <img id="supActionImgThumb" src="" alt="Vista previa de evidencia" 
                        style="width: 56px; height: 56px; object-fit: cover; border-radius: 10px; border: 1.5px solid #E2E8F0; cursor: pointer;" 
@@ -3757,16 +3759,11 @@
                     <span style="font-size: 11px; color: #10B981; font-weight: 700; display: block;">✓ Lista para enviar al correo</span>
                   </div>
                 </div>
-                <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                  <label for="supActionImageInput" class="pill-btn" onclick="event.stopPropagation();"
-                         style="padding: 6px 10px; background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE; font-size: 11px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 700;">
-                    <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>
-                    <span>Cambiar</span>
-                  </label>
+                <div style="display: flex; gap: 8px; flex-shrink: 0;">
                   <button type="button" class="pill-btn" onclick="clearSupportActionImage(event)" 
-                          style="padding: 6px 10px; background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 11px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 700;">
-                    <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
-                    <span>Quitar</span>
+                          style="padding: 7px 14px; background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 11.5px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 700;">
+                    <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
+                    <span>Quitar Foto</span>
                   </button>
                 </div>
               </div>
@@ -3968,8 +3965,8 @@
   <!-- Application Logic Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=43"></script>
-  <script src="js/sheets-sync.js?v=48"></script>
-  <script src="js/app.js?v=59"></script>
+  <script src="js/sheets-sync.js?v=49"></script>
+  <script src="js/app.js?v=61"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 
