@@ -14487,6 +14487,20 @@ function renderSupportView() {
                 </span>
               </div>
               <p class="st-res-text">"${ticket.resolution.observation}"</p>
+              ${ticket.resolution.evidenceImage ? `
+                <div class="st-res-evidence-wrap" style="margin: 8px 0; padding: 6px 10px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                    <i data-lucide="camera" style="width: 14px; height: 14px; color: #4F46E5; flex-shrink: 0;"></i>
+                    <span style="font-size: 11.5px; font-weight: 700; color: #334155; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+                      Evidencia: ${ticket.resolution.evidenceImageName || 'Fotografía de Validación'}
+                    </span>
+                  </div>
+                  <button type="button" class="pill-btn" onclick="viewSupportEvidence('${ticket.resolution.evidenceImage}', 'Evidencia · Ticket ${ticket.code}')" style="padding: 3px 10px; font-size: 11px; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 6px; color: #4F46E5; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 700; flex-shrink: 0;">
+                    <i data-lucide="eye" style="width: 12px; height: 12px;"></i>
+                    <span>Ver Foto</span>
+                  </button>
+                </div>
+              ` : ''}
               ${ticket.resolution.etaHours ? `
                 <div class="st-res-eta">
                   <i data-lucide="clock" style="width: 13px; height: 13px;"></i>
@@ -14535,12 +14549,211 @@ function renderSupportView() {
   if (window.lucide) lucide.createIcons();
 }
 
+// =========================================================================
+// GESTIÓN DE EVIDENCIA FOTOGRÁFICA Y ATENCIÓN DE TICKETS DE SOPORTE
+// =========================================================================
+let currentSupportActionImage = null;
+let supModalPasteHandlerBound = false;
+
+function formatFileSizeHelper(bytes) {
+  if (!bytes || bytes === 0) return '0 KB';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function handleSupportActionImageSelect(e) {
+  const file = e.target.files && e.target.files[0];
+  if (file) {
+    processSupportActionImageFile(file);
+  }
+}
+
+function processSupportActionImageFile(file) {
+  if (!file) return;
+  if (!file.type.match(/^image\//i)) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ El archivo seleccionado debe ser una imagen (PNG, JPG o WebP).', 'warning');
+    }
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const rawDataUrl = evt.target.result;
+    
+    // Optimizar imagen mediante Canvas (máximo 1280px de ancho para nitidez óptima y ligereza de envío por correo)
+    const img = new Image();
+    img.onload = function() {
+      const maxWidth = 1280;
+      const maxHeight = 1280;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth || height > maxHeight) {
+        if (width > height) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        } else {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Usar JPEG 0.88 para balance perfecto de nitidez y peso liviano
+      const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+      const estBytes = Math.round((optimizedDataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
+
+      currentSupportActionImage = {
+        dataUrl: optimizedDataUrl,
+        name: file.name || ('captura_soporte_' + Date.now() + '.jpg'),
+        type: 'image/jpeg',
+        size: formatFileSizeHelper(estBytes)
+      };
+
+      updateSupportDropzoneUI();
+      updateLiveOperatorPreview();
+
+      if (typeof showToast === 'function') {
+        showToast('📸 Evidencia fotográfica cargada correctamente (' + currentSupportActionImage.size + ').', 'info');
+      }
+    };
+    img.onerror = function() {
+      currentSupportActionImage = {
+        dataUrl: rawDataUrl,
+        name: file.name || 'foto_soporte.jpg',
+        type: file.type || 'image/jpeg',
+        size: formatFileSizeHelper(file.size)
+      };
+      updateSupportDropzoneUI();
+      updateLiveOperatorPreview();
+    };
+    img.src = rawDataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSupportDropzoneUI() {
+  const promptEl = document.getElementById('supDropzonePrompt');
+  const prevEl = document.getElementById('supDropzonePreview');
+  const thumbEl = document.getElementById('supActionImgThumb');
+  const nameEl = document.getElementById('supActionImgName');
+  const sizeEl = document.getElementById('supActionImgSize');
+
+  if (currentSupportActionImage) {
+    if (promptEl) promptEl.style.display = 'none';
+    if (prevEl) prevEl.style.display = 'flex';
+    if (thumbEl) thumbEl.src = currentSupportActionImage.dataUrl;
+    if (nameEl) nameEl.textContent = currentSupportActionImage.name;
+    if (sizeEl) sizeEl.textContent = currentSupportActionImage.size;
+  } else {
+    if (promptEl) promptEl.style.display = 'flex';
+    if (prevEl) prevEl.style.display = 'none';
+    if (thumbEl) thumbEl.src = '';
+  }
+}
+
+function clearSupportActionImage(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  currentSupportActionImage = null;
+  const inputEl = document.getElementById('supActionImageInput');
+  if (inputEl) inputEl.value = '';
+  updateSupportDropzoneUI();
+  updateLiveOperatorPreview();
+}
+
+function initSupportModalPasteAndDrop() {
+  const dropzone = document.getElementById('supImageDropzone');
+  if (dropzone && !dropzone.dataset.boundEvents) {
+    dropzone.dataset.boundEvents = 'true';
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.style.borderColor = '#4F46E5';
+      dropzone.style.background = '#EEF2FF';
+    });
+    dropzone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.style.borderColor = '#CBD5E1';
+      dropzone.style.background = '#F8FAFC';
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.style.borderColor = '#CBD5E1';
+      dropzone.style.background = '#F8FAFC';
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processSupportActionImageFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  if (!supModalPasteHandlerBound) {
+    supModalPasteHandlerBound = true;
+    window.addEventListener('paste', (e) => {
+      const modal = document.getElementById('modalSupportAction');
+      if (!modal || !modal.classList.contains('show')) return;
+
+      const items = (e.clipboardData || window.clipboardData)?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type && items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) {
+            e.preventDefault();
+            processSupportActionImageFile(blob);
+            break;
+          }
+        }
+      }
+    });
+  }
+}
+
+// Visor Lightbox para Evidencia Fotográfica
+function viewSupportEvidence(imgUrl, title) {
+  if (!imgUrl) return;
+  const modal = document.getElementById('modalSupportEvidenceViewer');
+  const img = document.getElementById('supEvidenceViewerImg');
+  const titleEl = document.getElementById('supEvidenceViewerTitle');
+  const dlBtn = document.getElementById('supEvidenceDownloadBtn');
+
+  if (img) img.src = imgUrl;
+  if (titleEl) titleEl.textContent = title || 'Evidencia Fotográfica de Soporte';
+  if (dlBtn) {
+    dlBtn.href = imgUrl;
+    dlBtn.download = (title ? title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'evidencia_soporte') + '.jpg';
+  }
+  if (modal) modal.classList.add('show');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeSupportEvidenceViewer(e) {
+  if (e && e.target && e.target !== e.currentTarget && !e.target.closest('.modal-close-btn')) return;
+  const modal = document.getElementById('modalSupportEvidenceViewer');
+  if (modal) modal.classList.remove('show');
+}
+
 function updateLiveOperatorPreview() {
   const isAccept = document.getElementById('radioDecisionAccept')?.checked;
   const obs = (document.getElementById('supActionObservation')?.value || '').trim();
   const eta = document.getElementById('supActionEta')?.value;
   const prevMsg = document.getElementById('sopPrevMsg');
   const prevFooter = document.getElementById('sopPrevFooter');
+  const prevEvidence = document.getElementById('sopPrevEvidence');
+  const prevEvidenceName = document.getElementById('sopPrevEvidenceName');
   const session = getLoggedSessionUser();
 
   if (prevMsg) {
@@ -14552,6 +14765,17 @@ function updateLiveOperatorPreview() {
     } else {
       prevMsg.textContent = 'Escribe una respuesta para visualizar la notificación en tiempo real...';
       prevMsg.style.color = '#94A3B8';
+    }
+  }
+
+  if (prevEvidence) {
+    if (currentSupportActionImage) {
+      prevEvidence.style.display = 'flex';
+      if (prevEvidenceName) {
+        prevEvidenceName.textContent = currentSupportActionImage.name || 'foto_adjunta.jpg';
+      }
+    } else {
+      prevEvidence.style.display = 'none';
     }
   }
 
@@ -14573,6 +14797,7 @@ function openSupportActionModal(ticketId, preselectedAction) {
   const radioAccept = document.getElementById('radioDecisionAccept');
   const radioReject = document.getElementById('radioDecisionReject');
   const obsTextarea = document.getElementById('supActionObservation');
+  const emailInput = document.getElementById('supActionRequesterEmail');
   const etaSelect = document.getElementById('supActionEta');
   const prevApp = document.getElementById('sopPrevApp');
 
@@ -14582,6 +14807,11 @@ function openSupportActionModal(ticketId, preselectedAction) {
   const dev = getDeveloperById(ticket.devId) || { name: ticket.devName };
 
   if (prevApp) prevApp.textContent = `${app.name} · TERMINAL PLANTA`;
+
+  const reqEmail = ticket.requester?.email || ticket.requesterEmail || ticket.email || '';
+  if (emailInput) {
+    emailInput.value = reqEmail;
+  }
 
   if (summaryBox) {
     summaryBox.innerHTML = `
@@ -14593,6 +14823,7 @@ function openSupportActionModal(ticketId, preselectedAction) {
       <div style="font-size: 12px; color: #475569; display: flex; gap: 12px; flex-wrap: wrap;">
         <span><strong>Solicita:</strong> ${ticket.requester?.name || 'Operario'} (${ticket.requester?.area || 'Planta'})</span>
         <span><strong>Desarrollador:</strong> ${dev.name}</span>
+        ${reqEmail ? `<span><strong>Correo Solicitante:</strong> <span style="color: #4F46E5; font-weight: 600;">${reqEmail}</span></span>` : ''}
       </div>
     `;
   }
@@ -14606,10 +14837,23 @@ function openSupportActionModal(ticketId, preselectedAction) {
   if (ticket.resolution) {
     if (obsTextarea) obsTextarea.value = ticket.resolution.observation || '';
     if (etaSelect && ticket.resolution.etaHours) etaSelect.value = ticket.resolution.etaHours;
+    if (ticket.resolution.evidenceImage) {
+      currentSupportActionImage = {
+        dataUrl: ticket.resolution.evidenceImage,
+        name: ticket.resolution.evidenceImageName || 'evidencia_guardada.jpg',
+        type: 'image/jpeg',
+        size: 'Adjunta previamente'
+      };
+      updateSupportDropzoneUI();
+    } else {
+      clearSupportActionImage();
+    }
   } else {
     if (obsTextarea) obsTextarea.value = '';
+    clearSupportActionImage();
   }
 
+  initSupportModalPasteAndDrop();
   updateLiveOperatorPreview();
 
   if (modal) modal.classList.add('show');
@@ -14619,6 +14863,7 @@ function openSupportActionModal(ticketId, preselectedAction) {
 function closeSupportActionModal() {
   const modal = document.getElementById('modalSupportAction');
   if (modal) modal.classList.remove('show');
+  clearSupportActionImage();
 }
 
 function handleDecisionRadioChange(action) {
@@ -14626,9 +14871,19 @@ function handleDecisionRadioChange(action) {
   const etaRow = document.getElementById('supActionEtaRow');
   const btnText = document.getElementById('btnSubmitSupActionText');
   const chipsWrap = document.getElementById('supTemplatesChips');
+  const imgBadge = document.getElementById('supImgRequiredBadge');
 
   if (etaRow) etaRow.style.display = isAccept ? 'flex' : 'none';
-  if (btnText) btnText.textContent = isAccept ? 'Aceptar Solicitud & Enviar Respuesta' : 'Rechazar Solicitud & Notificar Causa';
+  if (btnText) btnText.textContent = isAccept ? 'Aceptar Solicitud & Enviar Respuesta' : 'Rechazar Solicitud & Notificar Causa con Foto';
+
+  if (imgBadge) {
+    imgBadge.innerHTML = isAccept
+      ? '📸 Captura técnica (Opcional)'
+      : '📸 Adjunta foto para validar rechazo / solución';
+    imgBadge.style.color = isAccept ? '#059669' : '#D97706';
+    imgBadge.style.background = isAccept ? '#ECFDF5' : '#FEF3C7';
+    imgBadge.style.borderColor = isAccept ? '#A7F3D0' : '#FDE68A';
+  }
 
   const templates = isAccept ? [
     '✅ Recibido en planta. Procedemos a revisar y corregir de inmediato.',
@@ -14636,7 +14891,9 @@ function handleDecisionRadioChange(action) {
     '✅ Validado con la jefa de área. Se ajustará la configuración del módulo.',
     '✅ El módulo se encuentra en pruebas; aplicaremos la actualización solicitada.'
   ] : [
-    '❌ No procede: El aplicativo opera según la parametrización estándar aprobada.',
+    '❌ Ya solucionado: El caso ya se encuentra solventado y operativo en planta (ver evidencia adjunta).',
+    '❌ Solicitud repetida: La funcionalidad opera con normalidad según la captura fotográfica adjunta.',
+    '❌ No procede: El aplicativo opera según la parametrización estándar aprobada en planta.',
     '❌ Requiere validación previa con la jefatura de planta antes de modificar.',
     '❌ No corresponde a una falla de software (verificar conectividad o hardware de planta).',
     '❌ El requerimiento ya se encuentra solventado en la última versión estable.'
@@ -14674,6 +14931,7 @@ function handleSupportActionSubmit(e) {
   const decision = isAccept ? 'aceptada' : 'rechazada';
   const observation = (document.getElementById('supActionObservation')?.value || '').trim();
   const etaHours = isAccept ? document.getElementById('supActionEta')?.value : null;
+  const requesterEmail = (document.getElementById('supActionRequesterEmail')?.value || '').trim();
 
   if (!observation) {
     if (typeof showToast === 'function') {
@@ -14682,21 +14940,43 @@ function handleSupportActionSubmit(e) {
     return;
   }
 
+  if (!requesterEmail || requesterEmail.indexOf('@') === -1) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Por favor ingresa un correo electrónico válido para notificar al solicitante.', 'warning');
+    }
+    const emailField = document.getElementById('supActionRequesterEmail');
+    if (emailField) {
+      emailField.focus();
+      emailField.style.borderColor = '#EF4444';
+      setTimeout(() => { emailField.style.borderColor = ''; }, 3000);
+    }
+    return;
+  }
+
   const session = getLoggedSessionUser();
   ticket.status = decision;
+
+  // Actualizar correo en el ticket
+  if (!ticket.requester) ticket.requester = {};
+  ticket.requester.email = requesterEmail;
+  ticket.requesterEmail = requesterEmail;
+
   ticket.resolution = {
     action: decision,
     resolvedBy: session.name,
     resolvedByDevId: getLoggedDevId(),
     resolvedAt: new Date().toISOString(),
     observation: observation,
-    etaHours: etaHours
+    etaHours: etaHours,
+    requesterEmail: requesterEmail,
+    evidenceImage: currentSupportActionImage ? currentSupportActionImage.dataUrl : null,
+    evidenceImageName: currentSupportActionImage ? currentSupportActionImage.name : null
   };
 
   saveData(appState);
   closeSupportActionModal();
 
-  // Sincronizar dictamen oficial en Google Sheets (Hoja: SOLICITUDES_SOPORTE)
+  // Sincronizar dictamen oficial en Google Sheets y despachar correo con la foto adjunta
   try {
     if (window.SheetsSync && typeof window.SheetsSync.resolveSupportTicket === 'function') {
       window.SheetsSync.resolveSupportTicket({
@@ -14704,7 +14984,12 @@ function handleSupportActionSubmit(e) {
         decision: decision,
         observation: observation,
         etaHours: etaHours,
-        resolvedBy: session.name
+        resolvedBy: session.name,
+        requesterEmail: requesterEmail,
+        evidenceImage: currentSupportActionImage ? currentSupportActionImage.dataUrl : null,
+        evidenceImageName: currentSupportActionImage ? currentSupportActionImage.name : null
+      }).then(res => {
+        console.log('[SupportAction] Sincronizado en Sheets & Correo:', res);
       }).catch(err => console.warn('[SupportAction] Sync Sheets:', err));
     }
   } catch (e) { }
@@ -14727,11 +15012,12 @@ function handleSupportActionSubmit(e) {
     playNotificationSound();
   }
 
+  const hasPhoto = !!(currentSupportActionImage && currentSupportActionImage.dataUrl);
   if (typeof showToast === 'function') {
     showToast(
       decision === 'aceptada'
-        ? `✓ Solicitud ${ticket.code} ACEPTADA. Se notificó la respuesta oficial a ${ticket.requester?.name || 'planta'}.`
-        : `✕ Solicitud ${ticket.code} RECHAZADA. Se envió la causa técnica al solicitante.`,
+        ? `✓ Solicitud ${ticket.code} ACEPTADA. Notificación enviada a ${requesterEmail}.`
+        : `✕ Solicitud ${ticket.code} RECHAZADA. Se envió la causa técnica${hasPhoto ? ' y la fotografía adjunta' : ''} a ${requesterEmail}.`,
       'success'
     );
   }
@@ -14741,6 +15027,12 @@ function handleSupportActionSubmit(e) {
     renderNotificationsDropdown();
   }
 }
+
+// Exponer funciones globalmente
+window.handleSupportActionImageSelect = handleSupportActionImageSelect;
+window.clearSupportActionImage = clearSupportActionImage;
+window.viewSupportEvidence = viewSupportEvidence;
+window.closeSupportEvidenceViewer = closeSupportEvidenceViewer;
 
 function openNewSupportModal() {
   const modal = document.getElementById('modalNewSupportTicket');

@@ -95,7 +95,8 @@ var HEADERS = {
     "Observacion_Desarrollador",
     "Tiempo_Estimado_ETA",
     "Resuelto_Por",
-    "Correo_Solicitante"
+    "Correo_Solicitante",
+    "Evidencia_Fotografica"
   ]
 };
 
@@ -113,7 +114,8 @@ function onOpen() {
     .addItem('📋 Reparar & Alinear Hoja CONTROL_TAREAS', 'setupTareasSheetDirect')
     .addItem('🌐 Actualizar Hoja SISTEMAS_WEB', 'setupSistemasWebSheetDirect')
     .addItem('📝 Configurar Hoja HISTORIAL_OBSERVACIONES', 'setupObservacionesSheetDirect')
-    .addItem('📧 Probar Notificación por Correo', 'testEmailNotification')
+    .addItem('📧 Probar Notificación por Correo (Tareas)', 'testEmailNotification')
+    .addItem('📧 Probar Correo de Rechazo / Solución con Foto', 'testSupportResolutionEmailDirect')
     .addToUi();
 }
 
@@ -1735,7 +1737,7 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // ACCIÓN 8: Oficializar Dictamen de Soporte (Aceptar / Rechazar con Observación)
+    // ACCIÓN 8: Oficializar Dictamen de Soporte (Aceptar / Rechazar con Observación & Foto)
     // =========================================================================
     if (action === "resolve_support_ticket") {
       var sSoporte = getMasterSheet(ss, "SOPORTE");
@@ -1758,6 +1760,41 @@ function doPost(e) {
       var decisionText = payload.decision === 'aceptada' ? 'Aceptada' : 'Rechazada';
       var resDate = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
 
+      // Procesar y decodificar evidencia fotográfica si fue adjuntada
+      var imageBlob = null;
+      var imageUrl = "";
+      if (payload.evidenceImage && String(payload.evidenceImage).indexOf('data:image') !== -1) {
+        try {
+          var parts = payload.evidenceImage.split(',');
+          var meta = parts[0];
+          var base64Data = parts[1];
+          var contentType = "image/jpeg";
+          if (meta.indexOf("image/png") !== -1) contentType = "image/png";
+          else if (meta.indexOf("image/webp") !== -1) contentType = "image/webp";
+
+          var decoded = Utilities.base64Decode(base64Data);
+          var fileName = payload.evidenceImageName || ("evidencia_" + targetCode + "_" + (payload.decision || "rechazo") + ".jpg");
+          imageBlob = Utilities.newBlob(decoded, contentType, fileName);
+
+          // Intentar almacenar la imagen en Google Drive en carpeta oficial STF
+          try {
+            var folderName = "STF_EVIDENCIAS_SOPORTE";
+            var folders = DriveApp.getFoldersByName(folderName);
+            var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+            var driveFile = folder.createFile(imageBlob);
+            driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+            imageUrl = driveFile.getUrl();
+          } catch (eDrive) {
+            Logger.log("Drive folder/file error (continuando con Blob directo): " + eDrive.toString());
+          }
+        } catch (eImg) {
+          Logger.log("Image decode error: " + eImg.toString());
+        }
+      }
+
+      // Obtener o consolidar correo del solicitante
+      var reqEmail = String(payload.requesterEmail || (foundRow > 0 ? sSoporte.getRange(foundRow, 16).getValue() : '') || '').trim();
+
       if (foundRow > 0) {
         // Col K(11): Estado, Col L(12): Fecha_Respuesta, Col M(13): Observacion, Col N(14): ETA, Col O(15): Resuelto_Por
         sSoporte.getRange(foundRow, 11).setValue(decisionText);
@@ -1765,6 +1802,12 @@ function doPost(e) {
         sSoporte.getRange(foundRow, 13).setValue(payload.observation || '');
         sSoporte.getRange(foundRow, 14).setValue(payload.etaHours || '');
         sSoporte.getRange(foundRow, 15).setValue(payload.resolvedBy || 'Desarrollador');
+        if (reqEmail) {
+          sSoporte.getRange(foundRow, 16).setValue(reqEmail);
+        }
+        if (imageUrl || imageBlob) {
+          sSoporte.getRange(foundRow, 17).setValue(imageUrl || "Foto Adjunta en Correo");
+        }
       } else {
         sSoporte.appendRow([
           targetCode || ("STF-SUP-" + Math.floor(1000 + Math.random() * 9000)),
@@ -1781,8 +1824,16 @@ function doPost(e) {
           resDate,
           payload.observation || '',
           payload.etaHours || '',
-          payload.resolvedBy || 'Desarrollador'
+          payload.resolvedBy || 'Desarrollador',
+          reqEmail,
+          imageUrl || (imageBlob ? "Foto Adjunta en Correo" : "")
         ]);
+      }
+
+      // Enviar correo automático formal al solicitante con dictamen y foto adjunta
+      var emailResult = { sent: false };
+      if (reqEmail && reqEmail.indexOf("@") !== -1) {
+        emailResult = sendSupportResolutionEmail(ss, payload, targetCode, decisionText, resDate, imageBlob, imageUrl, reqEmail);
       }
 
       appendBitacoraRow(
@@ -1791,15 +1842,21 @@ function doPost(e) {
         payload.resolvedBy || "Desarrollador",
         payload.decision === 'aceptada' ? "SOPORTE_ACEPTADO" : "SOPORTE_RECHAZADO",
         payload.appName || "Soporte",
-        "Ticket " + targetCode + " marcado como " + decisionText + ": " + (payload.observation || '') + (payload.etaHours ? " (ETA: " + payload.etaHours + ")" : ""),
-        "SOPORTE · v1.0"
+        "Ticket " + targetCode + " marcado como " + decisionText + ": " + (payload.observation || '') +
+        (reqEmail ? " · Notificado por correo a: " + reqEmail : "") +
+        (imageBlob ? " [Con Evidencia Fotográfica Adjunta]" : ""),
+        "SOPORTE · v1.5"
       );
 
       return createJsonResponse({
         status: "success",
         ticketCode: targetCode,
         decision: decisionText,
-        message: "Dictamen de soporte actualizado exitosamente en SOLICITUDES_SOPORTE",
+        emailSent: emailResult.sent,
+        recipient: reqEmail,
+        hasPhoto: !!imageBlob,
+        driveUrl: imageUrl,
+        message: "Dictamen de soporte y correo procesados exitosamente",
         date: dateStr
       });
     }
@@ -2000,6 +2057,155 @@ function sendSupportConfirmationEmail(ss, payload, ticketCode, tipoTxt) {
   }
 
   return results;
+}
+
+/**
+ * AUTOMATIZACIÓN 2: Enviar Notificación de Dictamen Oficial al Solicitante (Aceptada / Rechazada)
+ * Incluye la causa técnica, tiempo de atención u observación y la fotografía de evidencia adjunta.
+ */
+function sendSupportResolutionEmail(ss, payload, ticketCode, decisionText, resDate, imageBlob, imageUrl, explicitEmail) {
+  var targetEmail = (explicitEmail || payload.requesterEmail || "").trim();
+  if (!targetEmail || targetEmail.indexOf("@") === -1) {
+    return { sent: false, reason: "Sin correo válido del solicitante" };
+  }
+
+  var isRejected = (payload.decision === 'rechazada' || decisionText.toLowerCase().indexOf('rechaz') !== -1);
+  var appName = payload.appName || "Sistema Industrial STF";
+  var reqName = payload.requesterName || "Solicitante de Planta";
+  var reqArea = payload.requesterArea || "Planta STF";
+  var devName = payload.resolvedBy || "Desarrollador Oficial";
+  var title = payload.title || "Solicitud de Soporte / Novedad Técnica";
+  var observation = payload.observation || (isRejected ? "Solicitud evaluada y rechazada según parametrización técnica." : "Solicitud aceptada para atención.");
+  var etaHours = payload.etaHours || "";
+
+  var statusColor = isRejected ? "#DC2626" : "#059669";
+  var statusBg = isRejected ? "#FEF2F2" : "#ECFDF5";
+  var statusBorder = isRejected ? "#F87171" : "#34D399";
+  var statusBadgeText = isRejected ? "✕ RECHAZADA (SOLUCIÓN VALIDADA / NO PROCEDE)" : "✓ ACEPTADA (EN ATENCIÓN TÉCNICA)";
+
+  var subject = (isRejected ? "🔴 [STF SOPORTE] Dictamen Oficial: " : "🟢 [STF SOPORTE] Dictamen Oficial: ") +
+                ticketCode + " · " + (isRejected ? "Rechazada" : "Aceptada") + " en " + appName;
+
+  var html = "" +
+    "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 18px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.08);\">" +
+    // Cabecera Institucional
+    "<div style=\"background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); padding: 26px 24px; color: #FFFFFF; text-align: left;\">" +
+    "<div style=\"display: inline-block; background: " + (isRejected ? "#EF4444" : "#10B981") + "; color: #FFFFFF; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.6px; margin-bottom: 8px; text-transform: uppercase;\">" +
+    "STF GROUP · BANDEJA DE SOPORTE PLANTA" +
+    "</div>" +
+    "<h2 style=\"margin: 0; font-size: 21px; font-weight: 800; color: #FFFFFF;\">Respuesta a Solicitud de Soporte Técnico</h2>" +
+    "<p style=\"margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;\">El programador a cargo ha emitido el dictamen técnico formal para tu requerimiento.</p>" +
+    "</div>" +
+
+    // Cuerpo
+    "<div style=\"padding: 24px;\">" +
+    "<p style=\"font-size: 14.5px; color: #1E293B; margin-top: 0;\">Hola <strong>" + reqName + "</strong> (" + reqArea + "),</p>" +
+    "<p style=\"font-size: 13.5px; color: #475569; line-height: 1.5;\">Te notificamos la respuesta oficial al ticket radicado en planta:</p>" +
+
+    // Estado Destacado
+    "<div style=\"background: " + statusBg + "; border: 1.5px solid " + statusBorder + "; border-radius: 12px; padding: 14px 18px; margin: 16px 0; display: flex; align-items: center; justify-content: space-between;\">" +
+    "<div>" +
+    "<span style=\"font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; display: block; margin-bottom: 2px;\">Estado del Requerimiento</span>" +
+    "<strong style=\"font-size: 15px; color: " + statusColor + "; font-weight: 800;\">" + statusBadgeText + "</strong>" +
+    "</div>" +
+    "<div style=\"text-align: right;\">" +
+    "<span style=\"font-size: 11px; font-weight: 700; color: #64748B; display: block;\">Radicado</span>" +
+    "<span style=\"font-family: monospace; font-weight: 800; font-size: 14px; color: #0F172A;\">" + ticketCode + "</span>" +
+    "</div>" +
+    "</div>" +
+
+    // Observación / Respuesta del Desarrollador (Causa del rechazo o solución)
+    "<div style=\"background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 16px 18px; margin: 18px 0;\">" +
+    "<div style=\"font-size: 11.5px; font-weight: 800; color: #B45309; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;\">" +
+    "📝 Observación / Causa Técnica del Desarrollador:" +
+    "</div>" +
+    "<div style=\"font-size: 14px; color: #1E293B; font-weight: 600; line-height: 1.6;\">" +
+    "\"" + observation + "\"" +
+    "</div>" +
+    (etaHours ? "<div style=\"font-size: 12px; color: #78350F; margin-top: 8px; font-weight: 600;\">⏱️ Tiempo estimado: " + etaHours + "</div>" : "") +
+    "</div>" +
+
+    // Evidencia Fotográfica (Incrustada y como Archivo Adjunto)
+    (imageBlob || imageUrl ? (
+      "<div style=\"background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 18px; margin: 20px 0;\">" +
+      "<div style=\"display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;\">" +
+      "<div style=\"font-size: 13px; font-weight: 800; color: #0F172A;\">📷 Evidencia Fotográfica / Captura de Validación:</div>" +
+      "<span style=\"font-size: 11px; background: #EEF2FF; color: #4F46E5; padding: 2px 8px; border-radius: 6px; font-weight: 700;\">Adjunto en el correo</span>" +
+      "</div>" +
+      "<p style=\"font-size: 12px; color: #64748B; margin: 0 0 12px 0;\">El desarrollador adjuntó la siguiente fotografía para certificar que el aplicativo ya opera correctamente o sustentar el motivo de rechazo:</p>" +
+      "<div style=\"text-align: center; background: #0F172A; border-radius: 10px; padding: 10px; overflow: hidden;\">" +
+      (imageBlob ? "<img src=\"cid:evidenciaFoto\" style=\"max-width: 100%; height: auto; max-height: 460px; border-radius: 8px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3);\" alt=\"Evidencia Fotográfica de Soporte\">" : "") +
+      "</div>" +
+      (imageUrl ? ("<div style=\"text-align: center; margin-top: 10px;\"><a href=\"" + imageUrl + "\" target=\"_blank\" style=\"font-size: 12px; color: #4F46E5; font-weight: 700; text-decoration: underline;\">Ver fotografía en resolución completa en Google Drive ↗</a></div>") : "") +
+      "</div>"
+    ) : "") +
+
+    // Tabla de Detalle
+    "<div style=\"background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin: 18px 0;\">" +
+    "<table style=\"width: 100%; border-collapse: collapse; font-size: 13px;\">" +
+    "<tr><td style=\"padding: 5px 0; color: #64748B;\">🏢 <strong>Sistema:</strong></td><td style=\"padding: 5px 0; font-weight: 700; color: #0F172A;\">" + appName + " (" + (payload.appCode || '') + ")</td></tr>" +
+    "<tr><td style=\"padding: 5px 0; color: #64748B;\">📌 <strong>Título Novedad:</strong></td><td style=\"padding: 5px 0; font-weight: 600; color: #1E293B;\">" + title + "</td></tr>" +
+    "<tr><td style=\"padding: 5px 0; color: #64748B;\">💻 <strong>Desarrollador Responsable:</strong></td><td style=\"padding: 5px 0; font-weight: 700; color: #4F46E5;\">" + devName + "</td></tr>" +
+    "<tr><td style=\"padding: 5px 0; color: #64748B;\">📅 <strong>Fecha de Respuesta:</strong></td><td style=\"padding: 5px 0; color: #475569;\">" + resDate + "</td></tr>" +
+    "</table>" +
+    "</div>" +
+
+    // Botón para acceder
+    "<div style=\"text-align: center; margin-24px 0;\">" +
+    "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4F46E5; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);\">Ingresar a la Plataforma STF</a>" +
+    "</div>" +
+
+    // Pie de página
+    "<div style=\"border-top: 1px solid #E2E8F0; padding-top: 16px; text-align: center;\">" +
+    "<p style=\"font-size: 11.5px; color: #94A3B8; margin: 0;\">Este es un dictamen oficial generado automáticamente por la Dirección de Tecnología STF GROUP.</p>" +
+    "</div>" +
+    "</div>" +
+    "</div>";
+
+  try {
+    var mailOptions = {
+      to: targetEmail,
+      subject: subject,
+      htmlBody: html
+    };
+
+    if (imageBlob) {
+      mailOptions.inlineImages = {
+        evidenciaFoto: imageBlob
+      };
+      mailOptions.attachments = [imageBlob];
+    }
+
+    MailApp.sendEmail(mailOptions);
+    return { sent: true, recipient: targetEmail, hasPhoto: !!imageBlob };
+  } catch (errMail) {
+    return { sent: false, error: errMail.toString() };
+  }
+}
+
+/**
+ * Función de Prueba Directa de Notificación de Rechazo con Foto
+ */
+function testSupportResolutionEmailDirect() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var payload = {
+    requesterName: "Patricia Pai",
+    requesterArea: "CALIDAD",
+    requesterEmail: "joseoneiber711@gmail.com",
+    appName: "CALIDAD",
+    appCode: "STF-CAL-04",
+    resolvedBy: "Juan David",
+    decision: "rechazada",
+    title: "Pausas,ingreso de unidades,",
+    observation: "El aplicativo ya cuenta con la corrección validada en la última versión de planta. Se adjunta evidencia del funcionamiento correcto."
+  };
+  var resDate = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+  var res = sendSupportResolutionEmail(ss, payload, "STF-SUP-1552", "Rechazada", resDate, null, "", "joseoneiber711@gmail.com");
+  if (res.sent) {
+    SpreadsheetApp.getUi().alert("✅ ¡Correo de resolución enviado con éxito a: joseoneiber711@gmail.com! Revisa tu bandeja de entrada.");
+  } else {
+    SpreadsheetApp.getUi().alert("⚠️ Error al enviar: " + (res.error || res.reason));
+  }
 }
 
 /**
