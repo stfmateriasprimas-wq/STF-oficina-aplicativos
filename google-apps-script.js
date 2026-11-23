@@ -2150,11 +2150,6 @@ function sendSupportResolutionEmail(ss, payload, ticketCode, decisionText, resDa
     "</table>" +
     "</div>" +
 
-    // Botón para acceder
-    "<div style=\"text-align: center; margin: 24px 0;\">" +
-    "<a href=\"https://stf-oficina-aplicativos.vercel.app\" style=\"display: inline-block; background: #4F46E5; color: #FFFFFF; padding: 12px 28px; border-radius: 24px; text-decoration: none; font-weight: 700; font-size: 13.5px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);\">Ingresar a la Plataforma STF</a>" +
-    "</div>" +
-
     // Pie de página
     "<div style=\"border-top: 1px solid #E2E8F0; padding-top: 16px; text-align: center;\">" +
     "<p style=\"font-size: 11.5px; color: #94A3B8; margin: 0;\">Este es un dictamen oficial generado automáticamente por la Dirección de Tecnología STF GROUP.</p>" +
@@ -2173,7 +2168,7 @@ function sendSupportResolutionEmail(ss, payload, ticketCode, decisionText, resDa
       mailOptions.inlineImages = {
         evidenciaFoto: imageBlob
       };
-      mailOptions.attachments = [imageBlob];
+      mailOptions.attachments = [imageBlob.copyBlob().setName(payload.evidenceImageName || ("evidencia_" + ticketCode + ".jpg"))];
     }
 
     MailApp.sendEmail(mailOptions);

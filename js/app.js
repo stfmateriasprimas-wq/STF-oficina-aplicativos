@@ -14981,6 +14981,14 @@ function handleSupportActionSubmit(e) {
   ticket.requester.email = requesterEmail;
   ticket.requesterEmail = requesterEmail;
 
+  const photoToSend = currentSupportActionImage ? {
+    dataUrl: currentSupportActionImage.dataUrl,
+    name: currentSupportActionImage.name || 'evidencia_soporte.jpg'
+  } : (ticket.resolution && ticket.resolution.evidenceImage ? {
+    dataUrl: ticket.resolution.evidenceImage,
+    name: ticket.resolution.evidenceImageName || 'evidencia_soporte.jpg'
+  } : null);
+
   ticket.resolution = {
     action: decision,
     resolvedBy: session.name,
@@ -14989,12 +14997,11 @@ function handleSupportActionSubmit(e) {
     observation: observation,
     etaHours: etaHours,
     requesterEmail: requesterEmail,
-    evidenceImage: currentSupportActionImage ? currentSupportActionImage.dataUrl : null,
-    evidenceImageName: currentSupportActionImage ? currentSupportActionImage.name : null
+    evidenceImage: photoToSend ? photoToSend.dataUrl : null,
+    evidenceImageName: photoToSend ? photoToSend.name : null
   };
 
   saveData(appState);
-  closeSupportActionModal();
 
   // Sincronizar dictamen oficial en Google Sheets y despachar correo con la foto adjunta
   try {
@@ -15006,13 +15013,15 @@ function handleSupportActionSubmit(e) {
         etaHours: etaHours,
         resolvedBy: session.name,
         requesterEmail: requesterEmail,
-        evidenceImage: currentSupportActionImage ? currentSupportActionImage.dataUrl : null,
-        evidenceImageName: currentSupportActionImage ? currentSupportActionImage.name : null
+        evidenceImage: photoToSend ? photoToSend.dataUrl : null,
+        evidenceImageName: photoToSend ? photoToSend.name : null
       }).then(res => {
         console.log('[SupportAction] Sincronizado en Sheets & Correo:', res);
       }).catch(err => console.warn('[SupportAction] Sync Sheets:', err));
     }
   } catch (e) { }
+
+  closeSupportActionModal();
 
   // Emitir señal de broadcast en vivo a todas las terminales/usuarios y pestañas
   try {
