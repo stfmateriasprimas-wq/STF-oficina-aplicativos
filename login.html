@@ -92,8 +92,19 @@
       </div>
 
       <form class="login-form glass-form" id="loginForm">
+        <!-- Preselected Profile Card (al cambiar de perfil) -->
+        <div id="preselectedProfileCard" style="display: none; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.22); border-radius: 18px; padding: 12px 14px; margin-bottom: 16px; align-items: center; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
+          <img id="preselectedAvatar" src="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #4F46E5; flex-shrink: 0;" alt="Avatar">
+          <div style="flex: 1; text-align: left; min-width: 0;">
+            <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Perfil Seleccionado</div>
+            <strong id="preselectedName" style="font-size: 14.5px; color: #FFFFFF; display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Desarrollador</strong>
+            <span id="preselectedUsername" style="font-size: 11.5px; color: #A5B4FC; font-family: monospace;">usuario</span>
+          </div>
+          <button type="button" id="btnClearPreselected" onclick="clearPreselectedProfile()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; font-size: 11px; font-weight: 700; border-radius: 8px; padding: 5px 10px; cursor: pointer; transition: all 0.2s;" title="Cambiar a otro usuario">Cambiar</button>
+        </div>
+
         <!-- User Name / Login Field (Columna 2: Usuario_Logueo) -->
-        <div class="glass-input-group">
+        <div class="glass-input-group" id="userInputGroup">
           <div class="glass-input-wrapper">
             <input type="text" id="loginEmail" class="glass-form-input" placeholder="Ingresa tu usuario" value="" required autocomplete="off">
             <i data-lucide="user" class="glass-input-icon-right"></i>
@@ -135,7 +146,7 @@
 
   <!-- Interactive Logic -->
   <script src="js/light-tunnel.js?v=9"></script>
-  <script src="js/login.js?v=9"></script>
+  <script src="js/login.js?v=11"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 </html>

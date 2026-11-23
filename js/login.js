@@ -493,6 +493,9 @@ async function handleLoginSubmit(e) {
   localStorage.setItem('STF_LOGGED_USERNAME', matchedUser.username);  // Columna 2 anclada
   localStorage.setItem('STF_ACTIVE_DEV_ID', matchedUser.id);
   sessionStorage.setItem('STF_AUTH_SESSION', 'authenticated');
+  try {
+    localStorage.removeItem('STF_PRESELECTED_USER');
+  } catch (e) {}
 
   // Registrar login en la bitácora de Google Sheets en tiempo real
   try {
@@ -763,12 +766,106 @@ function initLiveDeveloperCoder() {
   }
 }
 
+// Limpiar usuario preseleccionado y permitir escribir libremente
+function clearPreselectedProfile() {
+  try {
+    localStorage.removeItem('STF_PRESELECTED_USER');
+  } catch (e) {}
+  const card = document.getElementById('preselectedProfileCard');
+  if (card) card.style.display = 'none';
+  const userInputGroup = document.getElementById('userInputGroup');
+  if (userInputGroup) userInputGroup.style.display = '';
+  const emailInput = document.getElementById('loginEmail');
+  if (emailInput) {
+    emailInput.value = '';
+    emailInput.focus();
+  }
+  const passInput = document.getElementById('loginPassword');
+  if (passInput) passInput.value = '';
+}
+
+// Aplicar perfil preseleccionado cuando se redirige desde "Cambiar a otro perfil"
+function applyPreselectedUser() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramUser = urlParams.get('user') || urlParams.get('devId');
+  let preData = null;
+
+  try {
+    const raw = localStorage.getItem('STF_PRESELECTED_USER');
+    if (raw) preData = JSON.parse(raw);
+  } catch (e) {}
+
+  const targetIdentifier = (paramUser || (preData && (preData.username || preData.id)) || '').toLowerCase().trim();
+  if (!targetIdentifier) return;
+
+  const allUsers = getActiveUsersCredentials();
+  const matched = allUsers.find(u => 
+    (u.username && u.username.toLowerCase() === targetIdentifier) ||
+    (u.id && u.id.toLowerCase() === targetIdentifier) ||
+    (u.email && u.email.toLowerCase() === targetIdentifier)
+  ) || (preData ? {
+    id: preData.id,
+    name: preData.name,
+    username: preData.username,
+    avatar: preData.avatar,
+    role: 'desarrollador'
+  } : null);
+
+  if (!matched) return;
+
+  // 1. Encender la lámpara automáticamente si está apagada para iluminar la tarjeta de login
+  if (!isLampOn) {
+    toggleLampState();
+  }
+
+  // 2. Pre-cargar el campo de usuario con el usuario oficial
+  const emailInput = document.getElementById('loginEmail');
+  if (emailInput) {
+    emailInput.value = matched.username || targetIdentifier;
+  }
+
+  // 3. Dejar el campo de contraseña vacío para que solo deba ingresar su clave
+  const passInput = document.getElementById('loginPassword');
+  if (passInput) {
+    passInput.value = '';
+  }
+
+  // 4. Mostrar tarjeta visual del perfil y ocultar el input de texto de usuario
+  const card = document.getElementById('preselectedProfileCard');
+  const avatarEl = document.getElementById('preselectedAvatar');
+  const nameEl = document.getElementById('preselectedName');
+  const usernameEl = document.getElementById('preselectedUsername');
+  const userInputGroup = document.getElementById('userInputGroup');
+
+  if (card && nameEl && usernameEl) {
+    nameEl.textContent = matched.name || matched.username;
+    usernameEl.textContent = `${matched.username} · ${matched.role || 'Desarrollador'}`;
+    if (avatarEl) {
+      avatarEl.src = matched.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+    }
+    card.style.display = 'flex';
+    if (userInputGroup) {
+      userInputGroup.style.display = 'none';
+    }
+  }
+
+  // 5. Enfocar el cursor directamente en el campo de contraseña
+  setTimeout(() => {
+    if (passInput) {
+      passInput.focus();
+    }
+    showLoginToast(`👤 Perfil de ${matched.name} seleccionado. Ingresa tu contraseña.`);
+  }, 400);
+}
+
 // Expose functions globally
 if (typeof window !== 'undefined') {
   window.getActiveUsersCredentials = getActiveUsersCredentials;
   window.selectDevPreset = selectDevPreset;
   window.handleLoginSubmit = handleLoginSubmit;
   window.renderDevChips = renderDevChips;
+  window.clearPreselectedProfile = clearPreselectedProfile;
+  window.applyPreselectedUser = applyPreselectedUser;
 }
 
 // Bootstrap
@@ -788,6 +885,7 @@ if (typeof document !== 'undefined') {
 
       renderDevChips();
       autoPullUsersFromSheets();
+      applyPreselectedUser();
       setInterval(() => {
         autoPullUsersFromSheets(true);
       }, 20000);
@@ -812,6 +910,7 @@ if (typeof document !== 'undefined') {
     if (passEl) passEl.value = '';
     renderDevChips();
     autoPullUsersFromSheets();
+    applyPreselectedUser();
   }
 }
 

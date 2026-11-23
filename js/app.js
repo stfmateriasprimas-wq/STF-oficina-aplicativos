@@ -1467,15 +1467,13 @@ function applyRoleBasedUI() {
     const dropTitleLabel = headerDropdown.querySelector('.dropdown-title-label');
     const dropOptionsList = document.getElementById('headerDevOptionsList');
     const allDevsItem = headerDropdown.querySelector('.all-devs-item');
-    const dividers = headerDropdown.querySelectorAll('.dev-drop-divider');
+    if (allDevsItem) allDevsItem.remove(); // Eliminar opción de Vista Global por requerimiento
 
-    if (dropTitleLabel) dropTitleLabel.style.display = isAdmin ? '' : 'none';
-    if (dropOptionsList) dropOptionsList.style.display = isAdmin ? '' : 'none';
-    if (allDevsItem) allDevsItem.style.display = isAdmin ? '' : 'none';
-    dividers.forEach((div, idx) => {
-      if (!isAdmin && idx > 0) div.style.display = 'none';
-      else div.style.display = '';
-    });
+    if (dropTitleLabel) {
+      dropTitleLabel.textContent = 'Cambiar a otro Perfil / Desarrollador:';
+      dropTitleLabel.style.display = '';
+    }
+    if (dropOptionsList) dropOptionsList.style.display = '';
   }
 
   // 5. Banner Principal de Bienvenida (Solo actualizar si estamos en la vista de Dashboard o inicio)
@@ -2403,12 +2401,55 @@ function logoutApp() {
   localStorage.removeItem('STF_USER_ROLE');
   localStorage.removeItem('STF_LOGGED_USERNAME');
   localStorage.removeItem('STF_ACTIVE_DEV_ID');
+  localStorage.removeItem('STF_PRESELECTED_USER');
   sessionStorage.removeItem('STF_AUTH_SESSION');
   window.location.href = 'login.html';
 }
 
+/**
+ * Cambiar de perfil desde el menú desplegable:
+ * Preselecciona al usuario y redirige al login solicitando únicamente la contraseña.
+ */
+function switchProfileToLogin(devId) {
+  let targetDev = appState.developers.find(d => d.id === devId);
+  if (!targetDev && window.STF_USERS_CREDENTIALS) {
+    targetDev = window.STF_USERS_CREDENTIALS.find(u => u.id === devId || u.username === devId);
+  }
+
+  // Fallbacks con los datos oficiales de usuarios
+  const OFFICIAL_DEVS = {
+    'dev_jg': { username: 'jose@guzman', name: 'Jose Guzman' },
+    'dev_jd': { username: 'juan@david', name: 'Juan David' },
+    'dev_ee': { username: 'esteban@escobar', name: 'Esteban Escobar' },
+    'dev_mocho': { username: 'jhon@eyder', name: 'Jhon Eyder (Mocho)' },
+    'dev_ediaz': { username: 'ediaz', name: 'Edwin Diaz' },
+    'admin': { username: 'ediaz', name: 'Edwin Diaz' }
+  };
+
+  const official = OFFICIAL_DEVS[devId] || {};
+  const username = (targetDev && targetDev.username) || official.username || devId;
+  const devName = (targetDev && targetDev.name) || official.name || username;
+  const avatar = (targetDev && targetDev.avatar) || '';
+
+  try {
+    localStorage.setItem('STF_PRESELECTED_USER', JSON.stringify({
+      id: devId,
+      username: username,
+      name: devName,
+      avatar: avatar
+    }));
+  } catch (e) {}
+
+  // Cerrar la sesión activa temporalmente para forzar que ingrese la contraseña del nuevo perfil
+  sessionStorage.removeItem('STF_AUTH_SESSION');
+
+  // Redirigir a login con el parámetro de usuario para foco directo en la contraseña
+  window.location.href = `login.html?user=${encodeURIComponent(username)}`;
+}
+
 window.renderHeaderSessionUser = renderHeaderSessionUser;
 window.logoutApp = logoutApp;
+window.switchProfileToLogin = switchProfileToLogin;
 
 function selectDeveloper(devId) {
   // Si el usuario logueado es un Desarrollador, solo puede ver su propio perfil
@@ -10296,20 +10337,24 @@ function renderHeaderDevDropdown() {
   const container = document.getElementById('headerDevOptionsList');
   if (!container) return;
 
+  const currentLoggedId = getLoggedDevId();
+
   container.innerHTML = appState.developers.map(dev => {
     const isAdmin = dev.roleType === 'Admin' || String(dev.role || '').toLowerCase().includes('admin') || dev.id === 'dev_ediaz';
+    const isCurrent = dev.id === currentLoggedId;
     const assignedApps = appState.applications.filter(a => a.devId === dev.id || (a.devIds && a.devIds.includes(dev.id)));
     const appsSummary = assignedApps.length > 0
       ? assignedApps.map(a => a.shortName || a.name.split(' ')[0]).slice(0, 3).join(', ')
       : 'Sin asignaciones';
 
     return `
-      <div class="dev-drop-item" onclick="selectDeveloper('${dev.id}')">
+      <div class="dev-drop-item" onclick="switchProfileToLogin('${dev.id}')" title="Cambiar a perfil de ${dev.name}">
         <img src="${dev.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}" id="dropImg_${dev.id}" class="mini-drop-avatar" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'">
-        <div>
-          <strong style="${isAdmin ? 'color: #F5C542;' : ''}">${isAdmin ? '🛡️ ' : ''}${dev.name} · ${isAdmin ? 'Admin' : 'Dev'}</strong>
+        <div style="flex: 1;">
+          <strong style="${isAdmin ? 'color: #F5C542;' : ''}">${isAdmin ? '🛡️ ' : ''}${dev.name} · ${isAdmin ? 'Admin' : 'Dev'} ${isCurrent ? '<span style="font-size: 10px; color: #10B981; font-weight: 800; margin-left: 4px;">● Activo</span>' : ''}</strong>
           <span>${dev.username || dev.id} · ${appsSummary}</span>
         </div>
+        <div style="font-size: 13px; color: #6366F1; font-weight: 700; padding-right: 6px;" title="Iniciar sesión con este perfil">➔</div>
       </div>
     `;
   }).join('');
