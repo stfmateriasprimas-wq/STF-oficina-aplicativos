@@ -308,9 +308,8 @@ function renderDevChips() {
   const users = getActiveUsersCredentials();
   container.innerHTML = users.map(user => {
     const isAdmin = String(user.role).toLowerCase() === 'admin' || user.id === 'dev_ediaz';
-    const cleanPass = user.idPassword || '***';
     return `
-      <button type="button" class="dev-chip glass-dev-chip ${isAdmin ? 'admin-chip' : ''}" onclick="selectDevPreset('${user.id}')" title="${user.name} · Columna 2: ${user.username} · Columna 1: ${cleanPass} · Rol: ${user.role}">
+      <button type="button" class="dev-chip glass-dev-chip ${isAdmin ? 'admin-chip' : ''}" onclick="selectDevPreset('${user.id}')" title="${user.name} · Usuario: ${user.username} · Rol: ${user.role}">
         ${isAdmin ? '<span class="admin-badge-icon">🛡️</span>' : `<img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" alt="${user.name}">`}
         <span>${user.name}</span>
       </button>
@@ -397,12 +396,15 @@ function selectDevPreset(devId) {
   const userInput = document.getElementById('loginEmail');
   const passInput = document.getElementById('loginPassword');
 
-  // Columna 2: Usuario de logueo
+  // Columna 2: Usuario de logueo (únicamente usuario)
   if (userInput) userInput.value = user.username;
-  // Columna 1: ID / Contraseña
-  if (passInput) passInput.value = user.idPassword;
+  // La contraseña NUNCA se precarga: el usuario debe escribirla
+  if (passInput) {
+    passInput.value = '';
+    passInput.focus();
+  }
 
-  showLoginToast(`Credenciales cargadas: ${user.name} (${user.username}) · Rol: ${user.role}`);
+  showLoginToast(`👤 Usuario cargado: ${user.name} (${user.username}). Ingresa tu contraseña.`);
 }
 
 // Form Submission & Redirect with Real-Time Google Sheets Fallback Coordination
@@ -954,9 +956,9 @@ function initSmartUserAutocomplete() {
       }
     }
 
-    // Precargar contraseña en el campo de ID / Contraseña
-    if (passInput && bestUser.idPassword) {
-      passInput.value = bestUser.idPassword;
+    // La contraseña NUNCA se precarga: solo se carga el usuario
+    if (passInput) {
+      passInput.value = '';
     }
 
     // Mostrar ficha flotante inteligente
@@ -974,7 +976,7 @@ function initSmartUserAutocomplete() {
               <span class="smart-user-badge ${isAdmin ? 'admin-badge' : 'dev-badge'}">${isAdmin ? '🛡️ Admin' : '💻 ' + bestUser.role}</span>
             </div>
             <strong class="smart-user-name">${bestUser.name}</strong>
-            <span class="smart-user-handle">${bestUser.username} · ID: ${bestUser.idPassword || '***'}</span>
+            <span class="smart-user-handle">${bestUser.username}</span>
           </div>
           <button type="button" class="smart-user-confirm-btn" onclick="applySmartUserById('${bestUser.id}', true)" title="Confirmar">
             <span>Usar ↵</span>
@@ -1003,7 +1005,7 @@ function initSmartUserAutocomplete() {
   });
 }
 
-function applySmartUser(user, focusPass = false) {
+function applySmartUser(user, focusPass = true) {
   if (!user) return;
   const emailInput = document.getElementById('loginEmail');
   const passInput = document.getElementById('loginPassword');
@@ -1012,8 +1014,9 @@ function applySmartUser(user, focusPass = false) {
   if (emailInput) {
     emailInput.value = user.username;
   }
+  // La contraseña NUNCA se precarga: solo el usuario
   if (passInput) {
-    passInput.value = user.idPassword || '';
+    passInput.value = '';
     if (focusPass) {
       passInput.focus();
     }
@@ -1022,7 +1025,7 @@ function applySmartUser(user, focusPass = false) {
     suggestionContainer.style.display = 'none';
   }
   window._currentSmartMatch = user;
-  showLoginToast(`✨ Usuario detectado: ${user.name} (${user.username})`);
+  showLoginToast(`✨ Usuario cargado: ${user.name} (${user.username}). Ingresa tu contraseña.`);
 }
 
 function applySmartUserById(devId, focusPass = false) {
