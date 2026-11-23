@@ -121,23 +121,34 @@ function onOpen() {
 }
 
 /**
+ * Obtiene la carpeta oficial de Google Drive designada para almacenar evidencias de soporte.
+ * Carpeta vinculada: https://drive.google.com/drive/folders/1P-4nJESlFWxECqkPZhYsqWFId2Tttj2x
+ */
+function getOfficialDriveEvidenceFolder() {
+  var folderId = "1P-4nJESlFWxECqkPZhYsqWFId2Tttj2x";
+  try {
+    return DriveApp.getFolderById(folderId);
+  } catch (eId) {
+    Logger.log("Error al abrir por ID, buscando por nombre: " + eId.toString());
+    var folderName = "STF_EVIDENCIAS_SOPORTE";
+    var folders = DriveApp.getFoldersByName(folderName);
+    return folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  }
+}
+
+/**
  * Muestra el enlace directo a la carpeta de Google Drive donde se guardan las evidencias fotográficas
  */
 function abrirCarpetaEvidenciasDrive() {
-  var folderName = "STF_EVIDENCIAS_SOPORTE";
-  var folders = DriveApp.getFoldersByName(folderName);
-  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-  folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  
-  var url = folder.getUrl();
+  var folderUrl = "https://drive.google.com/drive/folders/1P-4nJESlFWxECqkPZhYsqWFId2Tttj2x";
   var htmlOutput = HtmlService.createHtmlOutput(
     "<div style=\"font-family: Arial, sans-serif; padding: 18px; text-align: center;\">" +
     "<h3 style=\"color: #0F172A; margin-top: 0;\">📁 Carpeta Oficial de Evidencias en Google Drive</h3>" +
     "<p style=\"font-size: 13px; color: #475569;\">Aquí se almacenan automáticamente todas las fotografías y capturas adjuntas a las soluciones y rechazos de soporte técnico:</p>" +
     "<div style=\"margin: 20px 0;\">" +
-    "<a href=\"" + url + "\" target=\"_blank\" style=\"display: inline-block; background: #4F46E5; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;\">Abrir Carpeta en Google Drive ↗</a>" +
+    "<a href=\"" + folderUrl + "\" target=\"_blank\" style=\"display: inline-block; background: #4F46E5; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;\">Abrir Carpeta en Google Drive ↗</a>" +
     "</div>" +
-    "<p style=\"font-size: 11px; color: #94A3B8;\">Nombre de la carpeta: <strong>STF_EVIDENCIAS_SOPORTE</strong></p>" +
+    "<p style=\"font-size: 11px; color: #94A3B8;\">ID de carpeta: <strong>1P-4nJESlFWxECqkPZhYsqWFId2Tttj2x</strong></p>" +
     "</div>"
   ).setWidth(440).setHeight(220);
   
@@ -1801,11 +1812,9 @@ function doPost(e) {
           var fileName = payload.evidenceImageName || ("evidencia_" + targetCode + "_" + (payload.decision || "rechazo") + ".jpg");
           imageBlob = Utilities.newBlob(decoded, contentType, fileName);
 
-          // Intentar almacenar la imagen en Google Drive en carpeta oficial STF
+          // Intentar almacenar la imagen en la carpeta oficial designada de Google Drive
           try {
-            var folderName = "STF_EVIDENCIAS_SOPORTE";
-            var folders = DriveApp.getFoldersByName(folderName);
-            var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+            var folder = getOfficialDriveEvidenceFolder();
             var driveFile = folder.createFile(imageBlob);
             driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
             imageUrl = driveFile.getUrl();
