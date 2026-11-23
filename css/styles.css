@@ -99,7 +99,7 @@ body {
 }
 
 .floating-sidebar.expanded {
-  width: 228px;
+  width: 242px;
   align-items: stretch;
   padding: 16px 12px;
   border-radius: 26px;
@@ -149,8 +149,8 @@ body.dark-mode .monogram-logo-btn:hover {
 }
 
 .floating-sidebar.expanded .sidebar-brand-corp-wrap {
-  max-width: 175px;
-  height: 42px;
+  max-width: 195px;
+  height: 52px;
   margin: 0;
   justify-content: flex-start;
 }
@@ -185,7 +185,7 @@ body.dark-mode .sidebar-corp-brand-img.corp-logo-light {
 
 body.dark-mode .sidebar-corp-brand-img.corp-logo-dark {
   display: block !important;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35));
+  filter: brightness(1.15) contrast(1.08);
 }
 
 .sidebar-toggle-chevron {
@@ -206,14 +206,14 @@ body.dark-mode .sidebar-corp-brand-img.corp-logo-dark {
 
 /* Mobile Brand Styling */
 .mobile-brand-corp-wrap {
-  max-width: 165px;
-  height: 40px;
+  max-width: 180px;
+  height: 48px;
   margin: 0;
   justify-content: flex-start;
 }
 
 .mobile-brand-corp-wrap .sidebar-corp-brand-img {
-  height: 36px;
+  height: 42px;
   max-width: 100%;
 }
 
@@ -225,13 +225,13 @@ body.dark-mode .sidebar-corp-brand-img.corp-logo-dark {
   .mobile-header-brand-logo {
     display: flex;
     align-items: center;
-    max-width: 145px;
-    height: 32px;
+    max-width: 160px;
+    height: 38px;
     margin-right: auto;
     margin-left: 8px;
   }
   .mobile-header-brand-logo .sidebar-corp-brand-img {
-    height: 28px;
+    height: 34px;
     max-width: 100%;
     object-fit: contain;
   }
