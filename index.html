@@ -34,7 +34,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=61">
+  <link rel="stylesheet" href="css/styles.css?v=62">
 </head>
 
 <body>
@@ -47,10 +47,9 @@
   <aside class="mobile-drawer" id="mobileDrawer" aria-label="Menú Móvil Principal">
     <div class="mobile-drawer-header">
       <div class="mobile-drawer-brand">
-        <div class="drawer-logo-badge">STF</div>
-        <div class="drawer-brand-text">
-          <span class="drawer-brand-title">STF GROUP</span>
-          <span class="drawer-brand-sub">Oficina TI Móvil</span>
+        <div class="sidebar-brand-corp-wrap mobile-brand-corp-wrap">
+          <img src="assets/stf-group-logo-black.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-light">
+          <img src="assets/stf-group-logo-white.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-dark">
         </div>
       </div>
       <button type="button" class="mobile-drawer-close-btn" onclick="closeMobileDrawer()" aria-label="Cerrar menú">
@@ -161,16 +160,10 @@
     <!-- Floating Minimalist Sidebar (Exact to Design, Expandible al clic) -->
     <aside class="floating-sidebar" id="appFloatingSidebar">
       <div class="sidebar-logo">
-        <button type="button" class="monogram-logo-btn" id="btnSidebarToggle" onclick="toggleSidebarExpansion()" title="Expandir / Contraer Menú Lateral" aria-label="Expandir o contraer menú">
-          <div class="monogram-logo" title="STF GROUP">
-            <span>STF</span>
-          </div>
-          <div class="sidebar-logo-text">
-            <div class="sidebar-brand-corp-wrap">
-              <img src="assets/stf-group-logo-black.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-light">
-              <img src="assets/stf-group-logo-white.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-dark">
-            </div>
-            <span class="slt-sub">Oficina TI</span>
+        <button type="button" class="sidebar-corp-header-btn monogram-logo-btn" id="btnSidebarToggle" onclick="toggleSidebarExpansion()" title="Expandir / Contraer Menú Lateral" aria-label="Expandir o contraer menú">
+          <div class="sidebar-brand-corp-wrap">
+            <img src="assets/stf-group-logo-black.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-light">
+            <img src="assets/stf-group-logo-white.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-dark">
           </div>
           <div class="sidebar-toggle-chevron">
             <i data-lucide="chevron-right" class="chevron-expand-icon"></i>
@@ -246,6 +239,12 @@
           <button type="button" class="mobile-menu-btn" id="btnMobileMenu" onclick="openMobileDrawer()" aria-label="Abrir Menú de Navegación" title="Menú">
             <i data-lucide="menu"></i>
           </button>
+
+          <!-- Logo Corporativo Móvil (Visible solo en pantallas móviles) -->
+          <div class="mobile-header-brand-logo">
+            <img src="assets/stf-group-logo-black.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-light">
+            <img src="assets/stf-group-logo-white.png" alt="STF GROUP S.A." class="sidebar-corp-brand-img corp-logo-dark">
+          </div>
 
           <button class="pill-btn primary-glow-btn" id="btnNewProject">
             <i data-lucide="plus"></i>

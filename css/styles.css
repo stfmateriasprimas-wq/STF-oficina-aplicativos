@@ -111,69 +111,58 @@ body {
   width: 100%;
 }
 
+.sidebar-corp-header-btn,
 .monogram-logo-btn {
   background: transparent;
   border: none;
-  padding: 0;
+  padding: 4px 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   width: 100%;
   outline: none;
   text-align: left;
-  border-radius: 20px;
+  border-radius: 14px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.monogram-logo-btn:hover .monogram-logo {
-  transform: scale(1.06);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-  border-color: #2563EB;
+.sidebar-corp-header-btn:hover,
+.monogram-logo-btn:hover {
+  background: rgba(0, 0, 0, 0.03);
 }
 
-.monogram-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: var(--bg-card-subtle);
-  border: 2px solid #E1E6F2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: -0.5px;
-  color: var(--text-dark);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-  flex-shrink: 0;
-  margin: 0 auto;
-  transition: all 0.25s ease;
-}
-
-.floating-sidebar.expanded .monogram-logo {
-  margin: 0;
-}
-
-.sidebar-logo-text {
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-  white-space: nowrap;
-  justify-content: center;
+body.dark-mode .sidebar-corp-header-btn:hover,
+body.dark-mode .monogram-logo-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-brand-corp-wrap {
   display: flex;
   align-items: center;
-  max-width: 132px;
-  height: 32px;
-  margin-bottom: 2px;
+  justify-content: center;
+  max-width: 44px;
+  height: 24px;
+  margin: 0 auto;
   overflow: hidden;
+  transition: max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-sidebar.expanded .sidebar-brand-corp-wrap {
+  max-width: 175px;
+  height: 42px;
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.floating-sidebar.expanded .sidebar-corp-header-btn,
+.floating-sidebar.expanded .monogram-logo-btn {
+  justify-content: space-between;
+  padding: 6px 8px;
 }
 
 .sidebar-corp-brand-img {
-  height: 30px;
+  height: 100%;
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -199,23 +188,6 @@ body.dark-mode .sidebar-corp-brand-img.corp-logo-dark {
   filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35));
 }
 
-.sidebar-logo-text .slt-main {
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--text-dark);
-  line-height: 1.2;
-}
-
-.sidebar-logo-text .slt-sub {
-  font-size: 9.5px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
 .sidebar-toggle-chevron {
   display: none;
   margin-left: auto;
@@ -225,16 +197,44 @@ body.dark-mode .sidebar-corp-brand-img.corp-logo-dark {
   height: 16px;
 }
 
-.floating-sidebar.expanded .sidebar-logo-text {
-  display: flex;
-  animation: fadeInSidebarLabel 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
 .floating-sidebar.expanded .sidebar-toggle-chevron {
   display: flex;
   align-items: center;
   justify-content: center;
   transform: rotate(180deg);
+}
+
+/* Mobile Brand Styling */
+.mobile-brand-corp-wrap {
+  max-width: 165px;
+  height: 40px;
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.mobile-brand-corp-wrap .sidebar-corp-brand-img {
+  height: 36px;
+  max-width: 100%;
+}
+
+.mobile-header-brand-logo {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-header-brand-logo {
+    display: flex;
+    align-items: center;
+    max-width: 145px;
+    height: 32px;
+    margin-right: auto;
+    margin-left: 8px;
+  }
+  .mobile-header-brand-logo .sidebar-corp-brand-img {
+    height: 28px;
+    max-width: 100%;
+    object-fit: contain;
+  }
 }
 
 .sidebar-nav {
