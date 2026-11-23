@@ -688,17 +688,46 @@ function getStoredData() {
             }
           });
 
+          // Asegurar que OFICINA APLICATIVOS siempre esté inicializado en stage_qa (Puesta en Planta) en el store
+          if (!stagesStore['app_oficina']) {
+            stagesStore['app_oficina'] = {
+              pipelineStage: 'stage_qa',
+              isProduction: false,
+              progress: 100,
+              phases: [
+                { id: "p1", name: "1. Levantamiento & Requisitos", weight: 10, completed: true },
+                { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
+                { id: "p3", name: "3. Desarrollo Core & Integraciones", weight: 30, completed: true },
+                { id: "p4", name: "4. Sincronización Google Sheets", weight: 25, completed: true },
+                { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: true },
+                { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: true }
+              ],
+              plantTestStartDate: new Date().toISOString()
+            };
+            try {
+              localStorage.setItem('STF_APP_PIPELINE_STAGES', JSON.stringify(stagesStore));
+            } catch (e) {}
+          }
+
           // Garantizar consistencia global para todas las aplicaciones en stage_qa o stage_prod
           parsed.applications.forEach(app => {
-            const sData = stagesStore[app.id];
-            if (sData) {
-              if (sData.pipelineStage) app.pipelineStage = sData.pipelineStage;
-              if (sData.isProduction !== undefined) app.isProduction = sData.isProduction;
-            }
-            if (app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || app.isProduction === true) {
+            if (app.id === 'app_oficina' || (app.name && app.name.toUpperCase().includes('OFICINA'))) {
+              app.pipelineStage = 'stage_qa';
               app.progress = 100;
               if (Array.isArray(app.phases)) {
                 app.phases.forEach(p => { p.completed = true; });
+              }
+            } else {
+              const sData = stagesStore[app.id];
+              if (sData) {
+                if (sData.pipelineStage) app.pipelineStage = sData.pipelineStage;
+                if (sData.isProduction !== undefined) app.isProduction = sData.isProduction;
+              }
+              if (app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || app.isProduction === true) {
+                app.progress = 100;
+                if (Array.isArray(app.phases)) {
+                  app.phases.forEach(p => { p.completed = true; });
+                }
               }
             }
           });

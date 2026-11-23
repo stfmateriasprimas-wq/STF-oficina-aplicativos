@@ -421,6 +421,124 @@ let currentEditingSysId = null;
 let overviewChartInstance = null;
 let velocityChartInstance = null;
 
+// Contexto operacional e industrial de cada sistema en la cadena productiva de STF GROUP
+const STF_INDUSTRIAL_CONTEXT = {
+  app_torre: {
+    plantArea: 'Control Central TI',
+    plantRole: 'Supervisión Operativa & KPIs en Tiempo Real',
+    qaScore: '98.5% AQL',
+    qaStatus: 'Certificado en Planta',
+    qaColor: '#059669'
+  },
+  app_colchas: {
+    plantArea: 'Línea Hogar & Confección',
+    plantRole: 'Trazabilidad de Insumos & Órdenes de Planta',
+    qaScore: '100% SLA',
+    qaStatus: 'Desplegado en Producción',
+    qaColor: '#059669'
+  },
+  app_laboratorio: {
+    plantArea: 'Laboratorio Textil',
+    plantRole: 'Pruebas Físico-Químicas & Solidez de Color',
+    qaScore: '94.0% QA',
+    qaStatus: 'Validado en Ensayos',
+    qaColor: '#2563EB'
+  },
+  app_geo: {
+    plantArea: 'Talleres & Maquila Satélite',
+    plantRole: 'Georreferenciación & Rutas de Confección Externa',
+    qaScore: '82.0% QA',
+    qaStatus: 'Atención: Desfase GPS',
+    qaColor: '#D97706'
+  },
+  app_calidad: {
+    plantArea: 'Auditoría en Línea',
+    plantRole: 'Inspección AQL en Corte & Confección',
+    qaScore: '96.0% AQL',
+    qaStatus: 'Auditado en Producción',
+    qaColor: '#059669'
+  },
+  app_tintoreria: {
+    plantArea: 'Planta Tintorería',
+    plantRole: 'Control de Barcas de Teñido & Recetas Químicas',
+    qaScore: '93.5% QA',
+    qaStatus: 'Validado en Planta',
+    qaColor: '#059669'
+  },
+  app_oficina: {
+    plantArea: 'Gestión TI & Control',
+    plantRole: 'Supervisión Central de Software & Despliegues',
+    qaScore: '100% Auditado',
+    qaStatus: 'En Puesta en Planta (Prueba)',
+    qaColor: '#D97706'
+  }
+};
+
+// Orden y clasificación oficial de sistemas por etapas de planta según directriz ejecutiva
+const PIPELINE_STAGE_1_ORDER = ['app_torre', 'app_laboratorio', 'app_geo'];
+const PIPELINE_STAGE_2_ORDER = ['app_oficina'];
+const PIPELINE_STAGE_3_ORDER = ['app_calidad', 'app_tintoreria', 'app_colchas'];
+
+function getAppPipelineStageInfo(app) {
+  if (!app) return { stageId: 'stage_core', order: 99 };
+  const id = String(app.id || '').toLowerCase();
+  const name = String(app.name || '').toUpperCase();
+
+  // 1. Revisar primero si existe promoción guardada en STF_APP_PIPELINE_STAGES (máxima persistencia)
+  try {
+    const stagesStore = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}') : {};
+    if (stagesStore[id] && stagesStore[id].pipelineStage) {
+      const savedStage = stagesStore[id].pipelineStage;
+      if (savedStage === 'stage_prod') return { stageId: 'stage_prod', order: 0 };
+      if (savedStage === 'stage_qa') return { stageId: 'stage_qa', order: 1 };
+      if (savedStage === 'stage_core') {
+        const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
+        return { stageId: 'stage_core', order: coreIdx !== -1 ? coreIdx : 10 };
+      }
+    }
+  } catch(e) {}
+
+  // Si tiene stage explícito definido (Persistido tras promoción del Admin)
+  if (app.pipelineStage === 'stage_prod' || app.isProduction === true) {
+    return { stageId: 'stage_prod', order: 0 };
+  }
+  if (app.pipelineStage === 'stage_qa') {
+    return { stageId: 'stage_qa', order: 1 };
+  }
+  if (app.pipelineStage === 'stage_core') {
+    const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
+    return { stageId: 'stage_core', order: coreIdx !== -1 ? coreIdx : 10 };
+  }
+
+  // 3. En Producción (En Vivo): CALIDAD, TINTORERIA, COLCHAS
+  const prodIdx = PIPELINE_STAGE_3_ORDER.indexOf(id);
+  if (prodIdx !== -1) return { stageId: 'stage_prod', order: prodIdx };
+  if (name.includes('CALIDAD')) return { stageId: 'stage_prod', order: 0 };
+  if (name.includes('TINTORERIA') || name.includes('TINTORERÍA')) return { stageId: 'stage_prod', order: 1 };
+  if (name.includes('COLCHAS')) return { stageId: 'stage_prod', order: 2 };
+
+  // 2. En Puesta en Planta: OFICINA - APLICATIVOS
+  const qaIdx = PIPELINE_STAGE_2_ORDER.indexOf(id);
+  if (qaIdx !== -1) return { stageId: 'stage_qa', order: qaIdx };
+  if (name.includes('OFICINA')) return { stageId: 'stage_qa', order: 0 };
+
+  // 1. En Construcción: TORRE DE CONTROL, LABORATORIO, GEO UBICACION TALLERES
+  const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
+  if (coreIdx !== -1) return { stageId: 'stage_core', order: coreIdx };
+  if (name.includes('TORRE')) return { stageId: 'stage_core', order: 0 };
+  if (name.includes('LABORATORIO')) return { stageId: 'stage_core', order: 1 };
+  if (name.includes('GEO')) return { stageId: 'stage_core', order: 2 };
+
+  return { stageId: 'stage_core', order: 50 };
+}
+
+function isAppInLiveProduction(app) {
+  return getAppPipelineStageInfo(app).stageId === 'stage_prod';
+}
+
+window.getAppPipelineStageInfo = getAppPipelineStageInfo;
+window.isAppInLiveProduction = isAppInLiveProduction;
+
 // Helpers
 function calculateAppProgress(app) {
   if (!app) return 0;
@@ -9442,119 +9560,6 @@ let qaBugsChartInstance = null;
 let teamWorkloadChartInstance = null;
 let plantCoverageChartInstance = null;
 
-// Contexto operacional e industrial de cada sistema en la cadena productiva de STF GROUP
-const STF_INDUSTRIAL_CONTEXT = {
-  app_torre: {
-    plantArea: 'Control Central TI',
-    plantRole: 'Supervisión Operativa & KPIs en Tiempo Real',
-    qaScore: '98.5% AQL',
-    qaStatus: 'Certificado en Planta',
-    qaColor: '#059669'
-  },
-  app_colchas: {
-    plantArea: 'Línea Hogar & Confección',
-    plantRole: 'Trazabilidad de Insumos & Órdenes de Planta',
-    qaScore: '100% SLA',
-    qaStatus: 'Desplegado en Producción',
-    qaColor: '#059669'
-  },
-  app_laboratorio: {
-    plantArea: 'Laboratorio Textil',
-    plantRole: 'Pruebas Físico-Químicas & Solidez de Color',
-    qaScore: '94.0% QA',
-    qaStatus: 'Validado en Ensayos',
-    qaColor: '#2563EB'
-  },
-  app_geo: {
-    plantArea: 'Talleres & Maquila Satélite',
-    plantRole: 'Georreferenciación & Rutas de Confección Externa',
-    qaScore: '82.0% QA',
-    qaStatus: 'Atención: Desfase GPS',
-    qaColor: '#D97706'
-  },
-  app_calidad: {
-    plantArea: 'Auditoría en Línea',
-    plantRole: 'Inspección AQL en Corte & Confección',
-    qaScore: '96.0% AQL',
-    qaStatus: 'Auditado en Producción',
-    qaColor: '#059669'
-  },
-  app_tintoreria: {
-    plantArea: 'Planta Tintorería',
-    plantRole: 'Control de Barcas de Teñido & Recetas Químicas',
-    qaScore: '93.5% QA',
-    qaStatus: 'Validado en Planta',
-    qaColor: '#059669'
-  },
-  app_oficina: {
-    plantArea: 'Gestión TI & Control',
-    plantRole: 'Supervisión Central de Software & Despliegues',
-    qaScore: '95.0% QA',
-    qaStatus: 'En Construcción Activa',
-    qaColor: '#2563EB'
-  }
-};
-
-// Orden y clasificación oficial de sistemas por etapas de planta según directriz ejecutiva
-const PIPELINE_STAGE_1_ORDER = ['app_torre', 'app_laboratorio', 'app_geo', 'app_oficina'];
-const PIPELINE_STAGE_3_ORDER = ['app_calidad', 'app_tintoreria', 'app_colchas'];
-
-function getAppPipelineStageInfo(app) {
-  if (!app) return { stageId: 'stage_core', order: 99 };
-  const id = String(app.id || '').toLowerCase();
-  const name = String(app.name || '').toUpperCase();
-
-  // 1. Revisar primero si existe promoción guardada en STF_APP_PIPELINE_STAGES (máxima persistencia)
-  try {
-    const stagesStore = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}') : {};
-    if (stagesStore[id] && stagesStore[id].pipelineStage) {
-      const savedStage = stagesStore[id].pipelineStage;
-      if (savedStage === 'stage_prod') return { stageId: 'stage_prod', order: 0 };
-      if (savedStage === 'stage_qa') return { stageId: 'stage_qa', order: 1 };
-      if (savedStage === 'stage_core') {
-        const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
-        return { stageId: 'stage_core', order: coreIdx !== -1 ? coreIdx : 10 };
-      }
-    }
-  } catch(e) {}
-
-  // Si tiene stage explícito definido (Persistido tras promoción del Admin)
-  if (app.pipelineStage === 'stage_prod' || app.isProduction === true) {
-    return { stageId: 'stage_prod', order: 0 };
-  }
-  if (app.pipelineStage === 'stage_qa') {
-    return { stageId: 'stage_qa', order: 1 };
-  }
-  if (app.pipelineStage === 'stage_core') {
-    const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
-    return { stageId: 'stage_core', order: coreIdx !== -1 ? coreIdx : 10 };
-  }
-
-  // 3. En Producción (En Vivo): CALIDAD, TINTORERIA, COLCHAS
-  const prodIdx = PIPELINE_STAGE_3_ORDER.indexOf(id);
-  if (prodIdx !== -1) return { stageId: 'stage_prod', order: prodIdx };
-  if (name.includes('CALIDAD')) return { stageId: 'stage_prod', order: 0 };
-  if (name.includes('TINTORERIA') || name.includes('TINTORERÍA')) return { stageId: 'stage_prod', order: 1 };
-  if (name.includes('COLCHAS')) return { stageId: 'stage_prod', order: 2 };
-
-  // 1. En Construcción: TORRE DE CONTROL, LABORATORIO, GEO UBICACION TALLERES, OFICINA - APLICATIVOS
-  const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
-  if (coreIdx !== -1) return { stageId: 'stage_core', order: coreIdx };
-  if (name.includes('TORRE')) return { stageId: 'stage_core', order: 0 };
-  if (name.includes('LABORATORIO')) return { stageId: 'stage_core', order: 1 };
-  if (name.includes('GEO')) return { stageId: 'stage_core', order: 2 };
-  if (name.includes('OFICINA')) return { stageId: 'stage_core', order: 3 };
-
-  return { stageId: 'stage_core', order: 50 };
-}
-
-function isAppInLiveProduction(app) {
-  return getAppPipelineStageInfo(app).stageId === 'stage_prod';
-}
-
-window.getAppPipelineStageInfo = getAppPipelineStageInfo;
-window.isAppInLiveProduction = isAppInLiveProduction;
-
 let currentActiveView = 'dashboard';
 window.currentActiveView = currentActiveView;
 
@@ -12192,6 +12197,42 @@ function toggleStageAccordion(stageId) {
   const box = document.getElementById(`accordion_${stageId}`);
   const body = document.getElementById(`body_${stageId}`);
   const hint = document.getElementById(`hint_${stageId}`);
+  const chevron = box ? box.querySelector('.h-stage-chevron-icon') : null;
+
+  if (box && body) {
+    const isOpen = !!stageAccordionState[stageId];
+    box.classList.toggle('is-open', isOpen);
+    box.classList.toggle('is-collapsed', !isOpen);
+    body.style.display = isOpen ? 'flex' : 'none';
+    if (hint) {
+      hint.textContent = isOpen ? 'Ocultar sistemas ▲' : 'Desplegar sistemas ▼';
+    }
+    if (chevron) {
+      chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+  }
+}
+window.toggleStageAccordion = toggleStageAccordion;
+
+function setProjectsHorizontalStage(stageId) {
+  currentHorizontalStageFilter = stageId;
+  // Si selecciona una etapa específica, la abre automáticamente
+  if (stageId !== 'all') {
+    stageAccordionState[stageId] = true;
+  }
+  const apps = getFilteredApplications(activeBrandFilter);
+  renderPipelineView(apps);
+}
+window.setProjectsHorizontalStage = setProjectsHorizontalStage;
+
+function renderPipelineView(apps) {
+  const container = document.getElementById('projectsPipelineView');
+  if (!container) return;
+
+  const isAdmin = isCurrentSessionAdmin();
+  const refDate = getSystemReferenceDate();
+
+  // Filtrado y clasificación en las 3 etapas de ciclo industrial
   const coreApps = apps
     .filter(a => getAppPipelineStageInfo(a).stageId === 'stage_core')
     .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
