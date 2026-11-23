@@ -29,7 +29,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Login Stylesheet (4K & High-DPI Optimized) -->
-  <link rel="stylesheet" href="css/login.css?v=10">
+  <link rel="stylesheet" href="css/login.css?v=11">
 </head>
 <body>
 
@@ -106,9 +106,11 @@
         <!-- User Name / Login Field (Columna 2: Usuario_Logueo) -->
         <div class="glass-input-group" id="userInputGroup">
           <div class="glass-input-wrapper">
-            <input type="text" id="loginEmail" class="glass-form-input" placeholder="Ingresa tu usuario" value="" required autocomplete="off">
+            <input type="text" id="loginEmail" class="glass-form-input" placeholder="Ingresa tu usuario (ej: jo, ed, ju, es, jh...)" value="" required autocomplete="off" spellcheck="false">
             <i data-lucide="user" class="glass-input-icon-right"></i>
           </div>
+          <!-- Contenedor de Autocompletado Predictivo Inteligente -->
+          <div id="smartUserSuggestion" class="smart-user-suggestion" style="display: none;"></div>
         </div>
 
         <!-- Password Field (Columna 1: ID / Contraseña) -->
@@ -146,7 +148,7 @@
 
   <!-- Interactive Logic -->
   <script src="js/light-tunnel.js?v=9"></script>
-  <script src="js/login.js?v=12"></script>
+  <script src="js/login.js?v=13"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 </html>

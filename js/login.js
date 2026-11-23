@@ -868,51 +868,220 @@ if (typeof window !== 'undefined') {
   window.renderDevChips = renderDevChips;
   window.clearPreselectedProfile = clearPreselectedProfile;
   window.applyPreselectedUser = applyPreselectedUser;
+  window.initSmartUserAutocomplete = initSmartUserAutocomplete;
+  window.applySmartUser = applySmartUser;
+  window.applySmartUserById = applySmartUserById;
+}
+
+/**
+ * Inteligencia de Autocompletado Predictivo para Usuario
+ * Al escribir las primeras 2 letras de cualquier usuario o nombre, identifica al desarrollador,
+ * muestra su ficha con avatar y rol, autocompleta el campo y precarga la contraseña oficial.
+ */
+function initSmartUserAutocomplete() {
+  const emailInput = document.getElementById('loginEmail');
+  const passInput = document.getElementById('loginPassword');
+  const suggestionContainer = document.getElementById('smartUserSuggestion');
+  if (!emailInput) return;
+
+  let isBackspacing = false;
+
+  emailInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      isBackspacing = true;
+    } else {
+      isBackspacing = false;
+    }
+
+    // Si presiona Enter y hay una coincidencia detectada, confirmarla y pasar a la contraseña
+    if (e.key === 'Enter') {
+      const activeMatch = window._currentSmartMatch;
+      if (activeMatch && emailInput.value.trim().length >= 2) {
+        e.preventDefault();
+        applySmartUser(activeMatch, true);
+      }
+    }
+  });
+
+  emailInput.addEventListener('input', (e) => {
+    const rawVal = emailInput.value;
+    const trimmed = rawVal.trim().toLowerCase();
+
+    // Si tiene menos de 2 caracteres, ocultar sugerencia
+    if (trimmed.length < 2) {
+      if (suggestionContainer) suggestionContainer.style.display = 'none';
+      window._currentSmartMatch = null;
+      return;
+    }
+
+    const allUsers = getActiveUsersCredentials();
+
+    // Algoritmo de detección inteligente
+    const matches = allUsers.filter(u => {
+      const uName = (u.username || '').toLowerCase();
+      const fName = (u.name || '').toLowerCase();
+      const uRole = (u.role || '').toLowerCase();
+      const uEmail = (u.email || '').toLowerCase();
+      if (uName.startsWith(trimmed) || fName.startsWith(trimmed) || uRole.startsWith(trimmed) || uEmail.startsWith(trimmed)) return true;
+      const parts = fName.split(/[\s()_-]+/);
+      if (parts.some(p => p.startsWith(trimmed))) return true;
+      return uName.includes(trimmed) || fName.includes(trimmed);
+    });
+
+    if (matches.length === 0) {
+      if (suggestionContainer) suggestionContainer.style.display = 'none';
+      window._currentSmartMatch = null;
+      return;
+    }
+
+    // Mejor candidato
+    const bestUser = matches.find(u => 
+      u.username.toLowerCase().startsWith(trimmed) || 
+      u.name.toLowerCase().startsWith(trimmed)
+    ) || matches[0];
+
+    window._currentSmartMatch = bestUser;
+
+    // Autocompletar texto en el input si el usuario está tipeando hacia adelante
+    if (!isBackspacing && e.inputType !== 'deleteContentBackward') {
+      const currentLen = rawVal.length;
+      const targetText = bestUser.username;
+      if (targetText.toLowerCase().startsWith(trimmed)) {
+        emailInput.value = targetText;
+        try {
+          emailInput.setSelectionRange(currentLen, targetText.length);
+        } catch (err) {}
+      }
+    }
+
+    // Precargar contraseña en el campo de ID / Contraseña
+    if (passInput && bestUser.idPassword) {
+      passInput.value = bestUser.idPassword;
+    }
+
+    // Mostrar ficha flotante inteligente
+    if (suggestionContainer) {
+      const isAdmin = String(bestUser.role).toLowerCase() === 'admin' || bestUser.id === 'dev_ediaz';
+      suggestionContainer.innerHTML = `
+        <div class="smart-user-card" onclick="applySmartUserById('${bestUser.id}', true)" title="Haz clic o presiona Enter para confirmar este usuario">
+          <div class="smart-user-avatar-wrap">
+            <img src="${bestUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}" alt="${bestUser.name}" class="smart-user-avatar">
+            <span class="smart-user-check-icon">✓</span>
+          </div>
+          <div class="smart-user-details">
+            <div class="smart-user-topline">
+              <span class="smart-user-tag">✨ Usuario Detectado</span>
+              <span class="smart-user-badge ${isAdmin ? 'admin-badge' : 'dev-badge'}">${isAdmin ? '🛡️ Admin' : '💻 ' + bestUser.role}</span>
+            </div>
+            <strong class="smart-user-name">${bestUser.name}</strong>
+            <span class="smart-user-handle">${bestUser.username} · ID: ${bestUser.idPassword || '***'}</span>
+          </div>
+          <button type="button" class="smart-user-confirm-btn" onclick="applySmartUserById('${bestUser.id}', true)" title="Confirmar">
+            <span>Usar ↵</span>
+          </button>
+        </div>
+        ${matches.length > 1 ? `
+          <div class="smart-user-alternatives">
+            <span class="smart-alt-label">Otras opciones:</span>
+            ${matches.slice(1, 4).map(m => `
+              <button type="button" class="smart-alt-chip" onclick="applySmartUserById('${m.id}', true)">
+                ${m.name.split(' ')[0]}
+              </button>
+            `).join('')}
+          </div>
+        ` : ''}
+      `;
+      suggestionContainer.style.display = 'block';
+    }
+  });
+
+  // Ocultar al hacer clic fuera del grupo de inputs
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#userInputGroup')) {
+      if (suggestionContainer) suggestionContainer.style.display = 'none';
+    }
+  });
+}
+
+function applySmartUser(user, focusPass = false) {
+  if (!user) return;
+  const emailInput = document.getElementById('loginEmail');
+  const passInput = document.getElementById('loginPassword');
+  const suggestionContainer = document.getElementById('smartUserSuggestion');
+
+  if (emailInput) {
+    emailInput.value = user.username;
+  }
+  if (passInput) {
+    passInput.value = user.idPassword || '';
+    if (focusPass) {
+      passInput.focus();
+    }
+  }
+  if (suggestionContainer) {
+    suggestionContainer.style.display = 'none';
+  }
+  window._currentSmartMatch = user;
+  showLoginToast(`✨ Usuario detectado: ${user.name} (${user.username})`);
+}
+
+function applySmartUserById(devId, focusPass = false) {
+  const allUsers = getActiveUsersCredentials();
+  const user = allUsers.find(u => u.id === devId || u.username === devId);
+  if (user) applySmartUser(user, focusPass);
 }
 
 // Bootstrap
 if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.lucide) lucide.createIcons();
-      initPullString();
+  const startLoginApp = () => {
+    try {
+      sessionStorage.removeItem('STF_AUTH_SESSION');
+    } catch (e) {}
 
-      const form = document.getElementById('loginForm');
-      if (form) form.addEventListener('submit', handleLoginSubmit);
-
-      const emailEl = document.getElementById('loginEmail');
-      const passEl = document.getElementById('loginPassword');
-      if (emailEl) emailEl.value = '';
-      if (passEl) passEl.value = '';
-
-      renderDevChips();
-      autoPullUsersFromSheets();
-      applyPreselectedUser();
-      setInterval(() => {
-        autoPullUsersFromSheets(true);
-      }, 20000);
-
-      // Keyboard shortcut to toggle lamp
-      document.addEventListener('keydown', (e) => {
-        if (e.key === ' ' || e.key === 'Enter') {
-          if (document.activeElement.tagName !== 'INPUT') {
-            toggleLampState();
-          }
-        }
-      });
-    });
-  } else {
     if (window.lucide) lucide.createIcons();
     initPullString();
+
     const form = document.getElementById('loginForm');
     if (form) form.addEventListener('submit', handleLoginSubmit);
+
     const emailEl = document.getElementById('loginEmail');
     const passEl = document.getElementById('loginPassword');
     if (emailEl) emailEl.value = '';
     if (passEl) passEl.value = '';
+
     renderDevChips();
     autoPullUsersFromSheets();
     applyPreselectedUser();
+    initSmartUserAutocomplete();
+
+    // Encender la lámpara automáticamente al cargar la página para que la tarjeta de login aparezca de inmediato
+    setTimeout(() => {
+      if (!isLampOn) {
+        toggleLampState();
+      }
+      if (emailEl && (!emailEl.value || emailEl.value.trim() === '')) {
+        emailEl.focus();
+      }
+    }, 280);
+
+    setInterval(() => {
+      autoPullUsersFromSheets(true);
+    }, 20000);
+
+    // Atajo de teclado para la lámpara si no se está escribiendo
+    document.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
+          toggleLampState();
+        }
+      }
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startLoginApp);
+  } else {
+    startLoginApp();
   }
 }
 

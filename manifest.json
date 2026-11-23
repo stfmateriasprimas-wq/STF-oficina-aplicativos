@@ -2,7 +2,7 @@
   "name": "STF-AP S.A. · Oficina Aplicativos",
   "short_name": "STF-AP",
   "description": "Sistema de Control de Desarrollo, Rendimiento de Ingeniería y Aplicativos de Planta de STF GROUP S.A.",
-  "start_url": "./index.html",
+  "start_url": "./login.html",
   "display": "standalone",
   "background_color": "#0B0C10",
   "theme_color": "#0B0C10",

@@ -3,6 +3,20 @@
 
 <head>
   <meta charset="UTF-8">
+  <!-- Auth Guard: Si la aplicación se abre desde cero sin sesión autenticada, redirigir a login.html -->
+  <script>
+    (function () {
+      try {
+        var isAuth = sessionStorage.getItem('STF_AUTH_SESSION') === 'authenticated';
+        var loggedUser = localStorage.getItem('STF_LOGGED_USER');
+        if (!isAuth || !loggedUser) {
+          window.location.replace('login.html');
+        }
+      } catch (e) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STF-AP S.A. · Sistema de Control de Desarrollo y Rendimiento</title>
 

@@ -1146,3 +1146,189 @@ body.lamp-on .login-card-container.glass-tag-plaque {
   position: absolute !important;
   left: -99999px !important;
 }
+
+/* ==========================================================================
+   SMART USER INTELLIGENCE AUTOCOMPLETE CARD & PREVIEW
+   ========================================================================== */
+.smart-user-suggestion {
+  margin-top: 8px;
+  background: rgba(13, 17, 28, 0.94);
+  border: 1.5px solid rgba(245, 197, 66, 0.5);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 197, 66, 0.22);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: smartSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+@keyframes smartSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.smart-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 12px;
+  transition: background 0.18s ease;
+}
+
+.smart-user-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.smart-user-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.smart-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold-primary);
+  display: block;
+}
+
+.smart-user-check-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #10B981;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #000;
+}
+
+.smart-user-details {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.smart-user-topline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.smart-user-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--gold-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.smart-user-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
+
+.smart-user-badge.admin-badge {
+  background: rgba(239, 68, 68, 0.25);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+.smart-user-badge.dev-badge {
+  background: rgba(79, 70, 229, 0.25);
+  color: #C7D2FE;
+  border: 1px solid rgba(79, 70, 229, 0.45);
+}
+
+.smart-user-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smart-user-handle {
+  display: block;
+  font-size: 11px;
+  color: #94A3B8;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smart-user-confirm-btn {
+  background: var(--gold-gradient);
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.smart-user-confirm-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.04);
+}
+
+.smart-user-alternatives {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+}
+
+.smart-alt-label {
+  font-size: 10px;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+
+.smart-alt-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #E2E8F0;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.smart-alt-chip:hover {
+  background: rgba(245, 197, 66, 0.25);
+  border-color: var(--gold-primary);
+  color: #FFFFFF;
+}
