@@ -5332,6 +5332,18 @@ function updateModalStageActionButtons(app, overrideAllDone) {
 function handlePromoteToPlantTestFromModal() {
   if (!currentEditingSysId) return;
   const appId = currentEditingSysId;
+  const app = (appState.applications || []).find(a => a.id === appId);
+  if (app && Array.isArray(app.phases)) {
+    const checkboxes = document.querySelectorAll('.phase-check-input');
+    if (checkboxes.length > 0) {
+      checkboxes.forEach(cb => {
+        const idx = parseInt(cb.dataset.phaseIdx);
+        if (app.phases[idx]) app.phases[idx].completed = cb.checked;
+      });
+      app.progress = calculateAppProgress(app);
+      saveData(appState);
+    }
+  }
   closeSystemDetailModal();
   handlePromoteToPlantTest(appId);
 }
@@ -9468,6 +9480,20 @@ function getAppPipelineStageInfo(app) {
   const id = String(app.id || '').toLowerCase();
   const name = String(app.name || '').toUpperCase();
 
+  // 1. Revisar primero si existe promoción guardada en STF_APP_PIPELINE_STAGES (máxima persistencia)
+  try {
+    const stagesStore = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}') : {};
+    if (stagesStore[id] && stagesStore[id].pipelineStage) {
+      const savedStage = stagesStore[id].pipelineStage;
+      if (savedStage === 'stage_prod') return { stageId: 'stage_prod', order: 0 };
+      if (savedStage === 'stage_qa') return { stageId: 'stage_qa', order: 1 };
+      if (savedStage === 'stage_core') {
+        const coreIdx = PIPELINE_STAGE_1_ORDER.indexOf(id);
+        return { stageId: 'stage_core', order: coreIdx !== -1 ? coreIdx : 10 };
+      }
+    }
+  } catch(e) {}
+
   // Si tiene stage explícito definido (Persistido tras promoción del Admin)
   if (app.pipelineStage === 'stage_prod' || app.isProduction === true) {
     return { stageId: 'stage_prod', order: 0 };
@@ -12712,9 +12738,27 @@ function handlePromoteToPlantTest(appId, event) {
   );
   if (!confirmed) return;
 
+  // Asegurar que todas las fases queden marcadas como completadas al 100%
+  if (Array.isArray(app.phases)) {
+    app.phases.forEach(p => { p.completed = true; });
+  }
+  app.progress = 100;
   app.pipelineStage = 'stage_qa';
   app.isProduction = false;
   app.plantTestStartDate = new Date().toISOString();
+
+  // Persistir en almacenamiento blindado STF_APP_PIPELINE_STAGES para resistir cualquier F5 / recarga
+  try {
+    const stagesStore = JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}');
+    stagesStore[app.id] = {
+      pipelineStage: 'stage_qa',
+      isProduction: false,
+      progress: 100,
+      phases: app.phases,
+      plantTestStartDate: app.plantTestStartDate
+    };
+    localStorage.setItem('STF_APP_PIPELINE_STAGES', JSON.stringify(stagesStore));
+  } catch (e) {}
 
   // Historial de auditoría local
   if (!Array.isArray(appState.auditLogs)) appState.auditLogs = [];
@@ -12784,9 +12828,26 @@ function handlePromoteToProduction(appId, event) {
   );
   if (!confirmed) return;
 
+  if (Array.isArray(app.phases)) {
+    app.phases.forEach(p => { p.completed = true; });
+  }
+  app.progress = 100;
   app.pipelineStage = 'stage_prod';
   app.isProduction = true;
   app.productionStartDate = new Date().toISOString();
+
+  // Persistir en almacenamiento blindado STF_APP_PIPELINE_STAGES
+  try {
+    const stagesStore = JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}');
+    stagesStore[app.id] = {
+      pipelineStage: 'stage_prod',
+      isProduction: true,
+      progress: 100,
+      phases: app.phases,
+      productionStartDate: app.productionStartDate
+    };
+    localStorage.setItem('STF_APP_PIPELINE_STAGES', JSON.stringify(stagesStore));
+  } catch (e) {}
 
   // Historial de auditoría local
   if (!Array.isArray(appState.auditLogs)) appState.auditLogs = [];

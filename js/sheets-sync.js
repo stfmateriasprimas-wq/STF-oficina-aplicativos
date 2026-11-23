@@ -1275,9 +1275,11 @@
             appObj.isProduction = true;
             updated = true;
           } else if (slaLow.includes('construcc')) {
-            appObj.pipelineStage = 'stage_core';
-            appObj.isProduction = false;
-            updated = true;
+            if (!appObj.pipelineStage || appObj.pipelineStage === 'stage_core') {
+              appObj.pipelineStage = 'stage_core';
+              appObj.isProduction = false;
+              updated = true;
+            }
           }
           if (slaLow.includes('riesgo')) {
             appObj.status = 'risk';
@@ -1406,10 +1408,17 @@
           count++;
         }
 
-        // 4. Sincronizar Estado de la hoja
+        // 4. Sincronizar Estado de la hoja y ciclo de vida (Puesta en Planta / Producción)
         const stateStr = String(ws.status || ws.Estado || '').toLowerCase();
-        if (stateStr.includes('producc')) {
+        if (stateStr.includes('planta') || stateStr.includes('prueba') || stateStr.includes('puesta')) {
+          targetApp.pipelineStage = 'stage_qa';
+          targetApp.isProduction = false;
+          count++;
+        } else if (stateStr.includes('producc')) {
+          targetApp.pipelineStage = 'stage_prod';
+          targetApp.isProduction = true;
           targetApp.status = 'ontime';
+          count++;
         }
       });
 

@@ -642,20 +642,39 @@ function getStoredData() {
         if (!Array.isArray(parsed.applications) || parsed.applications.length === 0) {
           parsed.applications = JSON.parse(JSON.stringify(STF_REAL_DATA.applications));
         } else {
+          // Recuperar promociones de etapas persistidas por el Administrador
+          let stagesStore = {};
+          try {
+            stagesStore = JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}');
+          } catch (e) {}
+
           STF_REAL_DATA.applications.forEach(official => {
             const existing = parsed.applications.find(a => a.id === official.id || (a.name && official.name && a.name.toLowerCase().trim() === official.name.toLowerCase().trim()));
             if (!existing) {
               parsed.applications.push(JSON.parse(JSON.stringify(official)));
             } else {
-              // Sincronizar fases, porcentaje oficial y URL correspondiente a la prueba en planta
-              existing.phases = JSON.parse(JSON.stringify(official.phases));
-              existing.progress = official.progress;
-              existing.status = official.status;
-              if (official.webUrl !== undefined) {
+              // PRESERVAR FASES Y PROGRESO: Si el usuario ya auditó o completó fases, NO sobreescribir con datos por defecto
+              if (!Array.isArray(existing.phases) || existing.phases.length === 0) {
+                existing.phases = JSON.parse(JSON.stringify(official.phases));
+                existing.progress = official.progress;
+              }
+              // Preservar estado y configuración básica
+              if (!existing.status) existing.status = official.status;
+              if (official.webUrl !== undefined && !existing.webUrl) {
                 existing.webUrl = official.webUrl;
               }
-              if (official.devId) existing.devId = official.devId;
-              if (official.devIds) existing.devIds = official.devIds;
+              if (!existing.devId && official.devId) existing.devId = official.devId;
+              if (!existing.devIds && official.devIds) existing.devIds = official.devIds;
+
+              // Reaplicar de forma garantizada cualquier promoción persistida a Puesta en Planta o Producción
+              const savedStageData = stagesStore[existing.id] || stagesStore[official.id];
+              if (savedStageData) {
+                if (savedStageData.pipelineStage) existing.pipelineStage = savedStageData.pipelineStage;
+                if (savedStageData.isProduction !== undefined) existing.isProduction = savedStageData.isProduction;
+                if (savedStageData.progress !== undefined) existing.progress = savedStageData.progress;
+                if (Array.isArray(savedStageData.phases)) existing.phases = savedStageData.phases;
+                if (savedStageData.plantTestStartDate) existing.plantTestStartDate = savedStageData.plantTestStartDate;
+              }
             }
           });
         }
