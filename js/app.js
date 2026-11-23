@@ -424,6 +424,19 @@ let velocityChartInstance = null;
 // Helpers
 function calculateAppProgress(app) {
   if (!app) return 0;
+  // Si el sistema está en Puesta en Planta o Producción, por definición técnica sus 6 fases están 100% completadas
+  const stageInfo = (typeof getAppPipelineStageInfo === 'function') ? getAppPipelineStageInfo(app) : null;
+  const isQaOrProd = (stageInfo && (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod')) ||
+                     app.pipelineStage === 'stage_qa' ||
+                     app.pipelineStage === 'stage_prod' ||
+                     app.isProduction === true;
+  if (isQaOrProd) {
+    if (Array.isArray(app.phases)) {
+      app.phases.forEach(p => { p.completed = true; });
+    }
+    return 100;
+  }
+
   if (!app.phases || app.phases.length === 0) {
     return Number(app.progress) || 0;
   }
@@ -5105,6 +5118,17 @@ window.updateVelocitySection = updateVelocitySection;
 function openSystemDetailModal(appId) {
   const app = appState.applications.find(a => a.id === appId);
   if (!app) return;
+
+  const stageInfo = typeof getAppPipelineStageInfo === 'function' ? getAppPipelineStageInfo(app) : null;
+  const isQaOrProd = (stageInfo && (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod')) ||
+                     app.pipelineStage === 'stage_qa' ||
+                     app.pipelineStage === 'stage_prod' ||
+                     app.isProduction === true;
+
+  if (isQaOrProd && Array.isArray(app.phases)) {
+    app.phases.forEach(p => { p.completed = true; });
+    app.progress = 100;
+  }
 
   const isAdmin = isCurrentSessionAdmin();
   if (!isAdmin && !isAppAssignedToDev(app, getLoggedDevId())) {
@@ -12168,42 +12192,6 @@ function toggleStageAccordion(stageId) {
   const box = document.getElementById(`accordion_${stageId}`);
   const body = document.getElementById(`body_${stageId}`);
   const hint = document.getElementById(`hint_${stageId}`);
-  const chevron = box ? box.querySelector('.h-stage-chevron-icon') : null;
-
-  if (box && body) {
-    const isOpen = !!stageAccordionState[stageId];
-    box.classList.toggle('is-open', isOpen);
-    box.classList.toggle('is-collapsed', !isOpen);
-    body.style.display = isOpen ? 'flex' : 'none';
-    if (hint) {
-      hint.textContent = isOpen ? 'Ocultar sistemas ▲' : 'Desplegar sistemas ▼';
-    }
-    if (chevron) {
-      chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-    }
-  }
-}
-window.toggleStageAccordion = toggleStageAccordion;
-
-function setProjectsHorizontalStage(stageId) {
-  currentHorizontalStageFilter = stageId;
-  // Si selecciona una etapa específica, la abre automáticamente
-  if (stageId !== 'all') {
-    stageAccordionState[stageId] = true;
-  }
-  const apps = getFilteredApplications(activeBrandFilter);
-  renderPipelineView(apps);
-}
-window.setProjectsHorizontalStage = setProjectsHorizontalStage;
-
-function renderPipelineView(apps) {
-  const container = document.getElementById('projectsPipelineView');
-  if (!container) return;
-
-  const isAdmin = isCurrentSessionAdmin();
-  const refDate = getSystemReferenceDate();
-
-  // Filtrado y clasificación en las 3 etapas de ciclo industrial
   const coreApps = apps
     .filter(a => getAppPipelineStageInfo(a).stageId === 'stage_core')
     .sort((a, b) => getAppPipelineStageInfo(a).order - getAppPipelineStageInfo(b).order);
@@ -12447,12 +12435,26 @@ function renderPipelineView(apps) {
 
 function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
   const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
-  const progress = calculateAppProgress(app);
-  const isProd = isAppInLiveProduction(app);
+  const stageInfo = getAppPipelineStageInfo(app);
+  const isProd = isAppInLiveProduction(app) || stageInfo.stageId === 'stage_prod';
+  const isQaOrProd = (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod' || app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || isProd);
+
+  if (isQaOrProd && Array.isArray(app.phases)) {
+    app.phases.forEach(p => { p.completed = true; });
+    app.progress = 100;
+  }
+
+  const progress = isQaOrProd ? 100 : calculateAppProgress(app);
   const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
-  const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
-  const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 });
-  const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount;
+  const activePhaseIndex = isQaOrProd ? -1 : (app.phases || []).findIndex(p => !p.completed);
+  const activePhase = isQaOrProd
+    ? (stageInfo.stageId === 'stage_qa'
+        ? { name: 'Validación en Planta / Pruebas Activas', weight: 0 }
+        : { name: 'Desplegado en Producción', weight: 0 })
+    : (activePhaseIndex !== -1
+        ? app.phases[activePhaseIndex]
+        : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 }));
+  const displayPhaseNum = isQaOrProd ? totalPhasesCount : (activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount);
 
   const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
     plantArea: app.category,
@@ -12500,8 +12502,8 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
 
   // Nodos dinámicos del Stepper Horizontal (configurados a medida por el Admin para este sistema)
   const stepperStepsHtml = (app.phases || []).map((p, idx) => {
-    const isCompleted = p.completed;
-    const isActive = idx === activePhaseIndex;
+    const isCompleted = isQaOrProd ? true : p.completed;
+    const isActive = !isQaOrProd && (idx === activePhaseIndex);
     const shortLabel = getDynamicPhaseLabel(p, idx);
     const stateText = isCompleted ? 'Completada ✅' : (isActive ? 'En Curso ⏳' : 'Pendiente');
     const nodeClass = isCompleted ? 'completed' : (isActive ? 'active' : 'pending');
@@ -12535,9 +12537,8 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
     `;
   }
 
-  const stageInfo = getAppPipelineStageInfo(app);
   const totalPhases = Array.isArray(app.phases) ? app.phases.length : 0;
-  const completedPhases = Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0;
+  const completedPhases = isQaOrProd ? totalPhases : (Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0);
   const allPhasesDone = totalPhases > 0 && completedPhases === totalPhases;
 
   let statusClass = 'status-ontime';
@@ -12632,7 +12633,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
       <div class="h-sys-timeline">
         <div class="h-timeline-top">
           <div class="h-active-phase-tag">
-            <span class="h-phase-pill-num">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
+            <span class="h-phase-pill-num">${isQaOrProd ? `${totalPhasesCount} de ${totalPhasesCount} Fases` : `Fase ${displayPhaseNum} de ${totalPhasesCount}`}</span>
             <strong class="h-phase-name-text" title="${activePhase.name}">${activePhase.name}</strong>
           </div>
           <div class="h-progress-metric">

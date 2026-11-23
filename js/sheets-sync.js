@@ -1298,22 +1298,38 @@
         }
 
         // Sincronizar porcentaje de avance con las fases si el valor es un número válido (0..100)
-        const cloudProg = Number(sys.progress);
-        if (!isNaN(cloudProg) && cloudProg >= 0 && cloudProg <= 100 && Array.isArray(appObj.phases)) {
-          const currentLocalProg = typeof window.calculateAppProgress === 'function' ? window.calculateAppProgress(appObj) : -1;
-          if (currentLocalProg !== cloudProg) {
-            let acc = 0;
-            let phasesActuallyChanged = false;
+        const isAppQaOrProd = appObj.pipelineStage === 'stage_qa' || appObj.pipelineStage === 'stage_prod' || appObj.isProduction === true;
+        if (isAppQaOrProd) {
+          if (appObj.progress !== 100) {
+            appObj.progress = 100;
+            updated = true;
+          }
+          if (Array.isArray(appObj.phases)) {
             appObj.phases.forEach(ph => {
-              const w = Number(ph.weight) || 0;
-              const shouldBeCompleted = (acc + w <= cloudProg);
-              if (ph.completed !== shouldBeCompleted) {
-                ph.completed = shouldBeCompleted;
-                phasesActuallyChanged = true;
+              if (!ph.completed) {
+                ph.completed = true;
+                updated = true;
               }
-              if (shouldBeCompleted) acc += w;
             });
-            if (phasesActuallyChanged) updated = true;
+          }
+        } else {
+          const cloudProg = Number(sys.progress);
+          if (!isNaN(cloudProg) && cloudProg >= 0 && cloudProg <= 100 && Array.isArray(appObj.phases)) {
+            const currentLocalProg = typeof window.calculateAppProgress === 'function' ? window.calculateAppProgress(appObj) : -1;
+            if (currentLocalProg !== cloudProg) {
+              let acc = 0;
+              let phasesActuallyChanged = false;
+              appObj.phases.forEach(ph => {
+                const w = Number(ph.weight) || 0;
+                const shouldBeCompleted = (acc + w <= cloudProg);
+                if (ph.completed !== shouldBeCompleted) {
+                  ph.completed = shouldBeCompleted;
+                  phasesActuallyChanged = true;
+                }
+                if (shouldBeCompleted) acc += w;
+              });
+              if (phasesActuallyChanged) updated = true;
+            }
           }
         }
       });

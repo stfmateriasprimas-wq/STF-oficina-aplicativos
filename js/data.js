@@ -211,7 +211,8 @@ const STF_REAL_DATA = {
       deadline: "2026-12-30",
       priority: "Alta",
       status: "ontime",
-      progress: 80,
+      progress: 100,
+      pipelineStage: "stage_qa",
       iconColor: "#0EA5E9",
       iconInitial: "OFA",
       webUrl: "https://stf-oficina-aplicativos.vercel.app/",
@@ -220,8 +221,8 @@ const STF_REAL_DATA = {
         { id: "p2", name: "2. Arquitectura & Diseño UI/UX", weight: 15, completed: true },
         { id: "p3", name: "3. Desarrollo Core & Integraciones", weight: 30, completed: true },
         { id: "p4", name: "4. Sincronización Google Sheets", weight: 25, completed: true },
-        { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: false },
-        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: false }
+        { id: "p5", name: "5. Pruebas de Despliegue Vercel", weight: 15, completed: true },
+        { id: "p6", name: "6. Salida en Vivo", weight: 5, completed: true }
       ]
     },
     {
@@ -675,6 +676,30 @@ function getStoredData() {
                 if (Array.isArray(savedStageData.phases)) existing.phases = savedStageData.phases;
                 if (savedStageData.plantTestStartDate) existing.plantTestStartDate = savedStageData.plantTestStartDate;
               }
+
+              // REGLA FUNDAMENTAL DE PIPELINE: Si el aplicativo está en Puesta en Planta o Producción,
+              // todas sus 6 fases de desarrollo deben estar certificadas al 100% por definición
+              if (existing.pipelineStage === 'stage_qa' || existing.pipelineStage === 'stage_prod' || existing.isProduction === true) {
+                existing.progress = 100;
+                if (Array.isArray(existing.phases)) {
+                  existing.phases.forEach(p => { p.completed = true; });
+                }
+              }
+            }
+          });
+
+          // Garantizar consistencia global para todas las aplicaciones en stage_qa o stage_prod
+          parsed.applications.forEach(app => {
+            const sData = stagesStore[app.id];
+            if (sData) {
+              if (sData.pipelineStage) app.pipelineStage = sData.pipelineStage;
+              if (sData.isProduction !== undefined) app.isProduction = sData.isProduction;
+            }
+            if (app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || app.isProduction === true) {
+              app.progress = 100;
+              if (Array.isArray(app.phases)) {
+                app.phases.forEach(p => { p.completed = true; });
+              }
             }
           });
         }
@@ -820,6 +845,16 @@ function saveData(data) {
   purgePhantomAppsFromState(data);
   if (data && Array.isArray(data.developers)) {
     data.developers = sanitizeAndDeduplicateDevelopers(data.developers);
+  }
+  if (data && Array.isArray(data.applications)) {
+    data.applications.forEach(a => {
+      if (a && (a.pipelineStage === 'stage_qa' || a.pipelineStage === 'stage_prod' || a.isProduction === true)) {
+        a.progress = 100;
+        if (Array.isArray(a.phases)) {
+          a.phases.forEach(p => { p.completed = true; });
+        }
+      }
+    });
   }
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('STF_GROUP_REAL_DATA_V8', JSON.stringify(data));
