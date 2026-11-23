@@ -9880,11 +9880,19 @@ function renderProjectsView(brand = activeBrandFilter) {
   if (gridContainer) {
     gridContainer.innerHTML = apps.map(app => {
       const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
-      const progress = calculateAppProgress(app);
+      const stageInfo = getAppPipelineStageInfo(app);
+      const isQaOrProd = (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod' || app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || app.isProduction === true);
+      const progress = isQaOrProd ? 100 : calculateAppProgress(app);
       const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
-      const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
-      const activePhase = activePhaseIndex !== -1 ? app.phases[activePhaseIndex] : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 });
-      const displayPhaseNum = activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount;
+      const activePhaseIndex = isQaOrProd ? -1 : (app.phases || []).findIndex(p => !p.completed);
+      const activePhase = isQaOrProd
+        ? (stageInfo.stageId === 'stage_qa'
+            ? { name: 'Validación en Planta / Pruebas Activas', weight: 0 }
+            : { name: 'Desplegado en Producción', weight: 0 })
+        : (activePhaseIndex !== -1
+            ? app.phases[activePhaseIndex]
+            : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 }));
+      const displayPhaseNum = isQaOrProd ? totalPhasesCount : (activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount);
 
       const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
         plantArea: app.category,
@@ -9925,14 +9933,14 @@ function renderProjectsView(brand = activeBrandFilter) {
       }
 
       // Track segmentado de las 6 fases de desarrollo
-      const segmentsHtml = app.phases.map((p, idx) => {
+      const segmentsHtml = (app.phases || []).map((p, idx) => {
         let segClass = 'pending';
-        if (p.completed) {
+        if (isQaOrProd || p.completed) {
           segClass = 'done';
         } else if (idx === activePhaseIndex) {
           segClass = 'active';
         }
-        const stateText = p.completed ? 'Completada ✅' : (idx === activePhaseIndex ? 'En Curso ⏳' : 'Pendiente');
+        const stateText = (isQaOrProd || p.completed) ? 'Completada ✅' : (idx === activePhaseIndex ? 'En Curso ⏳' : 'Pendiente');
         const tooltip = `Fase ${idx + 1}: ${p.name} (${p.weight}%) - ${stateText}`;
         return `<div class="phase-segment-item ${segClass}" title="${tooltip}"></div>`;
       }).join('');
@@ -9959,9 +9967,9 @@ function renderProjectsView(brand = activeBrandFilter) {
               </div>
 
               <div class="project-status-group">
-                <span class="status-pill ${isAppInLiveProduction(app) ? 'status-done' : (app.status === 'risk' ? 'status-risk' : 'status-ontime')}">
+                <span class="status-pill ${isAppInLiveProduction(app) ? 'status-done' : (stageInfo.stageId === 'stage_qa' ? 'status-ontime' : (app.status === 'risk' ? 'status-risk' : 'status-ontime'))}">
                   <span class="status-pulse-dot"></span>
-                  ${isAppInLiveProduction(app) ? 'En Producción' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo')}
+                  ${isAppInLiveProduction(app) ? 'En Producción' : (stageInfo.stageId === 'stage_qa' ? 'En Prueba' : (app.status === 'risk' ? 'En Riesgo' : 'En Tiempo'))}
                 </span>
                 <span class="priority-pill ${app.priority === 'Alta' ? 'priority-high' : 'priority-med'}">
                   ${app.priority === 'Alta' ? '⚡ Alta Prioridad' : 'Media Prioridad'}
@@ -9976,7 +9984,7 @@ function renderProjectsView(brand = activeBrandFilter) {
             <div class="project-phase-lifecycle">
               <div class="phase-lifecycle-header">
                 <div class="current-phase-name">
-                  <span class="phase-step-tag">Fase ${displayPhaseNum} de ${totalPhasesCount}</span>
+                  <span class="phase-step-tag">${isQaOrProd ? `${totalPhasesCount} de ${totalPhasesCount} Fases` : `Fase ${displayPhaseNum} de ${totalPhasesCount}`}</span>
                   <strong class="phase-active-title">${activePhase.name}</strong>
                 </div>
                 <div class="phase-progress-number">
@@ -12166,10 +12174,6 @@ window.closeQuarterlyGoalModal = closeQuarterlyGoalModal;
 window.saveQuarterlyGoal = saveQuarterlyGoal;
 window.saveSystemChanges = saveSystemChanges;
 window.cycleStackedDeckByAppId = cycleStackedDeckByAppId;
-window.cycleStackedDeckNext = cycleStackedDeckNext;
-window.cycleStackedDeckPrev = cycleStackedDeckPrev;
-window.selectDeveloper = selectDeveloper;
-window.selectDeveloperFromCard = selectDeveloper;
 window.handleCreateNewProject = handleCreateNewProject;
 window.handleAssignIntegrationSubmit = handleAssignIntegrationSubmit;
 window.handleConfirmEvaluation = handleConfirmEvaluation;

@@ -786,7 +786,9 @@ function clearPreselectedProfile() {
 
 // Aplicar perfil preseleccionado cuando se redirige desde "Cambiar a otro perfil"
 function applyPreselectedUser() {
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = (typeof window !== 'undefined' && window.location && window.location.search)
+    ? new URLSearchParams(window.location.search)
+    : new URLSearchParams('');
   const paramUser = urlParams.get('user') || urlParams.get('devId');
   let preData = null;
 
