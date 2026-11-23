@@ -106,6 +106,7 @@ var HEADERS = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚙️ STF SISTEMA')
+    .addItem('📁 Ver Enlace de Carpeta Google Drive (Evidencias)', 'abrirCarpetaEvidenciasDrive')
     .addItem('🚀 Estabilizar Base de Datos (6 Hojas Oficiales)', 'setupProfessionalDatabase')
     .addItem('🎧 Crear / Configurar Hoja SOLICITUDES_SOPORTE', 'setupSoporteSheetDirect')
     .addItem('🗑️ Eliminar Columna Telefono_SMS de Sheets', 'eliminarColumnaTelefonoSMS')
@@ -117,6 +118,30 @@ function onOpen() {
     .addItem('📧 Probar Notificación por Correo (Tareas)', 'testEmailNotification')
     .addItem('📧 Probar Correo de Rechazo / Solución con Foto', 'testSupportResolutionEmailDirect')
     .addToUi();
+}
+
+/**
+ * Muestra el enlace directo a la carpeta de Google Drive donde se guardan las evidencias fotográficas
+ */
+function abrirCarpetaEvidenciasDrive() {
+  var folderName = "STF_EVIDENCIAS_SOPORTE";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  
+  var url = folder.getUrl();
+  var htmlOutput = HtmlService.createHtmlOutput(
+    "<div style=\"font-family: Arial, sans-serif; padding: 18px; text-align: center;\">" +
+    "<h3 style=\"color: #0F172A; margin-top: 0;\">📁 Carpeta Oficial de Evidencias en Google Drive</h3>" +
+    "<p style=\"font-size: 13px; color: #475569;\">Aquí se almacenan automáticamente todas las fotografías y capturas adjuntas a las soluciones y rechazos de soporte técnico:</p>" +
+    "<div style=\"margin: 20px 0;\">" +
+    "<a href=\"" + url + "\" target=\"_blank\" style=\"display: inline-block; background: #4F46E5; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;\">Abrir Carpeta en Google Drive ↗</a>" +
+    "</div>" +
+    "<p style=\"font-size: 11px; color: #94A3B8;\">Nombre de la carpeta: <strong>STF_EVIDENCIAS_SOPORTE</strong></p>" +
+    "</div>"
+  ).setWidth(440).setHeight(220);
+  
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Acceso a Google Drive STF");
 }
 
 /**
