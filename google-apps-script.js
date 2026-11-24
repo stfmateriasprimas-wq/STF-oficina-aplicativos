@@ -1214,6 +1214,23 @@ function doGet(e) {
 }
 
 /**
+ * DEFENSIVE APPEC HELPER:
+ * Sanitiza valores de entrada para Google Sheets previniendo la inyección de fórmulas (Formula / CSV Injection).
+ * Si el texto comienza con '=', '+', '-', '@', '\t' o '\r', antepone una comilla simple (') para forzar
+ * su almacenamiento como cadena literal inofensiva en Google Sheets y en exportaciones a Excel.
+ */
+function sanitizeSheetInput(val) {
+  if (val === null || val === undefined) return "";
+  var str = String(val);
+  if (str.length === 0) return "";
+  var firstChar = str.charAt(0);
+  if (firstChar === '=' || firstChar === '+' || firstChar === '-' || firstChar === '@' || firstChar === '\t' || firstChar === '\r') {
+    return "'" + str;
+  }
+  return str;
+}
+
+/**
  * ============================================================================
  * ENDPOINT POST (Escritura de Todos los Procesos Operativos en las 5 Hojas)
  * ============================================================================
@@ -1243,17 +1260,17 @@ function doPost(e) {
 
       var cleanDeadline = formatDateToYMD(payload.deadline);
 
-      // Insertar en CONTROL_TAREAS (9 Columnas exactas A:I)
+      // Insertar en CONTROL_TAREAS (9 Columnas exactas A:I sanitizadas contra inyección de fórmulas)
       sTareas.appendRow([
-        payload.taskName || "",
-        payload.appName || "",
-        payload.developer || "",
+        sanitizeSheetInput(payload.taskName || ""),
+        sanitizeSheetInput(payload.appName || ""),
+        sanitizeSheetInput(payload.developer || ""),
         Number(payload.weight) || 15,
         cleanDeadline,
         "En Progreso",
         "Pendiente de Auditoría",
         dateStr,
-        payload.description || "Integración técnica asignada desde plataforma web."
+        sanitizeSheetInput(payload.description || "Integración técnica asignada desde plataforma web.")
       ]);
 
       // Registrar en BITACORA_HISTORIAL (7 Columnas A:G)
@@ -1706,24 +1723,24 @@ function doPost(e) {
         else resolvedDev = 'Jose Guzman';
       }
 
-      // Estructura Oficial: 16 Columnas A:P (Blindada para Tablas Nativas)
+      // Estructura Oficial: 16 Columnas A:P (Blindada contra inyección de fórmulas)
       var rowData = [
-        ticketCode,
+        sanitizeSheetInput(ticketCode),
         reqDate,
         tipoTxt,
-        payload.appName || '',
-        payload.appCode || '',
-        payload.requesterName || 'Operario de Planta',
-        payload.requesterArea || 'Planta STF',
-        payload.title || '',
-        payload.description || '',
-        resolvedDev,
+        sanitizeSheetInput(payload.appName || ''),
+        sanitizeSheetInput(payload.appCode || ''),
+        sanitizeSheetInput(payload.requesterName || 'Operario de Planta'),
+        sanitizeSheetInput(payload.requesterArea || 'Planta STF'),
+        sanitizeSheetInput(payload.title || ''),
+        sanitizeSheetInput(payload.description || ''),
+        sanitizeSheetInput(resolvedDev),
         'Pendiente',
         '', // Fecha_Respuesta
         '', // Observacion_Desarrollador
         '', // Tiempo_Estimado_ETA
         '',  // Resuelto_Por
-        payload.requesterEmail || ''
+        sanitizeSheetInput(payload.requesterEmail || '')
       ];
 
       try {
@@ -1816,7 +1833,12 @@ function doPost(e) {
           try {
             var folder = getOfficialDriveEvidenceFolder();
             var driveFile = folder.createFile(imageBlob);
-            driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+            // 🔒 SEGURIDAD: Restringir acceso al dominio de la organización en lugar de público abierto
+            try {
+              driveFile.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.VIEW);
+            } catch (eShare) {
+              Logger.log("Restricción de acceso en Drive aplicada: " + eShare.toString());
+            }
             imageUrl = driveFile.getUrl();
           } catch (eDrive) {
             Logger.log("Drive folder/file error (continuando con Blob directo): " + eDrive.toString());
@@ -1833,11 +1855,11 @@ function doPost(e) {
         // Col K(11): Estado, Col L(12): Fecha_Respuesta, Col M(13): Observacion, Col N(14): ETA, Col O(15): Resuelto_Por
         sSoporte.getRange(foundRow, 11).setValue(decisionText);
         sSoporte.getRange(foundRow, 12).setValue(resDate);
-        sSoporte.getRange(foundRow, 13).setValue(payload.observation || '');
+        sSoporte.getRange(foundRow, 13).setValue(sanitizeSheetInput(payload.observation || ''));
         sSoporte.getRange(foundRow, 14).setValue(payload.etaHours || '');
-        sSoporte.getRange(foundRow, 15).setValue(payload.resolvedBy || 'Desarrollador');
+        sSoporte.getRange(foundRow, 15).setValue(sanitizeSheetInput(payload.resolvedBy || 'Desarrollador'));
         if (reqEmail) {
-          sSoporte.getRange(foundRow, 16).setValue(reqEmail);
+          sSoporte.getRange(foundRow, 16).setValue(sanitizeSheetInput(reqEmail));
         }
         if (imageUrl || imageBlob) {
           sSoporte.getRange(foundRow, 17).setValue(imageUrl || "Foto Adjunta en Correo");

@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>STF GROUP · Solicitud Soporte Técnico & Mejoras en Planta</title>
   <meta name="description" content="Terminal oficial de radicación de requerimientos técnicos, soporte y mejoras para aplicativos industriales de STF GROUP S.A.">
@@ -1976,21 +1977,28 @@
         console.warn('Broadcast error:', err);
       }
 
-      // 3. Registrar en Google Sheets (Hoja: SOLICITUDES_SOPORTE)
+      // 3. Registrar en Google Sheets (Hoja: SOLICITUDES_SOPORTE con saneamiento anti-fórmulas)
       try {
+        function sanitizeFormula(val) {
+          if (!val) return '';
+          const str = String(val);
+          const trig = ['=', '+', '-', '@', '\t', '\r'];
+          return (trig.includes(str.charAt(0))) ? "'" + str : str;
+        }
+
         const sheetPayload = {
           action: 'log_support_ticket',
           ticketId: ticketPayload.id,
           ticketCode: ticketPayload.code,
           type: ticketPayload.type,
-          appName: ticketPayload.appName,
-          appCode: ticketPayload.appCode,
-          requesterName: ticketPayload.requester.name,
-          requesterArea: ticketPayload.requester.area,
-          requesterEmail: reqEmail,
-          title: ticketPayload.title,
-          description: ticketPayload.description,
-          devName: ticketPayload.devName,
+          appName: sanitizeFormula(ticketPayload.appName),
+          appCode: sanitizeFormula(ticketPayload.appCode),
+          requesterName: sanitizeFormula(ticketPayload.requester.name),
+          requesterArea: sanitizeFormula(ticketPayload.requester.area),
+          requesterEmail: sanitizeFormula(reqEmail),
+          title: sanitizeFormula(ticketPayload.title),
+          description: sanitizeFormula(ticketPayload.description),
+          devName: sanitizeFormula(ticketPayload.devName),
           createdAt: ticketPayload.createdAt
         };
 

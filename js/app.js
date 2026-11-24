@@ -4,6 +4,25 @@
  * y la experiencia visual idéntica a la maqueta de referencia.
  */
 
+/**
+ * DEFENSIVE APPEC HELPER:
+ * Sanitizador estricto contra ataques de Cross-Site Scripting (XSS).
+ * Escapa caracteres HTML críticos (&, <, >, ", ') para inserción segura en el DOM.
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+if (typeof window !== 'undefined') {
+  window.escapeHtml = escapeHtml;
+  window.safeHtml = escapeHtml;
+}
+
 let appState = getStoredData();
 if (appState) {
   if (!Array.isArray(appState.integrations)) {
