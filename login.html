@@ -31,11 +31,11 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Login Stylesheet (4K & High-DPI Optimized) -->
-  <link rel="stylesheet" href="css/login.css?v=16">
+  <link rel="stylesheet" href="css/login.css?v=20">
 </head>
-<body>
+<body class="lamp-on">
 
-  <!-- CINEMATIC VIDEO BACKGROUND LAYER: STF Headquarters + Futuristic Developer Code -->
+  <!-- CINEMATIC VIDEO BACKGROUND LAYER: STF Headquarters Photography -->
   <div class="cyber-bg-container" id="cyberBgContainer">
     <!-- STF Company Headquarters (Fotografía Real de la Sede Corporativa STF GROUP) -->
     <div class="bg-building-cinematic">
@@ -53,63 +53,58 @@
   <!-- Ambient Cinematic Warm Glow (Full Viewport, Seamless Feathering) -->
   <div class="ambient-glow"></div>
 
-  <!-- SPEED OF LIGHT PERSPECTIVE TUNNEL CANVAS (Right Half Light Rain & Ground Trails) -->
-  <canvas id="lightTunnelCanvas" class="light-tunnel-canvas"></canvas>
+  <!-- FULLSCREEN STAGE: Centered Layout with STF Logo on Top & Card in Center -->
+  <main class="fullscreen-stage secure-terminal-stage">
 
-  <!-- FULLSCREEN STAGE: Shorter lamp on the left, Dark & Gold Card on the right -->
-  <main class="fullscreen-stage">
-
-    <!-- THE MINIMALIST FLOOR LAMP (Shorter, Proportional, Borderless Optical Diffusion) -->
-    <div class="lamp-stage" id="lampStage">
-      <!-- Seamless Conical Light Beam with feathered optical decay -->
-      <div class="light-beam-cone"></div>
-
-      <!-- Lamp Head (Shade + Diffuser Bulb) -->
-      <div class="lamp-head">
-        <div class="lamp-shade-disc"></div>
-        <div class="lamp-bulb-diffuser"></div>
-      </div>
-
-      <!-- Interactive Pull String & Golden Brass Tassel Handle -->
-      <div class="pull-string-wrapper" id="pullString" title="Haz clic o jala la cuerda para encender/apagar la lámpara" aria-label="Interruptor de lámpara">
-        <div class="pull-cord-line" id="pullCordLine"></div>
-        <div class="pull-handle" id="pullHandle"></div>
-      </div>
-
-      <!-- Proportional Shorter Vertical Stem -->
-      <div class="lamp-stem"></div>
-
-      <!-- Heavy Circular Floor Base -->
-      <div class="lamp-base"></div>
-
-      <!-- Floor Reflection Puddle -->
-      <div class="floor-puddle"></div>
+    <!-- STF GROUP Official Corporate Logo Above Card -->
+    <div class="login-brand-header">
+      <img src="assets/stf-group-logo-white.png" alt="STF GROUP S.A. - STUDIO F · ela · STUDIO F MAN" class="login-brand-logo">
     </div>
 
-    <!-- THE TRANSLUCENT FROSTED GLASS LOGIN TAG ("Etiqueta Trasparentosa") -->
+    <!-- THE TRANSLUCENT FROSTED GLASS LOGIN TAG -->
     <div class="login-card-container glass-tag-plaque" id="loginCard">
-      <!-- STF GROUP Official Corporate Logo Header -->
-      <div class="card-logo-header">
-        <img src="assets/stf-group-logo-4k.png" alt="STF GROUP S.A. - STUDIO F, ela, STUDIO F MAN" class="card-brand-logo">
+      <!-- Decorative Rounded Corner Squares (Top-Left & Bottom-Right) -->
+      <div class="card-corner-badge corner-tl"></div>
+      <div class="card-corner-badge corner-br">
+        <span class="corner-version-tag">STF v3.5</span>
       </div>
+
+      <!-- Top Terminal Access Pill (GREEN) -->
+      <div class="terminal-badge-wrapper">
+        <span class="terminal-access-pill">
+          <span class="terminal-dot"></span>
+          <span>TERMINAL DE ACCESO SEGURO</span>
+        </span>
+      </div>
+
+      <!-- Welcome Title & Subtitle -->
+      <h1 class="terminal-title">BIENVENIDO</h1>
+      <p class="terminal-subtitle">Inicie sesión con su usuario o perfil corporativo</p>
 
       <form class="login-form glass-form" id="loginForm">
         <!-- Preselected Profile Card (al cambiar de perfil) -->
         <div id="preselectedProfileCard" style="display: none; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.22); border-radius: 18px; padding: 12px 14px; margin-bottom: 16px; align-items: center; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
-          <img id="preselectedAvatar" src="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #4F46E5; flex-shrink: 0;" alt="Avatar">
+          <img id="preselectedAvatar" src="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #10B981; flex-shrink: 0;" alt="Avatar">
           <div style="flex: 1; text-align: left; min-width: 0;">
-            <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Perfil Seleccionado</div>
+            <div style="font-size: 10px; color: #10B981; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Perfil Seleccionado</div>
             <strong id="preselectedName" style="font-size: 14.5px; color: #FFFFFF; display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Desarrollador</strong>
-            <span id="preselectedUsername" style="font-size: 11.5px; color: #A5B4FC; font-family: monospace;">usuario</span>
+            <span id="preselectedUsername" style="font-size: 11.5px; color: #34D399; font-family: monospace;">usuario</span>
           </div>
           <button type="button" id="btnClearPreselected" onclick="clearPreselectedProfile()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; font-size: 11px; font-weight: 700; border-radius: 8px; padding: 5px 10px; cursor: pointer; transition: all 0.2s;" title="Cambiar a otro usuario">Cambiar</button>
         </div>
 
         <!-- User Name / Login Field (Columna 2: Usuario_Logueo) -->
         <div class="glass-input-group" id="userInputGroup">
+          <div class="input-header-row">
+            <span class="input-label-green">
+              <i data-lucide="key" class="label-icon-green"></i>
+              <span>ID O DOCUMENTO DE USUARIO</span>
+            </span>
+            <span class="badge-authorized-green">AUTORIZADO STF</span>
+          </div>
           <div class="glass-input-wrapper">
+            <i data-lucide="user" class="glass-input-icon-left"></i>
             <input type="text" id="loginEmail" class="glass-form-input" placeholder="Ingresa tu usuario (ej: jo, ed, ju, es, jh...)" value="" required autocomplete="off" spellcheck="false">
-            <i data-lucide="user" class="glass-input-icon-right"></i>
           </div>
           <!-- Contenedor de Autocompletado Predictivo Inteligente -->
           <div id="smartUserSuggestion" class="smart-user-suggestion" style="display: none;"></div>
@@ -117,7 +112,15 @@
 
         <!-- Password Field (Columna 1: ID / Contraseña) -->
         <div class="glass-input-group">
+          <div class="input-header-row">
+            <span class="input-label-green">
+              <i data-lucide="lock" class="label-icon-green"></i>
+              <span>CONTRASEÑA O CLAVE</span>
+            </span>
+            <span class="badge-authorized-green">ENCRIPTADO TLS</span>
+          </div>
           <div class="glass-input-wrapper">
+            <i data-lucide="shield" class="glass-input-icon-left"></i>
             <input type="password" id="loginPassword" class="glass-form-input" placeholder="Ingresa tu ID / contraseña" value="" required autocomplete="new-password">
             <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('loginPassword', this)" title="Ver / Ocultar contraseña" aria-label="Toggle password visibility">
               <i data-lucide="eye-off"></i>
@@ -133,12 +136,34 @@
           </label>
         </div>
 
-        <!-- Translucent Frosted Glass Pill Login Button -->
-        <button type="submit" class="btn-glass-pill" id="btnSignIn">
-          <span>Ingresar al Sistema</span>
+        <!-- High-Impact Luxury White Pill Action Button -->
+        <button type="submit" class="btn-action-white-pill" id="btnSignIn">
+          <span>INGRESAR AL SISTEMA</span>
+          <i data-lucide="arrow-right" class="btn-arrow-icon"></i>
         </button>
+
+        <!-- Forgot Password Link with Green Key Icon -->
+        <div class="forgot-password-row">
+          <a href="javascript:void(0)" onclick="showForgotPasswordInfo()" class="forgot-password-link">
+            <i data-lucide="key-round" class="forgot-key-icon"></i>
+            <span>¿Olvidaste o perdiste tu contraseña?</span>
+          </a>
+        </div>
+
+        <!-- Card Internal Status Row -->
+        <div class="card-status-footer">
+          <span class="tls-security-badge">
+            <i data-lucide="shield-check" class="shield-green-icon"></i>
+            <span>CONEXIÓN SEGURA ENCRIPTADA (TLS)</span>
+          </span>
+        </div>
       </form>
     </div>
+
+    <!-- Outside Footer Caption -->
+    <footer class="login-page-footer">
+      <span>SISTEMA DE CONTROL Y GESTIÓN DE APLICATIVOS STF GROUP S.A. © 2026</span>
+    </footer>
 
   </main>
 

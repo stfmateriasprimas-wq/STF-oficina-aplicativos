@@ -3,7 +3,7 @@
  * Physics, Conical Light Toggling & Session Initialization
  */
 
-let isLampOn = false;
+let isLampOn = true;
 let isDragging = false;
 let startY = 0;
 let pullDistance = 0;
@@ -1084,14 +1084,12 @@ if (typeof document !== 'undefined') {
     initSmartUserAutocomplete();
 
     // Encender la lámpara automáticamente al cargar la página para que la tarjeta de login aparezca de inmediato
+    document.body.classList.add('lamp-on');
     setTimeout(() => {
-      if (!isLampOn) {
-        toggleLampState();
-      }
       if (emailEl && (!emailEl.value || emailEl.value.trim() === '')) {
         emailEl.focus();
       }
-    }, 280);
+    }, 150);
 
     setInterval(() => {
       autoPullUsersFromSheets(true);
@@ -1106,6 +1104,19 @@ if (typeof document !== 'undefined') {
       }
     });
   };
+
+  function showForgotPasswordInfo() {
+    const toast = document.getElementById('loginToast');
+    const msg = document.getElementById('loginToastMsg');
+    if (toast && msg) {
+      msg.textContent = 'Para restablecer o recuperar tu contraseña, comunícate con la Jefatura de Sistemas / Oficina TI.';
+      toast.className = 'login-toast show info';
+      setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    } else {
+      alert('Para restablecer o recuperar tu contraseña, comunícate con la Jefatura de Sistemas / Oficina TI.');
+    }
+  }
+  window.showForgotPasswordInfo = showForgotPasswordInfo;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', startLoginApp);
