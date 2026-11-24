@@ -415,6 +415,28 @@ function selectDevPreset(devId) {
 // ============================================================================
 // HUELLA DIGITAL DEL EQUIPO / DISPOSITIVO (AUDITORÍA & SEGURIDAD)
 // ============================================================================
+function getOrCreateDeviceId() {
+  const DEVICE_ID_KEY = 'STF_DEVICE_HARDWARE_ID';
+  try {
+    let devId = localStorage.getItem(DEVICE_ID_KEY);
+    if (devId && devId.startsWith('STF-DEV-')) {
+      return devId;
+    }
+    // Generar un ID de dispositivo persistente y único con formato STF-DEV-XXXX-XXXX
+    const chars = '0123456789ABCDEF';
+    let p1 = '', p2 = '';
+    for (let i = 0; i < 4; i++) {
+      p1 += chars.charAt(Math.floor(Math.random() * chars.length));
+      p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    devId = `STF-DEV-${p1}-${p2}`;
+    localStorage.setItem(DEVICE_ID_KEY, devId);
+    return devId;
+  } catch (e) {
+    return 'STF-DEV-9B21-4F10';
+  }
+}
+
 function getDeviceFingerprint() {
   const ua = navigator.userAgent || '';
   let os = 'Desconocido';
@@ -435,8 +457,10 @@ function getDeviceFingerprint() {
   const screenRes = `${window.screen?.width || window.innerWidth} x ${window.screen?.height || window.innerHeight} px`;
   const isMobile = (/Mobi|Android|iPhone|iPad/i.test(ua));
   const deviceType = isMobile ? 'Dispositivo Móvil / Smartphone' : 'Ordenador de Escritorio / Portátil';
+  const deviceId = getOrCreateDeviceId();
 
   return {
+    deviceId: deviceId,
     deviceType: deviceType,
     os: os,
     browser: browser,
