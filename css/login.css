@@ -55,49 +55,8 @@ body.lamp-on {
 }
 
 /* ==========================================================================
-   TOP BAR: SOLICITUD SOPORTE (Top Right Pill Button)
-   ========================================================================== */
-.login-top-bar {
-  position: fixed;
-  top: 18px;
-  right: 22px;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-}
-
-.btn-top-support {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: #F5C542;
-  color: #000000;
-  font-family: var(--font-family);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  padding: 6px 16px;
-  border-radius: 999px;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.btn-top-support:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
-}
-
-.btn-top-support i,
-.btn-top-support svg {
-  width: 15px;
-  height: 15px;
-  color: #000000;
-}
-
-/* ==========================================================================
    STF HEADQUARTERS CINEMATIC PHOTOGRAPHY BACKGROUND
-   Clean, visible, uniform dark layer so the building shines
+   Oscurecido profesional y nítido para máximo realce de la tarjeta
    ========================================================================== */
 .cyber-bg-container {
   position: fixed;
@@ -122,25 +81,25 @@ body.lamp-on {
   height: 100%;
   object-fit: cover;
   object-position: center 30%;
-  filter: brightness(0.70) contrast(1.04) saturate(0.95);
+  filter: brightness(0.56) contrast(1.08) saturate(0.92);
   will-change: transform;
 }
 
 body.lamp-on .bg-building-img {
-  filter: brightness(0.70) contrast(1.04) saturate(0.95);
+  filter: brightness(0.56) contrast(1.08) saturate(0.92);
 }
 
-/* Capa Oscurecida Uniforme sobre la Fotografía Corporativa (Sutil y Elegante) */
+/* Capa Oscurecida Uniforme sobre la Fotografía Corporativa (Equilibrio de Contraste) */
 .bg-dark-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(4, 7, 12, 0.50);
+  background: rgba(3, 6, 12, 0.65);
   z-index: 1;
   pointer-events: none;
 }
 
 body.lamp-on .bg-dark-overlay {
-  background: rgba(4, 7, 12, 0.50);
+  background: rgba(3, 6, 12, 0.65);
 }
 
 /* ==========================================================================
@@ -445,13 +404,15 @@ body.lamp-on .pull-handle {
   height: auto;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.15));
-  transition: transform 0.35s ease;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.90));
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+  cursor: pointer;
   image-rendering: -webkit-optimize-contrast;
 }
 
 .login-brand-logo:hover {
-  transform: scale(1.02);
+  transform: scale(1.06) translateY(-2px);
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.40));
 }
 
 /* ==========================================================================
@@ -1129,24 +1090,12 @@ body.lamp-on .pull-handle {
 
   .bg-building-img {
     object-position: center center !important;
-    filter: brightness(0.68) contrast(1.04) saturate(0.95) !important;
+    filter: brightness(0.54) contrast(1.08) saturate(0.92) !important;
   }
 
   /* Capa Oscurecida para Móvil: Fondo Oscuro Uniforme y Elegante */
   .bg-dark-overlay {
-    background: rgba(4, 7, 12, 0.55) !important;
-  }
-
-  /* Botón de Soporte Superior en Móvil */
-  .login-top-bar {
-    top: 12px;
-    right: 14px;
-  }
-
-  .btn-top-support {
-    padding: 5px 12px;
-    font-size: 11px;
-    gap: 5px;
+    background: rgba(3, 6, 12, 0.68) !important;
   }
 
   /* Ocultar elementos de lámpara no utilizados */
