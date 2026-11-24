@@ -41,58 +41,63 @@ html, body {
   transition: background-color 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Ambient Radial Warmth: Expanded smoothly to 440px around the lamp */
-.ambient-glow {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    circle 440px at 29vw 47%, 
-    rgba(255, 235, 150, 0.34) 0%, 
-    rgba(255, 215, 100, 0.18) 32%, 
-    rgba(255, 195, 75, 0.05) 66%, 
-    rgba(255, 185, 50, 0.01) 88%, 
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 2;
+/* Hide Legacy Lamp, Tunnel & Yellow Ambient Glow Elements */
+.ambient-glow,
+.light-tunnel-canvas,
+.video-scanlines,
+.video-dark-vignette,
+.code-matrix-canvas {
+  display: none !important;
 }
 
 body.lamp-on {
-  background-color: var(--bg-dark-on);
-}
-
-body.lamp-on .ambient-glow {
-  opacity: 1;
+  background-color: #030509;
 }
 
 /* ==========================================================================
-   SPEED OF LIGHT PERSPECTIVE TUNNEL CANVAS (Dual-Zone Right Half Animation)
+   TOP BAR: SOLICITUD SOPORTE (Top Right Pill Button)
    ========================================================================== */
-.light-tunnel-canvas {
+.login-top-bar {
   position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 4;
-  opacity: 0;
-  transform: scale(0.99);
-  filter: blur(2px);
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  top: 18px;
+  right: 22px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
 }
 
-body.lamp-on .light-tunnel-canvas {
-  opacity: 1;
-  transform: scale(1);
-  filter: blur(0px);
+.btn-top-support {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #F5C542;
+  color: #000000;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.btn-top-support:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.btn-top-support i,
+.btn-top-support svg {
+  width: 15px;
+  height: 15px;
+  color: #000000;
 }
 
 /* ==========================================================================
-   FUTURISTIC CINEMATIC VIDEO BACKGROUND & CODE MATRIX (STF HQ + DEVELOPER HUD)
+   STF HEADQUARTERS CINEMATIC PHOTOGRAPHY BACKGROUND
+   Clean, visible, uniform dark layer so the building shines
    ========================================================================== */
 .cyber-bg-container {
   position: fixed;
@@ -105,115 +110,37 @@ body.lamp-on .light-tunnel-canvas {
   background: #000000;
 }
 
-/* STF Headquarters Photography Layer */
 .bg-building-cinematic {
   position: absolute;
-  inset: -3%;
-  width: 106%;
-  height: 106%;
-  animation: droneCameraPan 60s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
-  transform-origin: 50% 50%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .bg-building-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 36%;
-  filter: brightness(0.55) contrast(1.08) saturate(0.88);
-  transition: filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, filter;
+  object-position: center 30%;
+  filter: brightness(0.70) contrast(1.04) saturate(0.95);
+  will-change: transform;
 }
 
 body.lamp-on .bg-building-img {
-  filter: brightness(0.46) contrast(1.06) saturate(0.80);
+  filter: brightness(0.70) contrast(1.04) saturate(0.95);
 }
 
-@keyframes droneCameraPan {
-  0% {
-    transform: scale(1.01) translate(0%, 0%);
-  }
-  33% {
-    transform: scale(1.05) translate(-1.2%, -0.8%);
-  }
-  66% {
-    transform: scale(1.03) translate(1%, -0.5%);
-  }
-  100% {
-    transform: scale(1.06) translate(-0.8%, 0.8%);
-  }
-}
-
-/* Capa Oscurecida Profesional sobre la Fotografía Corporativa (Máximo Realce del Cuadro de Login) */
+/* Capa Oscurecida Uniforme sobre la Fotografía Corporativa (Sutil y Elegante) */
 .bg-dark-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(4, 7, 15, 0.78) 0%,
-    rgba(8, 13, 24, 0.65) 45%,
-    rgba(2, 4, 10, 0.84) 100%
-  );
+  background: rgba(4, 7, 12, 0.50);
   z-index: 1;
   pointer-events: none;
-  transition: background 0.85s ease;
 }
 
 body.lamp-on .bg-dark-overlay {
-  background: linear-gradient(
-    135deg,
-    rgba(3, 5, 12, 0.82) 0%,
-    rgba(6, 10, 20, 0.72) 45%,
-    rgba(2, 3, 8, 0.88) 100%
-  );
-}
-
-/* Video Scanlines (Subtle CRT Broadcast Mesh) */
-.video-scanlines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.30) 3px,
-    rgba(0, 0, 0, 0.30) 4px
-  );
-  opacity: 0.40;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Dark Blurred Luxury Vignette & Cyber Radial Mask - Pitch-black outside yellow circle */
-.video-dark-vignette {
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.15) 0%, rgba(2, 4, 8, 0.60) 65%, #010205 100%),
-    linear-gradient(180deg, rgba(2, 3, 6, 0.88) 0%, rgba(2, 3, 6, 0.25) 20%, rgba(2, 3, 6, 0.30) 75%, rgba(2, 3, 6, 0.95) 100%);
-  z-index: 2;
-  pointer-events: none;
-  transition: background 0.85s ease;
-}
-
-body.lamp-on .video-dark-vignette {
-  background: radial-gradient(circle 520px at 29vw 47%, rgba(0, 0, 0, 0.10) 0%, rgba(2, 4, 8, 0.60) 58%, rgba(2, 4, 8, 0.88) 85%, #010204 100%);
-}
-
-/* Real Developer Matrix Rain Canvas - Hidden until lamp turns on */
-.code-matrix-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.85s ease;
-}
-
-body.lamp-on .code-matrix-canvas {
-  opacity: 0.10;
+  background: rgba(4, 7, 12, 0.50);
 }
 
 /* ==========================================================================
@@ -529,20 +456,19 @@ body.lamp-on .pull-handle {
 
 /* ==========================================================================
    SECURE TERMINAL FROSTED GLASS LOGIN CARD
-   Matches exact reference mockup with corporate green typography
+   Matches exact reference mockup: Clean white letters, sharp green accents,
+   no glow shadows (sin luz de relleno ni sombra)
    ========================================================================== */
 .login-card-container.glass-tag-plaque {
-  width: 500px;
+  width: 480px;
   max-width: 92vw;
-  background: rgba(13, 17, 24, 0.74); /* Ultra-sleek dark frosted glass */
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  background: rgba(12, 16, 22, 0.74); /* Translucent dark frosted glass */
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1.5px solid rgba(255, 255, 255, 0.14);
-  border-radius: 30px;
-  padding: 34px 34px 28px 34px;
-  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.88),
-              0 0 40px rgba(16, 185, 129, 0.08),
-              inset 0 1px 1.5px rgba(255, 255, 255, 0.22);
+  border-radius: 26px;
+  padding: 32px 32px 26px 32px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
   position: relative;
   z-index: 10;
   opacity: 1 !important;
@@ -555,26 +481,24 @@ body.lamp-on .pull-handle {
 /* Decorative Rounded Corner Badges (Top-Left & Bottom-Right) */
 .card-corner-badge.corner-tl {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), 0 4px 12px rgba(0,0,0,0.4);
+  top: 14px;
+  left: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   pointer-events: none;
 }
 
 .card-corner-badge.corner-br {
   position: absolute;
-  bottom: 16px;
-  right: 16px;
-  padding: 6px 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.20), 0 4px 12px rgba(0,0,0,0.4);
+  bottom: 14px;
+  right: 14px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -584,76 +508,74 @@ body.lamp-on .pull-handle {
 .corner-version-tag {
   font-size: 11px;
   font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-  font-weight: 800;
+  font-weight: 700;
   color: #FFFFFF;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
 }
 
-/* Top Pill Badge (TERMINAL DE ACCESO SEGURO - Verde Neón) */
+/* Top Pill Badge: TERMINAL DE ACCESO SEGURO (Clean White text, Green Dot, No Shadow) */
 .terminal-badge-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .terminal-access-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1.5px solid rgba(16, 185, 129, 0.42);
-  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 5px 14px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #10B981;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  box-shadow: 0 0 18px rgba(16, 185, 129, 0.20);
+  box-shadow: none;
 }
 
 .terminal-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #10B981;
-  box-shadow: 0 0 10px #10B981, 0 0 4px #34D399;
-  animation: terminalPulse 2s infinite ease-in-out;
 }
 
-@keyframes terminalPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.55; transform: scale(0.85); }
-}
-
-/* Welcome Typography */
-.terminal-title {
-  font-size: 30px;
-  font-weight: 800;
+.terminal-pill-text {
+  font-size: 10.5px;
+  font-weight: 700;
   color: #FFFFFF;
-  letter-spacing: 6px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+/* Welcome Typography: Crisp White, Flat, No Shadow */
+.terminal-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 5px;
   text-transform: uppercase;
   text-align: center;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   line-height: 1.15;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+  text-shadow: none;
 }
 
 .terminal-subtitle {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.70);
+  color: rgba(255, 255, 255, 0.72);
   text-align: center;
-  margin: 0 0 24px 0;
+  margin: 0 0 22px 0;
   letter-spacing: 0.2px;
+  text-shadow: none;
 }
 
 /* Form Styles */
 .glass-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 15px;
 }
 
 .glass-input-group {
@@ -661,23 +583,27 @@ body.lamp-on .pull-handle {
   flex-direction: column;
 }
 
-/* Input Header Row (Label Izquierda Verde + Badge Derecha Verde) */
+/* Input Header Row (Label Izquierda con Letra Blanca + Icono/Badge Verde) */
 .input-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
-.input-label-green {
+.input-label-row {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+}
+
+.input-label-text {
   font-size: 11.5px;
-  font-weight: 800;
-  color: #10B981;
-  letter-spacing: 0.8px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
+  text-shadow: none;
 }
 
 .label-icon-green {
@@ -687,18 +613,19 @@ body.lamp-on .pull-handle {
 }
 
 .badge-authorized-green {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 9.5px;
+  font-weight: 700;
   color: #10B981;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  padding: 3px 9px;
+  background: rgba(16, 185, 129, 0.10);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  padding: 2px 8px;
   border-radius: 6px;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
+  text-shadow: none;
 }
 
-/* Input Wrapper & Inputs with Left Icon */
+/* Input Wrapper & Flat Inputs */
 .glass-input-wrapper {
   position: relative;
   width: 100%;
@@ -708,37 +635,37 @@ body.lamp-on .pull-handle {
 
 .glass-input-icon-left {
   position: absolute;
-  left: 16px;
-  width: 18px;
-  height: 18px;
-  color: #10B981;
+  left: 15px;
+  width: 17px;
+  height: 17px;
+  color: rgba(255, 255, 255, 0.50);
   pointer-events: none;
   z-index: 2;
 }
 
 .glass-form-input {
   width: 100%;
-  height: 52px;
-  background: rgba(0, 0, 0, 0.52);
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
-  border-radius: 14px;
-  padding: 0 46px 0 46px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.50);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 0 44px 0 44px;
   font-family: var(--font-family);
-  font-size: 14.5px;
+  font-size: 14px;
   color: #FFFFFF;
   outline: none;
-  transition: all 0.25s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .glass-form-input::placeholder {
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.40);
   font-size: 13.5px;
 }
 
 .glass-form-input:focus {
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.68);
   border-color: #10B981;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+  box-shadow: none;
 }
 
 .glass-eye-toggle {
@@ -748,7 +675,7 @@ body.lamp-on .pull-handle {
   height: 28px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -759,12 +686,12 @@ body.lamp-on .pull-handle {
 }
 
 .glass-eye-toggle:hover {
-  color: #10B981;
+  color: #FFFFFF;
 }
 
 .glass-eye-toggle i, .glass-eye-toggle svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 
 /* Remember Me Checkbox Row */
@@ -782,30 +709,30 @@ body.lamp-on .pull-handle {
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   user-select: none;
 }
 
 .glass-checkbox {
   accent-color: #10B981;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
   border-radius: 4px;
 }
 
-/* High-Impact Luxury White Pill Action Button */
+/* High-Impact Solid White Pill Action Button (Matches Reference) */
 .btn-action-white-pill {
   width: 100%;
-  height: 52px;
+  height: 48px;
   border-radius: 999px;
   background: #FFFFFF;
-  color: #0A0D14;
+  color: #000000;
   font-family: var(--font-family);
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 800;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   border: none;
   cursor: pointer;
@@ -814,14 +741,13 @@ body.lamp-on .pull-handle {
   justify-content: center;
   gap: 10px;
   margin-top: 6px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 25px rgba(255, 255, 255, 0.25);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .btn-action-white-pill:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.65), 0 0 32px rgba(255, 255, 255, 0.40);
-  background: #F8FAFC;
+  transform: translateY(-1px);
+  filter: brightness(1.05);
 }
 
 .btn-action-white-pill:active {
@@ -829,9 +755,9 @@ body.lamp-on .pull-handle {
 }
 
 .btn-arrow-icon {
-  width: 18px;
-  height: 18px;
-  color: #0A0D14;
+  width: 17px;
+  height: 17px;
+  color: #000000;
   transition: transform 0.2s ease;
 }
 
@@ -839,7 +765,7 @@ body.lamp-on .pull-handle {
   transform: translateX(4px);
 }
 
-/* Forgot Password Link with Green Key Icon */
+/* Forgot Password Link with Green Key Icon & Clean White/Soft Text */
 .forgot-password-row {
   display: flex;
   align-items: center;
@@ -852,22 +778,22 @@ body.lamp-on .pull-handle {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #10B981;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  transition: color 0.2s ease, text-shadow 0.2s ease;
+  text-shadow: none;
+  transition: color 0.2s ease;
 }
 
 .forgot-password-link:hover {
-  color: #34D399;
-  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  color: #FFFFFF;
   text-decoration: underline;
 }
 
 .forgot-key-icon {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   color: #10B981;
 }
 
@@ -885,28 +811,29 @@ body.lamp-on .pull-handle {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.70);
-  letter-spacing: 0.6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.5px;
+  text-shadow: none;
 }
 
 .shield-green-icon {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   color: #10B981;
 }
 
 /* Outside Footer Caption */
 .login-page-footer {
   margin-top: 14px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.48);
+  color: rgba(255, 255, 255, 0.50);
   letter-spacing: 1px;
   text-transform: uppercase;
   text-align: center;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  text-shadow: none;
   z-index: 5;
 }
 
@@ -1191,7 +1118,7 @@ body.lamp-on .pull-handle {
     gap: 12px;
   }
 
-  /* Fotografía corporativa adaptada a pantallas móviles */
+  /* Fotografía corporativa adaptada a pantallas móviles (Bien visible y clara) */
   .bg-building-cinematic {
     inset: 0 !important;
     width: 100vw !important;
@@ -1202,17 +1129,24 @@ body.lamp-on .pull-handle {
 
   .bg-building-img {
     object-position: center center !important;
-    filter: brightness(0.42) contrast(1.10) saturate(0.85) !important;
+    filter: brightness(0.68) contrast(1.04) saturate(0.95) !important;
   }
 
-  /* Capa Oscurecida Vertical para Móvil: Fondo Oscuro para Máximo Realce de la Tarjeta */
+  /* Capa Oscurecida para Móvil: Fondo Oscuro Uniforme y Elegante */
   .bg-dark-overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(4, 7, 15, 0.88) 0%,
-      rgba(8, 12, 22, 0.80) 40%,
-      rgba(2, 4, 10, 0.94) 100%
-    ) !important;
+    background: rgba(4, 7, 12, 0.55) !important;
+  }
+
+  /* Botón de Soporte Superior en Móvil */
+  .login-top-bar {
+    top: 12px;
+    right: 14px;
+  }
+
+  .btn-top-support {
+    padding: 5px 12px;
+    font-size: 11px;
+    gap: 5px;
   }
 
   /* Ocultar elementos de lámpara no utilizados */
@@ -1237,7 +1171,7 @@ body.lamp-on .pull-handle {
   }
 
   .login-brand-logo {
-    max-width: 230px;
+    max-width: 220px;
   }
 
   /* Tarjeta de Login centrada y adaptada a todas las marcas de celular */
@@ -1245,28 +1179,29 @@ body.lamp-on .pull-handle {
     width: 100%;
     max-width: 390px;
     margin: 0 auto;
-    padding: 26px 20px 22px 20px;
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.92), 0 0 30px rgba(16, 185, 129, 0.08);
+    padding: 24px 18px 20px 18px;
+    border-radius: 22px;
+    background: rgba(12, 16, 22, 0.76);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.88);
   }
 
   .card-corner-badge.corner-tl {
-    width: 36px;
-    height: 36px;
-    top: 12px;
-    left: 12px;
-    border-radius: 10px;
+    width: 34px;
+    height: 34px;
+    top: 10px;
+    left: 10px;
+    border-radius: 9px;
   }
 
   .card-corner-badge.corner-br {
-    bottom: 12px;
-    right: 12px;
-    padding: 4px 10px;
-    border-radius: 10px;
+    bottom: 10px;
+    right: 10px;
+    padding: 4px 9px;
+    border-radius: 8px;
   }
 
   .corner-version-tag {
-    font-size: 10px;
+    font-size: 9.5px;
   }
 
   .terminal-badge-wrapper {
@@ -1275,43 +1210,45 @@ body.lamp-on .pull-handle {
 
   .terminal-access-pill {
     font-size: 10px;
-    padding: 5px 12px;
+    padding: 4px 12px;
     letter-spacing: 0.8px;
   }
 
   .terminal-title {
-    font-size: 24px;
-    letter-spacing: 4px;
-    margin-bottom: 4px;
+    font-size: 22px;
+    letter-spacing: 3.5px;
+    margin-bottom: 3px;
+    text-shadow: none;
   }
 
   .terminal-subtitle {
-    font-size: 12.5px;
-    margin-bottom: 18px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    text-shadow: none;
   }
 
   .glass-form {
-    gap: 14px;
+    gap: 13px;
   }
 
   .input-header-row {
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
-  .input-label-green {
+  .input-label-text {
     font-size: 10.5px;
   }
 
   .badge-authorized-green {
-    font-size: 9px;
-    padding: 2px 7px;
+    font-size: 8.5px;
+    padding: 2px 6px;
   }
 
   /* Fuente 16px para evitar auto-zoom indeseado en Safari iOS */
   .glass-form-input {
     font-size: 16px;
-    height: 48px;
-    padding: 0 42px 0 42px;
+    height: 46px;
+    padding: 0 40px 0 40px;
     border-radius: 12px;
   }
 
@@ -1326,9 +1263,9 @@ body.lamp-on .pull-handle {
   }
 
   .btn-action-white-pill {
-    height: 48px;
-    font-size: 13.5px;
-    letter-spacing: 1px;
+    height: 46px;
+    font-size: 13px;
+    letter-spacing: 0.8px;
     border-radius: 999px;
   }
 
@@ -1337,7 +1274,7 @@ body.lamp-on .pull-handle {
   }
 
   .forgot-password-link {
-    font-size: 12px;
+    font-size: 11.5px;
   }
 
   .card-status-footer {

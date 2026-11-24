@@ -31,27 +31,28 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Login Stylesheet (4K & High-DPI Optimized) -->
-  <link rel="stylesheet" href="css/login.css?v=20">
+  <link rel="stylesheet" href="css/login.css?v=21">
 </head>
 <body class="lamp-on">
 
-  <!-- CINEMATIC VIDEO BACKGROUND LAYER: STF Headquarters Photography -->
+  <!-- CINEMATIC BACKGROUND LAYER: STF Headquarters Photography (Visible & Clean) -->
   <div class="cyber-bg-container" id="cyberBgContainer">
     <!-- STF Company Headquarters (Fotografía Real de la Sede Corporativa STF GROUP) -->
     <div class="bg-building-cinematic">
       <img src="assets/stf-headquarters-bg.webp" alt="STF GROUP Sede Corporativa" class="bg-building-img" id="bgBuildingImg">
     </div>
 
-    <!-- Capa Oscurecida Profesional sobre la Fotografía Corporativa para Realce del Cuadro de Login -->
+    <!-- Capa Oscurecida Uniforme (Deja ver con total claridad la sede y resalta el cuadro) -->
     <div class="bg-dark-overlay"></div>
-
-    <!-- Dark Luxury Vignette Overlay -->
-    <div class="video-dark-vignette"></div>
-
   </div>
 
-  <!-- Ambient Cinematic Warm Glow (Full Viewport, Seamless Feathering) -->
-  <div class="ambient-glow"></div>
+  <!-- Barra Superior: Botón de Solicitud Soporte (Top-Right) -->
+  <div class="login-top-bar">
+    <a href="javascript:void(0)" onclick="showForgotPasswordInfo()" class="btn-top-support">
+      <i data-lucide="headphones"></i>
+      <span>Solicitud Soporte</span>
+    </a>
+  </div>
 
   <!-- FULLSCREEN STAGE: Centered Layout with STF Logo on Top & Card in Center -->
   <main class="fullscreen-stage secure-terminal-stage">
@@ -66,20 +67,20 @@
       <!-- Decorative Rounded Corner Squares (Top-Left & Bottom-Right) -->
       <div class="card-corner-badge corner-tl"></div>
       <div class="card-corner-badge corner-br">
-        <span class="corner-version-tag">STF v3.5</span>
+        <span class="corner-version-tag">STF v2.7</span>
       </div>
 
-      <!-- Top Terminal Access Pill (GREEN) -->
+      <!-- Top Terminal Access Pill -->
       <div class="terminal-badge-wrapper">
         <span class="terminal-access-pill">
           <span class="terminal-dot"></span>
-          <span>TERMINAL DE ACCESO SEGURO</span>
+          <span class="terminal-pill-text">TERMINAL DE ACCESO SEGURO</span>
         </span>
       </div>
 
       <!-- Welcome Title & Subtitle -->
       <h1 class="terminal-title">BIENVENIDO</h1>
-      <p class="terminal-subtitle">Inicie sesión con su usuario o perfil corporativo</p>
+      <p class="terminal-subtitle">Inicie sesión con su documento o perfil corporativo</p>
 
       <form class="login-form glass-form" id="loginForm">
         <!-- Preselected Profile Card (al cambiar de perfil) -->
@@ -96,9 +97,9 @@
         <!-- User Name / Login Field (Columna 2: Usuario_Logueo) -->
         <div class="glass-input-group" id="userInputGroup">
           <div class="input-header-row">
-            <span class="input-label-green">
+            <span class="input-label-row">
               <i data-lucide="key" class="label-icon-green"></i>
-              <span>ID O DOCUMENTO DE USUARIO</span>
+              <span class="input-label-text">ID O DOCUMENTO DE USUARIO</span>
             </span>
             <span class="badge-authorized-green">AUTORIZADO STF</span>
           </div>
@@ -113,9 +114,9 @@
         <!-- Password Field (Columna 1: ID / Contraseña) -->
         <div class="glass-input-group">
           <div class="input-header-row">
-            <span class="input-label-green">
+            <span class="input-label-row">
               <i data-lucide="lock" class="label-icon-green"></i>
-              <span>CONTRASEÑA O CLAVE</span>
+              <span class="input-label-text">CONTRASEÑA O CLAVE</span>
             </span>
             <span class="badge-authorized-green">ENCRIPTADO TLS</span>
           </div>
@@ -142,11 +143,11 @@
           <i data-lucide="arrow-right" class="btn-arrow-icon"></i>
         </button>
 
-        <!-- Forgot Password Link with Green Key Icon -->
+        <!-- Forgot Password Link with Green Key Icon and Clean White/Grey Text -->
         <div class="forgot-password-row">
           <a href="javascript:void(0)" onclick="showForgotPasswordInfo()" class="forgot-password-link">
             <i data-lucide="key-round" class="forgot-key-icon"></i>
-            <span>¿Olvidaste o perdiste tu contraseña?</span>
+            <span class="forgot-link-text">¿Olvidaste o perdiste tu contraseña?</span>
           </a>
         </div>
 
@@ -154,7 +155,7 @@
         <div class="card-status-footer">
           <span class="tls-security-badge">
             <i data-lucide="shield-check" class="shield-green-icon"></i>
-            <span>CONEXIÓN SEGURA ENCRIPTADA (TLS)</span>
+            <span class="tls-text">CONEXIÓN SEGURA ENCRIPTADA (TLS)</span>
           </span>
         </div>
       </form>
