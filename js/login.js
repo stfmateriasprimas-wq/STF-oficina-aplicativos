@@ -412,9 +412,437 @@ function selectDevPreset(devId) {
   showLoginToast(`👤 Usuario cargado: ${user.name} (${user.username}). Ingresa tu contraseña.`);
 }
 
+// ============================================================================
+// HUELLA DIGITAL DEL EQUIPO / DISPOSITIVO (AUDITORÍA & SEGURIDAD)
+// ============================================================================
+function getDeviceFingerprint() {
+  const ua = navigator.userAgent || '';
+  let os = 'Desconocido';
+  if (/Windows NT 10.0|Windows 11/i.test(ua)) os = 'Windows 10 / 11 (PC)';
+  else if (/Windows NT 6.3/i.test(ua)) os = 'Windows 8.1';
+  else if (/Windows NT 6.1/i.test(ua)) os = 'Windows 7';
+  else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS (Apple Mac)';
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS (iPhone / iPad)';
+  else if (/Android/i.test(ua)) os = 'Android (Dispositivo Móvil)';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+
+  let browser = 'Navegador Web';
+  if (/Edg\//i.test(ua)) browser = 'Microsoft Edge ' + (ua.match(/Edg\/([\d.]+)/)?.[1] || '');
+  else if (/Chrome\//i.test(ua)) browser = 'Google Chrome ' + (ua.match(/Chrome\/([\d.]+)/)?.[1] || '');
+  else if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) browser = 'Apple Safari ' + (ua.match(/Version\/([\d.]+)/)?.[1] || '');
+  else if (/Firefox\//i.test(ua)) browser = 'Mozilla Firefox ' + (ua.match(/Firefox\/([\d.]+)/)?.[1] || '');
+
+  const screenRes = `${window.screen?.width || window.innerWidth} x ${window.screen?.height || window.innerHeight} px`;
+  const isMobile = (/Mobi|Android|iPhone|iPad/i.test(ua));
+  const deviceType = isMobile ? 'Dispositivo Móvil / Smartphone' : 'Ordenador de Escritorio / Portátil';
+
+  return {
+    deviceType: deviceType,
+    os: os,
+    browser: browser,
+    screenRes: screenRes,
+    language: navigator.language || 'es-CO',
+    platform: navigator.platform || '',
+    userAgent: ua,
+    timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })
+  };
+}
+
+// ============================================================================
+// GESTIÓN DE BLOQUEO PROGRESIVO DE ACCESO (3 Y 8 INTENTOS FALLIDOS)
+// ============================================================================
+const LOCKOUT_STORAGE_KEY = 'STF_LOGIN_LOCKOUT';
+let lockoutIntervalId = null;
+
+function getLockoutState() {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { attempts: 0, lockedUntil: null, lockMinutes: 0 };
+  } catch (e) {
+    return { attempts: 0, lockedUntil: null, lockMinutes: 0 };
+  }
+}
+
+function saveLockoutState(state) {
+  try {
+    localStorage.setItem(LOCKOUT_STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {}
+}
+
+function checkLockoutStatus() {
+  const state = getLockoutState();
+  const now = Date.now();
+
+  if (state.lockedUntil && now < state.lockedUntil) {
+    applyLockoutUI(state.lockedUntil, state.attempts, state.lockMinutes || 5);
+    return true; // Bloqueo activo
+  }
+
+  // Si ya venció el tiempo de bloqueo
+  if (state.lockedUntil && now >= state.lockedUntil) {
+    state.lockedUntil = null;
+    saveLockoutState(state);
+    clearLockoutUI();
+  }
+
+  return false;
+}
+
+function applyLockoutUI(lockedUntil, attempts, lockMinutes) {
+  const btn = document.getElementById('btnSignIn');
+  const banner = document.getElementById('lockoutBanner');
+  const title = document.getElementById('lockoutTitle');
+  const timer = document.getElementById('lockoutTimer');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = '0.45';
+    btn.style.pointerEvents = 'none';
+  }
+
+  if (banner) {
+    banner.style.display = 'block';
+    if (title) {
+      title.textContent = (attempts >= 8) 
+        ? '🚨 Acceso Bloqueado (Nivel Extendido - 15 min)' 
+        : '⚠️ Acceso Bloqueado Temporalmente (5 min)';
+    }
+  }
+
+  if (lockoutIntervalId) clearInterval(lockoutIntervalId);
+
+  const updateCountdown = () => {
+    const remainingMs = lockedUntil - Date.now();
+    if (remainingMs <= 0) {
+      clearInterval(lockoutIntervalId);
+      lockoutIntervalId = null;
+      clearLockoutUI();
+      showLoginToast('🔓 El tiempo de bloqueo ha finalizado. Puedes volver a intentar.');
+      return;
+    }
+
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    if (timer) timer.textContent = formatted;
+  };
+
+  updateCountdown();
+  lockoutIntervalId = setInterval(updateCountdown, 1000);
+}
+
+function clearLockoutUI() {
+  if (lockoutIntervalId) {
+    clearInterval(lockoutIntervalId);
+    lockoutIntervalId = null;
+  }
+  const btn = document.getElementById('btnSignIn');
+  const banner = document.getElementById('lockoutBanner');
+  if (btn) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+  if (banner) {
+    banner.style.display = 'none';
+  }
+}
+
+async function sendLockoutSecurityAlert(username, attempts, lockMinutes) {
+  const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+  const fp = getDeviceFingerprint();
+
+  try {
+    const alertUrl = `${GOOGLE_SHEETS_URL}?action=security_lockout_alert` +
+      `&username=${encodeURIComponent(username || '')}` +
+      `&attempts=${encodeURIComponent(attempts)}` +
+      `&lockMinutes=${encodeURIComponent(lockMinutes)}` +
+      `&deviceInfo=${encodeURIComponent(JSON.stringify(fp))}` +
+      `&timestamp=${encodeURIComponent(fp.timestamp)}` +
+      `&_t=${Date.now()}`;
+
+    fetch(alertUrl, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+  } catch (err) {
+    console.warn('[login.js] Error enviando alerta de seguridad:', err);
+  }
+}
+
+function recordFailedLoginAttempt(enteredUser) {
+  const state = getLockoutState();
+  state.attempts = (state.attempts || 0) + 1;
+
+  // Hito 1: Al llegar a 3 intentos fallidos -> Bloqueo por 5 minutos + Correo
+  if (state.attempts === 3) {
+    state.lockMinutes = 5;
+    state.lockedUntil = Date.now() + 5 * 60 * 1000;
+    saveLockoutState(state);
+    applyLockoutUI(state.lockedUntil, state.attempts, 5);
+    sendLockoutSecurityAlert(enteredUser, 3, 5);
+    showLoginToast('⚠️ 3 intentos fallidos. Acceso bloqueado por 5 minutos y alerta de seguridad enviada a tu correo corporativo.');
+    return;
+  }
+
+  // Hito 2: Al llegar a 8 intentos fallidos (3 iniciales + 5 siguientes) -> Bloqueo por 15 minutos + Correo detallado
+  if (state.attempts >= 8) {
+    state.lockMinutes = 15;
+    state.lockedUntil = Date.now() + 15 * 60 * 1000;
+    saveLockoutState(state);
+    applyLockoutUI(state.lockedUntil, state.attempts, 15);
+    sendLockoutSecurityAlert(enteredUser, state.attempts, 15);
+    showLoginToast('🚨 8 intentos fallidos. Acceso bloqueado por 15 minutos. Alerta con datos de tu equipo enviada.');
+    return;
+  }
+
+  saveLockoutState(state);
+  const remaining = (state.attempts < 3) ? (3 - state.attempts) : (8 - state.attempts);
+  showLoginToast(`🔒 Contraseña incorrecta. Te quedan ${remaining} intento(s) antes del bloqueo.`);
+}
+
+function recordSuccessfulLogin() {
+  try {
+    localStorage.removeItem(LOCKOUT_STORAGE_KEY);
+    clearLockoutUI();
+  } catch (e) {}
+}
+
+// ============================================================================
+// RECUPERACIÓN DE CONTRASEÑA AUTOSERVICIO (CÓDIGO OTP & GOOGLE SHEETS)
+// ============================================================================
+let currentRecoveryUser = null;
+
+function openPasswordRecoveryModal() {
+  const modal = document.getElementById('modalPasswordRecovery');
+  if (!modal) return;
+
+  // Restablecer estados
+  const s1 = document.getElementById('recoveryStep1');
+  const s2 = document.getElementById('recoveryStep2');
+  const s3 = document.getElementById('recoveryStep3');
+  if (s1) s1.style.display = 'block';
+  if (s2) s2.style.display = 'none';
+  if (s3) s3.style.display = 'none';
+
+  // Precargar usuario si ya está en el input del login
+  const loginUser = (document.getElementById('loginEmail')?.value || '').trim();
+  const identInput = document.getElementById('recoveryIdentifier');
+  if (identInput) {
+    identInput.value = loginUser;
+    setTimeout(() => identInput.focus(), 150);
+  }
+
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden', 'false');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closePasswordRecoveryModal() {
+  const modal = document.getElementById('modalPasswordRecovery');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function backToRecoveryStep1() {
+  const s1 = document.getElementById('recoveryStep1');
+  const s2 = document.getElementById('recoveryStep2');
+  const s3 = document.getElementById('recoveryStep3');
+  if (s1) s1.style.display = 'block';
+  if (s2) s2.style.display = 'none';
+  if (s3) s3.style.display = 'none';
+  if (window.lucide) lucide.createIcons();
+}
+
+async function handleRequestRecoveryCode(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const identInput = document.getElementById('recoveryIdentifier');
+  const btn = document.getElementById('btnRequestOtp');
+  const identifier = (identInput?.value || '').trim();
+
+  if (!identifier) {
+    showLoginToast('Ingresa tu usuario o correo corporativo registrado.');
+    return;
+  }
+
+  const originalBtnHtml = btn ? btn.innerHTML : 'ENVIAR CÓDIGO';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #000; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando y enviando código...`;
+  }
+
+  const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+  const fp = getDeviceFingerprint();
+
+  try {
+    const reqUrl = `${GOOGLE_SHEETS_URL}?action=request_password_reset` +
+      `&userIdentifier=${encodeURIComponent(identifier)}` +
+      `&deviceInfo=${encodeURIComponent(JSON.stringify(fp))}` +
+      `&_t=${Date.now()}`;
+
+    const res = await fetch(reqUrl);
+    const data = await res.json();
+
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+
+    if (data.status === 'success') {
+      currentRecoveryUser = {
+        identifier: data.username || identifier,
+        emailMasked: data.maskedEmail || 'tu correo registrado'
+      };
+
+      const emailEl = document.getElementById('recoveryTargetEmail');
+      if (emailEl) emailEl.textContent = data.maskedEmail;
+
+      const s1 = document.getElementById('recoveryStep1');
+      const s2 = document.getElementById('recoveryStep2');
+      if (s1) s1.style.display = 'none';
+      if (s2) s2.style.display = 'block';
+
+      const otpInput = document.getElementById('recoveryOtpCode');
+      if (otpInput) {
+        otpInput.value = '';
+        setTimeout(() => otpInput.focus(), 150);
+      }
+      showLoginToast(`📧 Código OTP enviado con éxito a: ${data.maskedEmail}`);
+      if (window.lucide) lucide.createIcons();
+    } else {
+      showLoginToast(`⚠️ ${data.message || 'No se pudo generar el código. Verifica tus datos.'}`);
+    }
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+    console.error('Error al solicitar código OTP:', err);
+    showLoginToast('⚠️ Error al comunicarse con el servidor de Google Sheets. Intenta de nuevo.');
+  }
+}
+
+async function handleResetPasswordSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const otpInput = document.getElementById('recoveryOtpCode');
+  const pass1Input = document.getElementById('recoveryNewPassword');
+  const pass2Input = document.getElementById('recoveryConfirmPassword');
+  const btn = document.getElementById('btnSubmitNewPassword');
+
+  const otp = (otpInput?.value || '').trim();
+  const pass1 = (pass1Input?.value || '').trim();
+  const pass2 = (pass2Input?.value || '').trim();
+
+  if (!otp || otp.length !== 6) {
+    showLoginToast('El código debe ser de exactamente 6 dígitos numéricos.');
+    otpInput?.focus();
+    return;
+  }
+
+  if (!pass1) {
+    showLoginToast('Por favor escribe tu nueva contraseña.');
+    pass1Input?.focus();
+    return;
+  }
+
+  if (pass1.length < 3) {
+    showLoginToast('La contraseña debe tener al menos 3 caracteres.');
+    pass1Input?.focus();
+    return;
+  }
+
+  if (pass1 !== pass2) {
+    showLoginToast('Las contraseñas no coinciden. Verifícalas cuidadosamente.');
+    pass2Input?.focus();
+    return;
+  }
+
+  const originalBtnHtml = btn ? btn.innerHTML : 'ACTUALIZAR CONTRASEÑA';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #000; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Guardando en Google Sheets...`;
+  }
+
+  const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+  const fp = getDeviceFingerprint();
+  const userIdent = currentRecoveryUser?.identifier || (document.getElementById('recoveryIdentifier')?.value || '').trim();
+
+  try {
+    const resetUrl = `${GOOGLE_SHEETS_URL}?action=reset_password` +
+      `&userIdentifier=${encodeURIComponent(userIdent)}` +
+      `&otpCode=${encodeURIComponent(otp)}` +
+      `&newPassword=${encodeURIComponent(pass1)}` +
+      `&deviceInfo=${encodeURIComponent(JSON.stringify(fp))}` +
+      `&_t=${Date.now()}`;
+
+    const res = await fetch(resetUrl);
+    const data = await res.json();
+
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+
+    if (data.status === 'success') {
+      // Sincronizar automáticamente usuarios desde Sheets para reflejar la nueva clave
+      autoPullUsersFromSheets(true);
+
+      // Precargar datos en el formulario principal de login
+      const loginEmail = document.getElementById('loginEmail');
+      const loginPassword = document.getElementById('loginPassword');
+      if (loginEmail) loginEmail.value = data.username || userIdent;
+      if (loginPassword) loginPassword.value = pass1;
+
+      // Restablecer contadores de bloqueo si existían
+      recordSuccessfulLogin();
+
+      const s2 = document.getElementById('recoveryStep2');
+      const s3 = document.getElementById('recoveryStep3');
+      if (s2) s2.style.display = 'none';
+      if (s3) s3.style.display = 'block';
+
+      showLoginToast('🎉 ¡Contraseña actualizada exitosamente en Google Sheets!');
+      if (window.lucide) lucide.createIcons();
+    } else {
+      showLoginToast(`❌ ${data.message || 'Código incorrecto o expirado.'}`);
+    }
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+    console.error('Error al actualizar contraseña:', err);
+    showLoginToast('❌ Error de conexión al guardar en Google Sheets. Intenta nuevamente.');
+  }
+}
+
+function finishRecoveryAndFocusLogin() {
+  closePasswordRecoveryModal();
+  const passInput = document.getElementById('loginPassword');
+  if (passInput) {
+    passInput.focus();
+  }
+  showLoginToast('🔑 Credenciales listas. Haz clic en "Ingresar al Sistema".');
+}
+
+// Exponer funciones en window para invocaciones inline desde el DOM
+window.openPasswordRecoveryModal = openPasswordRecoveryModal;
+window.closePasswordRecoveryModal = closePasswordRecoveryModal;
+window.backToRecoveryStep1 = backToRecoveryStep1;
+window.handleRequestRecoveryCode = handleRequestRecoveryCode;
+window.handleResetPasswordSubmit = handleResetPasswordSubmit;
+window.finishRecoveryAndFocusLogin = finishRecoveryAndFocusLogin;
+
 // Form Submission & Redirect with Real-Time Server Authentication
 async function handleLoginSubmit(e) {
   e.preventDefault();
+
+  // 0. Verificar si la cuenta está actualmente bloqueada por intentos fallidos
+  if (checkLockoutStatus()) {
+    showLoginToast('⏳ Tu cuenta se encuentra bloqueada temporalmente por seguridad. Espera a que termine el temporizador.');
+    return;
+  }
 
   const enteredUser = (document.getElementById('loginEmail')?.value || '').trim();
   const enteredPass = (document.getElementById('loginPassword')?.value || '').trim();
@@ -486,7 +914,10 @@ async function handleLoginSubmit(e) {
       btn.disabled = false;
       btn.innerHTML = originalBtnHtml;
     }
-    showLoginToast('🔒 Contraseña o usuario incorrecto. Verifica tus datos de acceso.');
+    
+    // Registrar intento fallido y aplicar bloqueo progresivo con alerta de correo
+    recordFailedLoginAttempt(enteredUser);
+
     const passInput = document.getElementById('loginPassword');
     if (passInput) {
       passInput.value = '';
@@ -494,6 +925,9 @@ async function handleLoginSubmit(e) {
     }
     return;
   }
+
+  // Acceso concedido: restablecer contador de bloqueo
+  recordSuccessfulLogin();
 
   // 4. Acceso Concedido: Guardar sesión sanitizada (NUNCA almacena contraseña)
   if (btn) {
@@ -1082,6 +1516,7 @@ if (typeof document !== 'undefined') {
     autoPullUsersFromSheets();
     applyPreselectedUser();
     initSmartUserAutocomplete();
+    checkLockoutStatus();
 
     // Encender la lámpara automáticamente al cargar la página para que la tarjeta de login aparezca de inmediato
     document.body.classList.add('lamp-on');
@@ -1106,15 +1541,7 @@ if (typeof document !== 'undefined') {
   };
 
   function showForgotPasswordInfo() {
-    const toast = document.getElementById('loginToast');
-    const msg = document.getElementById('loginToastMsg');
-    if (toast && msg) {
-      msg.textContent = 'Para restablecer o recuperar tu contraseña, comunícate con la Jefatura de Sistemas / Oficina TI.';
-      toast.className = 'login-toast show info';
-      setTimeout(() => { toast.classList.remove('show'); }, 4000);
-    } else {
-      alert('Para restablecer o recuperar tu contraseña, comunícate con la Jefatura de Sistemas / Oficina TI.');
-    }
+    openPasswordRecoveryModal();
   }
   window.showForgotPasswordInfo = showForgotPasswordInfo;
 

@@ -31,7 +31,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Login Stylesheet (4K & High-DPI Optimized) -->
-  <link rel="stylesheet" href="css/login.css?v=25">
+  <link rel="stylesheet" href="css/login.css?v=26">
 </head>
 <body class="lamp-on">
 
@@ -79,6 +79,20 @@
       <!-- Welcome Title & Subtitle -->
       <h1 class="terminal-title">BIENVENIDO</h1>
       <p class="terminal-subtitle">Inicie sesión con su documento o perfil corporativo</p>
+
+      <!-- Security Lockout Banner (Activo tras 3 u 8 intentos fallidos) -->
+      <div id="lockoutBanner" class="lockout-banner" style="display: none;">
+        <div class="lockout-banner-content">
+          <div class="lockout-banner-icon">
+            <i data-lucide="shield-alert"></i>
+          </div>
+          <div class="lockout-banner-text">
+            <div class="lockout-title" id="lockoutTitle">Acceso Bloqueado Temporalmente</div>
+            <div class="lockout-desc" id="lockoutDesc">Demasiados intentos fallidos. Reintenta en:</div>
+            <div class="lockout-timer" id="lockoutTimer">05:00</div>
+          </div>
+        </div>
+      </div>
 
       <form class="login-form glass-form" id="loginForm">
         <!-- Preselected Profile Card (al cambiar de perfil) -->
@@ -143,7 +157,7 @@
 
         <!-- Forgot Password Link with Green Key Icon and Clean White/Grey Text -->
         <div class="forgot-password-row">
-          <a href="javascript:void(0)" onclick="showForgotPasswordInfo()" class="forgot-password-link">
+          <a href="javascript:void(0)" onclick="openPasswordRecoveryModal()" class="forgot-password-link">
             <i data-lucide="key-round" class="forgot-key-icon"></i>
             <span class="forgot-link-text">¿Olvidaste o perdiste tu contraseña?</span>
           </a>
@@ -164,6 +178,139 @@
       <span>SISTEMA DE CONTROL Y GESTIÓN DE APLICATIVOS STF GROUP S.A. © 2026</span>
     </footer>
 
+    <!-- MODAL DE RECUPERACIÓN DE CONTRASEÑA (GLASSMORPHISM PREMIUN) -->
+    <div id="modalPasswordRecovery" class="recovery-modal-backdrop" style="display: none;" aria-hidden="true">
+      <div class="recovery-modal-card">
+        <!-- Close Button -->
+        <button type="button" class="recovery-modal-close" onclick="closePasswordRecoveryModal()" aria-label="Cerrar modal">
+          <i data-lucide="x"></i>
+        </button>
+
+        <!-- Step 1: Solicitar Código OTP -->
+        <div id="recoveryStep1" class="recovery-step">
+          <div class="recovery-header">
+            <div class="recovery-icon-badge">
+              <i data-lucide="key-round"></i>
+            </div>
+            <h2 class="recovery-title">RECUPERAR CONTRASEÑA</h2>
+            <p class="recovery-subtitle">Ingresa tu usuario o correo corporativo registrado. Te enviaremos un código de seguridad de 6 dígitos para verificar tu identidad.</p>
+          </div>
+
+          <form id="formRecoveryStep1" onsubmit="handleRequestRecoveryCode(event)">
+            <div class="glass-input-group">
+              <div class="input-header-row">
+                <span class="input-label-row">
+                  <i data-lucide="user" class="label-icon-green"></i>
+                  <span class="input-label-text">USUARIO O CORREO REGISTRADO</span>
+                </span>
+                <span class="badge-authorized-green">OFICIAL STF</span>
+              </div>
+              <div class="glass-input-wrapper">
+                <i data-lucide="mail" class="glass-input-icon-left"></i>
+                <input type="text" id="recoveryIdentifier" class="glass-form-input" placeholder="ej: jose.guzman o joseoneiber711@gmail.com" required autocomplete="off" spellcheck="false">
+              </div>
+            </div>
+
+            <button type="submit" id="btnRequestOtp" class="btn-action-white-pill" style="margin-top: 18px; width: 100%;">
+              <span>ENVIAR CÓDIGO DE RECUPERACIÓN</span>
+              <i data-lucide="send" class="btn-arrow-icon"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Ingresar OTP y Nueva Contraseña -->
+        <div id="recoveryStep2" class="recovery-step" style="display: none;">
+          <div class="recovery-header">
+            <div class="recovery-icon-badge">
+              <i data-lucide="shield-check"></i>
+            </div>
+            <h2 class="recovery-title">ACTUALIZAR CONTRASEÑA</h2>
+            <p class="recovery-subtitle">
+              Hemos enviado un código de 6 dígitos a <strong id="recoveryTargetEmail" style="color: #FFFFFF;">tu correo</strong>. Ingrésalo para validar tu identidad y guardar tu nueva contraseña en Google Sheets.
+            </p>
+          </div>
+
+          <form id="formRecoveryStep2" onsubmit="handleResetPasswordSubmit(event)">
+            <!-- OTP Code Input -->
+            <div class="glass-input-group">
+              <div class="input-header-row">
+                <span class="input-label-row">
+                  <i data-lucide="hash" class="label-icon-green"></i>
+                  <span class="input-label-text">CÓDIGO DE SEGURIDAD (6 DÍGITOS)</span>
+                </span>
+                <span class="badge-authorized-green">VÁLIDO 15 MIN</span>
+              </div>
+              <div class="glass-input-wrapper">
+                <i data-lucide="key" class="glass-input-icon-left"></i>
+                <input type="text" id="recoveryOtpCode" class="glass-form-input recovery-otp-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code" inputmode="numeric">
+              </div>
+            </div>
+
+            <!-- Nueva Contraseña -->
+            <div class="glass-input-group">
+              <div class="input-header-row">
+                <span class="input-label-row">
+                  <i data-lucide="lock" class="label-icon-green"></i>
+                  <span class="input-label-text">NUEVA CONTRASEÑA O CLAVE</span>
+                </span>
+                <span class="badge-authorized-green">HOJA USUARIOS</span>
+              </div>
+              <div class="glass-input-wrapper">
+                <i data-lucide="lock" class="glass-input-icon-left"></i>
+                <input type="password" id="recoveryNewPassword" class="glass-form-input" placeholder="Escribe tu nueva contraseña" required autocomplete="new-password">
+                <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('recoveryNewPassword', this)">
+                  <i data-lucide="eye-off"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirmar Nueva Contraseña -->
+            <div class="glass-input-group">
+              <div class="input-header-row">
+                <span class="input-label-row">
+                  <i data-lucide="check" class="label-icon-green"></i>
+                  <span class="input-label-text">CONFIRMAR NUEVA CONTRASEÑA</span>
+                </span>
+              </div>
+              <div class="glass-input-wrapper">
+                <i data-lucide="shield" class="glass-input-icon-left"></i>
+                <input type="password" id="recoveryConfirmPassword" class="glass-form-input" placeholder="Confirma tu nueva contraseña" required autocomplete="new-password">
+                <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('recoveryConfirmPassword', this)">
+                  <i data-lucide="eye-off"></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="btnSubmitNewPassword" class="btn-action-white-pill" style="margin-top: 18px; width: 100%;">
+              <span>ACTUALIZAR CONTRASEÑA</span>
+              <i data-lucide="check-circle" class="btn-arrow-icon"></i>
+            </button>
+
+            <div style="margin-top: 14px; text-align: center;">
+              <a href="javascript:void(0)" onclick="backToRecoveryStep1()" class="recovery-back-link">
+                ← Volver a solicitar código
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 3: Confirmación de Éxito -->
+        <div id="recoveryStep3" class="recovery-step" style="display: none; text-align: center; padding: 10px 4px;">
+          <div class="recovery-success-icon">
+            <i data-lucide="check-circle"></i>
+          </div>
+          <h2 class="recovery-title" style="margin-top: 14px;">¡CONTRASEÑA ACTUALIZADA!</h2>
+          <p class="recovery-subtitle" style="margin-bottom: 22px;">
+            Tu contraseña ha sido guardada y reemplazada con éxito en el documento de Google Sheets. Ya puedes ingresar al sistema con tu nueva clave.
+          </p>
+          <button type="button" class="btn-action-white-pill" style="width: 100%;" onclick="finishRecoveryAndFocusLogin()">
+            <span>INGRESAR AL SISTEMA AHORA</span>
+            <i data-lucide="arrow-right" class="btn-arrow-icon"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- Login Feedback Toast -->
@@ -174,7 +321,7 @@
 
   <!-- Interactive Logic -->
   <script src="js/light-tunnel.js?v=9"></script>
-  <script src="js/login.js?v=15"></script>
+  <script src="js/login.js?v=16"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 </html>
