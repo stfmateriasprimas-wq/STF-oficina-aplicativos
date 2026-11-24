@@ -218,23 +218,7 @@ body.dark-mode .sidebar-corp-brand-img.corp-logo-dark {
 }
 
 .mobile-header-brand-logo {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-header-brand-logo {
-    display: flex;
-    align-items: center;
-    max-width: 160px;
-    height: 38px;
-    margin-right: auto;
-    margin-left: 8px;
-  }
-  .mobile-header-brand-logo .sidebar-corp-brand-img {
-    height: 34px;
-    max-width: 100%;
-    object-fit: contain;
-  }
+  display: none !important;
 }
 
 .sidebar-nav {
