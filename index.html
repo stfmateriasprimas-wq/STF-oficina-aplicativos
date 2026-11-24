@@ -159,7 +159,7 @@
 
     <!-- Footer Móvil con Modo Oscuro y Logout -->
     <div class="mobile-drawer-footer">
-      <button type="button" class="drawer-footer-btn" onclick="toggleDarkTheme()">
+      <button type="button" class="drawer-footer-btn" onclick="toggleDarkTheme(event)">
         <i data-lucide="moon" id="mobileDrawerThemeIcon"></i>
         <span id="mobileDrawerThemeText">Modo Oscuro</span>
       </button>
@@ -224,7 +224,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button type="button" class="nav-btn theme-sidebar-btn" id="btnSidebarThemeToggle" onclick="toggleDarkTheme()"
+        <button type="button" class="nav-btn theme-sidebar-btn" id="btnSidebarThemeToggle" onclick="toggleDarkTheme(event)"
           title="Modo Oscuro / Modo Claro" aria-label="Cambiar tema de interfaz">
           <i data-lucide="moon" id="sidebarThemeIcon"></i>
           <span class="nav-btn-label" id="sidebarThemeText">Modo Oscuro</span>
@@ -280,7 +280,7 @@
           </button>
 
           <!-- Theme Toggle Button (Modo Claro / Modo Oscuro) -->
-          <button type="button" class="icon-circle-btn theme-toggle-btn" id="btnThemeToggle" onclick="toggleDarkTheme()"
+          <button type="button" class="icon-circle-btn theme-toggle-btn" id="btnThemeToggle" onclick="toggleDarkTheme(event)"
             title="Alternar entre Modo Claro y Modo Oscuro" aria-label="Cambiar tema">
             <i data-lucide="moon" id="themeToggleIcon"></i>
           </button>
@@ -3970,7 +3970,7 @@
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=46"></script>
   <script src="js/sheets-sync.js?v=52"></script>
-  <script src="js/app.js?v=67"></script>
+  <script src="js/app.js?v=68"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 

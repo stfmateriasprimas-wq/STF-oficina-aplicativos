@@ -8950,74 +8950,109 @@ function initTheme() {
   }
 }
 
-function toggleDarkTheme() {
+function toggleDarkTheme(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
   const isDark = document.body.classList.contains('dark-mode');
   const targetTheme = isDark ? 'light' : 'dark';
   applyTheme(targetTheme, true);
 }
 
 function applyTheme(theme, showNotice = false) {
-  const isDark = theme === 'dark';
-  document.body.classList.toggle('dark-mode', isDark);
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('STF_THEME', theme);
+  try {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('STF_THEME', theme);
+    } catch (e) {}
 
-  // Actualizar iconos y títulos de los botones en Header y Sidebar
-  const iconName = isDark ? 'sun' : 'moon';
-  const toggleBtn = document.getElementById('btnThemeToggle');
-  const sidebarBtn = document.getElementById('btnSidebarThemeToggle');
-  const iconEl = document.getElementById('themeToggleIcon');
-  const sidebarIcon = document.getElementById('sidebarThemeIcon');
+    // Iconos SVG directos optimizados (cero sobrecarga DOM ni bloqueos WebKit en iOS Safari)
+    const ICON_SUN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+    const ICON_MOON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+    const currentSvg = isDark ? ICON_SUN_SVG : ICON_MOON_SVG;
 
-  if (iconEl) iconEl.setAttribute('data-lucide', iconName);
-  if (sidebarIcon) sidebarIcon.setAttribute('data-lucide', iconName);
-  if (toggleBtn) {
-    toggleBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
-    toggleBtn.classList.toggle('active-dark', isDark);
-  }
-  if (sidebarBtn) {
-    sidebarBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
-    sidebarBtn.classList.toggle('active-dark', isDark);
-  }
+    const toggleBtn = document.getElementById('btnThemeToggle');
+    const sidebarBtn = document.getElementById('btnSidebarThemeToggle');
+    const iconEl = document.getElementById('themeToggleIcon');
+    const sidebarIcon = document.getElementById('sidebarThemeIcon');
+    const mobileDrawerIcon = document.getElementById('mobileDrawerThemeIcon');
+    const mobileDrawerText = document.getElementById('mobileDrawerThemeText');
 
-  const sidebarThemeText = document.getElementById('sidebarThemeText');
-  if (sidebarThemeText) {
-    sidebarThemeText.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
-  }
+    if (iconEl) iconEl.innerHTML = currentSvg;
+    if (sidebarIcon) sidebarIcon.innerHTML = currentSvg;
+    if (mobileDrawerIcon) mobileDrawerIcon.innerHTML = currentSvg;
 
-  // Actualizar botones de configuración
-  const btnSetLight = document.getElementById('btnThemeSetLight');
-  const btnSetDark = document.getElementById('btnThemeSetDark');
-  if (btnSetLight && btnSetDark) {
-    if (isDark) {
-      btnSetLight.className = 'pill-btn secondary-btn small-btn';
-      btnSetDark.className = 'pill-btn primary-glow-btn small-btn';
-    } else {
-      btnSetLight.className = 'pill-btn primary-glow-btn small-btn';
-      btnSetDark.className = 'pill-btn secondary-btn small-btn';
+    if (toggleBtn) {
+      toggleBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
+      toggleBtn.classList.toggle('active-dark', isDark);
     }
-  }
+    if (sidebarBtn) {
+      sidebarBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
+      sidebarBtn.classList.toggle('active-dark', isDark);
+    }
 
-  // Meta tag de navegador móvil para la barra de estado
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) {
-    metaTheme.setAttribute('content', isDark ? '#0A0E17' : '#0B0C10');
-  }
+    const sidebarThemeText = document.getElementById('sidebarThemeText');
+    if (sidebarThemeText) {
+      sidebarThemeText.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
+    }
+    if (mobileDrawerText) {
+      mobileDrawerText.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
+    }
 
-  if (window.lucide && typeof window.lucide.createIcons === 'function') {
-    window.lucide.createIcons();
-  }
+    // Actualizar botones de configuración
+    const btnSetLight = document.getElementById('btnThemeSetLight');
+    const btnSetDark = document.getElementById('btnThemeSetDark');
+    if (btnSetLight && btnSetDark) {
+      if (isDark) {
+        btnSetLight.className = 'pill-btn secondary-btn small-btn';
+        btnSetDark.className = 'pill-btn primary-glow-btn small-btn';
+      } else {
+        btnSetLight.className = 'pill-btn primary-glow-btn small-btn';
+        btnSetDark.className = 'pill-btn secondary-btn small-btn';
+      }
+    }
 
-  // Actualizar gráficos dinámicos con la paleta de modo oscuro
-  if (typeof updateOverviewChart === 'function') updateOverviewChart();
-  if (typeof updateVelocitySection === 'function') {
-    updateVelocitySection(currentVelocityPeriod, currentVelocityDev, true);
-  } else if (typeof initVelocityBarChart === 'function') {
-    initVelocityBarChart();
-  }
+    // Meta tag de navegador móvil para la barra de estado
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', isDark ? '#0A0E17' : '#F0F2F7');
+    }
 
-  if (showNotice && typeof showToast === 'function') {
-    showToast(isDark ? '🌙 Modo Oscuro Activado' : '☀️ Modo Claro Activado', 'info');
+    // Actualizar gráficos dinámicos en el siguiente frame de renderizado para evitar saturación de memoria en WebKit
+    if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+      window.requestAnimationFrame(() => {
+        try {
+          if (typeof updateOverviewChart === 'function') updateOverviewChart();
+        } catch (e) {
+          console.warn('[Theme] Error al actualizar curva de avance:', e);
+        }
+        try {
+          if (typeof updateVelocitySection === 'function') {
+            updateVelocitySection(currentVelocityPeriod, currentVelocityDev, true);
+          } else if (typeof initVelocityBarChart === 'function') {
+            initVelocityBarChart();
+          }
+        } catch (e) {
+          console.warn('[Theme] Error al actualizar barras de velocidad:', e);
+        }
+      });
+    } else {
+      setTimeout(() => {
+        try {
+          if (typeof updateOverviewChart === 'function') updateOverviewChart();
+          if (typeof updateVelocitySection === 'function') {
+            updateVelocitySection(currentVelocityPeriod, currentVelocityDev, true);
+          }
+        } catch (e) {}
+      }, 50);
+    }
+
+    if (showNotice && typeof showToast === 'function') {
+      showToast(isDark ? '🌙 Modo Oscuro Activado' : '☀️ Modo Claro Activado', 'info');
+    }
+  } catch (err) {
+    console.error('[Theme] Error al aplicar tema visual:', err);
   }
 }
 
