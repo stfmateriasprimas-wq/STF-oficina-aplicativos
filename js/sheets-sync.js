@@ -7,9 +7,11 @@
   'use strict';
 
   const DEFAULT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+  const DEFAULT_AUTH_KEY = 'STF_SEC_AUTH_KEY_2026_TI_PLATFORM_V3';
 
   const STORAGE_KEYS = {
     URL: 'STF_SHEETS_WEBAPP_URL',
+    AUTH_KEY: 'STF_SHEETS_AUTH_KEY',
     HISTORY: 'STF_SHEETS_HISTORY_LOG',
     LAST_SYNC: 'STF_SHEETS_LAST_SYNC_TIME'
   };
@@ -57,6 +59,19 @@
       this.updateUiStatus();
     },
 
+    getAuthKey() {
+      return localStorage.getItem(STORAGE_KEYS.AUTH_KEY) || DEFAULT_AUTH_KEY;
+    },
+
+    setAuthKey(newKey) {
+      const clean = (newKey || '').trim();
+      if (clean) {
+        localStorage.setItem(STORAGE_KEYS.AUTH_KEY, clean);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.AUTH_KEY);
+      }
+    },
+
     isConnected() {
       return !!this.url && this.url.startsWith('https://script.google.com/macros/s/');
     },
@@ -65,6 +80,13 @@
      * Enviar carga útil a Google Apps Script
      */
     async sendPayload(payload) {
+      if (!payload || typeof payload !== 'object') payload = {};
+
+      // Defensive AppSec (Paso 3): Adjuntar clave de autorización para endpoints protegidos
+      if (!payload.authKey) {
+        payload.authKey = this.getAuthKey();
+      }
+
       // 1. Guardar siempre en historial local inmediato
       this.recordLocalHistory(payload);
 

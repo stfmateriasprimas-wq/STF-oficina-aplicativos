@@ -1288,6 +1288,33 @@ function sanitizeSheetInput(val) {
 }
 
 /**
+ * DEFENSIVE APPSEC HELPER (Paso 3):
+ * Obtiene la clave secreta corporativa configurada para operaciones administrativas y destructivas.
+ * Puede sobreescribirse en Propiedades del Script de Google Apps Script (clave: STF_APP_AUTH_KEY)
+ * o recurrir al valor corporativo predeterminado.
+ */
+function getExpectedAuthKey() {
+  try {
+    var customKey = PropertiesService.getScriptProperties().getProperty("STF_APP_AUTH_KEY");
+    if (customKey && customKey.trim().length > 0) {
+      return customKey.trim();
+    }
+  } catch (err) {}
+  return "STF_SEC_AUTH_KEY_2026_TI_PLATFORM_V3";
+}
+
+/**
+ * Valida si la solicitud entrante contiene una clave de autorización válida.
+ */
+function isAuthorizedRequest(payload, e) {
+  var expected = getExpectedAuthKey();
+  var provided = (payload && (payload.authKey || payload.token || payload.apiKey)) ||
+                 (e && e.parameter && (e.parameter.authKey || e.parameter.token || e.parameter.apiKey)) ||
+                 "";
+  return String(provided).trim() === expected;
+}
+
+/**
  * ============================================================================
  * ENDPOINT POST (Escritura de Todos los Procesos Operativos en las 5 Hojas)
  * ============================================================================
@@ -1563,6 +1590,13 @@ function doPost(e) {
     // ACCIÓN 4: Sincronizar Directorio de Usuarios (USUARIOS + BITACORA)
     // =========================================================================
     if (action === "sync_users") {
+      if (!isAuthorizedRequest(payload, e)) {
+        return createJsonResponse({
+          status: "unauthorized",
+          authorized: false,
+          message: "Acceso denegado: La sincronización del directorio de usuarios requiere clave de autorización (authKey)."
+        });
+      }
       var users = payload.users || [];
       if (users.length > 0) {
         var sU = getMasterSheet(ss, "USUARIOS");
@@ -1611,6 +1645,13 @@ function doPost(e) {
     // Sincroniza SISTEMAS_WEB, CONTROL_TAREAS, HISTORIAL_OBSERVACIONES, USUARIOS y BITACORA_HISTORIAL
     // =========================================================================
     if (action === "sync_full_state") {
+      if (!isAuthorizedRequest(payload, e)) {
+        return createJsonResponse({
+          status: "unauthorized",
+          authorized: false,
+          message: "Acceso denegado: La sincronización maestra total de hojas requiere clave de autorización (authKey)."
+        });
+      }
       var apps = (payload.applications || []).filter(function (a) {
         var n = String(a.name || "").toLowerCase().trim();
         return n !== "" && n !== "sistema_a_cargo" && n !== "nombre_aplicativo" && a.code !== "STF-SIS-99";
@@ -1898,6 +1939,13 @@ function doPost(e) {
 
     // ACCIÓN 10: Eliminar Columna Telefono_SMS
     if (action === "delete_sms_column") {
+      if (!isAuthorizedRequest(payload, e)) {
+        return createJsonResponse({
+          status: "unauthorized",
+          authorized: false,
+          message: "Acceso denegado: Modificación estructural de columnas requiere clave de autorización (authKey)."
+        });
+      }
       eliminarColumnaTelefonoSMS();
       return createJsonResponse({
         status: "success",
@@ -2035,6 +2083,13 @@ function doPost(e) {
 
     // ACCIÓN 9: Limpiar Solicitudes de Soporte de Prueba (Dejar en 0)
     if (action === "clear_support_tickets") {
+      if (!isAuthorizedRequest(payload, e)) {
+        return createJsonResponse({
+          status: "unauthorized",
+          authorized: false,
+          message: "Acceso denegado: El vaciado masivo de solicitudes de soporte requiere clave de autorización (authKey)."
+        });
+      }
       var sSup = getMasterSheet(ss, "SOPORTE");
       var deleted = 0;
       if (sSup && sSup.getLastRow() > 1) {
