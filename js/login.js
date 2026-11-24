@@ -172,15 +172,20 @@ function togglePasswordVisibility(inputId, btn) {
   }
 }
 
-// Base de Datos Oficial de Usuarios y Credenciales Autorizadas (Sincronizada con Google Sheets Hoja 'Usuarios')
-// Columna 1: ID (Contraseña de logueo)
-// Columna 2: Usuario_Logueo (Nombres de ingreso)
-// Columna 3: Rol (desarrollador | Admin)
-// Columna 4: Correo
+// Función criptográfica nativa para verificación segura de hashes (Web Crypto API)
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(String(message));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 🔒 SEGURIDAD DEFENSIVA: Se eliminan contraseñas en texto plano del frontend.
+// Se conservan hashes criptográficos SHA-256 únicamente como respaldo local offline.
 const STF_USERS_CREDENTIALS = [
   {
     id: "dev_jg",
-    idPassword: "159",
+    passHash: "ff2ccb6ba423d356bd549ed4bfb76e96976a0dcde05a09996a1cdb9f83422ec4",
     username: "jose@guzman",
     role: "desarrollador",
     name: "Jose Guzman",
@@ -189,7 +194,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_jd",
-    idPassword: "2222",
+    passHash: "edee29f882543b956620b26d0ee0e7e950399b1c4222f5de05e06425b4c995e9",
     username: "juan@david",
     role: "desarrollador",
     name: "Juan David",
@@ -198,7 +203,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_ee",
-    idPassword: "1111",
+    passHash: "0ffe1abd1a08215353c233d6e009613e95eec4253832a761af28ff37ac5a150c",
     username: "esteban@escobar",
     role: "desarrollador",
     name: "Esteban Escobar",
@@ -207,7 +212,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_mocho",
-    idPassword: "4444",
+    passHash: "79f06f8fde333461739f220090a23cb2a79f6d714bee100d0e4b4af249294619",
     username: "jhon@eyder",
     role: "desarrollador",
     name: "Jhon Eyder (Mocho)",
@@ -216,7 +221,7 @@ const STF_USERS_CREDENTIALS = [
   },
   {
     id: "dev_ediaz",
-    idPassword: "Admin",
+    passHash: "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
     username: "ediaz",
     role: "Admin",
     name: "Edwin Diaz",
@@ -257,12 +262,12 @@ function getActiveUsersCredentials() {
           const custom = customAvatars[d.id] || customAvatars[uLower] || (baseUser && customAvatars[baseUser.id]);
           map.set(uLower, {
             id: (baseUser && baseUser.id) || existing.id || d.id,
-            idPassword: d.idPassword || existing.idPassword || (baseUser && baseUser.idPassword) || '123456',
             username: d.username,
             role: d.roleType || d.role || existing.role || 'desarrollador',
             name: (baseUser && baseUser.name) || d.name || existing.name || d.username,
             email: d.email || existing.email || (baseUser && baseUser.email) || '',
-            avatar: custom || d.avatar || existing.avatar || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar: custom || d.avatar || existing.avatar || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+            passHash: (baseUser && baseUser.passHash) || existing.passHash || ''
           });
         });
       }
@@ -285,12 +290,12 @@ function getActiveUsersCredentials() {
           const custom = customAvatars[su.id] || customAvatars[uLower] || (baseUser && customAvatars[baseUser.id]);
           map.set(uLower, {
             id: (baseUser && baseUser.id) || existing.id || su.id || `dev_${uLower.replace(/[^a-z0-9]/g, '_')}`,
-            idPassword: su.idPassword !== undefined && su.idPassword !== '' ? su.idPassword : (existing.idPassword || '123456'),
             username: su.username,
             role: su.role || existing.role || 'desarrollador',
             name: su.name || (baseUser && baseUser.name) || existing.name || su.username,
             email: su.email || existing.email || (baseUser && baseUser.email) || '',
-            avatar: custom || su.avatar || existing.avatar || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+            avatar: custom || su.avatar || existing.avatar || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+            passHash: (baseUser && baseUser.passHash) || existing.passHash || ''
           });
         });
       }
@@ -340,7 +345,6 @@ async function autoPullUsersFromSheets(silent = true) {
 
         data.users.forEach(u => {
           const uName = String(u.username || '').trim();
-          const uPass = String(u.idPassword !== undefined ? u.idPassword : '').trim();
           const uRole = String(u.role || 'desarrollador').trim();
           const uEmail = String(u.email || '').trim();
           const uFullName = String(u.name || '').trim();
@@ -352,24 +356,25 @@ async function autoPullUsersFromSheets(silent = true) {
           const effectiveAvatar = u.avatar || custom || (match && match.avatar) || (baseUser && baseUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
 
           if (match) {
-            match.idPassword = uPass || match.idPassword;
             match.role = uRole || match.role;
             match.email = uEmail || match.email;
             if (uFullName) match.name = uFullName;
             if (baseUser) {
               match.id = baseUser.id;
+              match.passHash = baseUser.passHash;
             }
             match.avatar = effectiveAvatar;
+            delete match.idPassword; // 🔒 Purgar contraseñas antiguas
           } else {
             const cleanName = uFullName || (baseUser && baseUser.name) || uName.replace(/[@._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             credsStore.push({
               id: (baseUser && baseUser.id) || `dev_${uName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
-              idPassword: uPass || (baseUser && baseUser.idPassword) || '123456',
               username: uName,
               role: uRole,
               name: cleanName,
               email: uEmail || (baseUser && baseUser.email) || '',
-              avatar: effectiveAvatar
+              avatar: effectiveAvatar,
+              passHash: (baseUser && baseUser.passHash) || ''
             });
           }
         });
@@ -407,7 +412,7 @@ function selectDevPreset(devId) {
   showLoginToast(`👤 Usuario cargado: ${user.name} (${user.username}). Ingresa tu contraseña.`);
 }
 
-// Form Submission & Redirect with Real-Time Google Sheets Fallback Coordination
+// Form Submission & Redirect with Real-Time Server Authentication
 async function handleLoginSubmit(e) {
   e.preventDefault();
 
@@ -417,11 +422,10 @@ async function handleLoginSubmit(e) {
   const originalBtnHtml = btn ? btn.innerHTML : 'Iniciar Sesión';
 
   if (!enteredUser || !enteredPass) {
-    showLoginToast('Por favor completa todos los campos');
+    showLoginToast('Por favor completa tu usuario y contraseña');
     return;
   }
 
-  // 1. Primer intento: Validar con credenciales locales en memoria
   const normalizedUser = enteredUser.toLowerCase();
   let allUsers = getActiveUsersCredentials();
   let matchedUser = allUsers.find(u => 
@@ -430,100 +434,113 @@ async function handleLoginSubmit(e) {
     (u.id && u.id.toLowerCase() === normalizedUser)
   );
 
-  let isPasswordValid = matchedUser && String(matchedUser.idPassword).trim() === enteredPass;
-
-  // 2. Si no coincide el usuario o la contraseña, consultar INMEDIATAMENTE a Google Sheets en tiempo real
-  // Esto garantiza que si el admin recién editó el Excel/Google Sheets, el dev ingrese sin problemas
-  if (!matchedUser || !isPasswordValid) {
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando en vivo con Google Sheets...`;
-    }
-
-    try {
-      await autoPullUsersFromSheets(true);
-      allUsers = getActiveUsersCredentials();
-      matchedUser = allUsers.find(u => 
-        (u.username && u.username.toLowerCase() === normalizedUser) || 
-        (u.email && u.email.toLowerCase() === normalizedUser) ||
-        (u.id && u.id.toLowerCase() === normalizedUser)
-      );
-      isPasswordValid = matchedUser && String(matchedUser.idPassword).trim() === enteredPass;
-    } catch(err) {
-      console.warn("Live sheets check error:", err);
-    }
-  }
-
-  // 3. Evaluar resultado final tras verificación en tiempo real
-  if (!matchedUser) {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalBtnHtml;
-    }
-    showLoginToast('⚠️ Usuario no encontrado. Verifica la Columna 2 (Usuario_Logueo) en Google Sheets');
-    return;
-  }
-
-  if (!isPasswordValid) {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalBtnHtml;
-    }
-    showLoginToast('🔒 Contraseña / ID incorrecto para ' + matchedUser.name + '. Verifica la Columna 1 en Google Sheets');
-    return;
-  }
-
-  // Visual button loading state for access approval
   if (btn) {
     btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando credenciales...`;
+  }
+
+  let authSuccess = false;
+  let verifiedUser = null;
+  const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+
+  // 1. Verificación directa y segura en el servidor de Google Apps Script
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7500);
+    const authUrl = `${GOOGLE_SHEETS_URL}?action=authenticate&username=${encodeURIComponent(enteredUser)}&password=${encodeURIComponent(enteredPass)}&_t=${Date.now()}`;
+    const res = await fetch(authUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'success' && data.authorized && data.user) {
+        authSuccess = true;
+        verifiedUser = data.user;
+      }
+    }
+  } catch (err) {
+    console.warn('[login.js] Servidor en verificación, probando fallback seguro:', err);
+  }
+
+  // 2. Respaldo seguro offline mediante hash criptográfico SHA-256 (sin exponer contraseñas)
+  if (!authSuccess && matchedUser && matchedUser.passHash) {
+    try {
+      const inputHash = await sha256(enteredPass);
+      if (inputHash === matchedUser.passHash) {
+        authSuccess = true;
+        verifiedUser = {
+          id: matchedUser.id,
+          username: matchedUser.username,
+          role: matchedUser.role,
+          name: matchedUser.name,
+          email: matchedUser.email,
+          avatar: matchedUser.avatar
+        };
+      }
+    } catch (hErr) {}
+  }
+
+  // 3. Resultado de la autenticación
+  if (!authSuccess) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
+    showLoginToast('🔒 Contraseña o usuario incorrecto. Verifica tus datos de acceso.');
+    const passInput = document.getElementById('loginPassword');
+    if (passInput) {
+      passInput.value = '';
+      passInput.focus();
+    }
+    return;
+  }
+
+  // 4. Acceso Concedido: Guardar sesión sanitizada (NUNCA almacena contraseña)
+  if (btn) {
     btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> ¡Acceso Concedido!...`;
   }
 
-  // 4. ANCLAR COLUMNA 2 (Usuario_Logueo) Y COLUMNA 3 (Rol) AL SISTEMA
   const sessionUser = {
-    id: matchedUser.id,
-    name: matchedUser.name,
-    username: matchedUser.username, // Columna 2
-    role: matchedUser.role,         // Columna 3
-    email: matchedUser.email,       // Columna 4
-    idPassword: matchedUser.idPassword, // Columna 1
-    avatar: matchedUser.avatar
+    id: (verifiedUser && verifiedUser.id) || (matchedUser && matchedUser.id) || `dev_${enteredUser}`,
+    name: (verifiedUser && verifiedUser.name) || (matchedUser && matchedUser.name) || enteredUser,
+    username: (verifiedUser && verifiedUser.username) || (matchedUser && matchedUser.username) || enteredUser,
+    role: (verifiedUser && verifiedUser.role) || (matchedUser && matchedUser.role) || 'desarrollador',
+    email: (verifiedUser && verifiedUser.email) || (matchedUser && matchedUser.email) || '',
+    avatar: (verifiedUser && verifiedUser.avatar) || (matchedUser && matchedUser.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
   };
 
   localStorage.setItem('STF_LOGGED_USER', JSON.stringify(sessionUser));
-  localStorage.setItem('STF_USER_ROLE', matchedUser.role);            // Columna 3 anclada
-  localStorage.setItem('STF_LOGGED_USERNAME', matchedUser.username);  // Columna 2 anclada
-  localStorage.setItem('STF_ACTIVE_DEV_ID', matchedUser.id);
+  localStorage.setItem('STF_USER_ROLE', sessionUser.role);
+  localStorage.setItem('STF_LOGGED_USERNAME', sessionUser.username);
+  localStorage.setItem('STF_ACTIVE_DEV_ID', sessionUser.id);
   sessionStorage.setItem('STF_AUTH_SESSION', 'authenticated');
+
   try {
     localStorage.removeItem('STF_PRESELECTED_USER');
   } catch (e) {}
 
-  // Registrar login en la bitácora de Google Sheets en tiempo real
+  // Registrar login en bitácora de Google Sheets
   try {
-    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
     fetch(GOOGLE_SHEETS_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'log_update',
-        developer: matchedUser.name,
+        developer: sessionUser.name,
         eventType: 'LOGIN_EXITOSO',
         appName: 'Portal de Ingeniería',
-        description: `Ingreso autenticado en vivo: Usuario [${matchedUser.username}] | Rol [${matchedUser.role}]`,
-        version: 'v2.6'
+        description: `Ingreso autenticado de forma segura: Usuario [${sessionUser.username}] | Rol [${sessionUser.role}]`,
+        version: 'v3.5'
       })
     }).catch(() => {});
-  } catch (err) {
-    console.warn("Could not log to Sheets bitacora:", err);
-  }
+  } catch (err) {}
 
-  showLoginToast(`¡Bienvenido, ${matchedUser.name}! Rol: [${matchedUser.role}]. Redirigiendo...`);
+  showLoginToast(`¡Bienvenido, ${sessionUser.name}! Rol: [${sessionUser.role}]. Redirigiendo...`);
 
   setTimeout(() => {
     window.location.href = 'index.html';
-  }, 750);
+  }, 650);
 }
 
 // Quick Google SSO Demo Login
@@ -1039,6 +1056,15 @@ if (typeof document !== 'undefined') {
   const startLoginApp = () => {
     try {
       sessionStorage.removeItem('STF_AUTH_SESSION');
+      // 🔒 Purgar credenciales en texto plano residuales de versiones anteriores en localStorage
+      const oldStore = JSON.parse(localStorage.getItem('STF_USERS_CREDENTIALS_STORE') || '[]');
+      if (Array.isArray(oldStore) && oldStore.some(u => u.idPassword)) {
+        const cleaned = oldStore.map(u => {
+          const { idPassword, ...rest } = u;
+          return rest;
+        });
+        localStorage.setItem('STF_USERS_CREDENTIALS_STORE', JSON.stringify(cleaned));
+      }
     } catch (e) {}
 
     if (window.lucide) lucide.createIcons();

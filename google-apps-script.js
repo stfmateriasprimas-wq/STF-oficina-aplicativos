@@ -833,7 +833,7 @@ function doGet(e) {
         if (!uLogin || uLogin.toLowerCase() === "usuario_logueo" || uLogin.toLowerCase() === "usuario") continue;
         var userAvatar = (idxAvatar !== -1 && idxAvatar < uRows[r].length) ? String(uRows[r][idxAvatar] || "").trim() : "";
         usersList.push({
-          idPassword: String(uRows[r][idxPass] !== undefined ? uRows[r][idxPass] : "").trim(),
+          id: "dev_" + uLogin.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase(),
           username: uLogin,
           role: String(uRows[r][idxRole] || "desarrollador").trim(),
           email: String(uRows[r][idxEmail] || "").trim(),
@@ -844,6 +844,63 @@ function doGet(e) {
       }
     }
     return createJsonResponse({ status: "success", users: usersList });
+  }
+
+  // 1.1 Autenticación Segura en el Servidor (Verifica credenciales contra la hoja USUARIOS)
+  if (action === "authenticate") {
+    var checkUser = String((e && e.parameter && e.parameter.username) || "").trim().toLowerCase();
+    var checkPass = String((e && e.parameter && e.parameter.password) || "").trim();
+
+    if (!checkUser || !checkPass) {
+      return createJsonResponse({ status: "error", authorized: false, message: "Usuario y contraseña requeridos" });
+    }
+
+    var sU2 = getMasterSheet(ss, "USUARIOS");
+    var uRows2 = sU2.getDataRange().getValues();
+    if (uRows2.length > 1) {
+      var hRow2 = uRows2[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+      var idxPass2 = -1, idxUser2 = -1, idxRole2 = -1, idxEmail2 = -1, idxName2 = -1, idxAvatar2 = -1;
+      for (var c2 = 0; c2 < hRow2.length; c2++) {
+        var h2 = hRow2[c2];
+        if (idxPass2 === -1 && (h2 === "id" || h2.indexOf("pass") !== -1 || h2.indexOf("clave") !== -1 || h2.indexOf("contra") !== -1)) idxPass2 = c2;
+        else if (idxUser2 === -1 && (h2.indexOf("usuario") !== -1 || h2.indexOf("login") !== -1 || h2 === "user")) idxUser2 = c2;
+        else if (idxRole2 === -1 && (h2.indexOf("rol") !== -1 || h2.indexOf("role") !== -1 || h2.indexOf("perfil") !== -1)) idxRole2 = c2;
+        else if (idxEmail2 === -1 && (h2.indexOf("correo") !== -1 || h2.indexOf("email") !== -1 || h2.indexOf("mail") !== -1)) idxEmail2 = c2;
+        else if (idxName2 === -1 && (h2.indexOf("nombre") !== -1 || h2.indexOf("name") !== -1 || h2.indexOf("desarrollador") !== -1)) idxName2 = c2;
+        else if (idxAvatar2 === -1 && (h2.indexOf("avatar") !== -1 || h2.indexOf("foto") !== -1 || h2.indexOf("img") !== -1)) idxAvatar2 = c2;
+      }
+      if (idxPass2 === -1) idxPass2 = 0;
+      if (idxUser2 === -1) idxUser2 = 1;
+      if (idxRole2 === -1) idxRole2 = 2;
+      if (idxEmail2 === -1) idxEmail2 = 3;
+      if (idxName2 === -1) idxName2 = 4;
+
+      for (var r2 = 1; r2 < uRows2.length; r2++) {
+        var rowUser = String(uRows2[r2][idxUser2] || "").trim().toLowerCase();
+        var rowPass = String(uRows2[r2][idxPass2] || "").trim();
+        var rowEmail = String(uRows2[r2][idxEmail2] || "").trim().toLowerCase();
+
+        if (rowUser === checkUser || rowEmail === checkUser) {
+          if (rowPass === checkPass) {
+            return createJsonResponse({
+              status: "success",
+              authorized: true,
+              user: {
+                id: "dev_" + rowUser.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase(),
+                username: uRows2[r2][idxUser2],
+                role: String(uRows2[r2][idxRole2] || "desarrollador").trim(),
+                email: String(uRows2[r2][idxEmail2] || "").trim(),
+                name: (idxName2 < uRows2[r2].length) ? String(uRows2[r2][idxName2] || "").trim() : rowUser,
+                avatar: (idxAvatar2 !== -1 && idxAvatar2 < uRows2[r2].length) ? String(uRows2[r2][idxAvatar2] || "").trim() : ""
+              }
+            });
+          } else {
+            return createJsonResponse({ status: "error", authorized: false, message: "Contraseña incorrecta" });
+          }
+        }
+      }
+    }
+    return createJsonResponse({ status: "error", authorized: false, message: "Usuario no encontrado" });
   }
 
   // 2. Obtener Historial de Eventos
@@ -1250,6 +1307,65 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var now = new Date();
     var dateStr = Utilities.formatDate(now, "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+
+    // =========================================================================
+    // ACCIÓN 0: Autenticación Segura de Usuarios contra Hoja USUARIOS
+    // =========================================================================
+    if (action === "authenticate") {
+      var checkUser = String(payload.username || "").trim().toLowerCase();
+      var checkPass = String(payload.password || "").trim();
+
+      if (!checkUser || !checkPass) {
+        return createJsonResponse({ status: "error", authorized: false, message: "Usuario y contraseña requeridos" });
+      }
+
+      var sUsers = getMasterSheet(ss, "USUARIOS");
+      var uRows = sUsers.getDataRange().getValues();
+      if (uRows.length > 1) {
+        var hRow = uRows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+        var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxAvatar = -1;
+        for (var c = 0; c < hRow.length; c++) {
+          var h = hRow[c];
+          if (idxPass === -1 && (h === "id" || h.indexOf("pass") !== -1 || h.indexOf("clave") !== -1 || h.indexOf("contra") !== -1)) idxPass = c;
+          else if (idxUser === -1 && (h.indexOf("usuario") !== -1 || h.indexOf("login") !== -1 || h === "user")) idxUser = c;
+          else if (idxRole === -1 && (h.indexOf("rol") !== -1 || h.indexOf("role") !== -1 || h.indexOf("perfil") !== -1)) idxRole = c;
+          else if (idxEmail === -1 && (h.indexOf("correo") !== -1 || h.indexOf("email") !== -1 || h.indexOf("mail") !== -1)) idxEmail = c;
+          else if (idxName === -1 && (h.indexOf("nombre") !== -1 || h.indexOf("name") !== -1 || h.indexOf("desarrollador") !== -1)) idxName = c;
+          else if (idxAvatar === -1 && (h.indexOf("avatar") !== -1 || h.indexOf("foto") !== -1 || h.indexOf("img") !== -1)) idxAvatar = c;
+        }
+        if (idxPass === -1) idxPass = 0;
+        if (idxUser === -1) idxUser = 1;
+        if (idxRole === -1) idxRole = 2;
+        if (idxEmail === -1) idxEmail = 3;
+        if (idxName === -1) idxName = 4;
+
+        for (var r = 1; r < uRows.length; r++) {
+          var rowUser = String(uRows[r][idxUser] || "").trim().toLowerCase();
+          var rowPass = String(uRows[r][idxPass] || "").trim();
+          var rowEmail = String(uRows[r][idxEmail] || "").trim().toLowerCase();
+
+          if (rowUser === checkUser || rowEmail === checkUser) {
+            if (rowPass === checkPass) {
+              return createJsonResponse({
+                status: "success",
+                authorized: true,
+                user: {
+                  id: "dev_" + rowUser.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase(),
+                  username: uRows[r][idxUser],
+                  role: String(uRows[r][idxRole] || "desarrollador").trim(),
+                  email: String(uRows[r][idxEmail] || "").trim(),
+                  name: (idxName < uRows.length) ? String(uRows[r][idxName] || "").trim() : rowUser,
+                  avatar: (idxAvatar !== -1 && idxAvatar < uRows[r].length) ? String(uRows[r][idxAvatar] || "").trim() : ""
+                }
+              });
+            } else {
+              return createJsonResponse({ status: "error", authorized: false, message: "Contraseña incorrecta" });
+            }
+          }
+        }
+      }
+      return createJsonResponse({ status: "error", authorized: false, message: "Usuario no registrado" });
+    }
 
     // =========================================================================
     // ACCIÓN 1: Registrar Asignación de Tarea & Enviar Correo Automático
