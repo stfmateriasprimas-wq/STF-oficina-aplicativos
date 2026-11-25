@@ -8968,9 +8968,12 @@ function applyTheme(theme, showNotice = false) {
     } catch (e) {}
 
     // Iconos SVG directos optimizados (cero sobrecarga DOM ni bloqueos WebKit en iOS Safari)
+    // Cuando el usuario está en MODO OSCURO (isDark === true) -> se muestra el SOL ☀️ para cambiar a Modo Claro
+    // Cuando el usuario está en MODO CLARO (isDark === false) -> se muestra la LUNA 🌙 para cambiar a Modo Oscuro
     const ICON_SUN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
     const ICON_MOON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
     const currentSvg = isDark ? ICON_SUN_SVG : ICON_MOON_SVG;
+    const targetLucide = isDark ? 'sun' : 'moon';
 
     const toggleBtn = document.getElementById('btnThemeToggle');
     const sidebarBtn = document.getElementById('btnSidebarThemeToggle');
@@ -8979,12 +8982,37 @@ function applyTheme(theme, showNotice = false) {
     const mobileDrawerIcon = document.getElementById('mobileDrawerThemeIcon');
     const mobileDrawerText = document.getElementById('mobileDrawerThemeText');
 
-    if (iconEl) iconEl.innerHTML = currentSvg;
-    if (sidebarIcon) sidebarIcon.innerHTML = currentSvg;
-    if (mobileDrawerIcon) mobileDrawerIcon.innerHTML = currentSvg;
+    [iconEl, sidebarIcon, mobileDrawerIcon].forEach(el => {
+      if (el) {
+        el.removeAttribute('data-lucide');
+        el.innerHTML = currentSvg;
+      }
+    });
+
+    // Hook defensivo: Si lucide.createIcons es llamado en cualquier parte de la app,
+    // re-asegurar que el icono de tema permanezca en Sol (en oscuro) o Luna (en claro)
+    if (window.lucide && !window.__lucideThemeHookInstalled) {
+      window.__lucideThemeHookInstalled = true;
+      const originalCreate = window.lucide.createIcons;
+      window.lucide.createIcons = function (options) {
+        try { originalCreate.call(this, options); } catch (e) { }
+        const darkActive = document.body.classList.contains('dark-mode');
+        const sunHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+        const moonHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+        const targetHtml = darkActive ? sunHtml : moonHtml;
+        ['themeToggleIcon', 'sidebarThemeIcon', 'mobileDrawerThemeIcon'].forEach(id => {
+          const slot = document.getElementById(id);
+          if (slot) {
+            slot.removeAttribute('data-lucide');
+            slot.innerHTML = targetHtml;
+          }
+        });
+      };
+    }
 
     if (toggleBtn) {
       toggleBtn.setAttribute('title', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
+      toggleBtn.setAttribute('aria-label', isDark ? 'Cambiar a Modo Claro ☀️' : 'Cambiar a Modo Oscuro 🌙');
       toggleBtn.classList.toggle('active-dark', isDark);
     }
     if (sidebarBtn) {
@@ -8994,10 +9022,10 @@ function applyTheme(theme, showNotice = false) {
 
     const sidebarThemeText = document.getElementById('sidebarThemeText');
     if (sidebarThemeText) {
-      sidebarThemeText.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
+      sidebarThemeText.textContent = isDark ? 'Modo Claro ☀️' : 'Modo Oscuro 🌙';
     }
     if (mobileDrawerText) {
-      mobileDrawerText.textContent = isDark ? 'Modo Claro' : 'Modo Oscuro';
+      mobileDrawerText.textContent = isDark ? 'Modo Claro ☀️' : 'Modo Oscuro 🌙';
     }
 
     // Actualizar botones de configuración
