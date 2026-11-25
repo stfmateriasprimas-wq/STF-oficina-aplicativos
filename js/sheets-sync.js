@@ -296,6 +296,21 @@
     },
 
     /**
+     * Eliminar tarea de CONTROL_TAREAS y registrar en BITACORA_HISTORIAL (Solo Admin)
+     */
+    deleteTask(data) {
+      const payload = {
+        action: 'delete_task',
+        taskId: data.taskId || '',
+        taskName: data.taskName || '',
+        appName: data.appName || '',
+        developer: data.developer || '',
+        date: typeof this.getColombiaIsoDate === 'function' ? this.getColombiaIsoDate() : new Date().toISOString()
+      };
+      return this.sendPayload(payload);
+    },
+
+    /**
      * Registrar nueva solicitud de soporte o actualización en la hoja SOLICITUDES_SOPORTE
      */
     logSupportTicket(data) {

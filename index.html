@@ -3668,8 +3668,13 @@
           <span class="live-dot-pulse"></span>
           <span id="taskObsModalFooterStatus">Actualizado en tiempo real</span>
         </div>
-        <button type="button" class="pill-btn secondary-btn" onclick="closeTaskObservationsModal()">Cerrar
-          Ventana</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="pill-btn danger-btn small-btn btn-modal-delete-task" id="btnTaskObsDeleteTask" style="display: none;" onclick="if (typeof confirmDeleteIntegrationTask === 'function') { confirmDeleteIntegrationTask(currentViewTaskObsId); closeTaskObservationsModal(); }">
+            <i data-lucide="trash-2"></i>
+            <span>Eliminar Tarea</span>
+          </button>
+          <button type="button" class="pill-btn secondary-btn" onclick="closeTaskObservationsModal()">Cerrar Ventana</button>
+        </div>
       </div>
     </div>
   </div>

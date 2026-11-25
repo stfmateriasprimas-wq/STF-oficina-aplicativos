@@ -7408,9 +7408,16 @@ function renderIntegrationsList(filter = activeIntFilter) {
             ${cornerBadgeContent}
           </div>
 
+          ${isAdmin ? `
+            <!-- Botón Eliminar Tarea (Exclusivo Super Admin) -->
+            <button type="button" class="btn-card-delete-task" onclick="confirmDeleteIntegrationTask('${item.id}'); event.stopPropagation();" title="Eliminar tarea definitivamente (Solo Super Admin)">
+              <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+            </button>
+          ` : ''}
+
           <div class="int-card-content">
             <!-- Top Row: App Badge, Consecutivo Tag & Status Pill -->
-            <div class="int-card-header">
+            <div class="int-card-header ${isAdmin ? 'has-admin-delete' : ''}">
               <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
                 <div class="int-app-badge" style="background-color: ${appColor}12; color: ${appColor}; border: 1px solid ${appColor}2E;">
                   <span class="int-app-dot" style="background-color: ${appColor};"></span>
@@ -7775,6 +7782,85 @@ function handleAssignIntegrationSubmit(e) {
     window.SheetsSync.syncFullState(appState);
   }
 }
+
+/**
+ * Eliminar una tarea definitivamente de planta (Exclusivo Super Admin)
+ */
+function confirmDeleteIntegrationTask(taskId) {
+  if (!isCurrentSessionAdmin()) {
+    if (typeof showToast === 'function') {
+      showToast("⚠️ Acción restringida: Solo el Administrador tiene permisos para eliminar tareas.", "error");
+    } else {
+      alert("⚠️ Acción restringida: Solo el Administrador tiene permisos para eliminar tareas.");
+    }
+    return;
+  }
+
+  if (!appState || !Array.isArray(appState.integrations)) return;
+  const task = appState.integrations.find(t => String(t.id) === String(taskId));
+  if (!task) {
+    if (typeof showToast === 'function') {
+      showToast("No se encontró la tarea seleccionada.", "error");
+    }
+    return;
+  }
+
+  const dev = getDeveloperById(task.devId);
+  const devName = dev ? dev.name : (task.devName || 'Desarrollador');
+  const taskTitle = task.name || 'Sin título';
+
+  const confirmMsg = `¿Estás seguro de que deseas eliminar permanentemente esta tarea?\n\n• Tarea: "${taskTitle}"\n• Desarrollador: ${devName}\n\n⚠️ Esta acción borrará la tarea de las estadísticas de planta, Google Sheets y la bitácora del sistema. No se puede deshacer.`;
+
+  if (!window.confirm(confirmMsg)) {
+    return;
+  }
+
+  // 1. Remover del estado local en memoria
+  appState.integrations = appState.integrations.filter(t => String(t.id) !== String(taskId));
+
+  // 2. Persistir inmediatamente en localStorage
+  if (typeof saveData === 'function') {
+    saveData(appState);
+  }
+
+  // 3. Emitir broadcast a otras pestañas/dispositivos
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'TASK_DELETED',
+        taskId: taskId
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch (e) {}
+
+  // 4. Refrescar todas las vistas en vivo del sistema
+  if (typeof refreshAllViews === 'function') {
+    refreshAllViews();
+  }
+
+  // 5. Sincronizar eliminación en Google Sheets en segundo plano
+  if (window.SheetsSync) {
+    if (typeof window.SheetsSync.deleteTask === 'function') {
+      window.SheetsSync.deleteTask({
+        taskId: taskId,
+        taskName: taskTitle,
+        appName: task.appName || '',
+        developer: devName
+      });
+    }
+    if (typeof window.SheetsSync.syncFullState === 'function') {
+      window.SheetsSync.syncFullState(appState);
+    }
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(`🗑️ Tarea "${taskTitle}" eliminada exitosamente.`);
+  }
+}
+
+window.confirmDeleteIntegrationTask = confirmDeleteIntegrationTask;
 
 // --------------------------------------------------------------------------
 // MODAL: Auditoría & Calificación de Calidad (Super Admin)
@@ -8810,6 +8896,16 @@ function renderTaskObservationsModalContent(taskId) {
   const footerStatusEl = document.getElementById('taskObsModalFooterStatus');
   if (footerStatusEl) {
     footerStatusEl.textContent = `${totalObs} observación(es) en historial de esta tarea · Sincronizado en tiempo real`;
+  }
+
+  // Botón Eliminar Tarea dentro del modal (Solo Admin)
+  const deleteModalTaskBtn = document.getElementById('btnTaskObsDeleteTask');
+  if (deleteModalTaskBtn) {
+    if (isCurrentSessionAdmin()) {
+      deleteModalTaskBtn.style.display = 'inline-flex';
+    } else {
+      deleteModalTaskBtn.style.display = 'none';
+    }
   }
 
   if (window.lucide && typeof window.lucide.createIcons === 'function') {

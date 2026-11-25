@@ -1479,6 +1479,47 @@ function doPost(e) {
     }
 
     // =========================================================================
+    // ACCIÓN: Eliminar Tarea de CONTROL_TAREAS (Solo Super Admin)
+    // =========================================================================
+    if (action === "delete_task") {
+      var sTareasDel = getMasterSheet(ss, "TAREAS");
+      var deleted = false;
+      var targetTaskName = String(payload.taskName || "").trim().toLowerCase();
+      var targetTaskId = String(payload.taskId || "").trim().toLowerCase();
+
+      if (sTareasDel) {
+        var tDataDel = sTareasDel.getDataRange().getValues();
+        for (var rd = tDataDel.length - 1; rd >= 1; rd--) {
+          var rowTaskName = String(tDataDel[rd][0] || "").trim().toLowerCase();
+          if ((targetTaskName && rowTaskName === targetTaskName) ||
+              (targetTaskId && rowTaskName.indexOf(targetTaskId) !== -1)) {
+            sTareasDel.deleteRow(rd + 1);
+            deleted = true;
+            break;
+          }
+        }
+      }
+
+      setupBitacoraSheet(ss);
+      appendBitacoraRow(
+        ss,
+        "TAREAS",
+        "ELIMINAR TAREA",
+        payload.taskName || payload.taskId || "Tarea",
+        "Super Admin TI",
+        payload.developer || "Desarrollador",
+        "Tarea eliminada definitivamente por el Administrador. Filas y estadísticas actualizadas."
+      );
+
+      return createJsonResponse({
+        status: "success",
+        message: deleted ? "Tarea eliminada exitosamente de CONTROL_TAREAS" : "Tarea procesada y retirada del registro",
+        deleted: deleted,
+        date: dateStr
+      });
+    }
+
+    // =========================================================================
     // ACCIÓN 2: Registrar Auditoría de Calidad (Actualiza CONTROL_TAREAS y BITACORA)
     // =========================================================================
     if (action === "log_audit") {
