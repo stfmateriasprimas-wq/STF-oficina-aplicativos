@@ -151,7 +151,7 @@ function abrirCarpetaEvidenciasDrive() {
     "<p style=\"font-size: 11px; color: #94A3B8;\">ID de carpeta: <strong>1P-4nJESlFWxECqkPZhYsqWFId2Tttj2x</strong></p>" +
     "</div>"
   ).setWidth(440).setHeight(220);
-  
+
   SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Acceso a Google Drive STF");
 }
 
@@ -165,7 +165,7 @@ function eliminarColumnaTelefonoSMS() {
     SpreadsheetApp.getActiveSpreadsheet().toast('❌ No se encontró la hoja SOLICITUDES_SOPORTE.', 'STF GROUP TI', 5);
     return;
   }
-  
+
   var maxCols = Math.max(sheet.getLastColumn(), 17);
   var headers = sheet.getRange(1, 1, 1, maxCols).getValues()[0];
   var colIdx = -1;
@@ -185,7 +185,7 @@ function eliminarColumnaTelefonoSMS() {
       try {
         sheet.getRange(1, colIdx, sheet.getMaxRows(), 1).clearContent();
         SpreadsheetApp.getActiveSpreadsheet().toast('✅ Contenido de columna Telefono_SMS borrado exitosamente.', 'STF GROUP TI', 6);
-      } catch (e2) {}
+      } catch (e2) { }
     }
   } else if (sheet.getLastColumn() >= 17) {
     try {
@@ -805,7 +805,7 @@ function doGet(e) {
     var usersList = [];
     if (uRows.length > 1) {
       // Detección dinámica de índices de columna por encabezado
-      var hRow = uRows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+      var hRow = uRows[0].map(function (h) { return String(h || "").trim().toLowerCase(); });
       var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxStatus = -1, idxAvatar = -1;
 
       for (var c = 0; c < hRow.length; c++) {
@@ -858,7 +858,7 @@ function doGet(e) {
     var sU2 = getMasterSheet(ss, "USUARIOS");
     var uRows2 = sU2.getDataRange().getValues();
     if (uRows2.length > 1) {
-      var hRow2 = uRows2[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+      var hRow2 = uRows2[0].map(function (h) { return String(h || "").trim().toLowerCase(); });
       var idxPass2 = -1, idxUser2 = -1, idxRole2 = -1, idxEmail2 = -1, idxName2 = -1, idxAvatar2 = -1;
       for (var c2 = 0; c2 < hRow2.length; c2++) {
         var h2 = hRow2[c2];
@@ -1250,7 +1250,7 @@ function doGet(e) {
     if (sColchas) {
       var rows = sColchas.getDataRange().getValues();
       if (rows && rows.length > 1) {
-        var hRow = rows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+        var hRow = rows[0].map(function (h) { return String(h || "").trim().toLowerCase(); });
         var idxNombre = 1; // Default Columna B (índice 1)
         var idxArea = 3;   // Default Columna D (índice 3)
         var idxCorreo = 4; // Default Columna E (índice 4)
@@ -1314,7 +1314,7 @@ function getExpectedAuthKey() {
     if (customKey && customKey.trim().length > 0) {
       return customKey.trim();
     }
-  } catch (err) {}
+  } catch (err) { }
   return "STF_SEC_AUTH_KEY_2026_TI_PLATFORM_V3";
 }
 
@@ -1324,8 +1324,8 @@ function getExpectedAuthKey() {
 function isAuthorizedRequest(payload, e) {
   var expected = getExpectedAuthKey();
   var provided = (payload && (payload.authKey || payload.token || payload.apiKey)) ||
-                 (e && e.parameter && (e.parameter.authKey || e.parameter.token || e.parameter.apiKey)) ||
-                 "";
+    (e && e.parameter && (e.parameter.authKey || e.parameter.token || e.parameter.apiKey)) ||
+    "";
   return String(provided).trim() === expected;
 }
 
@@ -1364,7 +1364,7 @@ function doPost(e) {
       var sUsers = getMasterSheet(ss, "USUARIOS");
       var uRows = sUsers.getDataRange().getValues();
       if (uRows.length > 1) {
-        var hRow = uRows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+        var hRow = uRows[0].map(function (h) { return String(h || "").trim().toLowerCase(); });
         var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxAvatar = -1;
         for (var c = 0; c < hRow.length; c++) {
           var h = hRow[c];
@@ -1960,7 +1960,7 @@ function doPost(e) {
         payload.type === 'actualizacion' ? "SOLICITUD_ACTUALIZACION" : "SOLICITUD_SOPORTE_TECNICO",
         payload.appName || "Planta",
         "[" + tipoTxt.toUpperCase() + "] " + (payload.title || '') + " -> Asignado a " + (payload.devName || 'Desarrollador') +
-          (payload.requesterEmail ? " | Email: " + payload.requesterEmail : ""),
+        (payload.requesterEmail ? " | Email: " + payload.requesterEmail : ""),
         "PLANTA · v1.0"
       );
 
@@ -2347,7 +2347,7 @@ function sendSupportResolutionEmail(ss, payload, ticketCode, decisionText, resDa
   var statusBadgeText = isRejected ? "✕ RECHAZADA (SOLUCIÓN VALIDADA / NO PROCEDE)" : "✓ ACEPTADA (EN ATENCIÓN TÉCNICA)";
 
   var subject = (isRejected ? "🔴 [STF SOPORTE] Dictamen Oficial: " : "🟢 [STF SOPORTE] Dictamen Oficial: ") +
-                ticketCode + " · " + (isRejected ? "Rechazada" : "Aceptada") + " en " + appName;
+    ticketCode + " · " + (isRejected ? "Rechazada" : "Aceptada") + " en " + appName;
 
   var html = "" +
     "<div style=\"font-family: 'Plus Jakarta Sans', Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 18px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.08);\">" +
@@ -2550,8 +2550,8 @@ function findUserInSheet(sUsers, identifier) {
   var rows = sUsers.getDataRange().getValues();
   if (rows.length <= 1) return null;
 
-  var hRow = rows[0].map(function(h) { 
-    return String(h || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+  var hRow = rows[0].map(function (h) {
+    return String(h || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   });
   var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxAvatar = -1;
   for (var c = 0; c < hRow.length; c++) {
@@ -2726,7 +2726,7 @@ function handleRequestPasswordReset(ss, params) {
         "v2.7"
       ]);
     }
-  } catch (errBit) {}
+  } catch (errBit) { }
 
   return createJsonResponse({
     status: "success",
@@ -2799,7 +2799,7 @@ function handleResetPassword(ss, params) {
           "v2.7"
         ]);
       }
-    } catch (errBit) {}
+    } catch (errBit) { }
 
     // Enviar confirmación por correo al usuario
     sendPasswordChangedSuccessEmail(userObj.email, userObj.name, userObj.username, deviceInfo, timestamp);
@@ -2886,23 +2886,19 @@ function sendSecurityLockoutEmail(userEmail, userName, userLogin, attempts, lock
     '              <td style="color: #FFFFFF; font-weight: 700; padding: 5px 0;">' + (deviceInfo.deviceType || "Ordenador / PC") + '</td>',
     '            </tr>',
     (deviceInfo.mobileBrand ? [
-    '            <tr>',
-    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Marca del Dispositivo:</strong></td>',
-    '              <td style="color: #38BDF8; font-weight: 700; padding: 5px 0;">' + deviceInfo.mobileBrand + '</td>',
-    '            </tr>',
-    '            <tr>',
-    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Modelo Exacto:</strong></td>',
-    '              <td style="color: #FFFFFF; font-weight: 700; padding: 5px 0;">' + (deviceInfo.mobileModel || deviceInfo.mobileBrand) + '</td>',
-    '            </tr>'
+      '            <tr>',
+      '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Marca del Dispositivo:</strong></td>',
+      '              <td style="color: #38BDF8; font-weight: 700; padding: 5px 0;">' + deviceInfo.mobileBrand + '</td>',
+      '            </tr>'
     ].join('\n') : [
-    '            <tr>',
-    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Tarjeta Gráfica (GPU):</strong></td>',
-    '              <td style="color: #A7F3D0; font-weight: 600; padding: 5px 0;">' + (deviceInfo.gpu || "GPU Estándar") + '</td>',
-    '            </tr>',
-    '            <tr>',
-    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Hardware / Procesador:</strong></td>',
-    '              <td style="color: #FFFFFF; padding: 5px 0;">' + (deviceInfo.hardwareSpecs || "Estándar") + '</td>',
-    '            </tr>'
+      '            <tr>',
+      '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Tarjeta Gráfica (GPU):</strong></td>',
+      '              <td style="color: #A7F3D0; font-weight: 600; padding: 5px 0;">' + (deviceInfo.gpu || "GPU Estándar") + '</td>',
+      '            </tr>',
+      '            <tr>',
+      '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Hardware / Procesador:</strong></td>',
+      '              <td style="color: #FFFFFF; padding: 5px 0;">' + (deviceInfo.hardwareSpecs || "Estándar") + '</td>',
+      '            </tr>'
     ].join('\n')),
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Sistema Operativo:</strong></td>',
@@ -2911,10 +2907,6 @@ function sendSecurityLockoutEmail(userEmail, userName, userLogin, attempts, lock
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Navegador Web:</strong></td>',
     '              <td style="color: #FFFFFF; padding: 5px 0;">' + (deviceInfo.browser || "Navegador Web") + '</td>',
-    '            </tr>',
-    '            <tr>',
-    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Resolución Monitor:</strong></td>',
-    '              <td style="color: #FFFFFF; padding: 5px 0;">' + (deviceInfo.screenRes || "No disponible") + '</td>',
     '            </tr>',
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0; vertical-align: top;"><strong>User Agent:</strong></td>',

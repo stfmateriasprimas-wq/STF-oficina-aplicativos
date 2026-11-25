@@ -503,16 +503,20 @@ function detectMobileBrandAndModel(ua) {
       const r = window.devicePixelRatio || 1;
       const res = `${Math.min(w, h)}x${Math.max(w, h)}@${r}`;
       let ip = 'iPhone';
-      if (res.includes('393x852@3')) ip = 'iPhone 15 / 15 Pro / 14 Pro';
-      else if (res.includes('430x932@3')) ip = 'iPhone 15 Pro Max / 14 Pro Max';
-      else if (res.includes('390x844@3')) ip = 'iPhone 14 / 13 / 12';
-      else if (res.includes('428x926@3')) ip = 'iPhone 14 Plus / 13 Pro Max';
-      else if (res.includes('375x812@3')) ip = 'iPhone 11 Pro / X / XS';
-      else if (res.includes('414x896')) ip = 'iPhone 11 / XR / 11 Pro Max';
-      else if (res.includes('375x667')) ip = 'iPhone SE / 8';
-      model = `Apple ${ip}`;
+      if (res.includes('393x852@3')) ip = 'iPhone 15';
+      else if (res.includes('430x932@3')) ip = 'iPhone 15 Pro Max';
+      else if (res.includes('390x844@3')) ip = 'iPhone 14';
+      else if (res.includes('428x926@3')) ip = 'iPhone 14 Plus';
+      else if (res.includes('402x874@3')) ip = 'iPhone 16 Pro';
+      else if (res.includes('440x956@3')) ip = 'iPhone 16 Pro Max';
+      else if (res.includes('375x812@3')) ip = 'iPhone XS';
+      else if (res.includes('414x896@2')) ip = 'iPhone 11';
+      else if (res.includes('414x896@3')) ip = 'iPhone 11 Pro Max';
+      else if (res.includes('375x667')) ip = 'iPhone SE';
+      else ip = 'iPhone';
+      model = ip;
     } else if (/iPad/i.test(ua)) {
-      model = 'Apple iPad';
+      model = 'iPad';
     }
   }
   // 5. Google Pixel
@@ -576,13 +580,25 @@ function getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua, isMo
 function getDeviceFingerprint() {
   const ua = navigator.userAgent || '';
   let os = 'Desconocido';
-  if (/Windows NT 10.0|Windows 11/i.test(ua)) os = 'Windows 10 / 11 (PC)';
-  else if (/Windows NT 6.3/i.test(ua)) os = 'Windows 8.1';
-  else if (/Windows NT 6.1/i.test(ua)) os = 'Windows 7';
-  else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS (Apple Mac)';
-  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS (iPhone / iPad)';
-  else if (/Android/i.test(ua)) os = 'Android (Dispositivo Móvil)';
-  else if (/Linux/i.test(ua)) os = 'Linux';
+  // Verificar primero dispositivos móviles para evitar que 'like Mac OS X' en iOS marque macOS
+  if (/iPhone|iPad|iPod/i.test(ua)) {
+    const iosVer = ua.match(/OS (\d+[._]\d+)/i);
+    const verStr = iosVer ? iosVer[1].replace(/_/g, '.') : '';
+    os = verStr ? `iOS ${verStr} (Apple iPhone)` : 'iOS (Apple iPhone)';
+  } else if (/Android/i.test(ua)) {
+    const androidVer = ua.match(/Android\s*([0-9.]+)/i);
+    os = androidVer ? `Android ${androidVer[1]} (Móvil)` : 'Android (Dispositivo Móvil)';
+  } else if (/Windows NT 10.0|Windows 11/i.test(ua)) {
+    os = 'Windows 10 / 11 (PC)';
+  } else if (/Windows NT 6.3/i.test(ua)) {
+    os = 'Windows 8.1';
+  } else if (/Windows NT 6.1/i.test(ua)) {
+    os = 'Windows 7';
+  } else if (/Macintosh|Mac OS X/i.test(ua)) {
+    os = 'macOS (Apple Mac)';
+  } else if (/Linux/i.test(ua)) {
+    os = 'Linux';
+  }
 
   let browser = 'Navegador Web';
   if (/Edg\//i.test(ua)) browser = 'Microsoft Edge ' + (ua.match(/Edg\/([\d.]+)/)?.[1] || '');
@@ -597,8 +613,15 @@ function getDeviceFingerprint() {
   const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Núcleos` : 'No disponible';
   const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB RAM` : 'Estándar';
   
+  // Limpiar modelo para evitar duplicados de marca (ej: Apple Apple iPhone -> Apple iPhone)
+  const rawModel = (mobileInfo.model || '').trim();
+  const cleanModel = rawModel.replace(new RegExp(`^${mobileInfo.brand}\\s*`, 'i'), '');
+  const displayMobile = mobileInfo.brand 
+    ? (cleanModel ? `${mobileInfo.brand} ${cleanModel}` : mobileInfo.brand)
+    : 'Dispositivo Móvil';
+
   const deviceType = isMobile 
-    ? (mobileInfo.brand ? `📱 Móvil (${mobileInfo.brand} ${mobileInfo.model})` : '📱 Dispositivo Móvil')
+    ? `📱 Móvil (${displayMobile})`
     : detectAccurateDeviceType(ua, gpu);
 
   const deviceId = getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua, isMobile, mobileInfo.brand);
@@ -608,7 +631,7 @@ function getDeviceFingerprint() {
     deviceType: deviceType,
     isMobile: isMobile,
     mobileBrand: mobileInfo.brand,
-    mobileModel: mobileInfo.model,
+    mobileModel: cleanModel || rawModel,
     gpu: gpu,
     hardwareSpecs: isMobile ? `${screenRes} · Touchscreen` : `${cores} CPU · ${ram}`,
     os: os,
