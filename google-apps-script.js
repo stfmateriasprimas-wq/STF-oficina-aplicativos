@@ -2545,28 +2545,43 @@ function maskEmailAddress(email) {
  */
 function findUserInSheet(sUsers, identifier) {
   if (!sUsers || !identifier) return null;
-  var term = String(identifier).trim().toLowerCase();
+  var rawTerm = String(identifier).trim();
+  var term = rawTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   var rows = sUsers.getDataRange().getValues();
   if (rows.length <= 1) return null;
 
-  var hRow = rows[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
-  var idxPass = 0, idxUser = 1, idxRole = 2, idxEmail = 3, idxName = 4, idxAvatar = -1;
+  var hRow = rows[0].map(function(h) { 
+    return String(h || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+  });
+  var idxPass = -1, idxUser = -1, idxRole = -1, idxEmail = -1, idxName = -1, idxAvatar = -1;
   for (var c = 0; c < hRow.length; c++) {
     var h = hRow[c];
-    if (idxPass === 0 && (h === "id" || h.indexOf("pass") !== -1 || h.indexOf("clave") !== -1)) idxPass = c;
-    else if (idxUser === 1 && (h.indexOf("usuario") !== -1 || h.indexOf("login") !== -1 || h === "user")) idxUser = c;
-    else if (idxRole === 2 && (h.indexOf("rol") !== -1 || h.indexOf("role") !== -1)) idxRole = c;
-    else if (idxEmail === 3 && (h.indexOf("correo") !== -1 || h.indexOf("email") !== -1 || h.indexOf("mail") !== -1)) idxEmail = c;
-    else if (idxName === 4 && (h.indexOf("nombre") !== -1 || h.indexOf("desarrollador") !== -1)) idxName = c;
-    else if (idxAvatar === -1 && (h.indexOf("avatar") !== -1 || h.indexOf("foto") !== -1)) idxAvatar = c;
+    if (idxPass === -1 && (h === "id" || h.indexOf("pass") !== -1 || h.indexOf("clave") !== -1 || h.indexOf("contra") !== -1)) idxPass = c;
+    else if (idxUser === -1 && (h.indexOf("usuario") !== -1 || h.indexOf("login") !== -1 || h === "user")) idxUser = c;
+    else if (idxRole === -1 && (h.indexOf("rol") !== -1 || h.indexOf("role") !== -1 || h.indexOf("perfil") !== -1)) idxRole = c;
+    else if (idxEmail === -1 && (h.indexOf("correo") !== -1 || h.indexOf("email") !== -1 || h.indexOf("mail") !== -1)) idxEmail = c;
+    else if (idxName === -1 && (h.indexOf("nombre") !== -1 || h.indexOf("name") !== -1 || h.indexOf("desarrollador") !== -1)) idxName = c;
+    else if (idxAvatar === -1 && (h.indexOf("avatar") !== -1 || h.indexOf("foto") !== -1 || h.indexOf("img") !== -1)) idxAvatar = c;
   }
+
+  if (idxPass === -1) idxPass = 0;
+  if (idxUser === -1) idxUser = 1;
+  if (idxRole === -1) idxRole = 2;
+  if (idxEmail === -1) idxEmail = 3;
+  if (idxName === -1) idxName = 4;
 
   for (var r = 1; r < rows.length; r++) {
     var rPass = String(rows[r][idxPass] || "").trim();
     var rUser = String(rows[r][idxUser] || "").trim().toLowerCase();
     var rEmail = String(rows[r][idxEmail] || "").trim().toLowerCase();
+    var rName = (idxName < rows[r].length) ? String(rows[r][idxName] || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 
-    if (rUser === term || rEmail === term || (rPass.toLowerCase() === term && term.length > 2)) {
+    var matchUser = (rUser === term || (rUser.indexOf("@") !== -1 && rUser.split("@")[0] === term));
+    var matchEmail = (rEmail === term || (rEmail.indexOf("@") !== -1 && rEmail.split("@")[0] === term));
+    var matchName = (rName === term || (rName && (rName.indexOf(term) !== -1 || term.indexOf(rName) !== -1)));
+    var matchPass = (rPass.toLowerCase() === term && term.length > 2);
+
+    if (matchUser || matchEmail || matchName || matchPass) {
       return {
         rowIndex: r + 1, // 1-based row index para getRange
         id: rPass,
@@ -2587,22 +2602,42 @@ function findUserInSheet(sUsers, identifier) {
  */
 function handleSecurityLockoutAlert(ss, params) {
   var username = String(params.username || "").trim();
+  var directEmail = String(params.email || "").trim();
+  var directName = String(params.name || "").trim();
   var attempts = parseInt(params.attempts, 10) || 3;
   var lockMinutes = parseInt(params.lockMinutes, 10) || (attempts >= 8 ? 15 : 5);
+
   var deviceInfo = {};
   if (typeof params.deviceInfo === "string") {
     try { deviceInfo = JSON.parse(params.deviceInfo); } catch (e) { deviceInfo = { raw: params.deviceInfo }; }
   } else if (params.deviceInfo && typeof params.deviceInfo === "object") {
     deviceInfo = params.deviceInfo;
   }
+
+  // Fallbacks de parámetros directos (en caso de llamada GET directa)
+  if (params.deviceId && !deviceInfo.deviceId) deviceInfo.deviceId = String(params.deviceId);
+  if (params.deviceType && !deviceInfo.deviceType) deviceInfo.deviceType = String(params.deviceType);
+  if (params.gpu && !deviceInfo.gpu) deviceInfo.gpu = String(params.gpu);
+  if (params.os && !deviceInfo.os) deviceInfo.os = String(params.os);
+  if (params.browser && !deviceInfo.browser) deviceInfo.browser = String(params.browser);
+
   var timestamp = params.timestamp || Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
 
   var sUsers = getMasterSheet(ss, "USUARIOS");
-  var userObj = findUserInSheet(sUsers, username);
+  var userObj = findUserInSheet(sUsers, username || directEmail || directName);
 
-  var targetEmail = (userObj && userObj.email) ? userObj.email : "joseoneiber711@gmail.com";
-  var targetName = (userObj && userObj.name) ? userObj.name : (username || "Usuario STF");
-  var targetUser = (userObj && userObj.username) ? userObj.username : (username || "Desconocido");
+  // Prioridad absoluta al correo del desarrollador correspondiente
+  var targetEmail = (directEmail && directEmail.indexOf("@") !== -1)
+    ? directEmail
+    : ((userObj && userObj.email) ? userObj.email : "joseoneiber711@gmail.com");
+
+  var targetName = (userObj && userObj.name)
+    ? userObj.name
+    : (directName || username || "Usuario STF");
+
+  var targetUser = (userObj && userObj.username)
+    ? userObj.username
+    : (username || "Desconocido");
 
   // Registrar el bloqueo en la hoja BITACORA_HISTORIAL
   try {
@@ -2614,7 +2649,7 @@ function handleSecurityLockoutAlert(ss, params) {
         targetName,
         "SEGURIDAD_BLOQUEO",
         "SISTEMA_LOGIN",
-        "Bloqueo de seguridad (" + lockMinutes + " min) tras " + attempts + " intentos fallidos. Equipo: " + (deviceInfo.os || "Desconocido") + " / " + (deviceInfo.browser || "Desconocido"),
+        "Bloqueo de seguridad (" + lockMinutes + " min) tras " + attempts + " intentos fallidos. Equipo: " + (deviceInfo.deviceType || "PC") + " (" + (deviceInfo.deviceId || "STF-DEV") + ") / " + (deviceInfo.os || "Desconocido"),
         "v2.7"
       ]);
     }
@@ -2631,6 +2666,7 @@ function handleSecurityLockoutAlert(ss, params) {
     attempts: attempts,
     lockMinutes: lockMinutes,
     emailSent: mailResult.sent,
+    recipient: targetEmail,
     maskedEmail: maskEmailAddress(targetEmail)
   });
 }
@@ -2847,7 +2883,15 @@ function sendSecurityLockoutEmail(userEmail, userName, userLogin, attempts, lock
     '            </tr>',
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Tipo de Equipo:</strong></td>',
-    '              <td style="color: #FFFFFF; font-weight: 600; padding: 5px 0;">' + (deviceInfo.deviceType || "Ordenador / PC") + '</td>',
+    '              <td style="color: #FFFFFF; font-weight: 700; padding: 5px 0;">' + (deviceInfo.deviceType || "Ordenador / PC") + '</td>',
+    '            </tr>',
+    '            <tr>',
+    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Tarjeta Gráfica (GPU):</strong></td>',
+    '              <td style="color: #A7F3D0; font-weight: 600; padding: 5px 0;">' + (deviceInfo.gpu || "GPU Estándar") + '</td>',
+    '            </tr>',
+    '            <tr>',
+    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Hardware / Procesador:</strong></td>',
+    '              <td style="color: #FFFFFF; padding: 5px 0;">' + (deviceInfo.hardwareSpecs || "Estándar") + '</td>',
     '            </tr>',
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Sistema Operativo:</strong></td>',

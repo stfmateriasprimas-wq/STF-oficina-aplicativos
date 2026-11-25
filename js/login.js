@@ -415,25 +415,80 @@ function selectDevPreset(devId) {
 // ============================================================================
 // HUELLA DIGITAL DEL EQUIPO / DISPOSITIVO (AUDITORÍA & SEGURIDAD)
 // ============================================================================
-function getOrCreateDeviceId() {
+// Comprobación asíncrona de batería en segundo plano para clasificar Laptop vs PC de Mesa
+if (typeof navigator !== 'undefined' && typeof navigator.getBattery === 'function') {
+  navigator.getBattery().then(b => {
+    window._stfBatteryPresent = (b && typeof b.level === 'number' && b.level > 0);
+  }).catch(() => {
+    window._stfBatteryPresent = false;
+  });
+}
+
+function getGpuHardwareRenderer() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return 'GPU Estándar';
+    const dbgInfo = gl.getExtension('WEBGL_debug_renderer_info');
+    if (dbgInfo) {
+      const renderer = gl.getParameter(dbgInfo.UNMASKED_RENDERER_WEBGL) || '';
+      return renderer.replace(/^ANGLE \((.+)\)$/, '$1') || renderer || 'GPU Estándar';
+    }
+  } catch (e) {}
+  return 'GPU Estándar';
+}
+
+function detectAccurateDeviceType(ua, gpu) {
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) {
+    return '📱 Dispositivo Móvil (Smartphone / Tablet)';
+  }
+
+  const gpuLower = (gpu || '').toLowerCase();
+  // 1. Detección por modelo de chip gráfico (Laptops usualmente llevan sufijos Laptop, Mobile, Max-Q o Iris/Radeon integrados)
+  if (gpuLower.includes('laptop') || gpuLower.includes('mobile') || gpuLower.includes('max-q')) {
+    return '💻 Portátil (Laptop)';
+  }
+
+  // 2. Detección por batería
+  if (window._stfBatteryPresent === true) {
+    return '💻 Portátil (Laptop)';
+  }
+
+  // 3. Heurística de pantalla y touch
+  if (navigator.maxTouchPoints > 0 && window.screen.width <= 1920) {
+    return '💻 Portátil (Laptop táctil)';
+  }
+
+  return '🖥️ PC de Mesa (Escritorio / Torre)';
+}
+
+function getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua) {
   const DEVICE_ID_KEY = 'STF_DEVICE_HARDWARE_ID';
   try {
     let devId = localStorage.getItem(DEVICE_ID_KEY);
-    if (devId && devId.startsWith('STF-DEV-')) {
+    if (devId && (devId.startsWith('STF-DEV-') || devId.startsWith('STF-HWID-'))) {
       return devId;
     }
-    // Generar un ID de dispositivo persistente y único con formato STF-DEV-XXXX-XXXX
-    const chars = '0123456789ABCDEF';
-    let p1 = '', p2 = '';
-    for (let i = 0; i < 4; i++) {
-      p1 += chars.charAt(Math.floor(Math.random() * chars.length));
-      p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    // Calcular Hash criptográfico determinista de las piezas físicas del equipo
+    const rawSignature = `${gpu}|${screenRes}|${cores}|${ram}|${navigator.platform || ''}|${navigator.language || ''}|${ua}`;
+    let h1 = 0x811c9dc5;
+    for (let i = 0; i < rawSignature.length; i++) {
+      h1 ^= rawSignature.charCodeAt(i);
+      h1 = (h1 * 0x01000193) >>> 0;
     }
-    devId = `STF-DEV-${p1}-${p2}`;
+    let h2 = 5381;
+    for (let i = rawSignature.length - 1; i >= 0; i--) {
+      h2 = ((h2 << 5) + h2 + rawSignature.charCodeAt(i)) >>> 0;
+    }
+
+    const hex1 = h1.toString(16).toUpperCase().padStart(8, '0').slice(-4);
+    const hex2 = h2.toString(16).toUpperCase().padStart(8, '0').slice(-4);
+    devId = `STF-HWID-${hex1}-${hex2}`;
     localStorage.setItem(DEVICE_ID_KEY, devId);
     return devId;
   } catch (e) {
-    return 'STF-DEV-9B21-4F10';
+    return 'STF-HWID-A42F-89B1';
   }
 }
 
@@ -455,13 +510,17 @@ function getDeviceFingerprint() {
   else if (/Firefox\//i.test(ua)) browser = 'Mozilla Firefox ' + (ua.match(/Firefox\/([\d.]+)/)?.[1] || '');
 
   const screenRes = `${window.screen?.width || window.innerWidth} x ${window.screen?.height || window.innerHeight} px`;
-  const isMobile = (/Mobi|Android|iPhone|iPad/i.test(ua));
-  const deviceType = isMobile ? 'Dispositivo Móvil / Smartphone' : 'Ordenador de Escritorio / Portátil';
-  const deviceId = getOrCreateDeviceId();
+  const gpu = getGpuHardwareRenderer();
+  const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Núcleos` : 'No disponible';
+  const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB RAM` : 'Estándar';
+  const deviceType = detectAccurateDeviceType(ua, gpu);
+  const deviceId = getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua);
 
   return {
     deviceId: deviceId,
     deviceType: deviceType,
+    gpu: gpu,
+    hardwareSpecs: `${cores} CPU · ${ram}`,
     os: os,
     browser: browser,
     screenRes: screenRes,
@@ -574,16 +633,42 @@ function clearLockoutUI() {
   }
 }
 
-async function sendLockoutSecurityAlert(username, attempts, lockMinutes) {
+async function sendLockoutSecurityAlert(username, email, name, attempts, lockMinutes) {
   const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
   const fp = getDeviceFingerprint();
 
+  const payload = {
+    action: 'security_lockout_alert',
+    username: username || '',
+    email: email || '',
+    name: name || '',
+    attempts: attempts,
+    lockMinutes: lockMinutes,
+    deviceInfo: fp,
+    timestamp: fp.timestamp
+  };
+
   try {
+    // 1. Envío primario vía POST (sin límite de caracteres de URL y no-cors)
+    fetch(GOOGLE_SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+
+    // 2. Envío secundario vía GET con parámetros directos para máxima redundancia
     const alertUrl = `${GOOGLE_SHEETS_URL}?action=security_lockout_alert` +
       `&username=${encodeURIComponent(username || '')}` +
+      `&email=${encodeURIComponent(email || '')}` +
+      `&name=${encodeURIComponent(name || '')}` +
       `&attempts=${encodeURIComponent(attempts)}` +
       `&lockMinutes=${encodeURIComponent(lockMinutes)}` +
-      `&deviceInfo=${encodeURIComponent(JSON.stringify(fp))}` +
+      `&deviceId=${encodeURIComponent(fp.deviceId)}` +
+      `&deviceType=${encodeURIComponent(fp.deviceType)}` +
+      `&gpu=${encodeURIComponent(fp.gpu)}` +
+      `&os=${encodeURIComponent(fp.os)}` +
+      `&browser=${encodeURIComponent(fp.browser)}` +
       `&timestamp=${encodeURIComponent(fp.timestamp)}` +
       `&_t=${Date.now()}`;
 
@@ -597,13 +682,39 @@ function recordFailedLoginAttempt(enteredUser) {
   const state = getLockoutState();
   state.attempts = (state.attempts || 0) + 1;
 
-  // Hito 1: Al llegar a 3 intentos fallidos -> Bloqueo por 5 minutos + Correo
+  // Resolver identidad y correo del desarrollador que está intentando acceder
+  const rawInput = (enteredUser || '').trim();
+  const normalized = rawInput.toLowerCase();
+  const allUsers = getActiveUsersCredentials();
+
+  let matched = allUsers.find(u => {
+    if (!u) return false;
+    const uUser = (u.username || '').toLowerCase();
+    const uEmail = (u.email || '').toLowerCase();
+    const uId = (u.id || '').toLowerCase();
+    const uName = (u.name || '').toLowerCase();
+
+    return uUser === normalized ||
+           uEmail === normalized ||
+           uId === normalized ||
+           uName === normalized ||
+           (uUser.includes('@') && uUser.split('@')[0] === normalized) ||
+           (uEmail.includes('@') && uEmail.split('@')[0] === normalized) ||
+           uName.includes(normalized) ||
+           normalized.includes(uName);
+  });
+
+  const resolvedUsername = matched ? matched.username : rawInput;
+  const resolvedEmail = (matched && matched.email) ? matched.email : (rawInput.includes('@') ? rawInput : '');
+  const resolvedName = matched ? matched.name : rawInput;
+
+  // Hito 1: Al llegar a 3 intentos fallidos -> Bloqueo por 5 minutos + Correo al desarrollador
   if (state.attempts === 3) {
     state.lockMinutes = 5;
     state.lockedUntil = Date.now() + 5 * 60 * 1000;
     saveLockoutState(state);
     applyLockoutUI(state.lockedUntil, state.attempts, 5);
-    sendLockoutSecurityAlert(enteredUser, 3, 5);
+    sendLockoutSecurityAlert(resolvedUsername, resolvedEmail, resolvedName, 3, 5);
     showLoginToast('⚠️ 3 intentos fallidos. Acceso bloqueado por 5 minutos y alerta de seguridad enviada a tu correo corporativo.');
     return;
   }
@@ -614,8 +725,8 @@ function recordFailedLoginAttempt(enteredUser) {
     state.lockedUntil = Date.now() + 15 * 60 * 1000;
     saveLockoutState(state);
     applyLockoutUI(state.lockedUntil, state.attempts, 15);
-    sendLockoutSecurityAlert(enteredUser, state.attempts, 15);
-    showLoginToast('🚨 8 intentos fallidos. Acceso bloqueado por 15 minutos. Alerta con datos de tu equipo enviada.');
+    sendLockoutSecurityAlert(resolvedUsername, resolvedEmail, resolvedName, state.attempts, 15);
+    showLoginToast('🚨 8 intentos fallidos. Acceso bloqueado por 15 minutos. Alerta con datos de tu equipo enviada a tu correo.');
     return;
   }
 
