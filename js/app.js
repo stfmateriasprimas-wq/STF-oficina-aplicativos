@@ -562,19 +562,6 @@ window.isAppInLiveProduction = isAppInLiveProduction;
 // Helpers
 function calculateAppProgress(app) {
   if (!app) return 0;
-  // Si el sistema está en Puesta en Planta o Producción, por definición técnica sus 6 fases están 100% completadas
-  const stageInfo = (typeof getAppPipelineStageInfo === 'function') ? getAppPipelineStageInfo(app) : null;
-  const isQaOrProd = (stageInfo && (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod')) ||
-                     app.pipelineStage === 'stage_qa' ||
-                     app.pipelineStage === 'stage_prod' ||
-                     app.isProduction === true;
-  if (isQaOrProd) {
-    if (Array.isArray(app.phases)) {
-      app.phases.forEach(p => { p.completed = true; });
-    }
-    return 100;
-  }
-
   if (!app.phases || app.phases.length === 0) {
     return Number(app.progress) || 0;
   }
@@ -5280,11 +5267,6 @@ function openSystemDetailModal(appId) {
                      app.pipelineStage === 'stage_prod' ||
                      app.isProduction === true;
 
-  if (isQaOrProd && Array.isArray(app.phases)) {
-    app.phases.forEach(p => { p.completed = true; });
-    app.progress = 100;
-  }
-
   const isAdmin = isCurrentSessionAdmin();
   if (!isAdmin && !isAppAssignedToDev(app, getLoggedDevId())) {
     showToast('⚠️ Solo puedes visualizar las fases de tus aplicativos asignados.');
@@ -5584,12 +5566,38 @@ function saveSystemChanges() {
   const checkboxes = document.querySelectorAll('.phase-check-input');
   checkboxes.forEach(cb => {
     const idx = parseInt(cb.dataset.phaseIdx);
-    app.phases[idx].completed = cb.checked;
+    if (app.phases && app.phases[idx]) {
+      app.phases[idx].completed = cb.checked;
+    }
   });
 
   const currentWeight = calculateAppProgress(app);
+  app.progress = currentWeight;
+
   if (currentWeight === 100 && app.status === 'risk') {
     app.status = 'ontime';
+  }
+
+  // 🔒 Almacenar auditoría persistente de fases
+  try {
+    let stagesStore = JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}');
+    if (!stagesStore[app.id]) stagesStore[app.id] = {};
+    stagesStore[app.id].phases = JSON.parse(JSON.stringify(app.phases));
+    stagesStore[app.id].progress = currentWeight;
+    stagesStore[app.id].pipelineStage = app.pipelineStage;
+    stagesStore[app.id].isProduction = app.isProduction;
+    stagesStore[app.id].lastAudited = new Date().toISOString();
+    localStorage.setItem('STF_APP_PIPELINE_STAGES', JSON.stringify(stagesStore));
+
+    let auditedStore = JSON.parse(localStorage.getItem('STF_AUDITED_PHASES_STORE') || '{}');
+    auditedStore[app.id] = {
+      phases: JSON.parse(JSON.stringify(app.phases)),
+      progress: currentWeight,
+      lastAudited: new Date().toISOString()
+    };
+    localStorage.setItem('STF_AUDITED_PHASES_STORE', JSON.stringify(auditedStore));
+  } catch (e) {
+    console.warn('Error guardando auditoría de fases:', e);
   }
 
   saveData(appState);
@@ -10153,17 +10161,13 @@ function renderProjectsView(brand = activeBrandFilter) {
       const dev = getDeveloperById(app.devId) || { name: 'Equipo STF', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', role: 'Desarrollador' };
       const stageInfo = getAppPipelineStageInfo(app);
       const isQaOrProd = (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod' || app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || app.isProduction === true);
-      const progress = isQaOrProd ? 100 : calculateAppProgress(app);
+      const progress = calculateAppProgress(app);
       const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
-      const activePhaseIndex = isQaOrProd ? -1 : (app.phases || []).findIndex(p => !p.completed);
-      const activePhase = isQaOrProd
-        ? (stageInfo.stageId === 'stage_qa'
-            ? { name: 'Validación en Planta / Pruebas Activas', weight: 0 }
-            : { name: 'Desplegado en Producción', weight: 0 })
-        : (activePhaseIndex !== -1
-            ? app.phases[activePhaseIndex]
-            : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 }));
-      const displayPhaseNum = isQaOrProd ? totalPhasesCount : (activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount);
+      const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
+      const activePhase = (activePhaseIndex !== -1)
+        ? app.phases[activePhaseIndex]
+        : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: isQaOrProd ? 'Desplegado en Producción' : 'Completado', weight: 0 });
+      const displayPhaseNum = (activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount);
 
       const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
         plantArea: app.category,
@@ -10206,12 +10210,12 @@ function renderProjectsView(brand = activeBrandFilter) {
       // Track segmentado de las 6 fases de desarrollo
       const segmentsHtml = (app.phases || []).map((p, idx) => {
         let segClass = 'pending';
-        if (isQaOrProd || p.completed) {
+        if (p.completed) {
           segClass = 'done';
         } else if (idx === activePhaseIndex) {
           segClass = 'active';
         }
-        const stateText = (isQaOrProd || p.completed) ? 'Completada ✅' : (idx === activePhaseIndex ? 'En Curso ⏳' : 'Pendiente');
+        const stateText = p.completed ? 'Completada ✅' : (idx === activePhaseIndex ? 'En Curso ⏳' : 'Pendiente');
         const tooltip = `Fase ${idx + 1}: ${p.name} (${p.weight}%) - ${stateText}`;
         return `<div class="phase-segment-item ${segClass}" title="${tooltip}"></div>`;
       }).join('');
@@ -10255,7 +10259,7 @@ function renderProjectsView(brand = activeBrandFilter) {
             <div class="project-phase-lifecycle">
               <div class="phase-lifecycle-header">
                 <div class="current-phase-name">
-                  <span class="phase-step-tag">${isQaOrProd ? `${totalPhasesCount} de ${totalPhasesCount} Fases` : `Fase ${displayPhaseNum} de ${totalPhasesCount}`}</span>
+                  <span class="phase-step-tag">${progress === 100 ? `${totalPhasesCount} de ${totalPhasesCount} Fases` : `Fase ${displayPhaseNum} de ${totalPhasesCount}`}</span>
                   <strong class="phase-active-title">${activePhase.name}</strong>
                 </div>
                 <div class="phase-progress-number">
@@ -12755,22 +12759,13 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
   const isProd = isAppInLiveProduction(app) || stageInfo.stageId === 'stage_prod';
   const isQaOrProd = (stageInfo.stageId === 'stage_qa' || stageInfo.stageId === 'stage_prod' || app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || isProd);
 
-  if (isQaOrProd && Array.isArray(app.phases)) {
-    app.phases.forEach(p => { p.completed = true; });
-    app.progress = 100;
-  }
-
-  const progress = isQaOrProd ? 100 : calculateAppProgress(app);
+  const progress = calculateAppProgress(app);
   const totalPhasesCount = (app.phases && app.phases.length) ? app.phases.length : 6;
-  const activePhaseIndex = isQaOrProd ? -1 : (app.phases || []).findIndex(p => !p.completed);
-  const activePhase = isQaOrProd
-    ? (stageInfo.stageId === 'stage_qa'
-        ? { name: 'Validación en Planta / Pruebas Activas', weight: 0 }
-        : { name: 'Desplegado en Producción', weight: 0 })
-    : (activePhaseIndex !== -1
-        ? app.phases[activePhaseIndex]
-        : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: 'Desplegado en Producción', weight: 0 }));
-  const displayPhaseNum = isQaOrProd ? totalPhasesCount : (activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount);
+  const activePhaseIndex = (app.phases || []).findIndex(p => !p.completed);
+  const activePhase = (activePhaseIndex !== -1)
+    ? app.phases[activePhaseIndex]
+    : ((app.phases && app.phases.length) ? app.phases[app.phases.length - 1] : { name: isQaOrProd ? 'Desplegado en Producción' : 'Completado', weight: 0 });
+  const displayPhaseNum = (activePhaseIndex !== -1 ? activePhaseIndex + 1 : totalPhasesCount);
 
   const ind = STF_INDUSTRIAL_CONTEXT[app.id] || {
     plantArea: app.category,
@@ -12818,8 +12813,8 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
 
   // Nodos dinámicos del Stepper Horizontal (configurados a medida por el Admin para este sistema)
   const stepperStepsHtml = (app.phases || []).map((p, idx) => {
-    const isCompleted = isQaOrProd ? true : p.completed;
-    const isActive = !isQaOrProd && (idx === activePhaseIndex);
+    const isCompleted = !!p.completed;
+    const isActive = (idx === activePhaseIndex);
     const shortLabel = getDynamicPhaseLabel(p, idx);
     const stateText = isCompleted ? 'Completada ✅' : (isActive ? 'En Curso ⏳' : 'Pendiente');
     const nodeClass = isCompleted ? 'completed' : (isActive ? 'active' : 'pending');
@@ -12854,7 +12849,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
   }
 
   const totalPhases = Array.isArray(app.phases) ? app.phases.length : 0;
-  const completedPhases = isQaOrProd ? totalPhases : (Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0);
+  const completedPhases = Array.isArray(app.phases) ? app.phases.filter(p => p.completed === true).length : 0;
   const allPhasesDone = totalPhases > 0 && completedPhases === totalPhases;
 
   let statusClass = 'status-ontime';
@@ -12949,7 +12944,7 @@ function renderHorizontalSystemCardHtml(app, refDate, isAdmin) {
       <div class="h-sys-timeline">
         <div class="h-timeline-top">
           <div class="h-active-phase-tag">
-            <span class="h-phase-pill-num">${isQaOrProd ? `${totalPhasesCount} de ${totalPhasesCount} Fases` : `Fase ${displayPhaseNum} de ${totalPhasesCount}`}</span>
+            <span class="h-phase-pill-num">${progress === 100 ? `${totalPhasesCount} de ${totalPhasesCount} Fases` : `Fase ${displayPhaseNum} de ${totalPhasesCount}`}</span>
             <strong class="h-phase-name-text" title="${activePhase.name}">${activePhase.name}</strong>
           </div>
           <div class="h-progress-metric">

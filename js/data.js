@@ -664,10 +664,15 @@ function getStoredData() {
             torreApp.isGroupProject = false;
             torreApp.category = 'Control & Operaciones';
           }
-          // Recuperar promociones de etapas persistidas por el Administrador
+          // Recuperar promociones de etapas y auditoría de fases persistidas por el Administrador
           let stagesStore = {};
           try {
             stagesStore = JSON.parse(localStorage.getItem('STF_APP_PIPELINE_STAGES') || '{}');
+          } catch (e) {}
+
+          let auditedStore = {};
+          try {
+            auditedStore = JSON.parse(localStorage.getItem('STF_AUDITED_PHASES_STORE') || '{}');
           } catch (e) {}
 
           STF_REAL_DATA.applications.forEach(official => {
@@ -693,18 +698,17 @@ function getStoredData() {
               if (savedStageData) {
                 if (savedStageData.pipelineStage) existing.pipelineStage = savedStageData.pipelineStage;
                 if (savedStageData.isProduction !== undefined) existing.isProduction = savedStageData.isProduction;
-                if (savedStageData.progress !== undefined) existing.progress = savedStageData.progress;
-                if (Array.isArray(savedStageData.phases)) existing.phases = savedStageData.phases;
                 if (savedStageData.plantTestStartDate) existing.plantTestStartDate = savedStageData.plantTestStartDate;
               }
 
-              // REGLA FUNDAMENTAL DE PIPELINE: Si el aplicativo está en Puesta en Planta o Producción,
-              // todas sus 6 fases de desarrollo deben estar certificadas al 100% por definición
-              if (existing.pipelineStage === 'stage_qa' || existing.pipelineStage === 'stage_prod' || existing.isProduction === true) {
-                existing.progress = 100;
-                if (Array.isArray(existing.phases)) {
-                  existing.phases.forEach(p => { p.completed = true; });
-                }
+              // Prioridad absoluta a la auditoría realizada por el Administrador
+              const auditData = auditedStore[existing.id] || auditedStore[official.id];
+              if (auditData && Array.isArray(auditData.phases)) {
+                existing.phases = JSON.parse(JSON.stringify(auditData.phases));
+                if (auditData.progress !== undefined) existing.progress = auditData.progress;
+              } else if (savedStageData && Array.isArray(savedStageData.phases)) {
+                existing.phases = JSON.parse(JSON.stringify(savedStageData.phases));
+                if (savedStageData.progress !== undefined) existing.progress = savedStageData.progress;
               }
             }
           });
@@ -730,26 +734,22 @@ function getStoredData() {
             } catch (e) {}
           }
 
-          // Garantizar consistencia global para todas las aplicaciones en stage_qa o stage_prod
+          // Garantizar consistencia global de etapas sin sobreescribir la auditoría de fases
           parsed.applications.forEach(app => {
             if (app.id === 'app_oficina' || (app.name && app.name.toUpperCase().includes('OFICINA'))) {
               app.pipelineStage = 'stage_qa';
-              app.progress = 100;
-              if (Array.isArray(app.phases)) {
-                app.phases.forEach(p => { p.completed = true; });
-              }
             } else {
               const sData = stagesStore[app.id];
               if (sData) {
                 if (sData.pipelineStage) app.pipelineStage = sData.pipelineStage;
                 if (sData.isProduction !== undefined) app.isProduction = sData.isProduction;
               }
-              if (app.pipelineStage === 'stage_qa' || app.pipelineStage === 'stage_prod' || app.isProduction === true) {
-                app.progress = 100;
-                if (Array.isArray(app.phases)) {
-                  app.phases.forEach(p => { p.completed = true; });
-                }
-              }
+            }
+            // Prioridad absoluta a la auditoría de fases efectuada por el Administrador
+            const aAudit = auditedStore[app.id];
+            if (aAudit && Array.isArray(aAudit.phases)) {
+              app.phases = JSON.parse(JSON.stringify(aAudit.phases));
+              if (aAudit.progress !== undefined) app.progress = aAudit.progress;
             }
           });
         }
@@ -895,16 +895,6 @@ function saveData(data) {
   purgePhantomAppsFromState(data);
   if (data && Array.isArray(data.developers)) {
     data.developers = sanitizeAndDeduplicateDevelopers(data.developers);
-  }
-  if (data && Array.isArray(data.applications)) {
-    data.applications.forEach(a => {
-      if (a && (a.pipelineStage === 'stage_qa' || a.pipelineStage === 'stage_prod' || a.isProduction === true)) {
-        a.progress = 100;
-        if (Array.isArray(a.phases)) {
-          a.phases.forEach(p => { p.completed = true; });
-        }
-      }
-    });
   }
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('STF_GROUP_REAL_DATA_V8', JSON.stringify(data));

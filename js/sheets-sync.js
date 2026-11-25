@@ -1377,22 +1377,20 @@
           }
         }
 
-        // Sincronizar porcentaje de avance con las fases si el valor es un número válido (0..100)
-        const isAppQaOrProd = appObj.pipelineStage === 'stage_qa' || appObj.pipelineStage === 'stage_prod' || appObj.isProduction === true;
-        if (isAppQaOrProd) {
-          if (appObj.progress !== 100) {
-            appObj.progress = 100;
-            updated = true;
+        // Prioridad absoluta a la auditoría de fases efectuada por el Administrador
+        let hasAdminAudit = false;
+        try {
+          const auditedStore = JSON.parse(localStorage.getItem('STF_AUDITED_PHASES_STORE') || '{}');
+          if (auditedStore[appObj.id] && Array.isArray(auditedStore[appObj.id].phases)) {
+            hasAdminAudit = true;
+            appObj.phases = JSON.parse(JSON.stringify(auditedStore[appObj.id].phases));
+            if (auditedStore[appObj.id].progress !== undefined) {
+              appObj.progress = auditedStore[appObj.id].progress;
+            }
           }
-          if (Array.isArray(appObj.phases)) {
-            appObj.phases.forEach(ph => {
-              if (!ph.completed) {
-                ph.completed = true;
-                updated = true;
-              }
-            });
-          }
-        } else {
+        } catch (e) {}
+
+        if (!hasAdminAudit) {
           const cloudProg = Number(sys.progress);
           if (!isNaN(cloudProg) && cloudProg >= 0 && cloudProg <= 100 && Array.isArray(appObj.phases)) {
             const currentLocalProg = typeof window.calculateAppProgress === 'function' ? window.calculateAppProgress(appObj) : -1;
