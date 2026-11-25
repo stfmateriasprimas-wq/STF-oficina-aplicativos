@@ -357,9 +357,10 @@ function isTicketAssignedToDev(ticket, devId) {
     if (appNameNorm.includes('tinto') || appCodeNorm.includes('TIN') || appIdNorm.includes('tintoreria')) return true;
   }
 
-  // Esteban Escobar (dev_ee)
+  // Esteban Escobar (dev_ee): Torre de Control
   if (targetId === 'dev_ee') {
     if (ticket.devName && ticket.devName.toLowerCase().includes('esteban')) return true;
+    if (appNameNorm.includes('torre') || appCodeNorm.includes('TC') || appIdNorm.includes('torre')) return true;
   }
 
   // 4. Verificación dinámica contra aplicaciones registradas en appState
@@ -9421,6 +9422,30 @@ function initApp() {
     });
     if (window.appState.supportTickets.length !== prevCount && typeof saveData === 'function') {
       saveData(window.appState);
+    }
+  }
+
+  // Asignación exclusiva y blindada de TORRE DE CONTROL a Esteban Escobar
+  if (window.appState) {
+    if (Array.isArray(window.appState.applications)) {
+      const torreApp = window.appState.applications.find(a => a.id === 'app_torre' || (a.name && a.name.toUpperCase().includes('TORRE')));
+      if (torreApp) {
+        torreApp.devId = 'dev_ee';
+        torreApp.devIds = ['dev_ee'];
+        torreApp.isGroupProject = false;
+        torreApp.category = 'Control & Operaciones';
+      }
+    }
+    if (Array.isArray(window.appState.developers)) {
+      window.appState.developers.forEach(d => {
+        const cid = (typeof resolveCanonicalDevId === 'function') ? resolveCanonicalDevId(d.id) : d.id;
+        if (cid === 'dev_ee') {
+          if (!Array.isArray(d.activeProjects)) d.activeProjects = [];
+          if (!d.activeProjects.includes('app_torre')) d.activeProjects.push('app_torre');
+        } else if (Array.isArray(d.activeProjects)) {
+          d.activeProjects = d.activeProjects.filter(p => p !== 'app_torre');
+        }
+      });
     }
   }
 

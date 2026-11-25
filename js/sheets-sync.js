@@ -428,7 +428,7 @@
           ? 'En Producción'
           : (stageInfo.stageId === 'stage_qa' ? 'Puesta en Planta' : (app.status === 'risk' ? 'En Riesgo' : 'En Construcción'));
 
-        const leaderName = (app.isGroupProject || app.id === 'app_torre')
+        const leaderName = (app.isGroupProject)
           ? 'Equipo Grupal (4 Devs)'
           : (dev ? dev.name : 'Equipo STF');
 
@@ -1482,18 +1482,38 @@
         }
 
         // 2. Asociar al Desarrollador correspondiente
-        const devName = String(ws.devName || ws.Desarrollador || '').trim();
-        const dev = this.findDev(devName);
-        if (dev) {
-          if (!Array.isArray(dev.activeProjects)) dev.activeProjects = [];
-          if (!dev.activeProjects.includes(targetApp.id)) {
-            dev.activeProjects.push(targetApp.id);
+        const isTorre = targetApp.id === 'app_torre' || cleanSysName.toUpperCase().includes('TORRE');
+        if (isTorre) {
+          targetApp.devId = 'dev_ee';
+          targetApp.devIds = ['dev_ee'];
+          targetApp.isGroupProject = false;
+          targetApp.category = 'Control & Operaciones';
+
+          if (Array.isArray(window.appState.developers)) {
+            window.appState.developers.forEach(d => {
+              const cid = (typeof window.resolveCanonicalDevId === 'function') ? window.resolveCanonicalDevId(d.id) : d.id;
+              if (cid === 'dev_ee') {
+                if (!Array.isArray(d.activeProjects)) d.activeProjects = [];
+                if (!d.activeProjects.includes('app_torre')) d.activeProjects.push('app_torre');
+              } else if (Array.isArray(d.activeProjects)) {
+                d.activeProjects = d.activeProjects.filter(p => p !== 'app_torre');
+              }
+            });
           }
-          if (targetApp.isGroupProject || cleanSysName.toUpperCase().includes('TORRE')) {
-            if (!Array.isArray(targetApp.devIds)) targetApp.devIds = ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee'];
-            if (!targetApp.devIds.includes(dev.id)) targetApp.devIds.push(dev.id);
-          } else if (!targetApp.devId) {
-            targetApp.devId = dev.id;
+        } else {
+          const devName = String(ws.devName || ws.Desarrollador || '').trim();
+          const dev = this.findDev(devName);
+          if (dev) {
+            if (!Array.isArray(dev.activeProjects)) dev.activeProjects = [];
+            if (!dev.activeProjects.includes(targetApp.id)) {
+              dev.activeProjects.push(targetApp.id);
+            }
+            if (targetApp.isGroupProject) {
+              if (!Array.isArray(targetApp.devIds)) targetApp.devIds = ['dev_jg', 'dev_jd', 'dev_mocho', 'dev_ee'];
+              if (!targetApp.devIds.includes(dev.id)) targetApp.devIds.push(dev.id);
+            } else if (!targetApp.devId) {
+              targetApp.devId = dev.id;
+            }
           }
         }
 

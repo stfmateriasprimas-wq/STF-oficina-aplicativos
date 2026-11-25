@@ -461,13 +461,13 @@ function setupSistemasWebSheet(ss, forceClean) {
   ensureExactHeaders(s, HEADERS.SISTEMAS_WEB);
 
   var officialWebRows = [
-    ["Equipo Grupal (4 Devs)", "TORRE DE CONTROL", customUrls["TORRE DE CONTROL"] || "sharepoint", "En Construcción"],
     ["Edwin Diaz", "LABORATORIO", customUrls["LABORATORIO"] || "https://stflab-calidad-textil.vercel.app/", "En Construcción"],
     ["Jose Guzman", "GEO UBICACION TALLERES", customUrls["GEO UBICACION TALLERES"] || "https://stf-rastreo-calidad.vercel.app/", "En Construcción"],
     ["Jose Guzman", "OFICINA - APLICATIVOS", customUrls["OFICINA - APLICATIVOS"] || "https://stf-oficina-aplicativos.vercel.app/", "En Construcción"],
     ["Juan David", "CALIDAD", customUrls["CALIDAD"] || "", "En Producción"],
     ["Jhon Eyder (Mocho)", "TINTORERIA", customUrls["TINTORERIA"] || "https://stf-tintoreria.netlify.app/?v=2", "En Producción"],
-    ["Jose Guzman", "COLCHAS", customUrls["COLCHAS"] || "https://colchas.vercel.app/", "En Producción"]
+    ["Jose Guzman", "COLCHAS", customUrls["COLCHAS"] || "https://colchas.vercel.app/", "En Producción"],
+    ["Esteban Escobar", "TORRE DE CONTROL", customUrls["TORRE DE CONTROL"] || "sharepoint", "En Producción"]
   ];
 
   var lastR = s.getLastRow();

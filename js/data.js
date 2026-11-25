@@ -68,7 +68,7 @@ const STF_REAL_DATA = {
       codeQuality: 93,
       sprintsCompleted: 16,
       score: "9.5 / 10",
-      activeProjects: ["app_colchas", "app_geo", "app_oficina", "app_torre"]
+      activeProjects: ["app_colchas", "app_geo", "app_oficina"]
     },
     {
       id: "dev_jd",
@@ -82,7 +82,7 @@ const STF_REAL_DATA = {
       codeQuality: 96,
       sprintsCompleted: 14,
       score: "9.4 / 10",
-      activeProjects: ["app_calidad", "app_torre"]
+      activeProjects: ["app_calidad"]
     },
     {
       id: "dev_ee",
@@ -110,7 +110,7 @@ const STF_REAL_DATA = {
       codeQuality: 92,
       sprintsCompleted: 12,
       score: "9.2 / 10",
-      activeProjects: ["app_tintoreria", "app_torre"]
+      activeProjects: ["app_tintoreria"]
     },
     {
       id: "dev_ediaz",
@@ -124,7 +124,7 @@ const STF_REAL_DATA = {
       codeQuality: 98,
       sprintsCompleted: 24,
       score: "9.9 / 10",
-      activeProjects: ["app_laboratorio", "app_torre"]
+      activeProjects: ["app_laboratorio"]
     }
   ],
 
@@ -134,11 +134,11 @@ const STF_REAL_DATA = {
       id: "app_torre",
       code: "STF-TC-01",
       name: "TORRE DE CONTROL",
-      category: "Desarrollo Grupal",
-      description: "Macro-sistema centralizador de operaciones, manufactura, seguimiento logístico y KPIs estratégicos en tiempo real para STF GROUP. Desarrollo colaborativo del equipo.",
-      devId: "dev_jg", // Líder técnico principal
-      devIds: ["dev_jg", "dev_jd", "dev_mocho", "dev_ee"], // Los 4 desarrolladores
-      isGroupProject: true,
+      category: "Control & Operaciones",
+      description: "Macro-sistema centralizador de operaciones, manufactura, seguimiento logístico y KPIs estratégicos en tiempo real para STF GROUP.",
+      devId: "dev_ee", // Desarrollador exclusivo asignado en Google Sheets
+      devIds: ["dev_ee"],
+      isGroupProject: false,
       deadline: "2026-12-15",
       priority: "Alta",
       status: "ontime",
@@ -632,17 +632,38 @@ function getStoredData() {
         // Reasignación oficial de LABORATORIO a Edwin Diaz (Admin) y desvinculación de Jose Guzman
         const jgDev = parsed.developers.find(d => d.id === 'dev_jg');
         if (jgDev && Array.isArray(jgDev.activeProjects)) {
-          jgDev.activeProjects = jgDev.activeProjects.filter(p => p !== 'app_laboratorio');
+          jgDev.activeProjects = jgDev.activeProjects.filter(p => p !== 'app_laboratorio' && p !== 'app_torre');
         }
         const ediazUser = parsed.developers.find(d => d.id === 'dev_ediaz');
         if (ediazUser) {
-          ediazUser.activeProjects = ['app_laboratorio', 'app_torre'];
+          ediazUser.activeProjects = ['app_laboratorio'];
           ediazUser.role = 'Admin & Desarrollo';
         }
+
+        // 🔒 Asignación EXCLUSIVA de TORRE DE CONTROL a Esteban Escobar (dev_ee) según hoja SISTEMAS_WEB
+        if (Array.isArray(parsed.developers)) {
+          parsed.developers.forEach(d => {
+            const cid = (typeof resolveCanonicalDevId === 'function') ? resolveCanonicalDevId(d.id) : d.id;
+            if (cid === 'dev_ee') {
+              d.activeProjects = ['app_torre'];
+            } else if (Array.isArray(d.activeProjects)) {
+              d.activeProjects = d.activeProjects.filter(p => p !== 'app_torre');
+            }
+          });
+        }
+
         // Asegurar que applications e integrations sean arrays válidos con los enlaces reales oficiales
         if (!Array.isArray(parsed.applications) || parsed.applications.length === 0) {
           parsed.applications = JSON.parse(JSON.stringify(STF_REAL_DATA.applications));
         } else {
+          // Asignación exclusiva de TORRE DE CONTROL a Esteban Escobar en applications
+          const torreApp = parsed.applications.find(a => a.id === 'app_torre' || (a.name && a.name.toUpperCase().includes('TORRE')));
+          if (torreApp) {
+            torreApp.devId = 'dev_ee';
+            torreApp.devIds = ['dev_ee'];
+            torreApp.isGroupProject = false;
+            torreApp.category = 'Control & Operaciones';
+          }
           // Recuperar promociones de etapas persistidas por el Administrador
           let stagesStore = {};
           try {
