@@ -14638,10 +14638,11 @@ function renderSupportView() {
   const scopedTickets = typeof getScopedSupportTickets === 'function' ? getScopedSupportTickets() : appState.supportTickets;
 
   // KPIs
-  const totalCount = scopedTickets.length;
+  const totalCount = scopedTickets.filter(t => t.status !== 'eliminada').length;
   const pendingCount = scopedTickets.filter(t => t.status === 'pendiente').length;
   const acceptedCount = scopedTickets.filter(t => t.status === 'aceptada').length;
   const rejectedCount = scopedTickets.filter(t => t.status === 'rechazada').length;
+  const deletedCount = scopedTickets.filter(t => t.status === 'eliminada').length;
 
   const kpiTotal = document.getElementById('kpiSupportTotal');
   const kpiPending = document.getElementById('kpiSupportPending');
@@ -14658,11 +14659,13 @@ function renderSupportView() {
   const cPending = document.getElementById('countSupPending');
   const cAccepted = document.getElementById('countSupAccepted');
   const cRejected = document.getElementById('countSupRejected');
+  const cDeleted = document.getElementById('countSupDeleted');
 
   if (cAll) cAll.textContent = totalCount;
   if (cPending) cPending.textContent = pendingCount;
   if (cAccepted) cAccepted.textContent = acceptedCount;
   if (cRejected) cRejected.textContent = rejectedCount;
+  if (cDeleted) cDeleted.textContent = deletedCount;
 
   // Actualizar selector de desarrollador si es Super Admin
   const devSelect = document.getElementById('selectSupportDevFilter');
@@ -14687,7 +14690,9 @@ function renderSupportView() {
   }
 
   // Filtro por estado
-  if (currentSupportFilter !== 'all') {
+  if (currentSupportFilter === 'all') {
+    displayTickets = displayTickets.filter(t => t.status !== 'eliminada');
+  } else {
     displayTickets = displayTickets.filter(t => t.status === currentSupportFilter);
   }
 
@@ -14720,23 +14725,30 @@ function renderSupportView() {
   container.className = `support-tickets-list-container mode-${currentSupportLayoutMode}`;
 
   if (displayTickets.length === 0) {
+    const isDeletedFilter = currentSupportFilter === 'eliminada';
     container.innerHTML = `
       <div class="support-empty-state" style="text-align: center; padding: 60px 20px; background: var(--bg-card); border-radius: 20px; border: 1.5px dashed var(--border-light); grid-column: 1 / -1;">
-        <div style="width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 20px; background: rgba(99, 102, 241, 0.1); color: #4F46E5; display: flex; align-items: center; justify-content: center; font-size: 28px;">
-          <i data-lucide="headphones"></i>
+        <div style="width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 20px; background: ${isDeletedFilter ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)'}; color: ${isDeletedFilter ? '#EF4444' : '#4F46E5'}; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+          <i data-lucide="${isDeletedFilter ? 'trash-2' : 'headphones'}"></i>
         </div>
-        <h3 style="font-size: 17px; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">No se encontraron solicitudes</h3>
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">
+          ${isDeletedFilter ? 'No hay solicitudes eliminadas' : 'No se encontraron solicitudes'}
+        </h3>
         <p style="font-size: 13.5px; color: var(--text-muted); max-width: 460px; margin: 0 auto 20px; line-height: 1.5;">
           ${currentSupportSearchTerm 
             ? `No hay coincidencias para el término "${currentSupportSearchTerm}". Intenta con otra palabra clave.`
-            : (currentSupportFilter !== 'all' 
-                ? `No hay solicitudes en la categoría "${currentSupportFilter}".`
-                : 'La bandeja de soporte técnico se encuentra al día y sin requerimientos activos de planta.')}
+            : (isDeletedFilter
+                ? 'La papelera está vacía. Las solicitudes que elimines de tu bandeja se conservarán aquí para que puedas restaurarlas o eliminarlas definitivamente.'
+                : (currentSupportFilter !== 'all' 
+                    ? `No hay solicitudes en la categoría "${currentSupportFilter}".`
+                    : 'La bandeja de soporte técnico se encuentra al día y sin requerimientos activos de planta.'))}
         </p>
-        <button type="button" class="pill-btn primary-glow-btn small-glow" onclick="openNewSupportModal()">
-          <i data-lucide="plus-circle"></i>
-          <span>Simular Requerimiento de Planta</span>
-        </button>
+        ${!isDeletedFilter ? `
+          <button type="button" class="pill-btn primary-glow-btn small-glow" onclick="openNewSupportModal()">
+            <i data-lucide="plus-circle"></i>
+            <span>Simular Requerimiento de Planta</span>
+          </button>
+        ` : ''}
       </div>
     `;
     updateSupportNavBadge();
@@ -14760,6 +14772,10 @@ function renderSupportView() {
       statusClass = 'status-rejected';
       statusLabel = 'Rechazada / No Aplica';
       statusIcon = 'x-circle';
+    } else if (ticket.status === 'eliminada') {
+      statusClass = 'status-deleted';
+      statusLabel = 'Eliminada / Papelera';
+      statusIcon = 'trash-2';
     }
 
     // Priority styling
@@ -14792,6 +14808,7 @@ function renderSupportView() {
     });
 
     const isPending = ticket.status === 'pendiente';
+    const isDeleted = ticket.status === 'eliminada';
     const hasResolution = !!ticket.resolution;
 
     return `
@@ -14814,6 +14831,17 @@ function renderSupportView() {
               <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
               <span>Copiar</span>
             </button>
+            ${isDeleted ? `
+              <button type="button" class="st-btn-copy st-btn-restore-header" onclick="handleRestoreSupportTicket('${ticket.id}')" title="Restaurar solicitud a la bandeja">
+                <i data-lucide="rotate-ccw" style="width: 12px; height: 12px; color: #10B981;"></i>
+                <span>Restaurar</span>
+              </button>
+            ` : `
+              <button type="button" class="st-btn-copy st-btn-delete-header" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Eliminar solicitud y mover a papelera">
+                <i data-lucide="trash-2" style="width: 12px; height: 12px; color: #EF4444;"></i>
+                <span>Eliminar</span>
+              </button>
+            `}
             <div class="st-status-badge ${statusClass}">
               <i data-lucide="${statusIcon}" style="width: 13px; height: 13px;"></i>
               <span>${statusLabel}</span>
@@ -14922,7 +14950,16 @@ function renderSupportView() {
           </div>
 
           <div class="st-footer-actions">
-            ${isPending ? `
+            ${isDeleted ? `
+              <button type="button" class="pill-btn st-btn-restore" onclick="handleRestoreSupportTicket('${ticket.id}')">
+                <i data-lucide="rotate-ccw"></i>
+                <span>Restaurar Solicitud</span>
+              </button>
+              <button type="button" class="pill-btn st-btn-purge" onclick="handlePurgeSupportTicket('${ticket.id}')">
+                <i data-lucide="trash"></i>
+                <span>Eliminar Definitivo</span>
+              </button>
+            ` : isPending ? `
               <button type="button" class="pill-btn st-btn-reject" onclick="openSupportActionModal('${ticket.id}', 'rechazada')">
                 <i data-lucide="x"></i>
                 <span>Rechazar Solicitud</span>
@@ -14931,10 +14968,18 @@ function renderSupportView() {
                 <i data-lucide="check"></i>
                 <span>Aceptar Solicitud</span>
               </button>
+              <button type="button" class="pill-btn st-btn-delete-card" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Mover a eliminadas">
+                <i data-lucide="trash-2"></i>
+                <span>Eliminar</span>
+              </button>
             ` : `
               <button type="button" class="pill-btn secondary-btn" onclick="openSupportActionModal('${ticket.id}', '${ticket.status}')" style="font-size: 12px; padding: 7px 16px; border-radius: 20px;">
                 <i data-lucide="edit-3"></i>
                 <span>Modificar Respuesta Oficial</span>
+              </button>
+              <button type="button" class="pill-btn st-btn-delete-card" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Mover a eliminadas">
+                <i data-lucide="trash-2"></i>
+                <span>Eliminar</span>
               </button>
             `}
           </div>
@@ -14945,6 +14990,160 @@ function renderSupportView() {
 
   updateSupportNavBadge();
   if (window.lucide) lucide.createIcons();
+}
+
+// =========================================================================
+// OPERACIONES DE ELIMINACIÓN Y PAPELERA DE SOPORTE TÉCNICO
+// =========================================================================
+function handleDeleteSupportTicket(ticketId) {
+  if (!ticketId) return;
+  const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
+  if (!ticket) return;
+
+  const code = ticket.code || ticket.id;
+  const confirmed = confirm(`¿Deseas mover la solicitud [${code}] a la sección de Eliminadas?\nPodrás restaurarla cuando quieras o eliminarla definitivamente.`);
+  if (!confirmed) return;
+
+  ticket.previousStatus = ticket.status || 'pendiente';
+  ticket.status = 'eliminada';
+  ticket.deletedAt = new Date().toISOString();
+
+  if (typeof window.saveData === 'function') {
+    window.saveData(appState);
+  }
+
+  // Notificar a Google Sheets si está enlazado
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.sendPayload === 'function') {
+      window.SheetsSync.sendPayload({
+        action: 'delete_support_ticket',
+        ticketId: ticket.id,
+        code: ticket.code
+      }).catch(err => console.warn('[DeleteSupportTicket] SheetsSync:', err));
+    }
+  } catch(e) {}
+
+  // Sincronización en vivo
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'DELETE_SUPPORT_TICKET',
+        ticketId: ticket.id
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch(e) {}
+
+  if (typeof showToast === 'function') {
+    showToast(`🗑️ Solicitud ${code} movida a Eliminadas.`, 'info');
+  }
+
+  renderSupportView();
+  updateSupportNavBadge();
+}
+
+function handleRestoreSupportTicket(ticketId) {
+  if (!ticketId) return;
+  const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
+  if (!ticket) return;
+
+  const code = ticket.code || ticket.id;
+  ticket.status = ticket.previousStatus || 'pendiente';
+  delete ticket.previousStatus;
+  delete ticket.deletedAt;
+
+  // Remover de tickets purgados si existía
+  try {
+    let purged = JSON.parse(localStorage.getItem('STF_PURGED_SUPPORT_TICKETS') || '[]');
+    purged = purged.filter(c => c !== String(code).toUpperCase());
+    localStorage.setItem('STF_PURGED_SUPPORT_TICKETS', JSON.stringify(purged));
+  } catch(e) {}
+
+  if (typeof window.saveData === 'function') {
+    window.saveData(appState);
+  }
+
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.sendPayload === 'function') {
+      window.SheetsSync.sendPayload({
+        action: 'restore_support_ticket',
+        ticketId: ticket.id,
+        code: ticket.code,
+        status: ticket.status
+      }).catch(err => console.warn('[RestoreSupportTicket] SheetsSync:', err));
+    }
+  } catch(e) {}
+
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'RESTORE_SUPPORT_TICKET',
+        ticketId: ticket.id
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch(e) {}
+
+  if (typeof showToast === 'function') {
+    showToast(`✓ Solicitud ${code} restaurada con éxito a la bandeja activa.`, 'success');
+  }
+
+  renderSupportView();
+  updateSupportNavBadge();
+}
+
+function handlePurgeSupportTicket(ticketId) {
+  if (!ticketId) return;
+  const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
+  const code = ticket ? (ticket.code || ticket.id) : ticketId;
+
+  const confirmed = confirm(`⚠️ ¿Confirmas eliminar DEFINITIVAMENTE la solicitud [${code}]?\nEsta acción no se puede deshacer y se borrará por completo.`);
+  if (!confirmed) return;
+
+  // Registrar código purgado para evitar resurrección automática
+  try {
+    let purged = JSON.parse(localStorage.getItem('STF_PURGED_SUPPORT_TICKETS') || '[]');
+    if (code && !purged.includes(String(code).toUpperCase())) {
+      purged.push(String(code).toUpperCase());
+      localStorage.setItem('STF_PURGED_SUPPORT_TICKETS', JSON.stringify(purged));
+    }
+  } catch(e) {}
+
+  appState.supportTickets = (appState.supportTickets || []).filter(t => t.id !== ticketId);
+
+  if (typeof window.saveData === 'function') {
+    window.saveData(appState);
+  }
+
+  try {
+    if (window.SheetsSync && typeof window.SheetsSync.sendPayload === 'function') {
+      window.SheetsSync.sendPayload({
+        action: 'purge_support_ticket',
+        ticketId: ticketId,
+        code: code
+      }).catch(err => console.warn('[PurgeSupportTicket] SheetsSync:', err));
+    }
+  } catch(e) {}
+
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'PURGE_SUPPORT_TICKET',
+        ticketId: ticketId
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch(e) {}
+
+  if (typeof showToast === 'function') {
+    showToast(`🗑️ Solicitud ${code} eliminada definitivamente.`, 'warning');
+  }
+
+  renderSupportView();
+  updateSupportNavBadge();
 }
 
 // =========================================================================
@@ -15708,4 +15907,7 @@ if (typeof window !== 'undefined') {
   window.handleNewDevFileSelect = handleNewDevFileSelect;
   window.handleNewDevUrlInput = handleNewDevUrlInput;
   window.compressAndOptimizeImage = compressAndOptimizeImage;
+  window.handleDeleteSupportTicket = handleDeleteSupportTicket;
+  window.handleRestoreSupportTicket = handleRestoreSupportTicket;
+  window.handlePurgeSupportTicket = handlePurgeSupportTicket;
 }

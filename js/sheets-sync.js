@@ -1259,13 +1259,26 @@
           if (!ct.devName) ct.devName = 'Jose Guzman';
         }
 
+        // Si el ticket fue purgado localmente de forma definitiva, no revivirlo
+        let purgedCodes = [];
+        try { purgedCodes = JSON.parse(localStorage.getItem('STF_PURGED_SUPPORT_TICKETS') || '[]'); } catch(e){}
+        if (purgedCodes.includes(ctCode.toUpperCase())) {
+          return;
+        }
+
         const existingIdx = state.supportTickets.findIndex(t =>
           String(t.code || t.id || '').trim().toUpperCase() === ctCode.toUpperCase()
         );
 
         if (existingIdx !== -1) {
           const local = state.supportTickets[existingIdx];
-          if (local.status !== ct.status || (!local.resolution && ct.resolution)) {
+          if (local.status === 'eliminada') {
+            // Mantener en papelera si el usuario localmente la eliminó
+            if (!local.resolution && ct.resolution) {
+              local.resolution = ct.resolution;
+              hasChanges = true;
+            }
+          } else if (local.status !== ct.status || (!local.resolution && ct.resolution)) {
             state.supportTickets[existingIdx] = { ...local, ...ct };
             hasChanges = true;
           }
@@ -1638,6 +1651,13 @@
             }
           }
           const cleanCode = 'STF-SUP-' + parsedCodeNum;
+
+          // Si el ticket fue purgado localmente, ignorar
+          let purgedCodes = [];
+          try { purgedCodes = JSON.parse(localStorage.getItem('STF_PURGED_SUPPORT_TICKETS') || '[]'); } catch(e){}
+          if (purgedCodes.includes(cleanCode.toUpperCase())) {
+            return;
+          }
 
           const existingTicket = state.supportTickets.find(t =>
             (t.title && t.title.toLowerCase() === title.toLowerCase()) ||
