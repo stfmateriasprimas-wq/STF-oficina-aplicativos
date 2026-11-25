@@ -386,20 +386,35 @@ function setupUsuariosSheet(ss) {
   var s = getOrCreateSheetByName(ss, TABS.USUARIOS, ["Usuarios"]);
   ensureExactHeaders(s, HEADERS.USUARIOS);
 
+  var OFFICIAL_MASTER_PASSWORDS = {
+    "jose@guzman": "159",
+    "juan@david": "2222",
+    "esteban@escobar": "1111",
+    "jhon@eyder": "4444",
+    "ediaz": "Admin"
+  };
+
   if (s.getLastRow() <= 1) {
     var defaultUsers = [
       ["159", "jose@guzman", "desarrollador", "joseoneiber711@gmail.com", "Jose Guzman", "ACTIVO", ""],
       ["2222", "juan@david", "desarrollador", "juan.david@studiof.com.co", "Juan David", "ACTIVO", ""],
       ["1111", "esteban@escobar", "desarrollador", "esteban.escobar@studiof.com.co", "Esteban Escobar", "ACTIVO", ""],
       ["4444", "jhon@eyder", "desarrollador", "jhon.eyder@studiof.com.co", "Jhon Eyder (Mocho)", "ACTIVO", ""],
-      ["Admin", "ediaz", "Admin", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN", ""]
+      ["Admin", "ediaz", "Admin & Desarrollo", "edwin.diaz@studiof.com.co", "Edwin Diaz", "ADMIN", ""]
     ];
     s.getRange(2, 1, defaultUsers.length, 7).setValues(defaultUsers);
   } else {
-    // Asegurar que todas las filas existentes tengan Nombre_Completo (Col E) y Estado (Col F)
+    // Blindaje y fijación de contraseñas oficiales en Columna A (ID)
     var rows = s.getDataRange().getValues();
     for (var r = 1; r < rows.length; r++) {
       var uLog = String(rows[r][1] || "").toLowerCase().trim();
+      var currentIdPass = String(rows[r][0] || "").trim();
+
+      // Si la contraseña fue alterada por un prefijo "dev_" o está vacía, restaurar la contraseña fija oficial
+      if (OFFICIAL_MASTER_PASSWORDS[uLog] && (currentIdPass.indexOf("dev_") === 0 || !currentIdPass)) {
+        s.getRange(r + 1, 1).setValue(OFFICIAL_MASTER_PASSWORDS[uLog]);
+      }
+
       var role = String(rows[r][2] || "desarrollador").trim();
       var name = String(rows[r][4] || "").trim();
       var state = String(rows[r][5] || "").trim();
@@ -418,7 +433,7 @@ function setupUsuariosSheet(ss) {
       }
     }
   }
-  formatCorporateSheet(s, "#0F172A", [120, 160, 130, 240, 180, 100]);
+  formatCorporateSheet(s, "#0F172A", [120, 160, 130, 240, 180, 100, 240]);
 }
 
 /**
@@ -1682,12 +1697,24 @@ function doPost(e) {
         if (lastRU > 1) {
           sU.getRange(2, 1, lastRU - 1, Math.max(7, sU.getLastColumn())).clearContent();
         }
+        var OFFICIAL_MASTER_PASSWORDS = {
+          "jose@guzman": "159",
+          "juan@david": "2222",
+          "esteban@escobar": "1111",
+          "jhon@eyder": "4444",
+          "ediaz": "Admin"
+        };
         var uMatrix = [];
         for (var u = 0; u < users.length; u++) {
           var usr = users[u];
           var roleStr = usr.role || "desarrollador";
+          var uUser = String(usr.username || "").toLowerCase().trim();
+          var fixedPass = OFFICIAL_MASTER_PASSWORDS[uUser] || usr.idPassword || usr.id;
+          if (!fixedPass || String(fixedPass).indexOf("dev_") === 0) {
+            fixedPass = OFFICIAL_MASTER_PASSWORDS[uUser] || "159";
+          }
           uMatrix.push([
-            usr.idPassword || usr.id || "123456",
+            fixedPass,
             usr.username || "",
             roleStr,
             usr.email || "",

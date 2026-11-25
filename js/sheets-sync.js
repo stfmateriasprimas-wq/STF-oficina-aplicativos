@@ -543,14 +543,32 @@
 
     /**
      * Enviar todos los usuarios locales de la aplicación a la pestaña 'Usuarios' de Google Sheets
+     * manteniendo fijas e inalterables las contraseñas oficiales (Columna A: ID)
      */
     async pushUsersToSheets() {
       if (!window.appState || !Array.isArray(window.appState.developers)) return { status: 'error' };
 
+      const OFFICIAL_MASTER_PASSWORDS = {
+        'jose@guzman': '159',
+        'dev_jg': '159',
+        'juan@david': '2222',
+        'dev_jd': '2222',
+        'esteban@escobar': '1111',
+        'dev_ee': '1111',
+        'jhon@eyder': '4444',
+        'dev_mocho': '4444',
+        'ediaz': 'Admin',
+        'dev_ediaz': 'Admin'
+      };
+
       const usersList = window.appState.developers.map(dev => {
+        const uLower = String(dev.username || '').toLowerCase();
+        const idLower = String(dev.id || '').toLowerCase();
+        const fixedPass = OFFICIAL_MASTER_PASSWORDS[uLower] || OFFICIAL_MASTER_PASSWORDS[idLower] || dev.idPassword || '123456';
+
         return {
-          id: dev.idPassword || dev.id.replace('dev_', ''),
-          idPassword: dev.idPassword || dev.id.replace('dev_', ''),
+          id: fixedPass,
+          idPassword: fixedPass,
           username: dev.username || dev.id,
           role: dev.role || 'desarrollador',
           email: dev.email || '',
