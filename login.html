@@ -5,17 +5,17 @@
   <!-- Content Security Policy (CSP Defensiva) -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>STF-AP S.A. · Acceso de Ingeniería & Desarrollo</title>
+  <title>STF-AP S.A. · Conectamos Talento · Oficina de Aplicativos</title>
 
-  <!-- Favicon & Touch Icons (STF-AP S.A. Golden Branding) -->
+  <!-- Favicon & Touch Icons -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/stf-ap-apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
 
-  <!-- Mobile App / PWA Meta Tags (Descarga e Instalación Móvil) -->
-  <meta name="theme-color" content="#0B0C10">
+  <!-- Mobile App / PWA Meta Tags -->
+  <meta name="theme-color" content="#030712">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="STF-AP">
@@ -31,7 +31,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Login Stylesheet (4K & High-DPI Optimized) -->
-  <link rel="stylesheet" href="css/login.css?v=26">
+  <link rel="stylesheet" href="css/login.css?v=30">
 
   <!-- STF Defensive Resilience & Crash Shield -->
   <script>
@@ -48,150 +48,254 @@
 </head>
 <body class="lamp-on">
 
-  <!-- CINEMATIC BACKGROUND LAYER: STF Headquarters Photography (Visible & Clean) -->
+  <!-- CINEMATIC BACKGROUND LAYER: STF Headquarters Photography (Visible & 4K Clean) -->
   <div class="cyber-bg-container" id="cyberBgContainer">
-    <!-- STF Company Headquarters (Fotografía Real de la Sede Corporativa STF GROUP) -->
+    <!-- STF Company Headquarters Real Photography -->
     <div class="bg-building-cinematic">
-      <img src="assets/stf-headquarters-bg.webp" alt="STF GROUP Sede Corporativa" class="bg-building-img" id="bgBuildingImg">
+      <img src="assets/stf-headquarters-hd.jpg" alt="STF GROUP Sede Corporativa" class="bg-building-img" id="bgBuildingImg">
     </div>
 
-    <!-- Capa Oscurecida Uniforme (Deja ver con total claridad la sede y resalta el cuadro) -->
-    <div class="bg-dark-overlay"></div>
+    <!-- 4K Deep Midnight-Sapphire Gradient Mesh (Preserva la visibilidad de la sede) -->
+    <div class="bg-midnight-mesh"></div>
+
+    <!-- Subtle Technical 4K Grid Pattern -->
+    <div class="bg-tech-grid"></div>
+
+    <!-- Radial Ambient Glows for Depth -->
+    <div class="bg-ambient-glow glow-hero"></div>
+    <div class="bg-ambient-glow glow-card"></div>
   </div>
 
-  <!-- FULLSCREEN STAGE: Centered Layout with STF Logo on Top & Card in Center -->
-  <main class="fullscreen-stage secure-terminal-stage">
-
-    <!-- STF GROUP Official Corporate Logo Above Card -->
-    <div class="login-brand-header">
-      <img src="assets/stf-group-logo-white.png" alt="STF GROUP S.A. - STUDIO F · ela · STUDIO F MAN" class="login-brand-logo">
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="stf-top-navbar">
+    <div class="stf-top-brand">
+      <div class="brand-text-logo">
+        <span class="brand-stf">STFGROUP</span>
+        <span class="brand-sa">S.A.</span>
+      </div>
+      <span class="brand-sep"></span>
+      <span class="brand-section">OFICINA DE APLICATIVOS</span>
     </div>
 
-    <!-- THE TRANSLUCENT FROSTED GLASS LOGIN TAG -->
-    <div class="login-card-container glass-tag-plaque" id="loginCard">
-      <!-- Decorative Rounded Corner Square (Bottom-Right Version Tag & Device ID Assignment) -->
-      <div class="card-corner-badge corner-br" onclick="promptDeviceCustomName()" style="cursor: pointer;" title="ID del Equipo Corporativo (Haz clic para asignar el Nombre exacto de Windows)">
-        <span class="corner-version-tag">STF v2.7</span>
-      </div>
+    <div class="stf-top-actions">
+      <a href="javascript:void(0)" onclick="openPasswordRecoveryModal()" class="stf-help-link" title="Soporte y Asistencia Corporativa">
+        <i data-lucide="help-circle"></i>
+        <span>¿Necesitas ayuda?</span>
+      </a>
+    </div>
+  </header>
 
-      <!-- Glass Indicator Dots (Right Edge Detail) -->
-      <div class="card-glass-dots" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
+  <!-- MAIN TWO-COLUMN STAGE -->
+  <main class="stf-main-stage">
+    <div class="stf-split-container">
 
-      <!-- Top Terminal Access Pill -->
-      <div class="terminal-badge-wrapper">
-        <span class="terminal-access-pill">
-          <span class="terminal-dot"></span>
-          <span class="terminal-pill-text">TERMINAL DE ACCESO SEGURO</span>
-        </span>
-      </div>
-
-      <!-- Welcome Title & Subtitle -->
-      <h1 class="terminal-title">BIENVENIDO</h1>
-      <p class="terminal-subtitle">Inicie sesión con su documento o perfil corporativo</p>
-
-      <!-- Security Lockout Banner (Activo tras 3 u 8 intentos fallidos) -->
-      <div id="lockoutBanner" class="lockout-banner" style="display: none;">
-        <div class="lockout-banner-content">
-          <div class="lockout-banner-icon">
-            <i data-lucide="shield-alert"></i>
-          </div>
-          <div class="lockout-banner-text">
-            <div class="lockout-title" id="lockoutTitle">Acceso Bloqueado Temporalmente</div>
-            <div class="lockout-desc" id="lockoutDesc">Demasiados intentos fallidos. Reintenta en:</div>
-            <div class="lockout-timer" id="lockoutTimer">05:00</div>
-          </div>
-        </div>
-      </div>
-
-      <form class="login-form glass-form" id="loginForm">
-        <!-- Preselected Profile Card (al cambiar de perfil) -->
-        <div id="preselectedProfileCard" style="display: none; background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.22); border-radius: 18px; padding: 12px 14px; margin-bottom: 16px; align-items: center; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
-          <img id="preselectedAvatar" src="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #10B981; flex-shrink: 0;" alt="Avatar">
-          <div style="flex: 1; text-align: left; min-width: 0;">
-            <div style="font-size: 10px; color: #10B981; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Perfil Seleccionado</div>
-            <strong id="preselectedName" style="font-size: 14.5px; color: #FFFFFF; display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Desarrollador</strong>
-            <span id="preselectedUsername" style="font-size: 11.5px; color: #34D399; font-family: monospace;">usuario</span>
-          </div>
-          <button type="button" id="btnClearPreselected" onclick="clearPreselectedProfile()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; font-size: 11px; font-weight: 700; border-radius: 8px; padding: 5px 10px; cursor: pointer; transition: all 0.2s;" title="Cambiar a otro usuario">Cambiar</button>
+      <!-- ========================================================
+           LEFT COLUMN: HERO HEADLINE & ISOMETRIC ARTWORK
+           ======================================================== -->
+      <section class="stf-hero-col">
+        <div class="hero-header-tag">
+          <span class="tag-dash">—</span>
+          <span>EL SIGUIENTE NIVEL COMIENZA AQUÍ</span>
         </div>
 
-        <!-- User Name / Login Field (Columna 2: Usuario_Logueo) -->
-        <div class="glass-input-group" id="userInputGroup">
-          <div class="input-header-row">
-            <span class="input-label-row">
-              <i data-lucide="key" class="label-icon-green"></i>
-              <span class="input-label-text">ID O DOCUMENTO DE USUARIO</span>
-            </span>
-            <span class="badge-authorized-green">AUTORIZADO STF</span>
+        <h1 class="hero-title">
+          <span>Conectamos</span>
+          <span>talento.</span>
+          <span class="hero-gradient-text">Creamos futuro.</span>
+        </h1>
+
+        <p class="hero-subtext">
+          Un solo acceso a las herramientas que hacen<br class="hero-br">
+          posible todo lo que somos.
+        </p>
+
+        <!-- ARTWORK: Orbital Ellipses with 3D Isometric Cube -->
+        <div class="stf-graphic-stage">
+          <div class="graphic-orbits">
+            <!-- Ellipse Orbits SVG -->
+            <svg class="orbits-svg" viewBox="0 0 460 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="230" cy="140" rx="200" ry="85" transform="rotate(-15 230 140)" stroke="rgba(56, 189, 248, 0.28)" stroke-width="1.2" stroke-dasharray="4 3"/>
+              <ellipse cx="230" cy="140" rx="180" ry="110" transform="rotate(25 230 140)" stroke="rgba(99, 102, 241, 0.22)" stroke-width="1.2"/>
+              <!-- Glowing Particle Nodes -->
+              <circle cx="85" cy="100" r="3.5" fill="#38BDF8" filter="url(#glow)"/>
+              <circle cx="365" cy="190" r="3" fill="#818CF8"/>
+              <circle cx="210" cy="45" r="2.5" fill="#38BDF8"/>
+              <defs>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+            </svg>
+
+            <!-- Orbit Floating Labels -->
+            <div class="orbit-badge-top">STF / CONNECT</div>
+            <div class="orbit-badge-bottom">01 — IDENTIDAD DIGITAL</div>
+
+            <!-- Central Luminous Diamond Shield with 3D Wireframe Cube -->
+            <div class="shield-center-node">
+              <div class="shield-outer-glow"></div>
+              <div class="shield-diamond">
+                <div class="shield-diamond-inner">
+                  <!-- Isometric 3D Cube SVG -->
+                  <svg class="isometric-cube" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Top Face -->
+                    <polygon points="32,8 52,20 32,32 12,20" fill="rgba(56, 189, 248, 0.25)" stroke="#38BDF8" stroke-width="1.8" stroke-linejoin="round"/>
+                    <!-- Left Face -->
+                    <polygon points="12,20 32,32 32,56 12,44" fill="rgba(14, 165, 233, 0.15)" stroke="#38BDF8" stroke-width="1.8" stroke-linejoin="round"/>
+                    <!-- Right Face -->
+                    <polygon points="32,32 52,20 52,44 32,56" fill="rgba(99, 102, 241, 0.20)" stroke="#818CF8" stroke-width="1.8" stroke-linejoin="round"/>
+                    <!-- Inner Core -->
+                    <circle cx="32" cy="32" r="3" fill="#FFFFFF"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="glass-input-wrapper">
-            <i data-lucide="user" class="glass-input-icon-left"></i>
-            <input type="text" id="loginEmail" class="glass-form-input" placeholder="Ingresa tu usuario (ej: jo, ed, ju, es, jh...)" value="" required autocomplete="off" spellcheck="false">
-          </div>
-          <!-- Contenedor de Autocompletado Predictivo Inteligente -->
-          <div id="smartUserSuggestion" class="smart-user-suggestion" style="display: none;"></div>
         </div>
 
-        <!-- Password Field (Columna 1: ID / Contraseña) -->
-        <div class="glass-input-group">
-          <div class="input-header-row">
-            <span class="input-label-row">
-              <i data-lucide="lock" class="label-icon-green"></i>
-              <span class="input-label-text">CONTRASEÑA O CLAVE</span>
-            </span>
-            <span class="badge-authorized-green">ENCRIPTADO TLS</span>
+        <!-- Sub-brands at bottom left -->
+        <div class="stf-brands-footer">
+          <span class="subbrand-name">STUDIO F</span>
+          <span class="subbrand-sep"></span>
+          <span class="subbrand-name subbrand-ela">ela</span>
+          <span class="subbrand-sep"></span>
+          <span class="subbrand-name subbrand-man">STUDIO F<small>MAN</small></span>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           RIGHT COLUMN: 4K HIGH-SECURITY LOGIN TERMINAL CARD
+           ======================================================== -->
+      <section class="stf-card-col">
+        <!-- Overhead Meta Bar -->
+        <div class="card-overhead-bar">
+          <div class="meta-left">
+            <span class="status-dot-cyan"></span>
+            <span>STF ID</span>
           </div>
-          <div class="glass-input-wrapper">
-            <i data-lucide="shield" class="glass-input-icon-left"></i>
-            <input type="password" id="loginPassword" class="glass-form-input" placeholder="Ingresa tu ID / contraseña" value="" required autocomplete="new-password">
-            <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('loginPassword', this)" title="Ver / Ocultar contraseña" aria-label="Toggle password visibility">
-              <i data-lucide="eye-off"></i>
+          <div class="meta-right">
+            <span>ACCESO CORPORATIVO / 01</span>
+          </div>
+        </div>
+
+        <!-- The 4K Frosted Glass Card -->
+        <div class="stf-terminal-card" id="loginCard">
+          <!-- Card Action Top Row -->
+          <div class="card-top-row">
+            <div class="app-icon-badge" title="Portal Corporativo STF">
+              <i data-lucide="layout-grid"></i>
+            </div>
+            <div class="env-pill-badge">
+              <i data-lucide="shield-check"></i>
+              <span>Entorno corporativo</span>
+            </div>
+          </div>
+
+          <!-- Card Titles -->
+          <div class="card-titles-wrap">
+            <div class="card-sub-tag">TU ESPACIO. TUS POSIBILIDADES.</div>
+            <h2 class="card-main-title">Bienvenido de nuevo.</h2>
+            <p class="card-sub-desc">Ingresa tus credenciales y conecta con tu día.</p>
+          </div>
+
+          <!-- Security Lockout Banner (Activo tras intentos fallidos) -->
+          <div id="lockoutBanner" class="lockout-banner" style="display: none;">
+            <div class="lockout-banner-content">
+              <div class="lockout-banner-icon">
+                <i data-lucide="shield-alert"></i>
+              </div>
+              <div class="lockout-banner-text">
+                <div class="lockout-title" id="lockoutTitle">Acceso Bloqueado Temporalmente</div>
+                <div class="lockout-desc" id="lockoutDesc">Demasiados intentos fallidos. Reintenta en:</div>
+                <div class="lockout-timer" id="lockoutTimer">05:00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preselected Profile Card (al cambiar de perfil) -->
+          <div id="preselectedProfileCard" class="preselected-profile-pill" style="display: none;">
+            <img id="preselectedAvatar" src="" class="pre-avatar" alt="Avatar">
+            <div class="pre-meta">
+              <div class="pre-tag">Perfil Seleccionado</div>
+              <strong id="preselectedName">Desarrollador</strong>
+              <span id="preselectedUsername">usuario</span>
+            </div>
+            <button type="button" id="btnClearPreselected" onclick="clearPreselectedProfile()" class="pre-btn-change" title="Cambiar a otro usuario">Cambiar</button>
+          </div>
+
+          <!-- Login Form -->
+          <form class="stf-login-form" id="loginForm">
+            <!-- Field 1: Usuario o Documento -->
+            <div class="stf-input-field" id="userInputGroup">
+              <label class="stf-field-lbl" for="loginEmail">Usuario o documento</label>
+              <div class="stf-field-box">
+                <i data-lucide="user" class="field-icon-left"></i>
+                <input type="text" id="loginEmail" class="field-input-native" placeholder="Ingresa tu usuario" required autocomplete="off" spellcheck="false">
+              </div>
+              <!-- Autocompletado Predictivo Inteligente -->
+              <div id="smartUserSuggestion" class="smart-user-suggestion" style="display: none;"></div>
+            </div>
+
+            <!-- Field 2: Contraseña -->
+            <div class="stf-input-field">
+              <div class="lbl-row-split">
+                <label class="stf-field-lbl" for="loginPassword">Contraseña</label>
+                <span class="lbl-row-aside">ACCESO PERSONAL</span>
+              </div>
+              <div class="stf-field-box">
+                <i data-lucide="lock" class="field-icon-left"></i>
+                <input type="password" id="loginPassword" class="field-input-native" placeholder="Ingresa tu contraseña" required autocomplete="new-password">
+                <button type="button" class="field-eye-btn" onclick="togglePasswordVisibility('loginPassword', this)" title="Ver / Ocultar contraseña" aria-label="Toggle password visibility">
+                  <i data-lucide="eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="stf-checkbox-row">
+              <label class="stf-check-lbl">
+                <input type="checkbox" id="rememberMe" checked class="native-check">
+                <span class="custom-box"></span>
+                <span class="check-text">Recordar mi usuario</span>
+              </label>
+            </div>
+
+            <!-- White Pill Action Button -->
+            <button type="submit" class="btn-primary-white-pill" id="btnSignIn">
+              <span>Ingresar a mi espacio</span>
+              <i data-lucide="arrow-right" class="btn-pill-arrow"></i>
             </button>
-          </div>
-        </div>
 
-        <!-- Remember Me Option -->
-        <div class="glass-remember-row">
-          <label class="glass-remember-label">
-            <input type="checkbox" id="rememberMe" checked class="glass-checkbox">
-            <span>Recordar sesión</span>
-          </label>
-        </div>
+            <!-- Forgot Password Link -->
+            <div class="stf-forgot-row">
+              <a href="javascript:void(0)" onclick="openPasswordRecoveryModal()" class="forgot-txt-link">
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
 
-        <!-- High-Impact Luxury White Pill Action Button -->
-        <button type="submit" class="btn-action-white-pill" id="btnSignIn">
-          <span>INGRESAR AL SISTEMA</span>
-          <i data-lucide="arrow-right" class="btn-arrow-icon"></i>
-        </button>
-
-        <!-- Forgot Password Link with Green Key Icon and Clean White/Grey Text -->
-        <div class="forgot-password-row">
-          <a href="javascript:void(0)" onclick="openPasswordRecoveryModal()" class="forgot-password-link">
-            <i data-lucide="key-round" class="forgot-key-icon"></i>
-            <span class="forgot-link-text">¿Olvidaste o perdiste tu contraseña?</span>
-          </a>
+            <!-- Card Bottom Status Footer -->
+            <div class="card-footer-info">
+              <div class="sec-left">
+                <i data-lucide="shield-check"></i>
+                <span>Tu identidad, protegida.</span>
+              </div>
+              <div class="ver-right" onclick="promptDeviceCustomName()" style="cursor: pointer;" title="ID del Equipo Corporativo (Haz clic para asignar el Nombre exacto de Windows)">
+                STF ID v.3.0
+              </div>
+            </div>
+          </form>
         </div>
+      </section>
 
-        <!-- Card Internal Status Row -->
-        <div class="card-status-footer">
-          <span class="tls-security-badge">
-            <i data-lucide="shield-check" class="shield-green-icon"></i>
-            <span class="tls-text">CONEXIÓN SEGURA ENCRIPTADA (TLS)</span>
-          </span>
-        </div>
-      </form>
     </div>
 
-    <!-- Outside Footer Caption -->
-    <footer class="login-page-footer">
-      <span>SISTEMA DE CONTROL Y GESTIÓN DE APLICATIVOS STF GROUP S.A. © 2026</span>
+    <!-- Bottom Page Slogan -->
+    <footer class="stf-slogan-footer">
+      <span>Diseñado para conectar. Creado para avanzar.</span>
     </footer>
 
-    <!-- MODAL DE RECUPERACIÓN DE CONTRASEÑA (GLASSMORPHISM PREMIUN) -->
+    <!-- MODAL DE RECUPERACIÓN DE CONTRASEÑA (GLASSMORPHISM 4K) -->
     <div id="modalPasswordRecovery" class="recovery-modal-backdrop" style="display: none;" aria-hidden="true">
       <div class="recovery-modal-card">
         <!-- Close Button -->
@@ -210,23 +314,17 @@
           </div>
 
           <form id="formRecoveryStep1" onsubmit="handleRequestRecoveryCode(event)">
-            <div class="glass-input-group">
-              <div class="input-header-row">
-                <span class="input-label-row">
-                  <i data-lucide="user" class="label-icon-green"></i>
-                  <span class="input-label-text">USUARIO O CORREO REGISTRADO</span>
-                </span>
-                <span class="badge-authorized-green">OFICIAL STF</span>
-              </div>
-              <div class="glass-input-wrapper">
-                <i data-lucide="mail" class="glass-input-icon-left"></i>
-                <input type="text" id="recoveryIdentifier" class="glass-form-input" placeholder="ej: jose.guzman o joseoneiber711@gmail.com" required autocomplete="off" spellcheck="false">
+            <div class="stf-input-field">
+              <label class="stf-field-lbl" for="recoveryIdentifier">Usuario o Correo Registrado</label>
+              <div class="stf-field-box">
+                <i data-lucide="mail" class="field-icon-left"></i>
+                <input type="text" id="recoveryIdentifier" class="field-input-native" placeholder="ej: jose.guzman o joseoneiber711@gmail.com" required autocomplete="off" spellcheck="false">
               </div>
             </div>
 
-            <button type="submit" id="btnRequestOtp" class="btn-action-white-pill" style="margin-top: 18px; width: 100%;">
-              <span>ENVIAR CÓDIGO DE RECUPERACIÓN</span>
-              <i data-lucide="send" class="btn-arrow-icon"></i>
+            <button type="submit" id="btnRequestOtp" class="btn-primary-white-pill" style="margin-top: 18px; width: 100%;">
+              <span>Enviar código de recuperación</span>
+              <i data-lucide="send" class="btn-pill-arrow"></i>
             </button>
           </form>
         </div>
@@ -245,58 +343,41 @@
 
           <form id="formRecoveryStep2" onsubmit="handleResetPasswordSubmit(event)">
             <!-- OTP Code Input -->
-            <div class="glass-input-group">
-              <div class="input-header-row">
-                <span class="input-label-row">
-                  <i data-lucide="hash" class="label-icon-green"></i>
-                  <span class="input-label-text">CÓDIGO DE SEGURIDAD (6 DÍGITOS)</span>
-                </span>
-                <span class="badge-authorized-green">VÁLIDO 15 MIN</span>
-              </div>
-              <div class="glass-input-wrapper">
-                <i data-lucide="key" class="glass-input-icon-left"></i>
-                <input type="text" id="recoveryOtpCode" class="glass-form-input recovery-otp-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code" inputmode="numeric">
+            <div class="stf-input-field">
+              <label class="stf-field-lbl" for="recoveryOtpCode">Código de seguridad (6 dígitos)</label>
+              <div class="stf-field-box">
+                <i data-lucide="key" class="field-icon-left"></i>
+                <input type="text" id="recoveryOtpCode" class="field-input-native recovery-otp-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code" inputmode="numeric">
               </div>
             </div>
 
             <!-- Nueva Contraseña -->
-            <div class="glass-input-group">
-              <div class="input-header-row">
-                <span class="input-label-row">
-                  <i data-lucide="lock" class="label-icon-green"></i>
-                  <span class="input-label-text">NUEVA CONTRASEÑA O CLAVE</span>
-                </span>
-                <span class="badge-authorized-green">HOJA USUARIOS</span>
-              </div>
-              <div class="glass-input-wrapper">
-                <i data-lucide="lock" class="glass-input-icon-left"></i>
-                <input type="password" id="recoveryNewPassword" class="glass-form-input" placeholder="Escribe tu nueva contraseña" required autocomplete="new-password">
-                <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('recoveryNewPassword', this)">
+            <div class="stf-input-field">
+              <label class="stf-field-lbl" for="recoveryNewPassword">Nueva Contraseña o Clave</label>
+              <div class="stf-field-box">
+                <i data-lucide="lock" class="field-icon-left"></i>
+                <input type="password" id="recoveryNewPassword" class="field-input-native" placeholder="Escribe tu nueva contraseña" required autocomplete="new-password">
+                <button type="button" class="field-eye-btn" onclick="togglePasswordVisibility('recoveryNewPassword', this)">
                   <i data-lucide="eye-off"></i>
                 </button>
               </div>
             </div>
 
             <!-- Confirmar Nueva Contraseña -->
-            <div class="glass-input-group">
-              <div class="input-header-row">
-                <span class="input-label-row">
-                  <i data-lucide="check" class="label-icon-green"></i>
-                  <span class="input-label-text">CONFIRMAR NUEVA CONTRASEÑA</span>
-                </span>
-              </div>
-              <div class="glass-input-wrapper">
-                <i data-lucide="shield" class="glass-input-icon-left"></i>
-                <input type="password" id="recoveryConfirmPassword" class="glass-form-input" placeholder="Confirma tu nueva contraseña" required autocomplete="new-password">
-                <button type="button" class="glass-eye-toggle" onclick="togglePasswordVisibility('recoveryConfirmPassword', this)">
+            <div class="stf-input-field">
+              <label class="stf-field-lbl" for="recoveryConfirmPassword">Confirmar Nueva Contraseña</label>
+              <div class="stf-field-box">
+                <i data-lucide="shield" class="field-icon-left"></i>
+                <input type="password" id="recoveryConfirmPassword" class="field-input-native" placeholder="Confirma tu nueva contraseña" required autocomplete="new-password">
+                <button type="button" class="field-eye-btn" onclick="togglePasswordVisibility('recoveryConfirmPassword', this)">
                   <i data-lucide="eye-off"></i>
                 </button>
               </div>
             </div>
 
-            <button type="submit" id="btnSubmitNewPassword" class="btn-action-white-pill" style="margin-top: 18px; width: 100%;">
-              <span>ACTUALIZAR CONTRASEÑA</span>
-              <i data-lucide="check-circle" class="btn-arrow-icon"></i>
+            <button type="submit" id="btnSubmitNewPassword" class="btn-primary-white-pill" style="margin-top: 18px; width: 100%;">
+              <span>Actualizar Contraseña</span>
+              <i data-lucide="check-circle" class="btn-pill-arrow"></i>
             </button>
 
             <div style="margin-top: 14px; text-align: center;">
@@ -316,14 +397,13 @@
           <p class="recovery-subtitle" style="margin-bottom: 22px;">
             Tu contraseña ha sido guardada y reemplazada con éxito en el documento de Google Sheets. Ya puedes ingresar al sistema con tu nueva clave.
           </p>
-          <button type="button" class="btn-action-white-pill" style="width: 100%;" onclick="finishRecoveryAndFocusLogin()">
-            <span>INGRESAR AL SISTEMA AHORA</span>
-            <i data-lucide="arrow-right" class="btn-arrow-icon"></i>
+          <button type="button" class="btn-primary-white-pill" style="width: 100%;" onclick="finishRecoveryAndFocusLogin()">
+            <span>Ingresar al sistema ahora</span>
+            <i data-lucide="arrow-right" class="btn-pill-arrow"></i>
           </button>
         </div>
       </div>
     </div>
-
   </main>
 
   <!-- Login Feedback Toast -->
@@ -334,7 +414,7 @@
 
   <!-- Interactive Logic -->
   <script src="js/light-tunnel.js?v=9"></script>
-  <script src="js/login.js?v=22"></script>
+  <script src="js/login.js?v=23"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 </html>
