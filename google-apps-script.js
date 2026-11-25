@@ -2885,6 +2885,16 @@ function sendSecurityLockoutEmail(userEmail, userName, userLogin, attempts, lock
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Tipo de Equipo:</strong></td>',
     '              <td style="color: #FFFFFF; font-weight: 700; padding: 5px 0;">' + (deviceInfo.deviceType || "Ordenador / PC") + '</td>',
     '            </tr>',
+    (deviceInfo.mobileBrand ? [
+    '            <tr>',
+    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Marca del Dispositivo:</strong></td>',
+    '              <td style="color: #38BDF8; font-weight: 700; padding: 5px 0;">' + deviceInfo.mobileBrand + '</td>',
+    '            </tr>',
+    '            <tr>',
+    '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Modelo Exacto:</strong></td>',
+    '              <td style="color: #FFFFFF; font-weight: 700; padding: 5px 0;">' + (deviceInfo.mobileModel || deviceInfo.mobileBrand) + '</td>',
+    '            </tr>'
+    ].join('\n') : [
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Tarjeta Gráfica (GPU):</strong></td>',
     '              <td style="color: #A7F3D0; font-weight: 600; padding: 5px 0;">' + (deviceInfo.gpu || "GPU Estándar") + '</td>',
@@ -2892,7 +2902,8 @@ function sendSecurityLockoutEmail(userEmail, userName, userLogin, attempts, lock
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Hardware / Procesador:</strong></td>',
     '              <td style="color: #FFFFFF; padding: 5px 0;">' + (deviceInfo.hardwareSpecs || "Estándar") + '</td>',
-    '            </tr>',
+    '            </tr>'
+    ].join('\n')),
     '            <tr>',
     '              <td style="color: #94A3B8; padding: 5px 0;"><strong>Sistema Operativo:</strong></td>',
     '              <td style="color: #FFFFFF; font-weight: 600; padding: 5px 0;">' + (deviceInfo.os || "Desconocido") + '</td>',

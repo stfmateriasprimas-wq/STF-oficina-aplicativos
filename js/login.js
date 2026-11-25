@@ -462,11 +462,91 @@ function detectAccurateDeviceType(ua, gpu) {
   return '🖥️ PC de Mesa (Escritorio / Torre)';
 }
 
-function getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua) {
+// Detección avanzada de Marca y Modelo en Dispositivos Móviles (Android / iPhone)
+function detectMobileBrandAndModel(ua) {
+  let brand = '';
+  let model = '';
+
+  // 1. Samsung
+  if (/SM-[A-Z0-9]+|SAMSUNG|Galaxy/i.test(ua)) {
+    brand = 'Samsung';
+    const m = ua.match(/SM-([A-Z0-9]+)/i);
+    model = m ? `Samsung Galaxy (SM-${m[1]})` : 'Samsung Galaxy';
+  }
+  // 2. Xiaomi / Redmi / POCO
+  else if (/Redmi|POCO|Xiaomi|Mi\s[0-9]|22[0-9]{6}|23[0-9]{6}|21[0-9]{6}/i.test(ua)) {
+    if (/Redmi/i.test(ua)) {
+      brand = 'Xiaomi';
+      const m = ua.match(/Redmi\s*([A-Za-z0-9\s]+?)(?:Build|\)|;)/i);
+      model = m ? `Redmi ${m[1].trim()}` : 'Xiaomi Redmi';
+    } else if (/POCO/i.test(ua)) {
+      brand = 'POCO';
+      const m = ua.match(/POCO\s*([A-Za-z0-9\s]+?)(?:Build|\)|;)/i);
+      model = m ? `POCO ${m[1].trim()}` : 'Xiaomi POCO';
+    } else {
+      brand = 'Xiaomi';
+      model = 'Xiaomi Phone';
+    }
+  }
+  // 3. Motorola
+  else if (/moto|motorola/i.test(ua)) {
+    brand = 'Motorola';
+    const m = ua.match(/(?:moto\s+[a-z0-9\s+]+|motorola\s+[a-z0-9\s+]+)/i);
+    model = m ? m[0].trim() : 'Motorola Moto';
+  }
+  // 4. Apple iPhone / iPad
+  else if (/iPhone|iPad|iPod/i.test(ua)) {
+    brand = 'Apple';
+    if (/iPhone/i.test(ua)) {
+      const w = window.screen?.width || 0;
+      const h = window.screen?.height || 0;
+      const r = window.devicePixelRatio || 1;
+      const res = `${Math.min(w, h)}x${Math.max(w, h)}@${r}`;
+      let ip = 'iPhone';
+      if (res.includes('393x852@3')) ip = 'iPhone 15 / 15 Pro / 14 Pro';
+      else if (res.includes('430x932@3')) ip = 'iPhone 15 Pro Max / 14 Pro Max';
+      else if (res.includes('390x844@3')) ip = 'iPhone 14 / 13 / 12';
+      else if (res.includes('428x926@3')) ip = 'iPhone 14 Plus / 13 Pro Max';
+      else if (res.includes('375x812@3')) ip = 'iPhone 11 Pro / X / XS';
+      else if (res.includes('414x896')) ip = 'iPhone 11 / XR / 11 Pro Max';
+      else if (res.includes('375x667')) ip = 'iPhone SE / 8';
+      model = `Apple ${ip}`;
+    } else if (/iPad/i.test(ua)) {
+      model = 'Apple iPad';
+    }
+  }
+  // 5. Google Pixel
+  else if (/Pixel/i.test(ua)) {
+    brand = 'Google';
+    const m = ua.match(/Pixel\s*[0-9a-zA-Z\s]*/i);
+    model = m ? m[0].trim() : 'Google Pixel';
+  }
+  // 6. Huawei / Honor
+  else if (/Huawei|HUAWEI|HONOR/i.test(ua)) {
+    brand = /HONOR/i.test(ua) ? 'Honor' : 'Huawei';
+    model = `${brand} Smartphone`;
+  }
+  // 7. Genérico Android
+  else if (/Android/i.test(ua)) {
+    brand = 'Android';
+    model = 'Dispositivo Móvil Android';
+  }
+
+  return { brand, model };
+}
+
+function getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua, isMobile, mobileBrand) {
   const DEVICE_ID_KEY = 'STF_DEVICE_HARDWARE_ID';
+  const CUSTOM_NAME_KEY = 'STF_CUSTOM_DEVICE_NAME';
   try {
+    // Si la empresa o el desarrollador asignó el nombre/serial oficial de su Windows
+    const customName = localStorage.getItem(CUSTOM_NAME_KEY);
+    if (customName && customName.trim().length > 0) {
+      return customName.trim();
+    }
+
     let devId = localStorage.getItem(DEVICE_ID_KEY);
-    if (devId && (devId.startsWith('STF-DEV-') || devId.startsWith('STF-HWID-'))) {
+    if (devId && (devId.startsWith('STF-DEV-') || devId.startsWith('STF-HWID-') || devId.startsWith('STF-MOBIL-'))) {
       return devId;
     }
 
@@ -484,11 +564,12 @@ function getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua) {
 
     const hex1 = h1.toString(16).toUpperCase().padStart(8, '0').slice(-4);
     const hex2 = h2.toString(16).toUpperCase().padStart(8, '0').slice(-4);
-    devId = `STF-HWID-${hex1}-${hex2}`;
+    const prefix = isMobile ? 'STF-MOBIL' : 'STF-HWID';
+    devId = `${prefix}-${hex1}-${hex2}`;
     localStorage.setItem(DEVICE_ID_KEY, devId);
     return devId;
   } catch (e) {
-    return 'STF-HWID-A42F-89B1';
+    return isMobile ? 'STF-MOBIL-7A21-4B90' : 'STF-HWID-A42F-89B1';
   }
 }
 
@@ -510,17 +591,26 @@ function getDeviceFingerprint() {
   else if (/Firefox\//i.test(ua)) browser = 'Mozilla Firefox ' + (ua.match(/Firefox\/([\d.]+)/)?.[1] || '');
 
   const screenRes = `${window.screen?.width || window.innerWidth} x ${window.screen?.height || window.innerHeight} px`;
-  const gpu = getGpuHardwareRenderer();
+  const isMobile = (/Mobi|Android|iPhone|iPad/i.test(ua));
+  const mobileInfo = isMobile ? detectMobileBrandAndModel(ua) : { brand: '', model: '' };
+  const gpu = isMobile ? (mobileInfo.brand ? `${mobileInfo.brand} Chipset` : 'GPU Móvil') : getGpuHardwareRenderer();
   const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Núcleos` : 'No disponible';
   const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB RAM` : 'Estándar';
-  const deviceType = detectAccurateDeviceType(ua, gpu);
-  const deviceId = getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua);
+  
+  const deviceType = isMobile 
+    ? (mobileInfo.brand ? `📱 Móvil (${mobileInfo.brand} ${mobileInfo.model})` : '📱 Dispositivo Móvil')
+    : detectAccurateDeviceType(ua, gpu);
+
+  const deviceId = getOrCreateDeterministicHardwareId(gpu, screenRes, cores, ram, ua, isMobile, mobileInfo.brand);
 
   return {
     deviceId: deviceId,
     deviceType: deviceType,
+    isMobile: isMobile,
+    mobileBrand: mobileInfo.brand,
+    mobileModel: mobileInfo.model,
     gpu: gpu,
-    hardwareSpecs: `${cores} CPU · ${ram}`,
+    hardwareSpecs: isMobile ? `${screenRes} · Touchscreen` : `${cores} CPU · ${ram}`,
     os: os,
     browser: browser,
     screenRes: screenRes,
@@ -530,6 +620,23 @@ function getDeviceFingerprint() {
     timestamp: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })
   };
 }
+
+// Función accesible para registrar el nombre o serial exacto del equipo Windows
+function promptDeviceCustomName() {
+  const current = localStorage.getItem('STF_CUSTOM_DEVICE_NAME') || localStorage.getItem('STF_DEVICE_HARDWARE_ID') || '';
+  const input = prompt('🖥️ IDENTIFICADOR DE EQUIPO CORPORATIVO STF\n\nPuedes asignar el Nombre de equipo o Serial exacto de Windows para esta máquina (ej: PORTATIL-EDWIN, DESKTOP-JUANDAVID, SN-5CD1234):\n', current);
+  if (input !== null) {
+    const clean = input.trim();
+    if (clean) {
+      localStorage.setItem('STF_CUSTOM_DEVICE_NAME', clean);
+      showLoginToast(`✅ ID de este equipo asignado como: ${clean}`);
+    } else {
+      localStorage.removeItem('STF_CUSTOM_DEVICE_NAME');
+      showLoginToast('ℹ️ Se utilizará el ID criptográfico automático de hardware.');
+    }
+  }
+}
+window.promptDeviceCustomName = promptDeviceCustomName;
 
 // ============================================================================
 // GESTIÓN DE BLOQUEO PROGRESIVO DE ACCESO (3 Y 8 INTENTOS FALLIDOS)
