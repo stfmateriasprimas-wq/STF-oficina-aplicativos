@@ -1177,8 +1177,20 @@
           });
 
           if (!exists) {
+            // Generar ID determinista basado en contenido para garantizar que permanezca idéntico entre recargas
+            let stableObsId = co.obsId;
+            if (!stableObsId) {
+              const seed = `${targetTask.id || targetTask.name}_${devName}_${dateStr}_${obsText.substring(0, 30)}`;
+              let hash = 0;
+              for (let si = 0; si < seed.length; si++) {
+                hash = ((hash << 5) - hash) + seed.charCodeAt(si);
+                hash |= 0;
+              }
+              stableObsId = `obs_cloud_${Math.abs(hash)}`;
+            }
+
             const newObs = {
-              id: co.obsId || ('obs_cloud_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
+              id: stableObsId,
               date: dateStr || new Date().toISOString().slice(0, 16).replace('T', ' '),
               timestamp: Date.now(),
               type: severity === 'critico' ? 'bloqueo' : (severity === 'alto' ? 'ajuste' : (obsText.includes('📅') ? 'reschedule' : 'avance')),

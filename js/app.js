@@ -956,9 +956,10 @@ function startAutomatedNotificationPolling() {
 }
 
 function checkAndAlertNewNotifications() {
+  readNotificationsSet = loadUserReadNotifications();
   const currentNotifs = getNotificationsData();
 
-  // Detectar notificaciones nuevas que no estaban en el sondeo anterior
+  // Detectar notificaciones nuevas que no estaban en el sondeo anterior ni han sido leídas
   const brandNewNotifs = currentNotifs.filter(n => !lastKnownNotifIds.has(n.id) && !readNotificationsSet.has(n.id));
 
   if (brandNewNotifs.length > 0) {
@@ -977,14 +978,38 @@ function checkAndAlertNewNotifications() {
   currentNotifs.forEach(n => lastKnownNotifIds.add(n.id));
 }
 
-// Variable global para tracking de notificaciones leídas
-let readNotificationsSet = new Set();
-try {
-  const storedRead = localStorage.getItem('STF_READ_NOTIFICATIONS');
-  if (storedRead) {
-    readNotificationsSet = new Set(JSON.parse(storedRead));
-  }
-} catch (e) { }
+// Variable global y funciones de almacenamiento por usuario para tracking de notificaciones leídas
+function getUserReadNotificationsKey() {
+  const session = (typeof getLoggedSessionUser === 'function') ? getLoggedSessionUser() : null;
+  const devId = (typeof getLoggedDevId === 'function') ? getLoggedDevId() : (session ? session.id : 'default');
+  const userId = devId || (session ? (session.username || session.id) : 'user');
+  return `STF_READ_NOTIFS_${userId}`;
+}
+
+function loadUserReadNotifications() {
+  const key = getUserReadNotificationsKey();
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      return new Set(JSON.parse(raw));
+    }
+    const legacy = localStorage.getItem('STF_READ_NOTIFICATIONS');
+    if (legacy) {
+      return new Set(JSON.parse(legacy));
+    }
+  } catch (e) {}
+  return new Set();
+}
+
+function saveUserReadNotifications(set) {
+  const key = getUserReadNotificationsKey();
+  try {
+    localStorage.setItem(key, JSON.stringify([...set]));
+    localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...set]));
+  } catch (e) {}
+}
+
+let readNotificationsSet = loadUserReadNotifications();
 
 function getNotificationsData() {
   const isAdmin = isCurrentSessionAdmin();
@@ -1221,7 +1246,7 @@ function getNotificationsData() {
 
   } else {
     // =========================================================================
-    // VISTA DESARROLLADOR: Nuevas Tareas Asignadas & Observaciones del Admin
+    // VISTA DESARROLLADOR: Nuevas Tareas Asignadas, Observaciones del Admin & Soporte
     // =========================================================================
     const canonCurrent = resolveCanonicalDevId(currentDevId);
     const devTasks = allInts.filter(t => {
@@ -1229,8 +1254,11 @@ function getNotificationsData() {
       return t.devId === currentDevId || t.devId === canonCurrent || (canonTask && canonTask === canonCurrent);
     });
     const devObj = getDeveloperById(currentDevId);
+    const session = (typeof getLoggedSessionUser === 'function') ? getLoggedSessionUser() : null;
+    const myDevName = (devObj && devObj.name) ? devObj.name.trim().toLowerCase() : '';
+    const myUsername = (session && session.username) ? session.username.trim().toLowerCase() : '';
 
-    // Notificaciones directas asignadas al desarrollador (ej. Reprogramaciones de reunión)
+    // A. Notificaciones directas asignadas al desarrollador (ej. Reprogramaciones de reunión)
     if (Array.isArray(appState.notifications)) {
       appState.notifications.forEach(notif => {
         const canonTarget = resolveCanonicalDevId(notif.targetDevId);
@@ -1252,9 +1280,15 @@ function getNotificationsData() {
       const app = allApps.find(a => a.id === task.appId);
       const appName = app ? app.name : 'Sistema';
 
-      // Observaciones de la bitácora de la tarea para el desarrollador
+      // B. Observaciones en la bitácora de la tarea (SOLO si NO fueron escritas por el mismo desarrollador)
       if (Array.isArray(task.observations) && task.observations.length > 0) {
         task.observations.forEach(obs => {
+          const obsAuthor = String(obs.author || '').trim().toLowerCase();
+          // Si la observación la escribió el mismo desarrollador en sesión, NO es una notificación para él
+          if (obsAuthor && (obsAuthor === myDevName || obsAuthor === myUsername)) {
+            return;
+          }
+
           const isResched = obs.type === 'reschedule';
           const isBlock = obs.type === 'bloqueo';
 
@@ -1291,7 +1325,7 @@ function getNotificationsData() {
             tagColor: tagColor,
             tagBg: tagBg,
             title: isResched ? `⏰ Cambio de Hora: ${task.name}` : `Observación: ${task.name}`,
-            sub: `${obs.author || 'Dirección TI'}: "${obs.text}"`,
+            sub: `${obs.author || 'Super Admin TI'}: "${obs.text}"`,
             time: obs.date || 'Reciente',
             action: () => {
               if (typeof switchMainTab === 'function') switchMainTab('view-tasks');
@@ -1308,7 +1342,7 @@ function getNotificationsData() {
         });
       }
 
-      // 1. Observaciones y dictámenes del Super Admin ante cualquier desarrollo
+      // C. Observaciones y dictámenes del Super Admin tras auditar la tarea
       if (task.evaluation && task.evaluation.notes) {
         notifications.push({
           id: `notif_obs_${task.id}`,
@@ -1319,14 +1353,14 @@ function getNotificationsData() {
           tag: 'Observación Admin',
           tagColor: '#6D28D9',
           tagBg: '#EDE9FE',
-          title: `Observación de Admin en ${appName}`,
+          title: `Dictamen de Admin en ${appName}`,
           sub: `"${task.evaluation.notes}" · Calidad: ${task.evaluation.qualityScore}% (+${task.evaluation.pointsAdded}% sumado)`,
           time: task.evaluation.evalDate || 'Reciente',
           action: () => openEvaluateIntegrationModal(task.id)
         });
       }
 
-      // 2. Nuevas Tareas Asignadas por el Admin (prioridad alta al inicio de la lista)
+      // D. Tareas Asignadas por el Admin (prioridad alta al inicio de la lista)
       if (task.status === 'in_progress') {
         const diag = calculateIntegrationTimeProgress(task);
         notifications.unshift({
@@ -1335,7 +1369,7 @@ function getNotificationsData() {
           icon: 'clipboard-list',
           iconBg: '#E0F2FE',
           iconColor: '#0284C7',
-          tag: '⚡ Nueva Tarea Asignada',
+          tag: '⚡ Tarea Asignada',
           tagColor: '#0369A1',
           tagBg: '#BAE6FD',
           title: `Tarea Asignada: ${task.name}`,
@@ -1348,7 +1382,7 @@ function getNotificationsData() {
         });
       }
 
-      // 3. Tareas vencidas o próximas a vencer para el desarrollador
+      // E. Tareas vencidas o próximas a vencer para el desarrollador
       const diag = calculateIntegrationTimeProgress(task);
       if (task.status !== 'evaluated' && diag.isOverdue) {
         notifications.push({
@@ -1368,28 +1402,7 @@ function getNotificationsData() {
       }
     });
 
-    // 4. Estado de los aplicativos asignados al desarrollador
-    const assignedApps = allApps.filter(a => isAppAssignedToDev(a, currentDevId));
-    assignedApps.forEach(app => {
-      const completedPhases = app.phases ? app.phases.filter(p => p.completed).length : 0;
-      const totalPhases = app.phases ? app.phases.length : 6;
-      notifications.push({
-        id: `notif_app_status_${app.id}`,
-        type: 'app_status',
-        icon: 'layers',
-        iconBg: '#EFF6FF',
-        iconColor: '#3B82F6',
-        tag: 'Avance Aplicativo',
-        tagColor: '#1D4ED8',
-        tagBg: '#DBEAFE',
-        title: `${app.name}: ${completedPhases}/${totalPhases} Fases Certificadas`,
-        sub: `Avance general: ${calculateAppProgress(app)}% · ${app.status === 'risk' ? 'En Riesgo' : 'En Tiempo'}`,
-        time: 'En supervisión',
-        action: () => openSystemDetailModal(app.id)
-      });
-    });
-
-    // 5. Solicitudes de Soporte Técnico de Planta Asignadas al Desarrollador
+    // F. Solicitudes de Soporte Técnico de Planta Asignadas al Desarrollador
     const myPendingTickets = (appState.supportTickets || []).filter(t => 
       t.status === 'pendiente' && isTicketAssignedToDev(t, currentDevId)
     );
@@ -1418,14 +1431,13 @@ function getNotificationsData() {
 }
 
 function markAllNotificationsRead(silent = false) {
+  readNotificationsSet = loadUserReadNotifications();
   const notifications = getNotificationsData();
   notifications.forEach(n => {
     readNotificationsSet.add(n.id);
     lastKnownNotifIds.add(n.id);
   });
-  try {
-    localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-  } catch (e) { }
+  saveUserReadNotifications(readNotificationsSet);
   const badgeEl = document.getElementById('notificationBadgeCount');
   if (badgeEl) {
     badgeEl.textContent = '0';
@@ -1440,11 +1452,10 @@ function markAllNotificationsRead(silent = false) {
 
 function markSingleNotificationRead(notifId) {
   if (notifId) {
+    readNotificationsSet = loadUserReadNotifications();
     readNotificationsSet.add(notifId);
     lastKnownNotifIds.add(notifId);
-    try {
-      localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-    } catch (e) { }
+    saveUserReadNotifications(readNotificationsSet);
     renderNotificationsDropdown();
   }
 }
@@ -1470,12 +1481,18 @@ function renderNotificationsDropdown() {
     }
   }
 
+  readNotificationsSet = loadUserReadNotifications();
   const notifications = getNotificationsData();
   const unreadCount = notifications.filter(n => !readNotificationsSet.has(n.id)).length;
 
   if (badgeEl) {
     badgeEl.textContent = unreadCount;
     badgeEl.style.display = unreadCount > 0 ? 'flex' : 'none';
+    if (unreadCount > 0) {
+      badgeEl.classList.add('pulse-badge');
+    } else {
+      badgeEl.classList.remove('pulse-badge');
+    }
   }
 
   if (!listEl) return;
@@ -8555,13 +8572,13 @@ function handleSaveObservation(event) {
   // Agregar al inicio del array de observaciones de la tarea
   task.observations.unshift(newObs);
 
-  // Asegurar que la notificación aparezca como pendiente / no leída para el Administrador
+  // Asegurar que la notificación aparezca como pendiente / no leída
   const notifId = `notif_task_obs_${obsId}`;
   if (typeof readNotificationsSet !== 'undefined' && readNotificationsSet.has(notifId)) {
     readNotificationsSet.delete(notifId);
-    try {
-      localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-    } catch (e) { }
+    if (typeof saveUserReadNotifications === 'function') {
+      saveUserReadNotifications(readNotificationsSet);
+    }
   }
 
   // Guardar en almacenamiento
@@ -8588,6 +8605,23 @@ function handleSaveObservation(event) {
   if (window.SheetsSync && typeof window.SheetsSync.syncFullState === 'function') {
     window.SheetsSync.syncFullState(appState);
   }
+
+  // Notificación en vivo en tiempo real a todas las terminales
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('STF_TASKS_REALTIME_SYNC');
+      bc.postMessage({
+        type: 'NEW_TASK_OBSERVATION',
+        taskId: task.id,
+        taskName: task.name,
+        targetDevId: task.devId,
+        author: authorName,
+        text: text,
+        obsType: type
+      });
+      setTimeout(() => { try { bc.close(); } catch(e){} }, 1000);
+    }
+  } catch (e) {}
 
   closeNewObservationModal();
   if (typeof renderIntegrationsList === 'function') {
@@ -9270,6 +9304,41 @@ function setupRealtimeTaskSync() {
           }
         }
 
+        // Nueva observación reportada en tarea en tiempo real
+        if (data.type === 'NEW_TASK_OBSERVATION') {
+          const isAdmin = isCurrentSessionAdmin();
+          const myId = getLoggedDevId();
+          const myCanon = resolveCanonicalDevId(myId);
+          const targetCanon = resolveCanonicalDevId(data.targetDevId);
+
+          if (!isAdmin && (data.targetDevId === myId || targetCanon === myCanon)) {
+            if (typeof playNotificationSound === 'function') playNotificationSound();
+            if (typeof triggerNotificationAlert === 'function') {
+              triggerNotificationAlert({
+                title: `💬 Nota en Tarea: ${data.taskName}`,
+                desc: `${data.author}: "${data.text.length > 70 ? data.text.substring(0, 70) + '...' : data.text}"`,
+                badge: 'Bitácora TI'
+              });
+            }
+          } else if (isAdmin && data.author && !data.author.toLowerCase().includes('admin')) {
+            if (typeof playNotificationSound === 'function') playNotificationSound();
+            if (typeof triggerNotificationAlert === 'function') {
+              triggerNotificationAlert({
+                title: `💬 Novedad de Dev: ${data.taskName}`,
+                desc: `${data.author}: "${data.text.length > 70 ? data.text.substring(0, 70) + '...' : data.text}"`,
+                badge: 'Novedad Planta'
+              });
+            }
+          }
+
+          const freshData = getStoredData();
+          if (freshData) {
+            appState = freshData;
+            refreshAllViews();
+            if (typeof renderNotificationsDropdown === 'function') renderNotificationsDropdown();
+          }
+        }
+
         // Resolución de solicitud de soporte (Notificación de respuesta del desarrollador al solicitante)
         if (data.type === 'SUPPORT_TICKET_RESOLVED' && data.ticket) {
           if (typeof playNotificationSound === 'function') playNotificationSound();
@@ -9403,6 +9472,7 @@ function initApp() {
 
     // AUTOMATIZACIÓN: Al abrir la campanita, marcar automáticamente todas las notificaciones actuales como leídas
     // y remover el número rojo del badge. Solo se volverá a mostrar cuando ingresen notificaciones verdaderamente nuevas.
+    readNotificationsSet = loadUserReadNotifications();
     const notifications = getNotificationsData();
     let hasNewReads = false;
     notifications.forEach(n => {
@@ -9414,9 +9484,7 @@ function initApp() {
     });
 
     if (hasNewReads) {
-      try {
-        localStorage.setItem('STF_READ_NOTIFICATIONS', JSON.stringify([...readNotificationsSet]));
-      } catch (e) { }
+      saveUserReadNotifications(readNotificationsSet);
     }
 
     // Ocultar inmediatamente el badge rojo de la campana
