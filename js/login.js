@@ -1242,33 +1242,251 @@ async function handleLoginSubmit(e) {
   }, 650);
 }
 
-// Quick Google SSO Demo Login
-function quickDemoLogin() {
-  const btn = document.getElementById('btnGoogleSSO');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = `<span>Autenticando con Google Workspace...</span>`;
+// ============================================================================
+// GOOGLE SIGN-IN & IDENTITY AUTHENTICATION (OAUTH 2.0 / GSI)
+// ============================================================================
+const GOOGLE_OAUTH_CLIENT_ID_KEY = 'STF_GOOGLE_CLIENT_ID';
+let googleTokenClient = null;
+
+function initGoogleSignIn() {
+  const btn = document.getElementById('btnGoogleSignIn');
+  if (!btn) return;
+
+  if (window.google?.accounts?.oauth2) {
+    setupGoogleTokenClient();
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(setupGoogleTokenClient, 600);
+    });
+  }
+}
+
+function setupGoogleTokenClient() {
+  try {
+    if (!window.google?.accounts?.oauth2) return;
+    const clientId = localStorage.getItem(GOOGLE_OAUTH_CLIENT_ID_KEY);
+    if (!clientId) return;
+
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'email profile openid',
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          await fetchGoogleUserInfo(tokenResponse.access_token);
+        }
+      },
+      error_callback: (err) => {
+        console.warn('Google Identity Client:', err);
+        openGoogleAccountSelectorModal();
+      }
+    });
+  } catch (err) {
+    console.warn('Error inicializando Google Client:', err);
+  }
+}
+
+async function fetchGoogleUserInfo(accessToken) {
+  const btnText = document.getElementById('btnGoogleSignInText');
+  try {
+    if (btnText) btnText.textContent = 'Verificando cuenta...';
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const googleUser = await res.json();
+    if (googleUser && googleUser.email) {
+      await processGoogleAuth(googleUser.email, googleUser.name, googleUser.picture);
+    } else {
+      throw new Error('No se pudo obtener información del perfil de Google');
+    }
+  } catch (e) {
+    showLoginToast('Error validando identidad con Google: ' + e.message);
+    if (btnText) btnText.textContent = 'Continuar con Google';
+  }
+}
+
+async function handleGoogleSignIn() {
+  if (checkLockoutStatus()) {
+    showLoginToast('⏳ Tu acceso se encuentra bloqueado temporalmente por seguridad.');
+    return;
   }
 
-  const adminDemo = {
-    id: 'dev_ediaz',
-    name: 'Edwin Diaz',
-    username: 'ediaz',
-    role: 'Admin',
-    email: 'edwin.diaz@studiof.com.co',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face'
-  };
-  localStorage.setItem('STF_LOGGED_USER', JSON.stringify(adminDemo));
-  localStorage.setItem('STF_USER_ROLE', adminDemo.role);
-  localStorage.setItem('STF_LOGGED_USERNAME', adminDemo.username);
-  localStorage.setItem('STF_ACTIVE_DEV_ID', adminDemo.id);
-  sessionStorage.setItem('STF_AUTH_SESSION', 'authenticated');
+  const clientId = localStorage.getItem(GOOGLE_OAUTH_CLIENT_ID_KEY);
+  if (clientId && window.google?.accounts?.oauth2) {
+    if (!googleTokenClient) setupGoogleTokenClient();
+    if (googleTokenClient) {
+      const btnText = document.getElementById('btnGoogleSignInText');
+      if (btnText) btnText.textContent = 'Abriendo Google...';
+      try {
+        googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      } catch (err) {
+        console.warn('Fallo popup de Google token client:', err);
+      }
+    }
+  }
 
-  showLoginToast('Autenticación corporativa exitosa. Redirigiendo...');
-  setTimeout(() => {
-    window.location.href = 'index.html';
-  }, 850);
+  openGoogleAccountSelectorModal();
 }
+
+function openGoogleAccountSelectorModal() {
+  const modal = document.getElementById('modalGoogleSignIn');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function closeGoogleModal() {
+  const modal = document.getElementById('modalGoogleSignIn');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  const btnText = document.getElementById('btnGoogleSignInText');
+  if (btnText) btnText.textContent = 'Continuar con Google';
+}
+
+async function selectGoogleAccount(email, name, avatar) {
+  closeGoogleModal();
+  await processGoogleAuth(email, name, avatar);
+}
+
+async function testCustomGoogleAccount() {
+  const input = document.getElementById('customGoogleEmailInput');
+  const email = (input?.value || '').trim();
+  if (!email || !email.includes('@')) {
+    alert('Ingresa un correo electrónico de Google válido (ej: intruso@gmail.com)');
+    return;
+  }
+  closeGoogleModal();
+  await processGoogleAuth(email, 'Usuario No Autorizado', '');
+}
+
+function promptConfigureGoogleClientId() {
+  const current = localStorage.getItem(GOOGLE_OAUTH_CLIENT_ID_KEY) || '';
+  const input = prompt(
+    '⚙️ CONFIGURACIÓN GOOGLE CLOUD OAUTH CLIENT ID\n\n' +
+    'Ingresa el Client ID de tu proyecto en Google Cloud Console para activar la ventana emergente nativa de Google (ej: 12345-abc.apps.googleusercontent.com):\n',
+    current
+  );
+  if (input !== null) {
+    const clean = input.trim();
+    if (clean) {
+      localStorage.setItem(GOOGLE_OAUTH_CLIENT_ID_KEY, clean);
+      setupGoogleTokenClient();
+      showLoginToast('✅ Client ID de Google configurado correctamente.');
+    } else {
+      localStorage.removeItem(GOOGLE_OAUTH_CLIENT_ID_KEY);
+      googleTokenClient = null;
+      showLoginToast('ℹ️ Se utilizará el selector de cuentas corporativas.');
+    }
+  }
+}
+
+async function processGoogleAuth(googleEmail, googleName, googlePicture) {
+  const btn = document.getElementById('btnGoogleSignIn');
+  const btnText = document.getElementById('btnGoogleSignInText');
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.textContent = 'Autenticando...';
+
+  const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
+  const fp = getDeviceFingerprint();
+
+  let isAuthorized = false;
+  let sessionUser = null;
+
+  // 1. Intentar validar en Google Apps Script
+  try {
+    const resp = await fetch(GOOGLE_SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'authenticate_google',
+        googleEmail: googleEmail,
+        googleName: googleName,
+        googlePicture: googlePicture,
+        deviceInfo: fp
+      })
+    });
+    if (resp.ok) {
+      const result = await resp.json();
+      if (result && result.authorized && result.user) {
+        isAuthorized = true;
+        sessionUser = result.user;
+      }
+    }
+  } catch (err) {
+    console.warn('Validación online de Google falló o modo offline:', err);
+  }
+
+  // 2. Respaldo local si no hubo respuesta del servidor (comparar con credenciales oficiales)
+  if (!isAuthorized && !sessionUser) {
+    const usersMap = getActiveUsersCredentials();
+    for (const [key, u] of usersMap.entries()) {
+      if (u.email && u.email.toLowerCase() === googleEmail.toLowerCase()) {
+        isAuthorized = true;
+        sessionUser = {
+          id: u.id,
+          name: u.name,
+          username: u.username,
+          role: u.role,
+          email: u.email,
+          avatar: googlePicture || u.avatar
+        };
+        break;
+      }
+    }
+  }
+
+  // Restablecer botón
+  if (btn) btn.disabled = false;
+  if (btnText) btnText.textContent = 'Continuar con Google';
+
+  // 3. Evaluar resultado de la autenticación
+  if (isAuthorized && sessionUser) {
+    recordSuccessfulLogin();
+
+    localStorage.setItem('STF_LOGGED_USER', JSON.stringify(sessionUser));
+    localStorage.setItem('STF_USER_ROLE', sessionUser.role);
+    localStorage.setItem('STF_LOGGED_USERNAME', sessionUser.username);
+    localStorage.setItem('STF_ACTIVE_DEV_ID', sessionUser.id);
+    sessionStorage.setItem('STF_AUTH_SESSION', 'authenticated');
+
+    showLoginToast(`🎉 ¡Acceso Concedido con Google! Bienvenido/a ${sessionUser.name}.`);
+
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 700);
+  } else {
+    // 🚨 ACCESO DENEGADO / INTENTO FRAUDULENTO CON CUENTA GOOGLE
+    recordFailedLoginAttempt(googleEmail);
+
+    // Enviar alerta de ciberseguridad a Google Apps Script para notificar al Administrador
+    try {
+      fetch(GOOGLE_SHEETS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'authenticate_google',
+          googleEmail: googleEmail,
+          googleName: googleName,
+          deviceInfo: fp
+        })
+      }).catch(() => {});
+    } catch (e) {}
+
+    showLoginToast(`🚨 ACCESO DENEGADO: La cuenta de Google (${googleEmail}) no está autorizada en STF GROUP.`);
+  }
+}
+
+window.handleGoogleSignIn = handleGoogleSignIn;
+window.openGoogleAccountSelectorModal = openGoogleAccountSelectorModal;
+window.closeGoogleModal = closeGoogleModal;
+window.selectGoogleAccount = selectGoogleAccount;
+window.testCustomGoogleAccount = testCustomGoogleAccount;
+window.promptConfigureGoogleClientId = promptConfigureGoogleClientId;
 
 function handleForgotPassword(e) {
   e.preventDefault();
@@ -1782,6 +2000,7 @@ if (typeof document !== 'undefined') {
     applyPreselectedUser();
     initSmartUserAutocomplete();
     checkLockoutStatus();
+    initGoogleSignIn();
 
     // Encender la lámpara automáticamente al cargar la página para que la tarjeta de login aparezca de inmediato
     document.body.classList.add('lamp-on');
