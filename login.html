@@ -32,6 +32,19 @@
 
   <!-- Login Stylesheet (4K & High-DPI Optimized) -->
   <link rel="stylesheet" href="css/login.css?v=26">
+
+  <!-- STF Defensive Resilience & Crash Shield -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.warn('[STF Shield] Error interceptado en Login:', e.message || e);
+      if (e && e.preventDefault) e.preventDefault();
+      return true;
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      console.warn('[STF Shield] Promesa interceptada en Login:', e.reason);
+      if (e && e.preventDefault) e.preventDefault();
+    });
+  </script>
 </head>
 <body class="lamp-on">
 

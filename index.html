@@ -20,6 +20,19 @@
       }
     })();
   </script>
+
+  <!-- STF Defensive Resilience & Crash Shield -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.warn('[STF Shield] Error interceptado para evitar bloqueo de UI:', e.message || e);
+      if (e && e.preventDefault) e.preventDefault();
+      return true;
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      console.warn('[STF Shield] Promesa no manejada interceptada defensivamente:', e.reason);
+      if (e && e.preventDefault) e.preventDefault();
+    });
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STF-AP S.A. · Sistema de Control de Desarrollo y Rendimiento</title>
 
