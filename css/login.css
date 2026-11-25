@@ -4,9 +4,9 @@
    ========================================================================== */
 
 :root {
-  --bg-deep: #020612;
-  --bg-card: rgba(10, 16, 32, 0.72);
-  --bg-card-border: rgba(56, 189, 248, 0.18);
+  --bg-deep: #000000;
+  --bg-card: rgba(8, 11, 20, 0.68);
+  --bg-card-border: rgba(255, 255, 255, 0.14);
   --cyan-primary: #38BDF8;
   --cyan-glow: rgba(56, 189, 248, 0.35);
   --indigo-primary: #6366F1;
@@ -14,7 +14,7 @@
   --text-pure: #FFFFFF;
   --text-muted: #94A3B8;
   --text-dim: #64748B;
-  --input-bg: rgba(6, 11, 24, 0.75);
+  --input-bg: rgba(6, 10, 20, 0.75);
   --input-border: rgba(255, 255, 255, 0.12);
   --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
@@ -66,18 +66,18 @@ html, body {
   height: 100%;
   object-fit: cover;
   object-position: center 30%;
-  filter: brightness(0.38) contrast(1.15) saturate(0.85);
+  filter: brightness(0.62) contrast(1.08) saturate(0.92);
   transform: scale(1.02);
   will-change: transform;
 }
 
-/* Deep Midnight-Sapphire Gradient Mesh (Preserva la imagen y otorga el tono 4K de la maqueta) */
+/* Dark Carbon Neutral Mesh (Mayor transparencia y tono negro para ver la sede con nitidez) */
 .bg-midnight-mesh {
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(circle at 75% 45%, rgba(13, 27, 62, 0.82) 0%, rgba(5, 12, 28, 0.88) 50%, rgba(2, 6, 18, 0.96) 100%),
-    linear-gradient(180deg, rgba(2, 6, 18, 0.86) 0%, rgba(4, 10, 24, 0.78) 50%, rgba(2, 5, 14, 0.94) 100%);
+    radial-gradient(circle at 75% 45%, rgba(0, 0, 0, 0.40) 0%, rgba(2, 4, 10, 0.60) 55%, rgba(0, 0, 0, 0.82) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.32) 50%, rgba(0, 0, 0, 0.72) 100%);
   z-index: 1;
 }
 
@@ -85,17 +85,17 @@ html, body {
 .bg-tech-grid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(56, 189, 248, 0.10) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px);
   background-size: 38px 38px;
   z-index: 2;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
-/* Radial Glow Orbs */
+/* Radial Glow Orbs (Suavizados para preservar la visibilidad de la sede) */
 .bg-ambient-glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(90px);
   pointer-events: none;
   z-index: 2;
 }
@@ -105,7 +105,7 @@ html, body {
   left: 20%;
   width: 520px;
   height: 420px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.16) 0%, rgba(99, 102, 241, 0.08) 55%, transparent 75%);
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(99, 102, 241, 0.04) 55%, transparent 75%);
 }
 
 .glow-card {
@@ -113,7 +113,7 @@ html, body {
   right: 12%;
   width: 480px;
   height: 480px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, rgba(56, 189, 248, 0.06) 60%, transparent 75%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(56, 189, 248, 0.03) 60%, transparent 75%);
 }
 
 /* ==========================================================================
@@ -136,25 +136,18 @@ html, body {
   gap: 14px;
 }
 
-.brand-text-logo {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
+.brand-corp-logo-img {
+  height: 25px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+  image-rendering: -webkit-optimize-contrast;
+  transition: transform 0.25s ease;
 }
 
-.brand-stf {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--text-pure);
-}
-
-.brand-sa {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #CBD5E1;
-  vertical-align: super;
+.brand-corp-logo-img:hover {
+  transform: scale(1.04);
 }
 
 .brand-sep {
@@ -218,13 +211,13 @@ html, body {
 .stf-split-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   width: 100%;
-  max-width: 1380px;
+  max-width: 1120px;
   margin: 0 auto;
-  gap: 48px;
+  gap: 56px;
   flex: 1;
-  padding: 10px 0 20px 0;
+  padding: 10px 24px 20px 24px;
 }
 
 /* ==========================================================================
@@ -232,11 +225,11 @@ html, body {
    ========================================================================== */
 .stf-hero-col {
   flex: 1;
-  max-width: 660px;
+  max-width: 530px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-right: 20px;
+  padding-right: 0;
 }
 
 .hero-header-tag {
@@ -431,13 +424,12 @@ html, body {
   text-transform: uppercase;
 }
 
-.subbrand-ela {
-  font-size: 17px;
-  font-weight: 800;
-  text-transform: lowercase;
-  letter-spacing: 1px;
-  font-style: italic;
-  font-family: serif;
+.subbrand-ela-img {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  filter: brightness(1) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6));
 }
 
 .subbrand-man {
@@ -464,7 +456,7 @@ html, body {
    ========================================================================== */
 .stf-card-col {
   width: 100%;
-  max-width: 440px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1203,20 +1195,21 @@ html, body {
    ========================================================================== */
 @media (min-width: 1800px) {
   .stf-split-container {
-    max-width: 1600px;
+    max-width: 1220px;
+    gap: 70px;
   }
   .hero-title {
-    font-size: 64px;
+    font-size: 58px;
   }
   .hero-subtext {
-    font-size: 18px;
-    max-width: 520px;
+    font-size: 17px;
+    max-width: 490px;
   }
   .stf-card-col {
-    max-width: 480px;
+    max-width: 440px;
   }
   .stf-terminal-card {
-    padding: 40px 38px 32px 38px;
+    padding: 38px 36px 30px 36px;
   }
 }
 
