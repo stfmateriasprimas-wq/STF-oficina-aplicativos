@@ -1871,27 +1871,49 @@ function doPost(e) {
         formatCorporateSheet(sTar, "#854D0E", [260, 180, 160, 110, 120, 125, 150, 150, 300]);
       }
 
-      // 4. Sincronizar USUARIOS si vienen en el payload
+      // 4. Sincronizar USUARIOS si vienen en el payload (garantizando contraseñas oficiales fijas)
       if (Array.isArray(payload.users) && payload.users.length > 0) {
         var sUsr = getMasterSheet(ss, "USUARIOS");
         ensureExactHeaders(sUsr, HEADERS.USUARIOS);
         var lastRUsr = sUsr.getLastRow();
         if (lastRUsr > 1) {
-          sUsr.getRange(2, 1, lastRUsr - 1, Math.max(6, sUsr.getLastColumn())).clearContent();
+          sUsr.getRange(2, 1, lastRUsr - 1, Math.max(7, sUsr.getLastColumn())).clearContent();
         }
+        var OFFICIAL_MASTER_PASSWORDS = {
+          "jose@guzman": "159",
+          "dev_jg": "159",
+          "dev_jose_guzman": "159",
+          "juan@david": "2222",
+          "dev_jd": "2222",
+          "dev_juan_david": "2222",
+          "esteban@escobar": "1111",
+          "dev_ee": "1111",
+          "dev_esteban_escobar": "1111",
+          "jhon@eyder": "4444",
+          "dev_mocho": "4444",
+          "dev_jhon_eyder": "4444",
+          "ediaz": "Admin",
+          "dev_ediaz": "Admin"
+        };
         var usrRows = payload.users.map(function (u) {
           var r = u.role || "desarrollador";
+          var uUser = String(u.username || "").toLowerCase().trim();
+          var fixedPass = OFFICIAL_MASTER_PASSWORDS[uUser] || u.idPassword || u.id;
+          if (!fixedPass || String(fixedPass).indexOf("dev_") === 0) {
+            fixedPass = OFFICIAL_MASTER_PASSWORDS[uUser] || "159";
+          }
           return [
-            u.idPassword || u.id || "123456",
+            fixedPass,
             u.username || "",
             r,
             u.email || "",
             u.name || u.username || "",
-            String(r).toLowerCase() === "admin" ? "ADMIN" : "ACTIVO"
+            String(r).toLowerCase() === "admin" ? "ADMIN" : "ACTIVO",
+            u.avatar || ""
           ];
         });
-        sUsr.getRange(2, 1, usrRows.length, 6).setValues(usrRows);
-        formatCorporateSheet(sUsr, "#0F172A", [120, 160, 130, 240, 180, 100]);
+        sUsr.getRange(2, 1, usrRows.length, 7).setValues(usrRows);
+        formatCorporateSheet(sUsr, "#0F172A", [120, 160, 130, 240, 180, 100, 240]);
       }
 
       // 5. Sincronizar HISTORIAL_OBSERVACIONES si vienen observaciones en el payload

@@ -480,14 +480,36 @@
         };
       });
 
-      const usersList = (targetState.developers || []).map(dev => ({
-        id: dev.idPassword || (dev.id === 'dev_ediaz' ? 'Admin' : dev.id.replace('dev_', '')),
-        idPassword: dev.idPassword || (dev.id === 'dev_ediaz' ? 'Admin' : dev.id.replace('dev_', '')),
-        username: dev.username || dev.id,
-        role: dev.roleType || dev.role || 'desarrollador',
-        email: dev.email || '',
-        name: dev.name
-      }));
+      const OFFICIAL_MASTER_PASSWORDS = {
+        'jose@guzman': '159',
+        'dev_jg': '159',
+        'dev_jose_guzman': '159',
+        'juan@david': '2222',
+        'dev_jd': '2222',
+        'dev_juan_david': '2222',
+        'esteban@escobar': '1111',
+        'dev_ee': '1111',
+        'dev_esteban_escobar': '1111',
+        'jhon@eyder': '4444',
+        'dev_mocho': '4444',
+        'dev_jhon_eyder': '4444',
+        'ediaz': 'Admin',
+        'dev_ediaz': 'Admin'
+      };
+
+      const usersList = (targetState.developers || []).map(dev => {
+        const uLower = String(dev.username || '').toLowerCase();
+        const idLower = String(dev.id || '').toLowerCase();
+        const fixedPass = OFFICIAL_MASTER_PASSWORDS[uLower] || OFFICIAL_MASTER_PASSWORDS[idLower] || dev.idPassword || (idLower === 'dev_ediaz' ? 'Admin' : '159');
+        return {
+          id: fixedPass,
+          idPassword: fixedPass,
+          username: dev.username || dev.id,
+          role: dev.roleType || dev.role || 'desarrollador',
+          email: dev.email || '',
+          name: dev.name
+        };
+      });
 
       const allObservations = [];
       (targetState.integrations || []).forEach(item => {

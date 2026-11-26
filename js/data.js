@@ -406,7 +406,7 @@ function sanitizeAndDeduplicateDevelopers(devList) {
         username: official ? official.username : (d.username || cid),
         avatar: official ? official.avatar : (d.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'),
         role: official ? official.role : (d.role || 'desarrollador'),
-        idPassword: d.idPassword || (official ? official.idPassword : null),
+        idPassword: official ? official.idPassword : (d.idPassword || '159'),
         onTimeDelivery: official ? official.onTimeDelivery : (d.onTimeDelivery || 95),
         codeQuality: official ? official.codeQuality : (d.codeQuality || 93),
         sprintsCompleted: official ? official.sprintsCompleted : (d.sprintsCompleted || 10),
@@ -427,16 +427,16 @@ function sanitizeAndDeduplicateDevelopers(devList) {
         existing.avatar = official.avatar;
         existing.username = official.username;
         existing.role = official.role;
+        existing.idPassword = official.idPassword;
         existing.onTimeDelivery = official.onTimeDelivery;
         existing.codeQuality = official.codeQuality;
+      } else if (!existing.idPassword && d.idPassword) {
+        existing.idPassword = d.idPassword;
       }
       if (Array.isArray(d.activeProjects)) {
         d.activeProjects.forEach(p => {
           if (!existing.activeProjects.includes(p)) existing.activeProjects.push(p);
         });
-      }
-      if (d.idPassword && !existing.idPassword) {
-        existing.idPassword = d.idPassword;
       }
     }
   });
