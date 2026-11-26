@@ -307,6 +307,7 @@ html, body {
   justify-content: center;
   margin: 12px 0 16px 0;
   align-self: flex-start;
+  cursor: pointer;
 }
 
 .graphic-orbits {
@@ -330,11 +331,37 @@ html, body {
 .orbit-group-1 {
   transform-origin: 170px 140px;
   animation: orbitSpinClockwise 22s linear infinite;
+  transition: animation-duration 0.8s ease;
 }
 
 .orbit-group-2 {
   transform-origin: 170px 140px;
   animation: orbitSpinCounter 28s linear infinite;
+  transition: animation-duration 0.8s ease;
+}
+
+/* Hover Acceleration: Aceleración suave y elegante sin ser muy rápida */
+.stf-graphic-stage:hover .orbit-group-1 {
+  animation-duration: 7.5s;
+}
+
+.stf-graphic-stage:hover .orbit-group-2 {
+  animation-duration: 9.5s;
+}
+
+.stf-graphic-stage:hover .shield-diamond {
+  transform: rotate(45deg) scale(1.05);
+  border-color: rgba(56, 189, 248, 0.95);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.70),
+    0 0 35px rgba(56, 189, 248, 0.55),
+    inset 0 0 25px rgba(56, 189, 248, 0.35);
+}
+
+.stf-graphic-stage:hover .shield-outer-glow {
+  transform: scale(1.22);
+  opacity: 0.95;
+  filter: blur(26px);
 }
 
 @keyframes orbitSpinClockwise {
