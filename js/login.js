@@ -1693,14 +1693,12 @@ function initSmartUserAutocomplete() {
           <div class="smart-user-details">
             <div class="smart-user-topline">
               <span class="smart-user-tag">✨ Usuario Detectado</span>
-              <span class="smart-user-badge ${isAdmin ? 'admin-badge' : 'dev-badge'}">${isAdmin ? '🛡️ Admin' : '💻 ' + bestUser.role}</span>
             </div>
-            <strong class="smart-user-name">${bestUser.name}</strong>
-            <span class="smart-user-handle">${bestUser.username}</span>
+            <div class="smart-user-info-row">
+              <strong class="smart-user-name">${bestUser.name}</strong>
+              <span class="smart-user-handle">${bestUser.username}</span>
+            </div>
           </div>
-          <button type="button" class="smart-user-confirm-btn" onclick="applySmartUserById('${bestUser.id}', true)" title="Confirmar">
-            <span>Usar ↵</span>
-          </button>
         </div>
         ${matches.length > 1 ? `
           <div class="smart-user-alternatives">
