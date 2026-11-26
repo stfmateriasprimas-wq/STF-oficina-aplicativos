@@ -1369,8 +1369,8 @@ body.verifying-credentials .isometric-cube {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    gap: 18px !important;
-    padding: 8px 0 !important;
+    gap: 32px !important;
+    padding: 12px 0 !important;
     max-width: 460px;
   }
   .stf-hero-col {
@@ -1459,8 +1459,8 @@ body.verifying-credentials .isometric-cube {
     height: auto !important;
   }
   .stf-split-container {
-    gap: 22px !important;
-    padding: 16px 0 20px 0 !important;
+    gap: 36px !important;
+    padding: 16px 0 24px 0 !important;
     width: 100% !important;
     max-width: 100% !important;
   }
