@@ -209,19 +209,19 @@ html, body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 1200px;
-  margin: 0;
+  max-width: 1340px;
+  margin: 0 auto;
   gap: 50px;
   flex: 1;
-  padding: 14px 0 20px 0;
+  padding: 14px 20px 20px 80px;
 }
 
 /* ==========================================================================
    LEFT COLUMN: HERO HEADLINE, ANIMATION & SUB-BRANDS
    ========================================================================== */
 .stf-hero-col {
-  flex: 0 0 460px;
-  max-width: 460px;
+  flex: 0 0 500px;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -266,11 +266,14 @@ html, body {
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95), 0 4px 32px rgba(0, 0, 0, 0.90);
 }
 
-.hero-title span {
+.hero-title > span,
+.hero-line {
   display: block;
+  white-space: nowrap;
 }
 
 .hero-gradient-text {
+  display: inline !important;
   color: #818CF8;
   background: linear-gradient(135deg, #A5B4FC 0%, #38BDF8 100%);
   -webkit-background-clip: text;
