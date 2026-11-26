@@ -1528,6 +1528,9 @@ body.verifying-credentials .isometric-cube {
   .stf-field-lbl {
     font-size: 11.5px;
   }
+  .field-input-native {
+    font-size: 16px !important; /* Evita que iOS Safari haga auto-zoom al enfocar */
+  }
   .stf-field-box {
     height: 45px;
   }
