@@ -340,13 +340,13 @@ html, body {
   transition: animation-duration 0.8s ease;
 }
 
-/* Hover Acceleration: Aceleración suave y elegante sin ser muy rápida */
+/* Hover Acceleration: Aceleración con un tris más de velocidad (dinámica y fluida) */
 .stf-graphic-stage:hover .orbit-group-1 {
-  animation-duration: 7.5s;
+  animation-duration: 5s;
 }
 
 .stf-graphic-stage:hover .orbit-group-2 {
-  animation-duration: 9.5s;
+  animation-duration: 6.5s;
 }
 
 .stf-graphic-stage:hover .shield-diamond {
