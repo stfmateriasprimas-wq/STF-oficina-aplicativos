@@ -207,25 +207,26 @@ html, body {
 .stf-split-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1420px;
   margin: 0 auto;
-  gap: 56px;
+  gap: 28px;
   flex: 1;
-  padding: 10px 24px 20px 24px;
+  padding: 10px 0 20px 0;
 }
 
 /* ==========================================================================
-   LEFT COLUMN: HERO HEADLINE & ISOMETRIC ARTWORK
+   LEFT COLUMN: HERO HEADLINE & SUB-BRANDS
    ========================================================================== */
 .stf-hero-col {
-  flex: 1;
-  max-width: 460px;
+  flex: 0 0 420px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding-right: 0;
+  justify-content: space-between;
+  min-height: 480px;
+  padding: 6px 0;
   position: relative;
   z-index: 10;
 }
@@ -234,12 +235,12 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 2.2px;
   text-transform: uppercase;
   color: var(--cyan-primary);
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.90);
 }
 
@@ -249,12 +250,12 @@ html, body {
 }
 
 .hero-title {
-  font-size: 47px;
+  font-size: 50px;
   font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: -0.6px;
+  line-height: 1.15;
+  letter-spacing: -0.8px;
   color: var(--text-pure);
-  margin-bottom: 18px;
+  margin-bottom: 22px;
   display: flex;
   flex-direction: column;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95), 0 4px 32px rgba(0, 0, 0, 0.90);
@@ -270,27 +271,27 @@ html, body {
 }
 
 .hero-subtext {
-  font-size: 15.5px;
+  font-size: 16px;
   line-height: 1.65;
-  color: #E2E8F0;
-  max-width: 440px;
-  margin-bottom: 24px;
+  color: #CBD5E1;
+  max-width: 410px;
+  margin-bottom: auto;
   font-weight: 400;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
 }
 
 /* ==========================================================================
-   GRAPHIC STAGE: ORBITAL ELLIPSES & 3D ISOMETRIC CUBE
+   CENTER STAGE: ORBITAL ELLIPSES & 3D ISOMETRIC CUBE
    ========================================================================== */
 .stf-graphic-stage {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  height: 230px;
+  flex: 1;
+  max-width: 440px;
+  height: 290px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 26px;
+  position: relative;
+  margin: 0 auto;
 }
 
 .graphic-orbits {
@@ -498,8 +499,9 @@ html, body {
    RIGHT COLUMN: 4K HIGH-SECURITY LOGIN TERMINAL CARD
    ========================================================================== */
 .stf-card-col {
+  flex: 0 0 410px;
   width: 100%;
-  max-width: 420px;
+  max-width: 410px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -554,16 +556,15 @@ html, body {
   will-change: transform, box-shadow;
 }
 
-/* Hover con zoom y activación de sombra negra difuminada ultra profunda */
+/* Hover con zoom sutil y activación de sombra suave y elegante (no tan marcada) */
 .stf-terminal-card:hover {
-  transform: scale(1.03) translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.20);
+  transform: scale(1.025) translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.22);
   box-shadow: 
-    0 45px 115px -10px rgba(0, 0, 0, 0.99),
-    0 25px 75px -5px rgba(0, 0, 0, 0.96),
-    0 0 95px 25px rgba(0, 0, 0, 0.95),
-    0 0 150px 45px rgba(0, 0, 0, 0.85),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.20);
+    0 18px 40px -8px rgba(0, 0, 0, 0.45),
+    0 8px 20px -4px rgba(0, 0, 0, 0.32),
+    0 0 28px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 /* Top Control Row inside Card (Alineado a la derecha sin el botón de cuadrícula eliminado) */
@@ -1242,18 +1243,23 @@ html, body {
    ========================================================================== */
 @media (min-width: 1800px) {
   .stf-split-container {
-    max-width: 1220px;
-    gap: 70px;
+    max-width: 1540px;
+    gap: 40px;
+  }
+  .stf-hero-col {
+    flex: 0 0 460px;
+    max-width: 460px;
   }
   .hero-title {
-    font-size: 58px;
+    font-size: 54px;
   }
   .hero-subtext {
-    font-size: 17px;
-    max-width: 490px;
+    font-size: 16.5px;
+    max-width: 440px;
   }
   .stf-card-col {
-    max-width: 440px;
+    flex: 0 0 430px;
+    max-width: 430px;
   }
   .stf-terminal-card {
     padding: 38px 36px 30px 36px;

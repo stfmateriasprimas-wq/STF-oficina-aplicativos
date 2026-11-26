@@ -82,7 +82,7 @@
     <div class="stf-split-container">
 
       <!-- ========================================================
-           LEFT COLUMN: HERO HEADLINE & ISOMETRIC ARTWORK
+           LEFT COLUMN: HERO HEADLINE & SUB-BRANDS
            ======================================================== -->
       <section class="stf-hero-col">
         <div class="hero-header-tag">
@@ -101,62 +101,6 @@
           posible todo lo que somos.
         </p>
 
-        <!-- ARTWORK: Orbital Ellipses with 3D Isometric Cube -->
-        <div class="stf-graphic-stage">
-          <div class="graphic-orbits">
-            <!-- Ellipse Orbits SVG with Gyroscopic Motion -->
-            <svg class="orbits-svg" viewBox="0 0 460 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <filter id="glowCyan" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-                <filter id="glowIndigo" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-
-              <!-- Orbit Track 1 (Clockwise Gyroscopic Rotation) -->
-              <g class="orbit-group-1">
-                <ellipse cx="230" cy="140" rx="195" ry="85" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1.4" stroke-dasharray="6 4"/>
-                <circle cx="35" cy="140" r="4" fill="#38BDF8" filter="url(#glowCyan)"/>
-                <circle cx="425" cy="140" r="3.2" fill="#38BDF8" filter="url(#glowCyan)"/>
-              </g>
-
-              <!-- Orbit Track 2 (Counter-Clockwise Rotation) -->
-              <g class="orbit-group-2">
-                <ellipse cx="230" cy="140" rx="175" ry="105" stroke="rgba(99, 102, 241, 0.30)" stroke-width="1.3"/>
-                <circle cx="230" cy="35" r="4" fill="#818CF8" filter="url(#glowIndigo)"/>
-                <circle cx="230" cy="245" r="3.2" fill="#818CF8" filter="url(#glowIndigo)"/>
-              </g>
-            </svg>
-
-            <!-- Orbit Floating Labels -->
-            <div class="orbit-badge-top">STF / CONNECT</div>
-
-            <!-- Central Luminous Diamond Shield with 3D Wireframe Cube -->
-            <div class="shield-center-node">
-              <div class="shield-outer-glow"></div>
-              <div class="shield-diamond">
-                <div class="shield-diamond-inner">
-                  <!-- Isometric 3D Cube SVG -->
-                  <svg class="isometric-cube" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Top Face -->
-                    <polygon points="32,8 52,20 32,32 12,20" fill="rgba(56, 189, 248, 0.25)" stroke="#38BDF8" stroke-width="1.8" stroke-linejoin="round"/>
-                    <!-- Left Face -->
-                    <polygon points="12,20 32,32 32,56 12,44" fill="rgba(14, 165, 233, 0.15)" stroke="#38BDF8" stroke-width="1.8" stroke-linejoin="round"/>
-                    <!-- Right Face -->
-                    <polygon points="32,32 52,20 52,44 32,56" fill="rgba(99, 102, 241, 0.20)" stroke="#818CF8" stroke-width="1.8" stroke-linejoin="round"/>
-                    <!-- Inner Core -->
-                    <circle cx="32" cy="32" r="3" fill="#FFFFFF"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Sub-brands at bottom left -->
         <div class="stf-brands-footer">
           <span class="subbrand-name">STUDIO F</span>
@@ -166,6 +110,64 @@
           <span class="subbrand-name subbrand-man">STUDIO F<small>MAN</small></span>
         </div>
       </section>
+
+      <!-- ========================================================
+           CENTER STAGE: ORBITAL ELLIPSES WITH 3D ISOMETRIC CUBE
+           ======================================================== -->
+      <div class="stf-graphic-stage">
+        <div class="graphic-orbits">
+          <!-- Ellipse Orbits SVG with Gyroscopic Motion -->
+          <svg class="orbits-svg" viewBox="0 0 460 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glowCyan" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glowIndigo" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            <!-- Orbit Track 1 (Clockwise Gyroscopic Rotation) -->
+            <g class="orbit-group-1">
+              <ellipse cx="230" cy="140" rx="195" ry="85" stroke="rgba(56, 189, 248, 0.35)" stroke-width="1.4" stroke-dasharray="6 4"/>
+              <circle cx="35" cy="140" r="4" fill="#38BDF8" filter="url(#glowCyan)"/>
+              <circle cx="425" cy="140" r="3.2" fill="#38BDF8" filter="url(#glowCyan)"/>
+            </g>
+
+            <!-- Orbit Track 2 (Counter-Clockwise Rotation) -->
+            <g class="orbit-group-2">
+              <ellipse cx="230" cy="140" rx="175" ry="105" stroke="rgba(99, 102, 241, 0.30)" stroke-width="1.3"/>
+              <circle cx="230" cy="35" r="4" fill="#818CF8" filter="url(#glowIndigo)"/>
+              <circle cx="230" cy="245" r="3.2" fill="#818CF8" filter="url(#glowIndigo)"/>
+            </g>
+          </svg>
+
+          <!-- Orbit Floating Labels -->
+          <div class="orbit-badge-top">STF / CONNECT</div>
+
+          <!-- Central Luminous Diamond Shield with 3D Wireframe Cube -->
+          <div class="shield-center-node">
+            <div class="shield-outer-glow"></div>
+            <div class="shield-diamond">
+              <div class="shield-diamond-inner">
+                <!-- Isometric 3D Cube SVG -->
+                <svg class="isometric-cube" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Top Face -->
+                  <polygon points="32,8 52,20 32,32 12,20" fill="rgba(56, 189, 248, 0.25)" stroke="#38BDF8" stroke-width="1.8" stroke-linejoin="round"/>
+                  <!-- Left Face -->
+                  <polygon points="12,20 32,32 32,56 12,44" fill="rgba(14, 165, 233, 0.15)" stroke="#38BDF8" stroke-width="1.8" stroke-linejoin="round"/>
+                  <!-- Right Face -->
+                  <polygon points="32,32 52,20 52,44 32,56" fill="rgba(99, 102, 241, 0.20)" stroke="#818CF8" stroke-width="1.8" stroke-linejoin="round"/>
+                  <!-- Inner Core -->
+                  <circle cx="32" cy="32" r="3" fill="#FFFFFF"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ========================================================
            RIGHT COLUMN: 4K HIGH-SECURITY LOGIN TERMINAL CARD
