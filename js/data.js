@@ -296,131 +296,8 @@ const STF_REAL_DATA = {
     }
   ],
 
-  // Integraciones y Tareas Oficiales Ponderadas por Desarrollador y Sistema
-  integrations: [
-    // --- Juan David (CALIDAD) ---
-    {
-      id: "int_1",
-      name: "revision y ajuste de indicadores de calidad, ejecucion en calculo",
-      appId: "app_calidad",
-      appName: "CALIDAD",
-      devId: "dev_jd",
-      devName: "Juan David",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-19",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    },
-    {
-      id: "int_2",
-      name: "PANEL DE PLANEACION, ADMIN, PLANEA PERSONAL ACTIVO, METAS, CALCUJLO PARTICIPOATIVO POR ACTIVIDAD DIARIA",
-      appId: "app_calidad",
-      appName: "CALIDAD",
-      devId: "dev_jd",
-      devName: "Juan David",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-22",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    },
-    {
-      id: "int_3",
-      name: "INDICADORES DE  CALIDAD TELAS",
-      appId: "app_calidad",
-      appName: "CALIDAD",
-      devId: "dev_jd",
-      devName: "Juan David",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-19",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    },
-    {
-      id: "int_5",
-      name: "revision de cuadro control de piso",
-      appId: "app_calidad",
-      appName: "CALIDAD",
-      devId: "dev_jd",
-      devName: "Juan David",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-19",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    },
-    // --- Esteban Escobar (TORRE DE CONTROL) ---
-    {
-      id: "int_4",
-      name: "REVISION DE LISTAS, INVESTIGACION DE ECOSISTEMA  Y ASISTENCIA IA",
-      appId: "app_torre",
-      appName: "TORRE DE CONTROL",
-      devId: "dev_ee",
-      devName: "esteban escobar",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-19",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    },
-    // --- Jhon Eyder (Mocho) (TINTORERIA) ---
-    {
-      id: "int_6",
-      name: "implementacion de dasboart  de control de piso",
-      appId: "app_tintoreria",
-      appName: "TINTORERIA",
-      devId: "dev_mocho",
-      devName: "Jhon Eyder (Mocho)",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-19",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    },
-    {
-      id: "int_7",
-      name: "validacion de modulo de inventario",
-      appId: "app_tintoreria",
-      appName: "TINTORERIA",
-      devId: "dev_mocho",
-      devName: "Jhon Eyder (Mocho)",
-      startDate: "2026-11-19",
-      createdDate: "2026-11-18 15:03:19",
-      deadline: "2026-11-19",
-      deliveryTime: "13:00",
-      weight: 15,
-      status: "in_progress",
-      description: "En desarrollo activo en planta.",
-      evaluation: null,
-      observations: []
-    }
-  ],
+  // Integraciones y Tareas Oficiales Ponderadas por Desarrollador y Sistema (Iniciado limpio para datos 100% reales)
+  integrations: [],
 
   // Solicitudes de Soporte Técnico en Planta (Bandeja por Desarrollador iniciada en 0 para pruebas oficiales)
   supportTickets: []
@@ -753,10 +630,44 @@ function getStoredData() {
             }
           });
         }
-        // Sincronizar y alinear integraciones oficiales por desarrollador
-        if (!Array.isArray(parsed.integrations) || parsed.integrations.length === 0) {
-          parsed.integrations = JSON.parse(JSON.stringify(STF_REAL_DATA.integrations || []));
+        // Sincronizar y alinear integraciones oficiales por desarrollador (solo tareas 100% reales)
+        if (!Array.isArray(parsed.integrations)) {
+          parsed.integrations = [];
         } else {
+          // Purgar de forma estricta tareas de demo/mock antiguas para asegurar datos 100% reales
+          const seedTaskIds = new Set(['int_1', 'int_2', 'int_3', 'int_4', 'int_5', 'int_6', 'int_7']);
+          parsed.integrations = parsed.integrations.filter(t => {
+            if (!t) return false;
+            const tid = String(t.id || '');
+            if (seedTaskIds.has(tid) || /^int_[1-9]$/.test(tid) || /^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(tid)) return false;
+            const tName = String(t.name || '').toLowerCase();
+            if (
+              tName.includes('revision y ajuste de indicadores de calidad') ||
+              tName.includes('panel de planeacion, admin, planea personal activo') ||
+              tName.includes('indicadores de calidad telas') ||
+              tName.includes('revision de cuadro control de piso') ||
+              tName.includes('revision de listas, investigacion de ecosistema') ||
+              tName.includes('implementacion de dasboart de control de piso') ||
+              tName.includes('validacion de modulo de inventario') ||
+              tName.includes('calibración y lectura qr') ||
+              tName.includes('calibracion y lectura qr') ||
+              tName.includes('geolocalización satelital') ||
+              tName.includes('geolocalizacion satelital') ||
+              tName.includes('sincronización en vivo con google sheets') ||
+              tName.includes('sincronizacion en vivo con google sheets') ||
+              tName.includes('arquitectura y especificación de ensayos textiles') ||
+              tName.includes('levantamiento de requisitos y fórmulas') ||
+              tName.includes('gateway de autenticación & roles') ||
+              tName.includes('conexión báscula digital') ||
+              tName.includes('automatización de recetas químicas') ||
+              tName.includes('servicio de notificaciones en tiempo real') ||
+              tName.includes('módulo gps & trazabilidad')
+            ) {
+              return false;
+            }
+            return true;
+          });
+
           parsed.integrations.forEach(item => {
             if (!item.appName && item.appId) {
               const app = (parsed.applications || []).find(a => a.id === item.appId);
@@ -783,67 +694,11 @@ function getStoredData() {
               }
             }
 
-            // Normalización de tiempos y fechas reales STF (creación vs reunión de entrega)
-            const todayStr = '2026-11-18';
-            let createdDay = todayStr;
-            if (item.createdDate) {
-              const dC = new Date(item.createdDate);
-              if (!isNaN(dC.getTime())) {
-                createdDay = `${dC.getFullYear()}-${String(dC.getMonth() + 1).padStart(2, '0')}-${String(dC.getDate()).padStart(2, '0')}`;
-              }
-            } else {
-              item.createdDate = `${todayStr} 08:00:00`;
-            }
-
-            const isEvaluated = item.status === 'evaluated' || (String(item.status || '').toLowerCase().includes('audit'));
-            if (!isEvaluated) {
-              // Toda tarea activa en desarrollo asignada para esta entrega se alinea a hoy
-              if (!item.startDate || item.startDate === '2026-10-19' || item.startDate < todayStr) {
-                item.startDate = todayStr;
-              }
-              if (!item.deadline || item.deadline < todayStr) {
-                item.deadline = todayStr;
-              }
-              if (!item.deliveryTime) {
-                item.deliveryTime = '13:00';
-              }
-            } else {
-              if (!item.startDate || item.startDate === '2026-10-19') {
-                item.startDate = createdDay;
-              }
-              if (!item.deliveryTime) {
-                item.deliveryTime = '11:00';
-              }
+            // Preservar la hora de reunión configurada
+            if (!item.deliveryTime) {
+              item.deliveryTime = '13:00';
             }
           });
-
-          // Purgar de forma estricta tareas de demo/mock antiguas para asegurar datos 100% reales de planta
-          if (Array.isArray(parsed.integrations)) {
-            parsed.integrations = parsed.integrations.filter(t => {
-              if (!t) return false;
-              const tid = String(t.id || '');
-              if (/^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(tid)) return false;
-              const tName = String(t.name || '').toLowerCase();
-              if (
-                tName.includes('calibración y lectura qr') ||
-                tName.includes('calibracion y lectura qr') ||
-                tName.includes('geolocalización satelital') ||
-                tName.includes('geolocalizacion satelital') ||
-                tName.includes('sincronización en vivo con google sheets') ||
-                tName.includes('sincronizacion en vivo con google sheets') ||
-                tName.includes('arquitectura y especificación de ensayos textiles') ||
-                tName.includes('levantamiento de requisitos y fórmulas') ||
-                tName.includes('gateway de autenticación & roles') ||
-                tName.includes('conexión báscula digital') ||
-                tName.includes('automatización de recetas químicas') ||
-                tName.includes('servicio de notificaciones en tiempo real') ||
-                tName.includes('módulo gps & trazabilidad')
-              ) {
-                return false;
-              }
-              return true;
-            });
-          }
         }
         // Inicializar o restablecer solicitudes de soporte técnico en 0 para pruebas oficiales
         if (!localStorage.getItem('STF_SUPPORT_RESET_ZERO_V6')) {

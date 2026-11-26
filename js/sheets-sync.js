@@ -917,7 +917,26 @@
       const state = window.appState;
       if (!Array.isArray(state.integrations)) state.integrations = [];
 
-      // Si Google Sheets trae tareas reales, purgar de inmediato tareas de mock o que no existan en la hoja
+      // Purgar de inmediato tareas de demo/mock antiguas para asegurar datos 100% reales
+      const seedTaskIds = new Set(['int_1', 'int_2', 'int_3', 'int_4', 'int_5', 'int_6', 'int_7']);
+      state.integrations = state.integrations.filter(item => {
+        if (!item) return false;
+        const itemId = String(item.id || '');
+        if (seedTaskIds.has(itemId) || /^int_[1-9]$/.test(itemId) || /^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(itemId)) return false;
+        const itemName = String(item.name || '').trim().toLowerCase();
+        if (
+          itemName.includes('revision y ajuste de indicadores de calidad') ||
+          itemName.includes('panel de planeacion, admin, planea personal activo') ||
+          itemName.includes('indicadores de calidad telas') ||
+          itemName.includes('revision de cuadro control de piso') ||
+          itemName.includes('revision de listas, investigacion de ecosistema') ||
+          itemName.includes('implementacion de dasboart de control de piso') ||
+          itemName.includes('validacion de modulo de inventario')
+        ) return false;
+        return true;
+      });
+
+      // Si Google Sheets trae tareas reales, sincronizar y filtrar
       if (tasksList.length > 0) {
         const cloudTaskIds = new Set(tasksList.map(t => String(t.id || t.ID_Tarea || '').trim()).filter(Boolean));
         const cloudTaskNames = new Set(tasksList.map(t => String(t.name || t.Tarea || '').trim().toLowerCase()).filter(Boolean));
@@ -925,7 +944,6 @@
         state.integrations = state.integrations.filter(item => {
           if (!item) return false;
           const itemId = String(item.id || '');
-          if (/^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(itemId)) return false;
           const itemName = String(item.name || '').trim().toLowerCase();
           return cloudTaskIds.has(itemId) || cloudTaskNames.has(itemName);
         });
@@ -990,14 +1008,6 @@
           }
         }
 
-        // REGLA CRÍTICA STF: Si la tarea está en desarrollo/progreso (no auditada) y su fecha quedó en el pasado, se normaliza a hoy
-        if (!isEval && (!cleanDeadline || cleanDeadline < systemTodayStr)) {
-          cleanDeadline = systemTodayStr;
-        }
-        if (!isEval && (!cleanStartDate || cleanStartDate < systemTodayStr || cleanStartDate === '2026-10-19')) {
-          cleanStartDate = systemTodayStr;
-        }
-
         // 4. Hora oficial de la reunión de entrega
         let cleanDeliveryTime = task.deliveryTime || task.Hora_Entrega || '13:00';
 
@@ -1031,14 +1041,8 @@
           }
 
           if (cleanCreatedDate) existing.createdDate = cleanCreatedDate;
-          if (!isEval && (!existing.startDate || existing.startDate < systemTodayStr || existing.startDate === '2026-10-19')) {
-            existing.startDate = systemTodayStr;
-          }
-          if (!isEval && (!existing.deadline || existing.deadline < systemTodayStr)) {
-            existing.deadline = systemTodayStr;
-          } else if (cleanDeadline) {
-            existing.deadline = cleanDeadline;
-          }
+          if (cleanStartDate) existing.startDate = cleanStartDate;
+          if (cleanDeadline) existing.deadline = cleanDeadline;
           if (!existing.deliveryTime) existing.deliveryTime = cleanDeliveryTime;
           if (cleanNotes && (!existing.description || existing.description === 'Integración técnica operativa en planta de confección.' || existing.description === 'Integración asignada desde Google Sheets.')) {
             existing.description = cleanNotes;

@@ -29,12 +29,20 @@ if (appState) {
     appState.integrations = [];
   }
   // Purgar de forma estricta tareas de demo/mock antiguas para asegurar datos 100% reales de planta
+  const seedTaskIds = new Set(['int_1', 'int_2', 'int_3', 'int_4', 'int_5', 'int_6', 'int_7']);
   appState.integrations = appState.integrations.filter(t => {
     if (!t) return false;
     const tid = String(t.id || '');
-    if (/^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(tid)) return false;
+    if (seedTaskIds.has(tid) || /^int_[1-9]$/.test(tid) || /^int_(jose|edwin|juan|mocho|esteban)_\d+/i.test(tid)) return false;
     const tName = String(t.name || '').toLowerCase();
     if (
+      tName.includes('revision y ajuste de indicadores de calidad') ||
+      tName.includes('panel de planeacion, admin, planea personal activo') ||
+      tName.includes('indicadores de calidad telas') ||
+      tName.includes('revision de cuadro control de piso') ||
+      tName.includes('revision de listas, investigacion de ecosistema') ||
+      tName.includes('implementacion de dasboart de control de piso') ||
+      tName.includes('validacion de modulo de inventario') ||
       tName.includes('calibración y lectura qr') ||
       tName.includes('calibracion y lectura qr') ||
       tName.includes('geolocalización satelital') ||
@@ -53,20 +61,11 @@ if (appState) {
     }
     return true;
   });
-  // Saneamiento de fechas reales STF para garantizar que tareas montadas hoy no aparezcan en desfase
-  const todayStr = '2026-11-18';
+
+  // Asegurar que las horas de entrega existan sin alterar las fechas límites reales
   appState.integrations.forEach(item => {
-    const isEvaluated = item.status === 'evaluated' || (String(item.status || '').toLowerCase().includes('audit'));
-    if (!isEvaluated) {
-      if (!item.startDate || item.startDate === '2026-10-19' || item.startDate < todayStr) {
-        item.startDate = todayStr;
-      }
-      if (!item.deadline || item.deadline < todayStr) {
-        item.deadline = todayStr;
-      }
-      if (!item.deliveryTime) {
-        item.deliveryTime = '13:00';
-      }
+    if (!item.deliveryTime) {
+      item.deliveryTime = '13:00';
     }
   });
 
