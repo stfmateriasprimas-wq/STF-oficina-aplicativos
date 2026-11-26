@@ -1132,6 +1132,9 @@ async function handleLoginSubmit(e) {
     btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #FFF; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px;"></span> Verificando credenciales...`;
   }
 
+  // Activar rotación a gran velocidad en la animación mientras verifica credenciales
+  document.body.classList.add('verifying-credentials');
+
   let authSuccess = false;
   let verifiedUser = null;
   const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz_CM987-Z3JW46oc5Vu9K394dvyyjY9fHWT5IwlXer0LMUS3Nu6eW5Pt-Y6lP89WM6/exec';
@@ -1175,6 +1178,7 @@ async function handleLoginSubmit(e) {
 
   // 3. Resultado de la autenticación
   if (!authSuccess) {
+    document.body.classList.remove('verifying-credentials');
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = originalBtnHtml;
