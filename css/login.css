@@ -1393,6 +1393,9 @@ body.verifying-credentials .isometric-cube {
     text-align: center !important;
     justify-content: center !important;
   }
+  .tag-dash {
+    display: none !important;
+  }
   .hero-title {
     font-size: 32px;
     line-height: 1.15;
@@ -1427,10 +1430,7 @@ body.verifying-credentials .isometric-cube {
     margin: 0 auto !important;
   }
   .card-overhead-bar {
-    padding: 0 4px 6px 4px;
-    font-size: 10.5px;
-    justify-content: center !important;
-    text-align: center !important;
+    display: none !important;
   }
 }
 
@@ -1479,6 +1479,9 @@ body.verifying-credentials .isometric-cube {
     align-self: center !important;
     text-align: center !important;
   }
+  .tag-dash {
+    display: none !important;
+  }
   .hero-title {
     font-size: 27px !important;
     line-height: 1.18 !important;
@@ -1503,11 +1506,7 @@ body.verifying-credentials .isometric-cube {
     margin: 0 auto !important;
   }
   .card-overhead-bar {
-    font-size: 10.5px;
-    letter-spacing: 1.5px;
-    padding: 0 4px 8px 4px !important;
-    justify-content: center !important;
-    text-align: center !important;
+    display: none !important;
   }
   .stf-terminal-card {
     padding: 24px 18px 20px 18px !important;
