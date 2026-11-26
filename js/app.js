@@ -9957,6 +9957,8 @@ function switchView(viewName) {
         ? 'Supervisión interactiva de fechas límite de entrega, reprogramación por arrastre y sincronización con la jornada laboral STF (Lun-Sáb 6am-1pm).'
         : 'Tus entregas programadas, plazos oficiales del Jefe TI y reprogramación interactiva de tareas asignadas.';
     }
+    calDeliveryViewMode = 'month';
+    calDeliveryDevFilter = 'all';
     renderCalendarDeliveryView();
   } else if (viewName === 'support') {
     if (titleEl) {
@@ -13254,8 +13256,8 @@ window.renderNewProjectPhases = renderNewProjectPhases;
 // ==========================================================================
 
 let calDeliveryCurrentDate = null;
-let calDeliveryViewMode = 'week'; // Default to compact Week view as requested!
-let calDeliveryDevFilter = 'all';
+let calDeliveryViewMode = 'month'; // Por defecto vista de MES como solicita el usuario
+let calDeliveryDevFilter = 'all'; // Por defecto Todo el Equipo
 let calDeliveryAppFilter = 'all';
 let calDeliveryStatusFilter = 'all';
 let calDeliverySearchQuery = '';
