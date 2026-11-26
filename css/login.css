@@ -207,26 +207,25 @@ html, body {
 .stf-split-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   width: 100%;
-  max-width: 1420px;
+  max-width: 1040px;
   margin: 0 auto;
-  gap: 28px;
+  gap: 48px;
   flex: 1;
-  padding: 10px 0 20px 0;
+  padding: 10px 20px 20px 20px;
 }
 
 /* ==========================================================================
-   LEFT COLUMN: HERO HEADLINE & SUB-BRANDS
+   LEFT COLUMN: HERO HEADLINE, ANIMATION & SUB-BRANDS
    ========================================================================== */
 .stf-hero-col {
-  flex: 0 0 420px;
-  max-width: 420px;
+  flex: 1;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 480px;
-  padding: 6px 0;
+  justify-content: center;
+  padding-right: 0;
   position: relative;
   z-index: 10;
 }
@@ -240,7 +239,7 @@ html, body {
   letter-spacing: 2.2px;
   text-transform: uppercase;
   color: var(--cyan-primary);
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.90);
 }
 
@@ -250,12 +249,12 @@ html, body {
 }
 
 .hero-title {
-  font-size: 50px;
+  font-size: 44px;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.8px;
+  line-height: 1.18;
+  letter-spacing: -0.6px;
   color: var(--text-pure);
-  margin-bottom: 22px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95), 0 4px 32px rgba(0, 0, 0, 0.90);
@@ -271,27 +270,27 @@ html, body {
 }
 
 .hero-subtext {
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 15.5px;
+  line-height: 1.6;
   color: #CBD5E1;
-  max-width: 410px;
-  margin-bottom: auto;
+  max-width: 440px;
+  margin-bottom: 12px;
   font-weight: 400;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
 }
 
 /* ==========================================================================
-   CENTER STAGE: ORBITAL ELLIPSES & 3D ISOMETRIC CUBE
+   GRAPHIC STAGE: ORBITAL ELLIPSES & 3D ISOMETRIC CUBE (DEBAJO DEL TEXTO)
    ========================================================================== */
 .stf-graphic-stage {
-  flex: 1;
+  position: relative;
+  width: 100%;
   max-width: 440px;
-  height: 290px;
+  height: 230px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  margin: 0 auto;
+  margin: 8px 0 20px 0;
 }
 
 .graphic-orbits {
@@ -1243,19 +1242,18 @@ html, body {
    ========================================================================== */
 @media (min-width: 1800px) {
   .stf-split-container {
-    max-width: 1540px;
-    gap: 40px;
+    max-width: 1140px;
+    gap: 56px;
   }
   .stf-hero-col {
-    flex: 0 0 460px;
-    max-width: 460px;
+    max-width: 520px;
   }
   .hero-title {
-    font-size: 54px;
+    font-size: 48px;
   }
   .hero-subtext {
-    font-size: 16.5px;
-    max-width: 440px;
+    font-size: 16px;
+    max-width: 480px;
   }
   .stf-card-col {
     flex: 0 0 430px;
