@@ -14537,6 +14537,10 @@ let currentSupportSearchTerm = '';
 let supportClockInterval = null;
 
 function setSupportStatusFilter(filter) {
+  const isAdmin = typeof isCurrentSessionAdmin === 'function' && isCurrentSessionAdmin();
+  if (!isAdmin && filter === 'eliminada') {
+    filter = 'all';
+  }
   currentSupportFilter = filter || 'all';
   document.querySelectorAll('#supportStatusFilterPills .filter-pill').forEach(pill => {
     pill.classList.toggle('active', pill.dataset.supportFilter === currentSupportFilter);
@@ -14630,6 +14634,21 @@ function renderSupportView() {
   const sectionTitle = document.getElementById('supportSectionTitle');
   const sectionSub = document.getElementById('supportSectionSubtitle');
   const devFilterWrap = document.getElementById('supportDevFilterWrap');
+  const btnResetZero = document.getElementById('btnResetSupportToZero');
+  const deletedPill = document.querySelector('#supportStatusFilterPills .filter-pill[data-support-filter="eliminada"]');
+
+  if (btnResetZero) {
+    btnResetZero.style.display = isAdmin ? 'inline-flex' : 'none';
+  }
+  if (deletedPill) {
+    deletedPill.style.display = isAdmin ? 'inline-flex' : 'none';
+  }
+  if (!isAdmin && currentSupportFilter === 'eliminada') {
+    currentSupportFilter = 'all';
+    document.querySelectorAll('#supportStatusFilterPills .filter-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.supportFilter === 'all');
+    });
+  }
 
   if (isAdmin) {
     if (shieldPill) shieldPill.style.background = 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)';
@@ -14853,15 +14872,19 @@ function renderSupportView() {
               <span>Copiar</span>
             </button>
             ${isDeleted ? `
-              <button type="button" class="st-btn-copy st-btn-restore-header" onclick="handleRestoreSupportTicket('${ticket.id}')" title="Restaurar solicitud a la bandeja">
-                <i data-lucide="rotate-ccw" style="width: 12px; height: 12px; color: #10B981;"></i>
-                <span>Restaurar</span>
-              </button>
+              ${isAdmin ? `
+                <button type="button" class="st-btn-copy st-btn-restore-header" onclick="handleRestoreSupportTicket('${ticket.id}')" title="Restaurar solicitud a la bandeja">
+                  <i data-lucide="rotate-ccw" style="width: 12px; height: 12px; color: #10B981;"></i>
+                  <span>Restaurar</span>
+                </button>
+              ` : ''}
             ` : `
-              <button type="button" class="st-btn-copy st-btn-delete-header" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Eliminar solicitud y mover a papelera">
-                <i data-lucide="trash-2" style="width: 12px; height: 12px; color: #EF4444;"></i>
-                <span>Eliminar</span>
-              </button>
+              ${isAdmin ? `
+                <button type="button" class="st-btn-copy st-btn-delete-header" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Eliminar solicitud y mover a papelera">
+                  <i data-lucide="trash-2" style="width: 12px; height: 12px; color: #EF4444;"></i>
+                  <span>Eliminar</span>
+                </button>
+              ` : ''}
             `}
             <div class="st-status-badge ${statusClass}">
               <i data-lucide="${statusIcon}" style="width: 13px; height: 13px;"></i>
@@ -14972,14 +14995,16 @@ function renderSupportView() {
 
           <div class="st-footer-actions">
             ${isDeleted ? `
-              <button type="button" class="pill-btn st-btn-restore" onclick="handleRestoreSupportTicket('${ticket.id}')">
-                <i data-lucide="rotate-ccw"></i>
-                <span>Restaurar Solicitud</span>
-              </button>
-              <button type="button" class="pill-btn st-btn-purge" onclick="handlePurgeSupportTicket('${ticket.id}')">
-                <i data-lucide="trash"></i>
-                <span>Eliminar Definitivo</span>
-              </button>
+              ${isAdmin ? `
+                <button type="button" class="pill-btn st-btn-restore" onclick="handleRestoreSupportTicket('${ticket.id}')">
+                  <i data-lucide="rotate-ccw"></i>
+                  <span>Restaurar Solicitud</span>
+                </button>
+                <button type="button" class="pill-btn st-btn-purge" onclick="handlePurgeSupportTicket('${ticket.id}')">
+                  <i data-lucide="trash"></i>
+                  <span>Eliminar Definitivo</span>
+                </button>
+              ` : ''}
             ` : isPending ? `
               <button type="button" class="pill-btn st-btn-reject" onclick="openSupportActionModal('${ticket.id}', 'rechazada')">
                 <i data-lucide="x"></i>
@@ -14989,19 +15014,23 @@ function renderSupportView() {
                 <i data-lucide="check"></i>
                 <span>Aceptar Solicitud</span>
               </button>
-              <button type="button" class="pill-btn st-btn-delete-card" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Mover a eliminadas">
-                <i data-lucide="trash-2"></i>
-                <span>Eliminar</span>
-              </button>
+              ${isAdmin ? `
+                <button type="button" class="pill-btn st-btn-delete-card" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Mover a eliminadas">
+                  <i data-lucide="trash-2"></i>
+                  <span>Eliminar</span>
+                </button>
+              ` : ''}
             ` : `
               <button type="button" class="pill-btn secondary-btn" onclick="openSupportActionModal('${ticket.id}', '${ticket.status}')" style="font-size: 12px; padding: 7px 16px; border-radius: 20px;">
                 <i data-lucide="edit-3"></i>
                 <span>Modificar Respuesta Oficial</span>
               </button>
-              <button type="button" class="pill-btn st-btn-delete-card" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Mover a eliminadas">
-                <i data-lucide="trash-2"></i>
-                <span>Eliminar</span>
-              </button>
+              ${isAdmin ? `
+                <button type="button" class="pill-btn st-btn-delete-card" onclick="handleDeleteSupportTicket('${ticket.id}')" title="Mover a eliminadas">
+                  <i data-lucide="trash-2"></i>
+                  <span>Eliminar</span>
+                </button>
+              ` : ''}
             `}
           </div>
         </div>
@@ -15017,6 +15046,12 @@ function renderSupportView() {
 // OPERACIONES DE ELIMINACIÓN Y PAPELERA DE SOPORTE TÉCNICO
 // =========================================================================
 function handleDeleteSupportTicket(ticketId) {
+  if (!isCurrentSessionAdmin()) {
+    if (typeof showToast === 'function') {
+      showToast('🔒 Acción restringida: Solo el Administrador tiene permisos para eliminar solicitudes de soporte.', 'warning');
+    }
+    return;
+  }
   if (!ticketId) return;
   const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
   if (!ticket) return;
@@ -15065,6 +15100,7 @@ function handleDeleteSupportTicket(ticketId) {
 }
 
 function handleRestoreSupportTicket(ticketId) {
+  if (!isCurrentSessionAdmin()) return;
   if (!ticketId) return;
   const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
   if (!ticket) return;
@@ -15116,6 +15152,7 @@ function handleRestoreSupportTicket(ticketId) {
 }
 
 function handlePurgeSupportTicket(ticketId) {
+  if (!isCurrentSessionAdmin()) return;
   if (!ticketId) return;
   const ticket = (appState.supportTickets || []).find(t => t.id === ticketId);
   const code = ticket ? (ticket.code || ticket.id) : ticketId;
