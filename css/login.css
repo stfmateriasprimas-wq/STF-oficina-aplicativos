@@ -109,11 +109,7 @@ html, body {
 }
 
 .glow-card {
-  top: 25%;
-  right: 12%;
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(56, 189, 248, 0.03) 60%, transparent 75%);
+  display: none;
 }
 
 /* ==========================================================================
@@ -546,8 +542,10 @@ html, body {
   border-radius: 30px;
   padding: 34px 32px 28px 32px;
   box-shadow: 
-    0 25px 60px -15px rgba(0, 0, 0, 0.8),
-    0 0 40px -10px rgba(14, 165, 233, 0.12),
+    0 30px 80px -10px rgba(0, 0, 0, 0.95),
+    0 15px 45px -5px rgba(0, 0, 0, 0.90),
+    0 0 70px 15px rgba(0, 0, 0, 0.85),
+    0 0 120px 30px rgba(0, 0, 0, 0.70),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
   overflow: hidden;
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
@@ -556,16 +554,16 @@ html, body {
   will-change: transform, box-shadow;
 }
 
-/* Hover con zoom y sombra difuminada entre azul oscuro y negro */
+/* Hover con zoom y sombra difuminada en negro puro ultra profundo */
 .stf-terminal-card:hover {
   transform: scale(1.03) translateY(-4px);
-  border-color: rgba(56, 189, 248, 0.40);
+  border-color: rgba(255, 255, 255, 0.20);
   box-shadow: 
-    0 45px 105px -10px rgba(0, 0, 0, 0.98),
-    0 20px 65px -5px rgba(0, 0, 0, 0.92),
-    0 0 55px 12px rgba(12, 45, 115, 0.60),
-    0 0 95px 28px rgba(2, 6, 26, 0.85),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.22);
+    0 45px 115px -10px rgba(0, 0, 0, 0.99),
+    0 25px 75px -5px rgba(0, 0, 0, 0.96),
+    0 0 95px 25px rgba(0, 0, 0, 0.95),
+    0 0 150px 45px rgba(0, 0, 0, 0.85),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.20);
 }
 
 /* Top Control Row inside Card (Alineado a la derecha sin el botón de cuadrícula eliminado) */
