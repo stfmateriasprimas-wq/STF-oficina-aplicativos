@@ -66,9 +66,9 @@ html, body {
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  filter: brightness(0.68) contrast(1.12) saturate(0.98);
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  filter: brightness(0.62) contrast(1.08) saturate(0.95);
+  transform: scale(1.02);
+  will-change: transform;
 }
 
 /* Dark Carbon Neutral Mesh (Mayor transparencia y tono negro para ver la sede con nitidez) */
