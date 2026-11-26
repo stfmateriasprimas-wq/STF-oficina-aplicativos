@@ -1353,40 +1353,58 @@ body.verifying-credentials .isometric-cube {
   .stf-top-navbar {
     padding: 0 24px;
     height: 60px;
+    justify-content: center;
+  }
+  .stf-top-brand {
+    justify-content: center;
   }
   .stf-main-stage {
-    min-height: auto;
+    min-height: auto !important;
+    height: auto !important;
+    justify-content: flex-start !important;
     padding: 0 20px 24px 20px;
   }
   .stf-split-container {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 10px 0;
-    max-width: 480px;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 18px !important;
+    padding: 8px 0 !important;
+    max-width: 460px;
   }
   .stf-hero-col {
-    min-height: auto !important;
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
     height: auto !important;
     max-width: 100% !important;
     width: 100% !important;
-    align-items: flex-start !important;
-    text-align: left !important;
+    align-items: center !important;
+    text-align: center !important;
     padding: 0 !important;
     justify-content: flex-start !important;
+    margin: 0 auto !important;
   }
   .hero-header-tag {
-    font-size: 10.5px;
+    font-size: 11px;
     letter-spacing: 1.6px;
-    margin-bottom: 6px;
-    align-self: flex-start;
+    margin: 0 auto 6px auto !important;
+    align-self: center !important;
+    text-align: center !important;
+    justify-content: center !important;
   }
   .hero-title {
     font-size: 32px;
     line-height: 1.15;
-    margin-bottom: 0;
-    align-self: flex-start;
-    text-align: left;
+    margin-bottom: 0 !important;
+    align-self: center !important;
+    text-align: center !important;
+    align-items: center !important;
+  }
+  .hero-title > span,
+  .hero-line {
+    text-align: center !important;
+    justify-content: center !important;
   }
   .hero-subtext {
     display: none !important;
@@ -1401,20 +1419,30 @@ body.verifying-credentials .isometric-cube {
     display: none !important;
   }
   .stf-card-col {
-    width: 100%;
-    max-width: 440px;
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    margin: 0 auto !important;
   }
   .card-overhead-bar {
     padding: 0 4px 6px 4px;
     font-size: 10.5px;
-    justify-content: flex-start;
+    justify-content: center !important;
+    text-align: center !important;
   }
 }
 
 @media (max-width: 480px) {
   .stf-top-navbar {
     padding: 0 16px;
-    height: 52px;
+    height: 50px;
+    justify-content: center !important;
+  }
+  .stf-top-brand {
+    justify-content: center !important;
+    margin: 0 auto !important;
   }
   .brand-corp-logo-img {
     height: 20px;
@@ -1426,35 +1454,60 @@ body.verifying-credentials .isometric-cube {
     display: none;
   }
   .stf-main-stage {
-    padding: 0 16px 20px 16px;
+    padding: 0 16px 20px 16px !important;
+    min-height: auto !important;
+    height: auto !important;
   }
   .stf-split-container {
-    gap: 14px;
-    padding: 4px 0 16px 0;
+    gap: 14px !important;
+    padding: 4px 0 16px 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .stf-hero-col {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    align-items: center !important;
+    text-align: center !important;
   }
   .hero-header-tag {
     font-size: 9.5px;
     letter-spacing: 1.4px;
-    margin-bottom: 4px;
+    margin: 0 auto 5px auto !important;
+    align-self: center !important;
+    text-align: center !important;
   }
   .hero-title {
     font-size: 26px !important;
     line-height: 1.16 !important;
     letter-spacing: -0.5px !important;
     margin-bottom: 0 !important;
+    align-self: center !important;
+    text-align: center !important;
+    align-items: center !important;
   }
   .hero-title > span,
   .hero-line {
     white-space: nowrap;
     display: block;
+    text-align: center !important;
   }
   .stf-card-col {
-    max-width: 100%;
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
   }
   .card-overhead-bar {
     font-size: 10px;
     letter-spacing: 1.4px;
     padding: 0 2px 4px 2px;
+    justify-content: center !important;
+    text-align: center !important;
   }
   .stf-terminal-card {
     padding: 20px 16px 18px 16px;
