@@ -1206,46 +1206,133 @@ function renderManualSectionDevelopers(isAdmin, devList) {
           <div>
             <h2>Directorio de Desarrolladores, Rendimiento & Gestión de Usuarios</h2>
             <p class="mhb-subtitle">
-              Métricas individuales de efectividad técnica, canales de contacto y capacidad operativa del equipo.
+              Métricas consolidadas de efectividad técnica, sincronización bidireccional con la hoja USUARIOS en Google Sheets y personalización de perfiles.
             </p>
           </div>
         </div>
       </div>
 
+      <!-- FIGURA 6.1: DIRECTORIO DE DESARROLLADORES -->
       <div class="manual-screenshot-card">
         <div class="msc-frame">
-          <img src="assets/manual/desarrolladores.png" alt="Directorio de Desarrolladores STF" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real: Directorio y Efectividad del Equipo TI</div>
+          <img src="assets/manual/equipo_directorio.jpg" alt="Directorio de Desarrolladores STF GROUP" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 6.1 · Directorio General de Desarrolladores y KPIs</div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
-            <strong>Figura 6.1:</strong> Tarjetas individuales de los 5 ingenieros del equipo con sus indicadores de cumplimiento y aplicativos asignados.
+            <strong>Figura 6.1:</strong> Vista consolidada del equipo TI con los 4 indicadores superiores (5 Ingenieros, 91.8% Cumplimiento, 92.8% Calidad QA, 8.4 Tareas/Sem) y listado oficial sincronizado con Google Sheets.
           </div>
-          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/desarrolladores.png', '_blank')">
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/equipo_directorio.jpg', '_blank')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
           </button>
         </div>
       </div>
 
+      <!-- EXPLICACIÓN PASO A PASO: DIRECTORIO -->
       <div class="manual-guide-block">
-        <h3 class="manual-block-title"><i data-lucide="award"></i> Cómo se Calcula la Efectividad del Desarrollador</h3>
-        <p>El porcentaje de efectividad de cada programador se calcula automáticamente combinando 3 factores:</p>
-        <ul>
-          <li><strong>Puntualidad en Entregas (40%):</strong> Cumplimiento de fechas límite fijadas en el cronograma.</li>
-          <li><strong>Promedio de Calificación QA (40%):</strong> Puntuación otorgada por el Jefe TI en los dictámenes formales.</li>
-          <li><strong>Resolución de Soporte (20%):</strong> Velocidad y calidad en la atención de solicitudes de planta.</li>
-        </ul>
-      </div>
+        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Métricas del Equipo y Canales de Contacto</h3>
+        <div class="manual-steps-grid">
+          <div class="manual-step-card">
+            <div class="step-number">01</div>
+            <div class="step-body">
+              <h4>Los 4 Indicadores Consolidados de Ingeniería</h4>
+              <p>En el encabezado se audita el rendimiento conjunto de toda la oficina de aplicativos:</p>
+              <ul>
+                <li><strong>Programadores Activos:</strong> 5 Ingenieros asignados al 100% de su capacidad.</li>
+                <li><strong>Cumplimiento a Tiempo:</strong> 91.8% (+3.4% de mejora frente al mes anterior).</li>
+                <li><strong>Índice de Calidad QA:</strong> 92.8% de entregas aprobadas sin fallas críticas en planta.</li>
+                <li><strong>Velocidad Promedio:</strong> 8.4 Tareas semanales con cadencia de entrega continua.</li>
+              </ul>
+            </div>
+          </div>
 
-      ${isAdmin ? `
-        <div class="manual-callout callout-admin">
-          <div class="callout-icon"><i data-lucide="user-plus"></i></div>
-          <div class="callout-content">
-            <h4>Creación y Gestión de Usuarios para el Administrador</h4>
-            <p>Puedes crear nuevos desarrolladores con el botón <code>+ Nuevo Dev</code>. El sistema crea el usuario localmente y lo ancla en la hoja <code>USUARIOS</code> de Google Sheets sin sobrescribir contraseñas existentes.</p>
+          <div class="manual-step-card">
+            <div class="step-number">02</div>
+            <div class="step-body">
+              <h4>Sincronización en Vivo con Google Sheets</h4>
+              <p>El indicador verde <code>● Hoja Sheets: Usuarios (Sincronizado)</code> certifica que los nombres, correos electrónicos corporativos, usuarios (@username) y roles provienen de la hoja maestra <code>USUARIOS</code> sin discrepancias locales.</p>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">03</div>
+            <div class="step-body">
+              <h4>El Equipo Oficial STF GROUP</h4>
+              <p>El directorio reconoce formalmente a los 5 ingenieros:</p>
+              <ul>
+                <li><strong>Jose Guzman:</strong> <code>@jose@guzman</code> · joseoneiber711@gmail.com (3 Sistemas a cargo).</li>
+                <li><strong>Juan David:</strong> <code>@juan@david</code> · juan.david@studiof.com.co (1 Sistema a cargo).</li>
+                <li><strong>Esteban Escobar:</strong> <code>@esteban@escobar</code> · esteban.escobar@studiof.com.co (1 Sistema a cargo).</li>
+                <li><strong>Jhon Eyder (Mocho):</strong> <code>@jhon@eyder</code> · jhon.eyder@studiof.com.co (1 Sistema a cargo).</li>
+                <li><strong>Edwin Diaz:</strong> <code>@ediaz</code> · edwin.diaz@studiof.com.co (Admin Base & Dirección TI).</li>
+              </ul>
+            </div>
           </div>
         </div>
-      ` : ''}
+      </div>
+
+      <!-- FIGURA 6.2: MODAL ACTUALIZAR FOTO DE PERFIL -->
+      <div class="manual-screenshot-card">
+        <div class="msc-frame">
+          <img src="assets/manual/equipo_modal_foto.jpg" alt="Modal de Actualización de Foto de Perfil" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 6.2 · Modal de Actualización de Foto de Perfil</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 6.2:</strong> Modal interactivo de personalización de foto de perfil con vista previa en tiempo real, carga por arrastre, enlace URL o selección de avatares oficiales.
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/equipo_modal_foto.jpg', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
+
+      <!-- EXPLICACIÓN PASO A PASO: CAMBIO DE FOTO -->
+      <div class="manual-guide-block">
+        <h3 class="manual-block-title"><i data-lucide="camera"></i> Paso a Paso: Cómo Cambiar tu Foto de Perfil</h3>
+        <div class="manual-steps-grid">
+          <div class="manual-step-card">
+            <div class="step-number">04</div>
+            <div class="step-body">
+              <h4>Abrir el Modal de Foto</h4>
+              <p>En tu propia fila del directorio (identificada con la etiqueta azul <em>[tú]</em>), haz clic en el botón <strong>"📷 Cambiar Mi Foto"</strong>. También puedes hacer clic sobre tu avatar en la esquina superior derecha del encabezado principal.</p>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">05</div>
+            <div class="step-body">
+              <h4>3 Métodos para Asignar tu Foto</h4>
+              <p>El sistema te ofrece total flexibilidad:</p>
+              <ul>
+                <li><strong>1. Arrastrar o Subir Archivo:</strong> Admite imágenes en formato JPG, PNG, WEBP o GIF con auto-recorte cuadrado automático.</li>
+                <li><strong>2. Enlace Directo:</strong> Pega una URL de internet y presiona el botón <em>Probar</em>.</li>
+                <li><strong>3. Avatares Oficiales:</strong> Si no tienes una foto a mano, selecciona cualquiera de los 5 avatares predeterminados con un solo clic.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">06</div>
+            <div class="step-body">
+              <h4>Guardar y Persistir</h4>
+              <p>Presiona el botón <strong>"✓ Guardar Foto"</strong>. Tu nueva imagen se actualizará al instante en la barra superior, en las tarjetas del Dashboard, en el Calendario y quedará guardada de forma permanente para tus próximas sesiones.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="manual-callout ${isAdmin ? 'callout-admin' : 'callout-dev'}">
+        <div class="callout-icon"><i data-lucide="${isAdmin ? 'crown' : 'shield-check'}"></i></div>
+        <div class="callout-content">
+          <h4>${isAdmin ? 'Gestión de Nuevos Programadores' : 'Seguridad de tu Cuenta de Ingeniero'}</h4>
+          <p>
+            ${isAdmin 
+              ? 'Como Administrador tienes habilitado el botón <code>+ Nuevo Dev</code> para registrar nuevos programadores en Google Sheets asignándoles rol y credenciales.' 
+              : 'Tu perfil está vinculado a tu cuenta en Google Sheets. Tu contraseña oficial es fija y segura, y puedes actualizar tu fotografía en cualquier momento.'}
+          </p>
+        </div>
+      </div>
     </div>
   `;
 }
