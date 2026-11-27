@@ -774,17 +774,147 @@ function renderManualSectionProjects(isAdmin, allSystems, myApps, userName) {
 // APARTADO 3: CONTROL DE TAREAS EN VIVO & DICTAMEN QA
 // ============================================================================
 function renderManualSectionTasks(isAdmin, allSystems, myApps, userName) {
+  if (!isAdmin) {
+    // VISTA DEL DESARROLLADOR: MIS TAREAS & ENTREGABLES ASIGNADOS
+    return `
+      <div class="manual-view-section">
+        <div class="manual-header-banner">
+          <div class="mhb-title-row">
+            <div class="mhb-icon-badge"><i data-lucide="check-square"></i></div>
+            <div>
+              <h2>Mis Tareas & Entregables Asignados · ${userName}</h2>
+              <p class="mhb-subtitle">
+                Seguimiento de tareas asignadas por el Jefe TI, plazos de entrega, cálculo de días transcurridos y dictamen formal de efectividad técnica.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIGURA 3.1: BANDEJA PERSONAL DEL DESARROLLADOR -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/tareas_dev.jpg" alt="Bandeja de Tareas del Desarrollador" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 3.1 · Bandeja de Entregas del Desarrollador</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 3.1:</strong> Bandeja de Tareas de ${userName} con filtros de estado (*Todas, En Desarrollo, En Riesgo, Auditadas*), convenciones del semáforo y tarjeta de estado al día (*Sin tareas pendientes*).
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas_dev.jpg', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: BANDEJA DEV -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Gestión y Convenciones de Tareas</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">01</div>
+              <div class="step-body">
+                <h4>Recepción y Notificación</h4>
+                <p>Cada vez que la Dirección TI te asigna una tarea técnica o módulo de software, el sistema envía una alerta inmediata a tu correo electrónico corporativo con la descripción, el aplicativo y la fecha límite acordada.</p>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">02</div>
+              <div class="step-body">
+                <h4>El Semáforo de Cumplimiento STF</h4>
+                <p>Las tareas se clasifican visualmente mediante 3 estados de color:</p>
+                <ul>
+                  <li><strong>● Amarillo (Asignada / En Proceso):</strong> Tarea en desarrollo dentro del plazo regular.</li>
+                  <li><strong>● Verde (Auditada / Cumplida):</strong> Tarea validada con dictamen aprobatorio del Jefe TI.</li>
+                  <li><strong>● Rojo (En Riesgo / Vencida):</strong> Fecha límite sobrepasada que requiere reporte inmediato.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">03</div>
+              <div class="step-body">
+                <h4>Pestañas de Filtrado Rápido</h4>
+                <p>Puedes alternar entre:</p>
+                <ul>
+                  <li><code>Todas las Tareas</code>: Historial consolidado.</li>
+                  <li><code>En Desarrollo</code>: Módulos que estás programando actualmente.</li>
+                  <li><code>En Riesgo / Vencidas</code>: Entregables con urgencia de atención.</li>
+                  <li><code>Auditadas & Calificadas</code>: Tareas finalizadas con dictamen QA.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIGURA 3.2: TAREAS ACTIVAS Y DICTAMEN QA -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/tareas.png" alt="Control de Tareas y Dictamen QA" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 3.2 · Control de Tareas, Días Transcurridos y Dictamen QA</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 3.2:</strong> Visualización de tareas asignadas con semáforo de días transcurridos vs deadline, porcentaje de ponderación y dictamen formal de calidad.
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas.png', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: DICTAMEN QA -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="sliders"></i> Flujo de Estados y Calificación de Calidad</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">04</div>
+              <div class="step-body">
+                <h4>Transición a "Pruebas QA"</h4>
+                <p>Cuando finalices la programación de un módulo, debes cambiar el estado de la tarea a <strong>Pruebas QA</strong>. Esto notifica al Administrador para que realice la auditoría técnica.</p>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">05</div>
+              <div class="step-body">
+                <h4>La Escala de Calificación QA del Jefe TI</h4>
+                <p>El Super Admin evalúa tu entrega otorgando uno de los 4 dictámenes oficiales:</p>
+                <ul>
+                  <li><strong>Sobresaliente (100 pts):</strong> Código sin fallas, entregado a tiempo y con alta estabilidad.</li>
+                  <li><strong>Aprobado (85 pts):</strong> Conforme a especificaciones de planta.</li>
+                  <li><strong>Con Observaciones (70 pts):</strong> Aprobado pero requiere ajustes menores.</li>
+                  <li><strong>No Conforme:</strong> Rechazado formalmente para corrección y refactorización.</li>
+                </ul>
+                <p style="margin-top:6px; font-size:12px; color:#4F46E5;">* Esta nota alimenta directamente tu 40% de efectividad en el Directorio TI.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-callout callout-dev">
+          <div class="callout-icon"><i data-lucide="clock"></i></div>
+          <div class="callout-content">
+            <h4>Cálculo Automático de Días Transcurridos</h4>
+            <p>
+              El sistema calcula de manera continua los días transcurridos desde que se asignó la tarea hasta la fecha actual. Si entregas con anticipación, el sistema registra bonificación por cumplimiento en tus métricas personales.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // VISTA DEL SUPER ADMINISTRADOR
   return `
     <div class="manual-view-section">
       <div class="manual-header-banner">
         <div class="mhb-title-row">
           <div class="mhb-icon-badge"><i data-lucide="check-square"></i></div>
           <div>
-            <h2>Integraciones Operativas, Control de Tareas & Dictamen QA</h2>
+            <h2>Integraciones Operativas, Control de Tareas & Dictamen QA · Administrador</h2>
             <p class="mhb-subtitle">
-              ${isAdmin 
-                ? 'Asignación ponderada de tareas, control de días transcurridos vs deadline y calificación formal de calidad.' 
-                : `Tus compromisos asignados por el Jefe TI · ${userName}: seguimiento de plazos, cambio de estados y dictámenes.`}
+              Supervisión de entregables, asignación con ponderación porcentual, cálculo de días transcurridos vs deadline y dictámenes formales de calidad.
             </p>
           </div>
         </div>
@@ -793,11 +923,11 @@ function renderManualSectionTasks(isAdmin, allSystems, myApps, userName) {
       <div class="manual-screenshot-card">
         <div class="msc-frame">
           <img src="assets/manual/tareas.png" alt="Control de Tareas y Dictamen QA" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real: Módulo de Tareas y Auditoría QA</div>
+          <div class="msc-badge-overlay">📸 Figura 3.1 · Bandeja de Tareas y Auditoría QA</div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
-            <strong>Figura 3.1:</strong> Bandeja de Tareas con semáforo de vencimiento, días transcurridos, ponderación (%) y dictamen del Jefe TI.
+            <strong>Figura 3.1:</strong> Supervisión global de tareas, semáforo de vencimiento, ponderación de fases y dictámenes de calidad asignados por la Jefatura TI.
           </div>
           <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas.png', '_blank')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
@@ -806,42 +936,33 @@ function renderManualSectionTasks(isAdmin, allSystems, myApps, userName) {
       </div>
 
       <div class="manual-guide-block">
-        <h3 class="manual-block-title"><i data-lucide="sliders"></i> El Flujo de Estados de una Tarea Técnica</h3>
+        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Guía Paso a Paso para el Administrador</h3>
         <div class="manual-steps-grid">
           <div class="manual-step-card">
             <div class="step-number">01</div>
             <div class="step-body">
-              <h4>Asignación Inicial (Pendiente)</h4>
-              <p>${isAdmin ? 'Haces clic en <code>+ Asignar Tarea</code>, eliges el aplicativo, el programador responsable, la ponderación del entregable (%) y la fecha límite.' : 'Recibes una notificación en tu correo corporativo con los requerimientos exactos y la fecha límite acordada.'}</p>
+              <h4>Cómo Asignar una Nueva Tarea</h4>
+              <p>Haz clic en el botón <code>+ Asignar Tarea</code> en el encabezado superior. Selecciona el aplicativo, el desarrollador responsable, el peso porcentual (%) y la fecha límite oficial.</p>
             </div>
           </div>
+
           <div class="manual-step-card">
             <div class="step-number">02</div>
             <div class="step-body">
-              <h4>En Desarrollo</h4>
-              <p>El programador inicia la codificación del módulo. El sistema calcula en vivo los días transcurridos desde la fecha de asignación.</p>
+              <h4>Emitir Dictamen de Calidad QA</h4>
+              <p>Cuando un programador pasa una tarea a <em>Pruebas QA</em>, audita el módulo en planta y selecciona la calificación formal (<em>Sobresaliente 100, Aprobado 85, Con Observaciones 70 o No Conforme</em>). El resultado se sincroniza en vivo con la hoja <code>CONTROL_TAREAS</code> de Google Sheets.</p>
             </div>
           </div>
-          <div class="manual-step-card">
-            <div class="step-number">03</div>
-            <div class="step-body">
-              <h4>Paso a Pruebas QA</h4>
-              <p>Cuando el código está listo, el desarrollador cambia el estado a <em>Pruebas QA</em> para que el Administrador evalúe el entregable.</p>
-            </div>
-          </div>
-          <div class="manual-step-card">
-            <div class="step-number">04</div>
-            <div class="step-body">
-              <h4>Dictamen de Calidad QA</h4>
-              <p>El Super Admin audita la solución y otorga una calificación formal:</p>
-              <ul>
-                <li><strong>Sobresaliente (100 pts):</strong> Código sin fallas y entrega en tiempo récord.</li>
-                <li><strong>Aprobado (85 pts):</strong> Conforme a requerimientos técnicos.</li>
-                <li><strong>Con Observaciones (70 pts):</strong> Aprobado con ajustes menores requeridos.</li>
-                <li><strong>No Conforme:</strong> Rechazo formal con solicitud de corrección.</li>
-              </ul>
-            </div>
-          </div>
+        </div>
+      </div>
+
+      <div class="manual-callout callout-admin">
+        <div class="callout-icon"><i data-lucide="eye"></i></div>
+        <div class="callout-content">
+          <h4>Inspeccionar la Bandeja del Desarrollador</h4>
+          <p>
+            Usa el botón <strong>"👁️ Ver como Desarrollador"</strong> para verificar cómo ve Jose Guzman su bandeja cuando no tiene tareas pendientes o cuando tiene tareas activas asignadas.
+          </p>
         </div>
       </div>
     </div>
