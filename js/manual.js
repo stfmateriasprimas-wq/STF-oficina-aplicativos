@@ -917,17 +917,7 @@ function renderManualSectionTasks(isAdmin, allSystems, myApps, userName) {
           <div class="msc-caption">
             <strong>Figura 3.1:</strong> Bandeja de Tareas del Desarrollador con filtros de estado (*Todas, En Desarrollo, En Riesgo, Auditadas*) y convenciones del semáforo.
           </div>
-          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas_dev.jpg', '_blank')">
-            <i data-lucide="maximize-2"></i> Ver Imagen Completa
-          </button>
-        </div>
-      </div>
-        </div>
-        <div class="msc-footer">
-          <div class="msc-caption">
-            <strong>Figura 3.1:</strong> Supervisión global de tareas, semáforo de vencimiento, ponderación de fases y dictámenes de calidad asignados por la Jefatura TI.
-          </div>
-          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas.png', '_blank')">
+          <button type="button" class="btn-zoom-img" onclick="openManualImageViewer('assets/manual/tareas_dev.jpg', 'Figura 3.1 · Bandeja de Tareas del Desarrollador')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
           </button>
         </div>
@@ -1647,3 +1637,281 @@ window.renderManualNativeView = renderManualNativeView;
 window.switchManualTab = switchManualTab;
 window.toggleManualRoleView = toggleManualRoleView;
 window.setManualSimulatedDev = setManualSimulatedDev;
+
+/* ====================================================================
+   VISOR INTERACTIVO 4K DE CAPTURAS (LIGHTBOX CON ZOOM + PAN / DRAG)
+   ==================================================================== */
+let mivScale = 1.0;
+let mivTranslateX = 0;
+let mivTranslateY = 0;
+let mivIsDragging = false;
+let mivStartX = 0;
+let mivStartY = 0;
+let mivCurrentSrc = '';
+let mivListenersAttached = false;
+
+function ensureManualImageViewerInDOM() {
+  if (document.getElementById('manualImageViewerModal')) return;
+
+  const modalHtml = `
+    <div id="manualImageViewerModal" class="miv-modal" role="dialog" aria-modal="true" aria-label="Visor 4K de Captura">
+      <div class="miv-backdrop" onclick="closeManualImageViewer()"></div>
+      <div class="miv-container">
+        <div class="miv-topbar">
+          <div class="miv-info">
+            <span class="miv-badge"><i data-lucide="sparkles"></i> 4K ULTRA HD</span>
+            <span class="miv-title" id="mivImageTitle">Captura de Pantalla</span>
+          </div>
+          <div class="miv-toolbar">
+            <button type="button" class="miv-btn" onclick="zoomManualImage(-0.25)" title="Alejar (Zoom -)" aria-label="Alejar">
+              <i data-lucide="minus"></i>
+            </button>
+            <span class="miv-zoom-level" id="mivZoomLevel" title="Nivel de Zoom actual">100%</span>
+            <button type="button" class="miv-btn" onclick="zoomManualImage(0.25)" title="Acercar (Zoom +)" aria-label="Acercar">
+              <i data-lucide="plus"></i>
+            </button>
+            <button type="button" class="miv-btn miv-btn-reset" onclick="resetManualImageZoom()" title="Restablecer tamaño (1:1 / Ajustar)">
+              <i data-lucide="rotate-ccw"></i>
+              <span>1:1</span>
+            </button>
+            <button type="button" class="miv-btn" onclick="openManualImageInNewTab()" title="Abrir archivo original en nueva pestaña" aria-label="Abrir original">
+              <i data-lucide="external-link"></i>
+            </button>
+            <button type="button" class="miv-btn miv-btn-close" onclick="closeManualImageViewer()" title="Cerrar visor (Esc)" aria-label="Cerrar">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="miv-stage" id="mivStage">
+          <div class="miv-drag-hint" id="mivDragHint">
+            <i data-lucide="move"></i>
+            <span>Arrastra libremente para desplazarte · Usa la rueda o botones para Zoom</span>
+          </div>
+          <div class="miv-canvas" id="mivCanvas">
+            <img id="mivImage" src="" alt="Captura STF en Alta Definición" draggable="false" />
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  attachMivEvents();
+}
+
+function attachMivEvents() {
+  if (mivListenersAttached) return;
+  mivListenersAttached = true;
+
+  const stage = document.getElementById('mivStage');
+  const modal = document.getElementById('manualImageViewerModal');
+  if (!stage || !modal) return;
+
+  // Arrastre con ratón
+  stage.addEventListener('mousedown', (e) => {
+    // Evitar arrastre si hace clic en controles o botones
+    if (e.target.closest('.miv-topbar') || e.target.closest('.miv-toolbar')) return;
+    mivIsDragging = true;
+    mivStartX = e.clientX - mivTranslateX;
+    mivStartY = e.clientY - mivTranslateY;
+    stage.classList.add('dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!mivIsDragging) return;
+    e.preventDefault();
+    mivTranslateX = e.clientX - mivStartX;
+    mivTranslateY = e.clientY - mivStartY;
+    applyMivTransform();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (mivIsDragging) {
+      mivIsDragging = false;
+      const s = document.getElementById('mivStage');
+      if (s) s.classList.remove('dragging');
+    }
+  });
+
+  // Zoom con rueda del ratón
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.2 : -0.2;
+    zoomManualImage(delta);
+  }, { passive: false });
+
+  // Doble clic para alternar entre 100% y 200%
+  stage.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.miv-topbar') || e.target.closest('.miv-toolbar')) return;
+    if (mivScale > 1.2) {
+      resetManualImageZoom();
+    } else {
+      mivScale = 2.0;
+      applyMivTransform();
+    }
+  });
+
+  // Atajos de teclado
+  window.addEventListener('keydown', (e) => {
+    const m = document.getElementById('manualImageViewerModal');
+    if (!m || !m.classList.contains('active')) return;
+
+    if (e.key === 'Escape') {
+      closeManualImageViewer();
+    } else if (e.key === '+' || e.key === '=') {
+      zoomManualImage(0.25);
+    } else if (e.key === '-' || e.key === '_') {
+      zoomManualImage(-0.25);
+    } else if (e.key === '0') {
+      resetManualImageZoom();
+    }
+  });
+
+  // Soporte táctil en dispositivos móviles
+  let touchStartDist = 0;
+  stage.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      mivIsDragging = true;
+      mivStartX = e.touches[0].clientX - mivTranslateX;
+      mivStartY = e.touches[0].clientY - mivTranslateY;
+    } else if (e.touches.length === 2) {
+      mivIsDragging = false;
+      touchStartDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+
+  stage.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && mivIsDragging) {
+      mivTranslateX = e.touches[0].clientX - mivStartX;
+      mivTranslateY = e.touches[0].clientY - mivStartY;
+      applyMivTransform();
+    } else if (e.touches.length === 2 && touchStartDist > 0) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const diff = (currentDist - touchStartDist) * 0.005;
+      mivScale = Math.min(4.5, Math.max(0.5, mivScale + diff));
+      applyMivTransform();
+      touchStartDist = currentDist;
+    }
+  }, { passive: true });
+
+  stage.addEventListener('touchend', () => {
+    mivIsDragging = false;
+    touchStartDist = 0;
+  });
+}
+
+function applyMivTransform() {
+  const canvas = document.getElementById('mivCanvas');
+  const zoomLevel = document.getElementById('mivZoomLevel');
+  if (canvas) {
+    canvas.style.transform = `translate(${mivTranslateX}px, ${mivTranslateY}px) scale(${mivScale})`;
+  }
+  if (zoomLevel) {
+    zoomLevel.textContent = `${Math.round(mivScale * 100)}%`;
+  }
+}
+
+function openManualImageViewer(src, title) {
+  ensureManualImageViewerInDOM();
+
+  mivCurrentSrc = src || '';
+  const modal = document.getElementById('manualImageViewerModal');
+  const img = document.getElementById('mivImage');
+  const titleEl = document.getElementById('mivImageTitle');
+
+  if (img) {
+    img.src = mivCurrentSrc;
+  }
+  if (titleEl) {
+    titleEl.textContent = title || 'Captura de Pantalla · STF GROUP';
+  }
+
+  // Restablecer zoom y posición inicial
+  mivScale = 1.0;
+  mivTranslateX = 0;
+  mivTranslateY = 0;
+  applyMivTransform();
+
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    try {
+      window.lucide.createIcons();
+    } catch (err) {
+      console.warn('Lucide icons warning in modal:', err);
+    }
+  }
+}
+
+function closeManualImageViewer() {
+  const modal = document.getElementById('manualImageViewerModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+  document.body.style.overflow = '';
+}
+
+function zoomManualImage(delta) {
+  mivScale = Math.min(4.5, Math.max(0.5, Number((mivScale + delta).toFixed(2))));
+  applyMivTransform();
+}
+
+function resetManualImageZoom() {
+  mivScale = 1.0;
+  mivTranslateX = 0;
+  mivTranslateY = 0;
+  applyMivTransform();
+}
+
+function openManualImageInNewTab() {
+  if (mivCurrentSrc) {
+    window.open(mivCurrentSrc, '_blank');
+  }
+}
+
+// Delegación universal de clics para capturas del manual
+document.addEventListener('click', (e) => {
+  // Clic en la imagen directa dentro de una tarjeta del manual
+  const targetImg = e.target.closest('.msc-img');
+  if (targetImg) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = targetImg.closest('.manual-screenshot-card');
+    const badge = card ? card.querySelector('.msc-badge-overlay') : null;
+    const title = badge ? badge.textContent.replace(/^[^\w\s]+/, '').trim() : (targetImg.alt || 'Captura STF');
+    openManualImageViewer(targetImg.src, title);
+    return;
+  }
+
+  // Clic en el botón "Ver Imagen Completa"
+  const zoomBtn = e.target.closest('.btn-zoom-img');
+  if (zoomBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = zoomBtn.closest('.manual-screenshot-card');
+    const img = card ? card.querySelector('.msc-img') : null;
+    const badge = card ? card.querySelector('.msc-badge-overlay') : null;
+    if (img) {
+      const title = badge ? badge.textContent.replace(/^[^\w\s]+/, '').trim() : (img.alt || 'Captura STF');
+      openManualImageViewer(img.src, title);
+    }
+  }
+});
+
+// Exportar funciones del visor globalmente
+window.openManualImageViewer = openManualImageViewer;
+window.closeManualImageViewer = closeManualImageViewer;
+window.zoomManualImage = zoomManualImage;
+window.resetManualImageZoom = resetManualImageZoom;
+window.openManualImageInNewTab = openManualImageInNewTab;
+
