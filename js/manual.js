@@ -149,10 +149,11 @@ function renderManualNativeView() {
     { key: 'projects', label: '2. Portafolio & Fases', icon: 'folder-git-2' },
     { key: 'tasks', label: '3. Tareas & Dictamen QA', icon: 'check-square' },
     { key: 'calendar', label: '4. Cronograma & Calendario', icon: 'calendar' },
-    { key: 'support', label: '5. Mesa de Ayuda de Planta', icon: 'headphones' },
-    { key: 'developers', label: '6. Equipo TI & Rendimiento', icon: 'users' },
-    { key: 'sheets', label: '7. Base de Datos & Sheets', icon: 'database' },
-    { key: 'intro', label: '8. Credenciales & Seguridad', icon: 'key-round' }
+    { key: 'developers', label: '5. Equipo TI & Rendimiento', icon: 'users' },
+    { key: 'analytics', label: '6. Métricas de Calidad & QA', icon: 'bar-chart-2' },
+    { key: 'support', label: '7. Mesa de Ayuda de Planta', icon: 'headphones' },
+    { key: 'sheets', label: '8. Base de Datos & Sheets', icon: 'database' },
+    { key: 'intro', label: '9. Credenciales & Seguridad', icon: 'key-round' }
   ];
 
   let navTabsHtml = `
@@ -181,11 +182,14 @@ function renderManualNativeView() {
     case 'calendar':
       contentHtml = renderManualSectionCalendar(isAdminView, devNameForFilter);
       break;
-    case 'support':
-      contentHtml = renderManualSectionSupport(isAdminView, devNameForFilter, myAssignedApps);
-      break;
     case 'developers':
       contentHtml = renderManualSectionDevelopers(isAdminView, devList);
+      break;
+    case 'analytics':
+      contentHtml = renderManualSectionAnalytics(isAdminView, allSystems, myAssignedApps, devNameForFilter);
+      break;
+    case 'support':
+      contentHtml = renderManualSectionSupport(isAdminView, devNameForFilter, myAssignedApps);
       break;
     case 'sheets':
       contentHtml = renderManualSectionSheets(isAdminView);
@@ -1330,6 +1334,179 @@ function renderManualSectionDevelopers(isAdmin, devList) {
             ${isAdmin 
               ? 'Como Administrador tienes habilitado el botón <code>+ Nuevo Dev</code> para registrar nuevos programadores en Google Sheets asignándoles rol y credenciales.' 
               : 'Tu perfil está vinculado a tu cuenta en Google Sheets. Tu contraseña oficial es fija y segura, y puedes actualizar tu fotografía en cualquier momento.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// APARTADO 6: MÉTRICAS DE CALIDAD, QA & ANALYTICS
+// ============================================================================
+function renderManualSectionAnalytics(isAdmin, allSystems, myApps, userName) {
+  return `
+    <div class="manual-view-section">
+      <div class="manual-header-banner">
+        <div class="mhb-title-row">
+          <div class="mhb-icon-badge"><i data-lucide="bar-chart-2"></i></div>
+          <div>
+            <h2>Métricas de Calidad, QA & Analítica Industrial · STF GROUP</h2>
+            <p class="mhb-subtitle">
+              ${isAdmin 
+                ? 'Control integral de defectos, estabilidad en planta, cobertura de digitalización y balanceo de carga del equipo.' 
+                : `Tus métricas personales de calidad · ${userName}: defectos resueltos, avance ponderado y cumplimiento SLA.`}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIGURA 6.1: KPIS DE CALIDAD Y QA -->
+      <div class="manual-screenshot-card">
+        <div class="msc-frame">
+          <img src="assets/manual/metricas_kpis_dev.png" alt="Métricas Personales de QA & Avance" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 6.1 · Indicadores Clave de Calidad & QA</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 6.1:</strong> Las 4 tarjetas superiores de calidad de ${userName}: Sistemas Auditados (3), Avance Ponderado (69.0%), Incidencias QA (34 detectadas, 28 subsanadas al 82%) e Índice de Eficiencia (95% SLA).
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/metricas_kpis_dev.png', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
+
+      <!-- EXPLICACIÓN PASO A PASO: KPIS DE CALIDAD -->
+      <div class="manual-guide-block">
+        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Interpretación de los Indicadores QA</h3>
+        <div class="manual-steps-grid">
+          <div class="manual-step-card">
+            <div class="step-number">01</div>
+            <div class="step-body">
+              <h4>Sistemas Auditados</h4>
+              <p>Conteo oficial de aplicativos a cargo del ingeniero que se encuentran en ciclo de vida activo (ej. <em>3 Sistemas a cargo de Jose Guzman</em>).</p>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">02</div>
+            <div class="step-body">
+              <h4>Avance Ponderado Consolidado</h4>
+              <p>Promedio ponderado global según las fases completadas (ej. <em>69.0% · 1 en Producción, 2 en curso</em>). Si un aplicativo avanza de fase, este porcentaje sube de inmediato.</p>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">03</div>
+            <div class="step-body">
+              <h4>Control de Incidencias QA</h4>
+              <p>Monitoreo de bugs detectados durante pruebas de laboratorio y planta:</p>
+              <ul>
+                <li><strong>34 Detectadas:</strong> Total de novedades reportadas en pruebas técnicas.</li>
+                <li><strong>28 Subsanadas (82%):</strong> Defectos corregidos y validados por el Jefe TI antes de la salida en vivo.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">04</div>
+            <div class="step-body">
+              <h4>Índice de Eficiencia (SLA)</h4>
+              <p>Medición del cumplimiento en tiempo (ej. <em>95% SLA · 100% en tiempo</em>). Refleja la estabilidad del software entregado y la ausencia de rebrotes de bugs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIGURA 6.2: GRÁFICAS ANALÍTICAS AVANZADAS -->
+      <div class="manual-screenshot-card">
+        <div class="msc-frame">
+          <img src="assets/manual/metricas_graficas_analiticas.png" alt="Gráficas Analíticas de Planta y Balanceo de Carga" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 6.2 · Gráficas Analíticas Avanzadas de Planta</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 6.2:</strong> Los 4 cuadrantes analíticos: Donut de Avance por Sistema (69%), Comparativa de Incidencias QA por Aplicativo, Madurez Tecnológica por Área Textil y Balanceo de Carga del Equipo.
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/metricas_graficas_analiticas.png', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
+
+      <!-- EXPLICACIÓN PASO A PASO: 4 CUADRANTES ANALÍTICOS -->
+      <div class="manual-guide-block">
+        <h3 class="manual-block-title"><i data-lucide="pie-chart"></i> Análisis de los 4 Cuadrantes Analíticos</h3>
+        <div class="manual-steps-grid">
+          <div class="manual-step-card">
+            <div class="step-number">05</div>
+            <div class="step-body">
+              <h4>1. Avance Ponderado por Marca / Categoría</h4>
+              <p>Gráfica de dona circular con el 69% promedio en el centro. Muestra el peso individual de cada desarrollo:</p>
+              <ul>
+                <li><code>GEO UBICACION TALLERES:</code> 10% de avance.</li>
+                <li><code>OFICINA - APLICATIVOS:</code> 100% completado.</li>
+                <li><code>COLCHAS:</code> 98% en certificación final.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">06</div>
+            <div class="step-body">
+              <h4>2. Estado de Pruebas QA & Incidencias</h4>
+              <p>Barras comparativas de doble color por sistema:</p>
+              <ul>
+                <li><strong>Barra Naranja:</strong> Incidencias detectadas durante auditoría.</li>
+                <li><strong>Barra Azul:</strong> Incidencias subsanadas y certificadas.</li>
+                <li><strong>Bugs Críticos en Planta:</strong> 0 (Estabilidad confirmada).</li>
+                <li><strong>Dictamen Auditoría:</strong> 98.5% AQL (Nivel de Calidad Aceptable de estándar internacional).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">07</div>
+            <div class="step-body">
+              <h4>3. Cobertura de Digitalización por Área de Planta</h4>
+              <p>Mide la penetración del software en la cadena de confección STF:</p>
+              <ul>
+                <li><strong>Manufactura (Colchas):</strong> 100% En Producción.</li>
+                <li><strong>Aseguramiento de Calidad:</strong> 100% En Producción.</li>
+                <li><strong>Torre de Control & TI:</strong> 100% En Producción.</li>
+                <li><strong>Planta Textil (Tintorería):</strong> 100% En Producción.</li>
+                <li><strong>Logística & Satélites:</strong> 10% En Desarrollo.</li>
+                <li><strong>Control Textil (Laboratorio):</strong> 5% En Desarrollo.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">08</div>
+            <div class="step-body">
+              <h4>4. Balanceo de Capacidad & Carga del Equipo</h4>
+              <p>Gráfica de saturación de ingeniería frente al benchmark del 100%:</p>
+              <ul>
+                <li><strong>Jose Guzman:</strong> 60% Carga Óptima (0 activas · 3 sistemas).</li>
+                <li><strong>Juan David:</strong> 45% Carga Óptima (3 activas · 1 sistema).</li>
+                <li><strong>Esteban Escobar:</strong> 30% Carga Óptima (2 activas · 1 sistema).</li>
+                <li><strong>Jhon Eyder (Mocho):</strong> 30% Carga Óptima (2 activas · 1 sistema).</li>
+                <li><strong>Edwin Diaz:</strong> 20% Capacidad Libre (0 activas · 1 sistema).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="manual-callout ${isAdmin ? 'callout-admin' : 'callout-dev'}">
+        <div class="callout-icon"><i data-lucide="${isAdmin ? 'crown' : 'check-circle-2'}"></i></div>
+        <div class="callout-content">
+          <h4>${isAdmin ? 'Gestión de Carga para el Super Administrador' : 'Compromiso de Calidad para el Desarrollador'}</h4>
+          <p>
+            ${isAdmin 
+              ? 'Usa el cuadrante de Balanceo de Capacidad para evitar la sobrecarga de un programador. Si un desarrollador supera el 80% de saturación, reasigna nuevas tareas a quienes tienen capacidad disponible.' 
+              : 'Para mantener tu indicador de calidad por encima del 90%, asegúrate de subsanar los defectos reportados en la barra naranja antes de solicitar el pase a la Fase 6 de Producción.'}
           </p>
         </div>
       </div>
