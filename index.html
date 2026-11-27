@@ -64,7 +64,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=67">
+  <link rel="stylesheet" href="css/styles.css?v=68">
 </head>
 
 <body>
@@ -186,7 +186,7 @@
         <span id="mobileDrawerThemeIcon"></span>
         <span id="mobileDrawerThemeText">Modo Oscuro</span>
       </button>
-      <button type="button" class="drawer-footer-btn" onclick="openInteractiveManualModal()" title="Manual de Uso">
+      <button type="button" class="drawer-footer-btn" data-view="manual" onclick="switchViewMobile('manual')" title="Manual de Uso">
         <i data-lucide="book-open"></i>
         <span>Manual</span>
       </button>
@@ -260,8 +260,8 @@
           <span id="sidebarThemeIcon"></span>
           <span class="nav-btn-label" id="sidebarThemeText">Modo Oscuro</span>
         </button>
-        <button type="button" class="nav-btn manual-sidebar-btn" id="btnSidebarManual"
-          onclick="openInteractiveManualModal()" title="Manual de Uso Interactivo del Sistema" aria-label="Abrir manual de usuario">
+        <button type="button" class="nav-btn manual-sidebar-btn" data-view="manual" id="btnSidebarManual"
+          onclick="switchView('manual')" title="Manual de Uso y Centro de Documentación" aria-label="Abrir manual de usuario">
           <i data-lucide="book-open"></i>
           <span class="nav-btn-label">Manual de Uso</span>
         </button>
@@ -2095,6 +2095,15 @@
             <!-- Renderizado dinámico vía JavaScript -->
           </div>
 
+        </div>
+      </section>
+
+      <!-- =======================================================================
+           VISTA NATIVA: MANUAL DE USO Y CENTRO DE DOCUMENTACIÓN POR ROLES
+           ======================================================================= -->
+      <section class="view-panel" id="view-manual">
+        <div class="manual-native-container" id="manualNativeContainer">
+          <!-- Inyectado dinámicamente según rol y estado real vía js/manual.js -->
         </div>
       </section>
 
@@ -4165,59 +4174,6 @@
       title="Cerrar notificación">✕</button>
   </div>
 
-  <!-- Modal Manual de Uso Interactivo y Centro de Ayuda -->
-  <div class="modal-backdrop" id="modalInteractiveManual" style="display: none;" onclick="if(event.target === this) closeInteractiveManualModal()">
-    <div class="manual-modal-dialog">
-      <div class="manual-modal-header">
-        <div class="manual-title-group">
-          <div class="manual-icon-circle"><i data-lucide="book-open"></i></div>
-          <div>
-            <h2 id="manualModalTitle">Manual de Uso Interactivo · STF GROUP</h2>
-            <div class="manual-role-badge-row">
-              <span class="badge badge-dev" id="manualRoleBadge">Panel de Desarrollador</span>
-              <span class="manual-user-live" id="manualUserLive">Cargando sesión...</span>
-            </div>
-          </div>
-        </div>
-        <div class="manual-header-actions">
-          <button type="button" class="manual-switch-role-btn" id="btnManualSwitchRole" onclick="toggleManualRoleView()" style="display: none;">
-            <i data-lucide="eye"></i> <span id="manualSwitchRoleText">Ver cómo lo ve el Desarrollador</span>
-          </button>
-          <button type="button" class="modal-close-btn" onclick="closeInteractiveManualModal()" title="Cerrar manual">
-            <i data-lucide="x"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="manual-modal-body">
-        <aside class="manual-sidebar-tabs">
-          <button class="manual-tab-btn active" data-tab="intro" onclick="switchManualTab('intro')">
-            <i data-lucide="user-check"></i> <span>1. Tu Perfil & Acceso</span>
-          </button>
-          <button class="manual-tab-btn" data-tab="dashboard" onclick="switchManualTab('dashboard')">
-            <i data-lucide="layout-dashboard"></i> <span>2. Dashboard & KPIs</span>
-          </button>
-          <button class="manual-tab-btn" data-tab="calendar" onclick="switchManualTab('calendar')">
-            <i data-lucide="calendar"></i> <span>3. Cronograma & Entregas</span>
-          </button>
-          <button class="manual-tab-btn" data-tab="tasks" onclick="switchManualTab('tasks')">
-            <i data-lucide="check-square"></i> <span>4. Tareas & Avances</span>
-          </button>
-          <button class="manual-tab-btn" data-tab="support" onclick="switchManualTab('support')">
-            <i data-lucide="headphones"></i> <span>5. Mesa de Ayuda (Soporte)</span>
-          </button>
-          <button class="manual-tab-btn" data-tab="sheets" onclick="switchManualTab('sheets')">
-            <i data-lucide="database"></i> <span>6. Base de Datos & Sheets</span>
-          </button>
-        </aside>
-
-        <div class="manual-content-viewport" id="manualContentViewport">
-          <!-- Inyectado dinámicamente según el rol en js/manual.js -->
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Toast Notification Message -->
   <div class="toast-notification" id="toastNotification">
     <i data-lucide="check-circle" class="toast-icon"></i>
@@ -4228,8 +4184,8 @@
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=46"></script>
   <script src="js/sheets-sync.js?v=52"></script>
-  <script src="js/app.js?v=69"></script>
-  <script src="js/manual.js?v=2"></script>
+  <script src="js/app.js?v=70"></script>
+  <script src="js/manual.js?v=3"></script>
   <script src="js/mobile-frame.js?v=2"></script>
 </body>
 

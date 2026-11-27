@@ -9858,11 +9858,11 @@ function switchView(viewName) {
   window.currentActiveView = viewName;
 
   // Update sidebar active state
-  document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
+  document.querySelectorAll('.sidebar-nav .nav-btn, .sidebar-footer .nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === viewName);
   });
   // Update mobile drawer active state
-  document.querySelectorAll('.mobile-drawer-nav .drawer-nav-item').forEach(btn => {
+  document.querySelectorAll('.mobile-drawer-nav .drawer-nav-item, .drawer-footer-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === viewName);
   });
 
@@ -9994,6 +9994,20 @@ function switchView(viewName) {
     renderSystemsTable();
     initOverviewChart();
     initVelocityBarChart();
+  } else if (viewName === 'manual') {
+    if (titleEl) {
+      titleEl.innerHTML = isAdmin
+        ? 'Manual de Operaciones & Centro de Ayuda · <span class="text-gradient">STF GROUP</span>'
+        : `Manual de Operación de Ingeniería · <span class="text-gradient">${session.name}</span>`;
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isAdmin
+        ? 'Guía oficial para Administradores: supervisión del portafolio, asignación de tareas, auditoría QA y soporte.'
+        : 'Guía oficial para Desarrolladores: gestión de aplicativos a cargo, calendario STF, dictámenes de soporte y tareas.';
+    }
+    if (typeof renderManualNativeView === 'function') {
+      renderManualNativeView();
+    }
   }
 
   lucide.createIcons();
