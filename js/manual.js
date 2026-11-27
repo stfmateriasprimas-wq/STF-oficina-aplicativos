@@ -981,60 +981,131 @@ function renderManualSectionCalendar(isAdmin, userName) {
           <div>
             <h2>Cronograma Futurista & Calendario de Entregas (v3.5)</h2>
             <p class="mhb-subtitle">
-              Sincronizado con la jornada laboral oficial de STF GROUP: Lunes a Sábado de 6:00 a.m. a 1:00 p.m. con festivos colombianos.
+              Sincronizado con la jornada laboral oficial de STF GROUP: Lunes a Sábado de 6:00 a.m. a 1:00 p.m. (7h/día), festivos colombianos y reprogramación interactiva.
             </p>
           </div>
         </div>
       </div>
 
+      <!-- FIGURA 4.1: VISTA MENSUAL PREDETERMINADA -->
       <div class="manual-screenshot-card">
         <div class="msc-frame">
-          <img src="assets/manual/calendario.jpg" alt="Calendario de Entregas STF" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real: Calendario en Vista Mes con Todo el Equipo</div>
+          <img src="assets/manual/calendario_vista_mes.png" alt="Calendario de Entregas STF - Vista Mes" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 4.1 · Vista Mensual (Predeterminada al Ingresar)</div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
-            <strong>Figura 4.1:</strong> Calendario mensual con festivos de ley en Colombia (diagonales rojas), día actual resaltado y entregables por desarrollador.
+            <strong>Figura 4.1:</strong> Vista mensual con festivos de ley en Colombia (diagonales rojas: 2 y 16 de noviembre), día actual en vivo (caja amarilla: 27 de nov), domingos de descanso oficial y panel lateral con todo el equipo.
           </div>
-          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/calendario.jpg', '_blank')">
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/calendario_vista_mes.png', '_blank')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
           </button>
         </div>
       </div>
 
+      <!-- EXPLICACIÓN PASO A PASO: VISTA MES -->
       <div class="manual-guide-block">
-        <h3 class="manual-block-title"><i data-lucide="clock"></i> Reglas Laborales y Convenciones Visuales</h3>
+        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Convenciones y Navegación del Calendario</h3>
         <div class="manual-steps-grid">
           <div class="manual-step-card">
             <div class="step-number">01</div>
             <div class="step-body">
-              <h4>Jornada Laboral STF</h4>
-              <p>• <strong>Lunes a Sábado:</strong> 6:00 a.m. a 1:00 p.m. (7 horas hábiles diarias).<br/>
-              • <strong>Domingos:</strong> Días no laborales (color gris suave).<br/>
-              • <strong>Festivos Oficiales de Colombia:</strong> Días no laborales con patrón de rayas rojas de advertencia.</p>
+              <h4>Carga Automática Predeterminada</h4>
+              <p>Al abrir el calendario, el sistema inicia automáticamente en visual de <strong>MES</strong> y mostrando a <strong>Todo el Equipo</strong>, ofreciendo una panorámica de compromisos sin pasos previos ni filtros obligatorios.</p>
             </div>
           </div>
+
           <div class="manual-step-card">
             <div class="step-number">02</div>
             <div class="step-body">
-              <h4>Carga Automática Predeterminada</h4>
-              <p>Al abrir el calendario, el sistema inicia automáticamente en visual de <strong>MES</strong> y mostrando a <strong>Todo el Equipo</strong>, ofreciendo una panorámica global sin pasos adicionales.</p>
+              <h4>Convenciones de Color Oficiales STF</h4>
+              <p>Los días se identifican con un estricto código cromático:</p>
+              <ul>
+                <li><strong>Diagonales Rojas (Festivos):</strong> Días festivos de ley en Colombia (ej. <em>2 y 16 de Noviembre</em>). El sistema no computa horas laborales en estos días.</li>
+                <li><strong>Caja Amarilla:</strong> Indicador visual del <strong>Día Actual en Vivo (Hoy)</strong>.</li>
+                <li><strong>Gris Claro (Descanso):</strong> Domingos de descanso obligatorio.</li>
+                <li><strong>Verde / Etiquetas de Color:</strong> Entregables de software con hora límite y porcentaje.</li>
+              </ul>
             </div>
           </div>
+
           <div class="manual-step-card">
             <div class="step-number">03</div>
             <div class="step-body">
-              <h4>Filtro de Desarrollador</h4>
-              <p>En el panel izquierdo puedes hacer clic sobre tu nombre o sobre un proyecto específico para limpiar la visualización y ver exclusivamente los plazos que te competen.</p>
+              <h4>Filtrar por Sistema o por Desarrollador</h4>
+              <p>En el panel izquierdo puedes hacer clic sobre cualquier proyecto (<em>Torre de Control, Laboratorio, Calidad...</em>) o sobre tu nombre (<em>${userName}</em>) para aislar únicamente tus entregas pactadas.</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- FIGURA 4.2: VISTA SEMANAL CON TURNO INDUSTRIAL -->
+      <div class="manual-screenshot-card">
+        <div class="msc-frame">
+          <img src="assets/manual/calendario_vista_semana.jpg" alt="Calendario STF - Vista Semana" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 4.2 · Vista Semanal y Jornada STF (6am - 1pm)</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 4.2:</strong> Visualización semanal con columnas de Lunes a Sábado de 6:00 a.m. a 1:00 p.m., marca visual de fin de jornada laboral a la 1:00 PM y domingo bloqueado como descanso.
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/calendario_vista_semana.jpg', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
+
+      <!-- EXPLICACIÓN PASO A PASO: VISTA SEMANA Y DÍA -->
+      <div class="manual-guide-block">
+        <h3 class="manual-block-title"><i data-lucide="clock"></i> Horario Laboral STF y Reprogramación</h3>
+        <div class="manual-steps-grid">
           <div class="manual-step-card">
             <div class="step-number">04</div>
             <div class="step-body">
-              <h4>${isAdmin ? 'Reprogramación por Arrastre (Drag & Drop)' : 'Inspección de Compromisos'}</h4>
-              <p>${isAdmin ? 'Como Super Admin puedes arrastrar cualquier bloque de entrega a un nuevo día. La fecha límite se actualiza de inmediato en Google Sheets.' : 'Los desarrolladores pueden consultar las fechas programadas sin alterar las fechas maestras fijadas por la jefatura.'}</p>
+              <h4>Jornada Laboral STF Oficial</h4>
+              <p>El calendario no utiliza horarios genéricos de oficina (8am-5pm), sino el turno industrial oficial de STF GROUP:</p>
+              <ul>
+                <li><strong>Lunes a Sábado:</strong> 6:00 a.m. a 1:00 p.m. (7 horas hábiles por día).</li>
+                <li><strong>Límite Diario:</strong> Marca amarilla a la <code>01:00 PM (Fin STF)</code>.</li>
+              </ul>
             </div>
           </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">05</div>
+            <div class="step-body">
+              <h4>${isAdmin ? 'Reprogramación por Arrastre (Drag & Drop)' : 'Consultar Vista Diaria'}</h4>
+              <p>${isAdmin ? 'Como Super Administrador, puedes arrastrar cualquier tarjeta de entrega a otro día. La nueva fecha límite se sincroniza de inmediato en Google Sheets.' : 'Los desarrolladores pueden usar el botón <code>Día</code> para revisar en detalle la agenda horaria del día presente sin alterar las fechas maestras fijadas por la jefatura.'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIGURA 4.3: VISTA DIARIA -->
+      <div class="manual-screenshot-card">
+        <div class="msc-frame">
+          <img src="assets/manual/calendario_vista_dia.jpg" alt="Calendario STF - Vista Día" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 4.3 · Vista Diaria con Detalle de Jornada</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 4.3:</strong> Inspección puntual de la jornada diaria (6:00 AM - 1:00 PM) para consultar entregas específicas de la fecha seleccionada.
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/calendario_vista_dia.jpg', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
+
+      <div class="manual-callout ${isAdmin ? 'callout-admin' : 'callout-dev'}">
+        <div class="callout-icon"><i data-lucide="${isAdmin ? 'crown' : 'info'}"></i></div>
+        <div class="callout-content">
+          <h4>${isAdmin ? 'Control de Fechas para el Administrador' : 'Compromisos de Entrega para el Desarrollador'}</h4>
+          <p>
+            ${isAdmin 
+              ? 'Todas las modificaciones que realices en el calendario recalculan automáticamente los días restantes en la vista de Tareas y el estado de riesgo en el Dashboard.' 
+              : 'Las fechas fijadas en tu calendario representan los compromisos oficiales de entrega ante la Dirección TI. El sistema te alertará automáticamente cuando falten 4 días para el vencimiento.'}
+          </p>
         </div>
       </div>
     </div>
