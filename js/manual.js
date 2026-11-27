@@ -251,33 +251,229 @@ function setManualSimulatedDev(username) {
 // ============================================================================
 function renderManualSectionDashboard(isAdmin, allSystems, myApps, userName) {
   const total = allSystems.length || 7;
-  const myTotal = myApps.length || 1;
+  const myTotal = myApps.length || 3;
 
+  if (!isAdmin) {
+    // VISTA EXCLUSIVA DEL DESARROLLADOR CON CAPTURAS REALES ADJUNTADAS
+    return `
+      <div class="manual-view-section">
+        <div class="manual-header-banner">
+          <div class="mhb-title-row">
+            <div class="mhb-icon-badge"><i data-lucide="layout-dashboard"></i></div>
+            <div>
+              <h2>Panel de Ingeniería · Centro de Comando del Desarrollador</h2>
+              <p class="mhb-subtitle">
+                Guía completa con datos y pantallas auténticas para <strong>${userName}</strong>: control de aplicativos asignados, curva de avance vs estimado, métricas ágiles de sprints y auditoría de fases.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAPTURA 1: PANEL SUPERIOR (Kpis, Baraja, Curva S, Ficha Técnica) -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/dashboard_dev_top.png" alt="Panel Superior del Desarrollador" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 1.1 · Vista Superior del Panel de Ingeniería</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 1.1:</strong> Barra de KPIs personales (3 Mis Aplicativos, 0 En Riesgo, 69.3% Promedio General), Baraja interactiva de sistemas, Curva S vs Meta proyectada y tarjetas de carga operativa.
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/dashboard_dev_top.png', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: PANEL SUPERIOR -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Interpretación del Panel Superior</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">01</div>
+              <div class="step-body">
+                <h4>KPIs Personales del Ingeniero</h4>
+                <p>En el extremo superior derecho ves tus indicadores consolidados en tiempo real:</p>
+                <ul>
+                  <li><strong>Mis Aplicativos:</strong> Conteo de sistemas donde eres líder responsable (${myTotal} asignados).</li>
+                  <li><strong>En Riesgo:</strong> Alerta inmediata si alguno de tus sistemas presenta retraso respecto a su fecha límite.</li>
+                  <li><strong>Promedio General:</strong> Tu avance ponderado consolidado sumando todas tus fases completadas.</li>
+                  <li><strong>Sheets Conectado:</strong> Confirma que tus cambios e hitos provienen de la hoja de cálculo de Google Sheets.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">02</div>
+              <div class="step-body">
+                <h4>Baraja de Aplicativos a Cargo (Stacked Deck)</h4>
+                <p>En el costado izquierdo se despliegan tus sistemas asignados (ej. <em>GEO UBICACION TALLERES [10%], OFICINA - APLICATIVOS [100%], COLCHAS [98%]</em>):</p>
+                <ul>
+                  <li>Haz clic en cada pestaña para conmutar el sistema activo en pantalla.</li>
+                  <li>El botón del <strong>ojo azul</strong> te permite abrir de inmediato el desglose de fases.</li>
+                  <li>Muestra el nivel de prioridad (*Alta / Media / Baja*) y la fecha límite oficial pactada con Jefatura TI.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">03</div>
+              <div class="step-body">
+                <h4>Curva de Avance vs. Estimado</h4>
+                <p>Gráfica matemática que compara tu rendimiento frente a la meta proyectada:</p>
+                <ul>
+                  <li><strong>Línea Continua Púrpura/Naranja:</strong> Tu progreso real acumulado basado en fases aprobadas.</li>
+                  <li><strong>Línea Punteada:</strong> La meta estimada que el proyecto debería alcanzar para la fecha actual.</li>
+                  <li>Puedes filtrar el rango temporal (*Últimos 30 días, Trimestre, Año*) en la esquina superior derecha.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">04</div>
+              <div class="step-body">
+                <h4>Avance Trimestral & Cumplimiento</h4>
+                <p>Muestra tu meta del periodo (ej. <em>Q4 Octubre - Diciembre</em>), la barra cápsula de completitud, los módulos entregados (ej. <em>12 de 18</em>), tu fase dominante y tu estado de cumplimiento (<em>En Tiempo +4d</em>).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAPTURA 2: VELOCIDAD DE SPRINTS Y TABLA DE SISTEMAS -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/dashboard_dev_bottom.png" alt="Velocidad de Sprints y Tabla de Aplicativos" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 1.2 · Velocidad de Sprints y Tabla de Sistemas</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 1.2:</strong> Rendimiento ágil en Sprints (67 Módulos, Mes récord Octubre con 17 mods, 468 hrs invertidas, 95% en tiempo) y tabla detallada de aplicativos asignados.
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/dashboard_dev_bottom.png', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: VELOCIDAD Y TABLA -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="activity"></i> Paso a Paso: Métricas Ágiles y Tabla de Sistemas</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">05</div>
+              <div class="step-body">
+                <h4>Velocidad de Entrega (Sprints)</h4>
+                <p>Métricas históricas de productividad personal calculadas en los últimos 6 meses:</p>
+                <ul>
+                  <li><strong>Módulos Entregados:</strong> Conteo total de entregables técnicos completados y aprobados.</li>
+                  <li><strong>Mes Récord (Pico Personal):</strong> Tu mejor mes de entrega (ej. <em>Octubre con 17 Módulos, 170% de la meta</em>).</li>
+                  <li><strong>Tiempo Total Invertido:</strong> Horas netas de desarrollo industrial (7.0 hrs promedio por entrega con 95% de estabilidad en planta sin incidencias).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">06</div>
+              <div class="step-body">
+                <h4>Tabla "Mis Aplicativos Asignados"</h4>
+                <p>Desglose fila por fila con el estado operativo de cada software a tu cargo:</p>
+                <ul>
+                  <li><strong>Aplicativo / Sistema:</strong> Nombre y código STF (ej. <em>GEO UBICACION TALLERES · STF-GEO-04</em>).</li>
+                  <li><strong>Fase Actual:</strong> Etapa en desarrollo (ej. <em>2. Arquitectura & Mapas Satelitales</em>).</li>
+                  <li><strong>Avance %:</strong> Barra de progreso proporcional a las fases validadas.</li>
+                  <li><strong>Estado:</strong> Etiqueta de salud (<em>En Tiempo</em> o <em>Desplegado</em>).</li>
+                  <li><strong>Acción "Ver Fases":</strong> Botón que abre el modal de auditoría y certificación.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAPTURA 3: MODAL DE FASES PONDERADAS (COLCHAS) -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/dashboard_modal_fases.jpg" alt="Modal de Fases y Ponderación Oficial" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 1.3 · Modal de Detalle de Fases y Ponderación Oficial</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 1.3:</strong> Ficha técnica del aplicativo con enlace directo <code>Abrir Sistema Web ↗</code>, fecha límite oficial y desglose matemático de las 6 fases (Ponderación Total 100%).
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/dashboard_modal_fases.jpg', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: MODAL DE FASES -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="check-circle-2"></i> Paso a Paso: Cómo Auditar las Fases de un Aplicativo</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">07</div>
+              <div class="step-body">
+                <h4>Botón "Abrir Sistema Web ↗"</h4>
+                <p>Al hacer clic en este botón verde situado en la esquina superior del modal, se abrirá en una pestaña nueva la aplicación en vivo desplegada en planta para que puedas probarla directamente.</p>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">08</div>
+              <div class="step-body">
+                <h4>Cálculo Ponderado de las 6 Fases (Suma 100%)</h4>
+                <p>El porcentaje no es inventado; se calcula sumando el peso de cada fase completada:</p>
+                <ul>
+                  <li><strong>1. Levantamiento & Requisitos:</strong> Peso 10% (Completada).</li>
+                  <li><strong>2. Arquitectura & Diseño UI/UX:</strong> Peso 15% (Completada).</li>
+                  <li><strong>3. Desarrollo Backend & Lógica Core:</strong> Peso 30% (Completada).</li>
+                  <li><strong>4. Frontend & Conexión Planta:</strong> Peso 25% (Completada).</li>
+                  <li><strong>5. Pruebas QA con Operarios:</strong> Peso 18% (Completada).</li>
+                  <li><strong>6. Salida en Vivo & Certificación Final:</strong> Peso 2% (Pendiente).</li>
+                </ul>
+                <p style="margin-top:6px; font-weight:700; color:#059669;">Total Acumulado Real: 98% (5 de 6 Fases aprobadas)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALLOUT DE PERMISOS DEV -->
+        <div class="manual-callout callout-dev">
+          <div class="callout-icon"><i data-lucide="shield-alert"></i></div>
+          <div class="callout-content">
+            <h4>Modo Visual (Solo Lectura) para Desarrolladores</h4>
+            <p>
+              Como se indica en el banner superior del modal: <em>"Visualización del ciclo de desarrollo. Los avances y fases son auditados y aprobados exclusivamente por la Dirección TI."</em> Si completas un entregable, debes reportarlo al Jefe TI para que asigne el dictamen QA correspondiente y el porcentaje se refleje en Google Sheets.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // VISTA DEL SUPER ADMINISTRADOR (JEFE TI)
   return `
     <div class="manual-view-section">
       <div class="manual-header-banner">
         <div class="mhb-title-row">
           <div class="mhb-icon-badge"><i data-lucide="layout-dashboard"></i></div>
           <div>
-            <h2>Panel de Control Principal (Dashboard) & Curva S de Avance</h2>
+            <h2>Panel de Control Principal (Dashboard Ejecutivo) · STF GROUP</h2>
             <p class="mhb-subtitle">
-              ${isAdmin 
-                ? 'Supervisión en tiempo real del estado de ingeniería, curva de avance vs estimado y asignación del equipo.' 
-                : `Tu centro de comando personal · ${userName}: aplicativos asignados, avance de fases y porcentaje ponderado.`}
+              Supervisión en tiempo real del portafolio completo (${total} aplicativos), curva acumulada S, auditoría de sprints y asignación de ingenieros.
             </p>
           </div>
         </div>
       </div>
 
-      <!-- Screenshot Real -->
+      <!-- Screenshot Real Admin -->
       <div class="manual-screenshot-card">
         <div class="msc-frame">
-          <img src="assets/manual/dashboard.png" alt="Dashboard Principal STF GROUP" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para abrir imagen en tamaño completo" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real del Sistema STF GROUP</div>
+          <img src="assets/manual/dashboard.png" alt="Dashboard Principal Ejecutivo STF GROUP" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 1.1 · Dashboard Ejecutivo de Administración</div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
-            <strong>Figura 1.1:</strong> Vista general del Dashboard con KPIs superiores, baraja de sistemas, Curva S acumulada y tarjetas de desarrolladores.
+            <strong>Figura 1.1:</strong> Vista consolidada del Super Admin con botones <code>+ Nuevo Aplicativo</code>, <code>+ Asignar Tarea</code>, tarjetas de los 5 desarrolladores y métricas globales.
           </div>
           <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/dashboard.png', '_blank')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
@@ -285,70 +481,51 @@ function renderManualSectionDashboard(isAdmin, allSystems, myApps, userName) {
         </div>
       </div>
 
-      <!-- Explicación Paso a Paso -->
+      <!-- Explicación Paso a Paso Admin -->
       <div class="manual-guide-block">
-        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Guía Paso a Paso: Cómo Navegar e Interpretar el Dashboard</h3>
-
+        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Guía Paso a Paso para el Administrador</h3>
         <div class="manual-steps-grid">
           <div class="manual-step-card">
             <div class="step-number">01</div>
             <div class="step-body">
-              <h4>Barra Superior de Indicadores (KPIs Clave)</h4>
-              <p>En el extremo superior derecho se muestran los contadores consolidados calculados matemáticamente:</p>
-              <ul>
-                <li><strong>Aplicativos Activos:</strong> ${total} sistemas registrados en la hoja de Google Sheets.</li>
-                <li><strong>En Riesgo:</strong> Conteo de proyectos cuya fecha estimada de entrega está vencida o próxima a vencer.</li>
-                <li><strong>Promedio General:</strong> Sumatoria ponderada del avance de todas las fases.</li>
-                <li><strong>Sheets Conectado:</strong> Indicador verde que confirma que los datos provienen directamente de la nube sin intermediarios.</li>
-              </ul>
+              <h4>Crear un Nuevo Aplicativo</h4>
+              <p>Haz clic en el botón azul superior <code>+ Nuevo Aplicativo</code>. Diligencia el nombre del sistema, marca textil, líder asignado y fecha límite de entrega para darlo de alta en Google Sheets.</p>
             </div>
           </div>
 
           <div class="manual-step-card">
             <div class="step-number">02</div>
             <div class="step-body">
-              <h4>La Baraja de Sistemas (Stacked Deck)</h4>
-              <p>Muestra el aplicativo activo seleccionado. Haz clic en las pestañas laterales para alternar entre sistemas (<em>Torre de Control, Laboratorio, Colchas, etc.</em>).</p>
-              <p>El porcentaje visual refleja la fórmula matemática de las 6 fases de ingeniería (Requerimientos, Wireframes, Frontend, Backend, Pruebas QA y Producción).</p>
-              ${isAdmin 
-                ? '<div class="role-tip admin-tip"><strong>Acción de Admin:</strong> Haz clic en el botón de lápiz azul para editar el nombre, líder asignado o fecha límite.</div>'
-                : '<div class="role-tip dev-tip"><strong>Visualización Dev:</strong> Solo lectura. Para solicitar cambios de fecha límite debes acordarlo con el Jefe TI.</div>'}
+              <h4>Asignar Tareas con Ponderación</h4>
+              <p>Haz clic en <code>+ Asignar Tarea</code>. Selecciona el aplicativo y el desarrollador. El sistema calcula los días vs deadline y envía notificación formal al correo del programador.</p>
             </div>
           </div>
 
           <div class="manual-step-card">
             <div class="step-number">03</div>
             <div class="step-body">
-              <h4>Curva de Avance vs. Estimado (Curva S)</h4>
-              <p>Gráfica interactiva de alta resolución que traza dos líneas de tiempo:</p>
-              <ul>
-                <li><strong>Línea Continua Púrpura:</strong> Avance real acumulado reportado en las fases completadas.</li>
-                <li><strong>Línea Discontinua Naranja:</strong> Meta proyectada que debería tener el proyecto a la fecha actual.</li>
-              </ul>
-              <p>Si la línea púrpura está por debajo de la naranja, el sistema marca el proyecto como retrasado.</p>
+              <h4>Filtrado Instantáneo por Desarrollador</h4>
+              <p>Haz clic sobre cualquiera de las 5 tarjetas de desarrolladores (<em>Jose Guzman, Juan David, Esteban Escobar, Mocho, Edwin Diaz</em>). Todo el dashboard se adaptará para mostrar exclusivamente los sistemas y la curva del ingeniero seleccionado.</p>
             </div>
           </div>
 
           <div class="manual-step-card">
             <div class="step-number">04</div>
             <div class="step-body">
-              <h4>Tarjetas de Desarrolladores y Filtrado Inmediato</h4>
-              <p>En la parte inferior se exhiben los ingenieros del equipo con su avatar real, % de efectividad y cantidad de aplicativos asignados.</p>
-              <p><strong>Interacción clave:</strong> Al hacer clic sobre cualquier desarrollador (por ejemplo, <em>${userName}</em>), todo el dashboard filtra de inmediato sus métricas personales, su baraja de sistemas y sus tareas pendientes.</p>
+              <h4>Auditoría de Curva S y Desvíos</h4>
+              <p>Monitorea la línea continua de avance real frente a la línea proyectada naranja. Si la línea de avance cae por debajo, toma acciones de reprogramación en el Calendario de Entregas.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Resumen de Permisos -->
-      <div class="manual-callout ${isAdmin ? 'callout-admin' : 'callout-dev'}">
-        <div class="callout-icon"><i data-lucide="${isAdmin ? 'crown' : 'info'}"></i></div>
+      <!-- BANNER DE PREVIEW DEV PARA EL ADMIN -->
+      <div class="manual-callout callout-admin">
+        <div class="callout-icon"><i data-lucide="eye"></i></div>
         <div class="callout-content">
-          <h4>${isAdmin ? 'Atribuciones del Administrador en el Dashboard' : 'Atribuciones del Desarrollador en el Dashboard'}</h4>
+          <h4>¿Quieres ver exactamente cómo ve esta pantalla tu equipo de desarrollo?</h4>
           <p>
-            ${isAdmin 
-              ? 'Puedes crear nuevos aplicativos con <code>+ Nuevo Aplicativo</code>, reasignar líderes, modificar fechas de entrega, ajustar la jornada laboral y auditar el avance global de todo el equipo.' 
-              : `Tienes acceso de consulta completo a tus <strong>${myTotal} aplicativos a cargo</strong>. Puedes consultar el progreso detallado de tus fases, revisar entregables y ver el estado de salud de tus proyectos.`}
+            Puedes pulsar el botón superior <strong>"👁️ Ver como Desarrollador"</strong> en este manual. Verás las capturas reales del panel de Jose Guzman, la velocidad de sprints y el modal de auditoría de fases en modo solo lectura.
           </p>
         </div>
       </div>
