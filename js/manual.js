@@ -15,17 +15,26 @@ let manualSimulatedRole = null; // null usa el rol real de la sesión; permite a
  */
 function openInteractiveManualModal() {
   const modal = document.getElementById('modalInteractiveManual');
-  if (!modal) return;
+  if (!modal) {
+    console.error('No se encontró el elemento #modalInteractiveManual');
+    return;
+  }
 
   manualSimulatedRole = null; // Restablecer al rol real de la sesión
   manualActiveTab = 'intro';
   modal.style.display = 'flex';
+  modal.classList.add('show');
   modal.classList.add('is-open');
+  document.body.classList.add('modal-open');
 
-  renderInteractiveManualContent();
+  try {
+    renderInteractiveManualContent();
+  } catch (err) {
+    console.error('Error renderizando manual:', err);
+  }
 
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
-    window.lucide.createIcons();
+    try { window.lucide.createIcons(); } catch (e) { }
   }
 }
 
@@ -35,8 +44,10 @@ function openInteractiveManualModal() {
 function closeInteractiveManualModal() {
   const modal = document.getElementById('modalInteractiveManual');
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.classList.remove('show');
   modal.classList.remove('is-open');
+  modal.style.display = 'none';
+  document.body.classList.remove('modal-open');
 }
 
 /**
@@ -477,3 +488,20 @@ window.openInteractiveManualModal = openInteractiveManualModal;
 window.closeInteractiveManualModal = closeInteractiveManualModal;
 window.switchManualTab = switchManualTab;
 window.toggleManualRoleView = toggleManualRoleView;
+
+// Asignar listeners inmediatos y tras DOMContentLoaded
+function bindManualButtons() {
+  const btnSidebar = document.getElementById('btnSidebarManual');
+  if (btnSidebar) {
+    btnSidebar.onclick = (e) => {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      openInteractiveManualModal();
+    };
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindManualButtons);
+} else {
+  bindManualButtons();
+}
