@@ -537,15 +537,192 @@ function renderManualSectionDashboard(isAdmin, allSystems, myApps, userName) {
 // APARTADO 2: PORTAFOLIO DE SISTEMAS INDUSTRIALES & FASES
 // ============================================================================
 function renderManualSectionProjects(isAdmin, allSystems, myApps, userName) {
+  if (!isAdmin) {
+    // VISTA DEL DESARROLLADOR: MIS APLICATIVOS ASIGNADOS
+    return `
+      <div class="manual-view-section">
+        <div class="manual-header-banner">
+          <div class="mhb-title-row">
+            <div class="mhb-icon-badge"><i data-lucide="layers"></i></div>
+            <div>
+              <h2>Mis Aplicativos Asignados · Portafolio y Macro-Etapas</h2>
+              <p class="mhb-subtitle">
+                Supervisión visual para <strong>${userName}</strong>: control de sistemas a cargo en la cadena textil, estado por macro-etapas (*En Construcción, Puesta en Planta, En Producción*) y líneas de tiempo de fases.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIGURA 2.1: ACORDEÓN CERRADO & KPIS SUPERIORES -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/aplicativos_acordeon_cerrado.jpg" alt="Mis Aplicativos Asignados - Vista Acordeón Plegado" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 2.1 · KPIs de Cobertura y Acordeón Inicial Plegado</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 2.1:</strong> Las 4 tarjetas de métricas industriales (Cobertura, Despliegue, Efectividad y Foco Crítico), filtros por área textil y los 3 macro-bloques colapsados por defecto para máxima ergonomía visual.
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/aplicativos_acordeon_cerrado.jpg', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: FIGURA 2.1 -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Estructura y Navegación del Portafolio</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">01</div>
+              <div class="step-body">
+                <h4>Las 4 Tarjetas de Salud Industrial</h4>
+                <p>En la parte superior se resumen tus indicadores de planta:</p>
+                <ul>
+                  <li><strong>Cobertura de Planta:</strong> Conteo de sistemas a cargo (ej. <em>3 Mis Sistemas · 100% Cadena Textil & Confección</em>).</li>
+                  <li><strong>Despliegue Productivo:</strong> Sistemas que ya operan en vivo en planta (ej. <em>1 en Producción · SLA 99.8%</em>).</li>
+                  <li><strong>Efectividad de Entregas:</strong> Porcentaje de cumplimiento de plazos (ej. <em>100.0% En Tiempo · 5 de 6 dentro del cronograma</em>).</li>
+                  <li><strong>Foco Crítico de Atención:</strong> Alertas tempranas de módulos que requieren sincronización (ej. <em>0 En Riesgo</em>).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">02</div>
+              <div class="step-body">
+                <h4>Filtros por Categoría y Buscador en Vivo</h4>
+                <p>Puedes filtrar tus sistemas según el área de planta textil:</p>
+                <ul>
+                  <li>Pestañas: <code>Todos (3)</code>, <code>Grupal (0)</code>, <code>Manufactura (1)</code>, <code>Textil (0)</code>, <code>Talleres (1)</code>, <code>Calidad (0)</code>.</li>
+                  <li>Buscador reactivo con tecla rápida <code>⌘K</code> para localizar cualquier sistema por nombre o código STF.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">03</div>
+              <div class="step-body">
+                <h4>¿Por qué inician cerrados los bloques?</h4>
+                <p>Por norma de diseño de STF GROUP, cada vez que ingresas al módulo de aplicativos, los 3 bloques (<em>1. En Construcción, 2. Puesta en Planta, 3. En Producción</em>) <strong>inician siempre plegados</strong>. Esto permite una vista panorámica limpia sin scroll innecesario. Haz clic en <strong>"Desplegar sistemas ▾"</strong> en el bloque que desees consultar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIGURA 2.2: ETAPA 1 Y 2 ABIERTAS -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/aplicativos_etapas_abiertas.jpg" alt="Etapas En Construcción y Puesta en Planta desplegadas" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 2.2 · Despliegue de En Construcción y Puesta en Planta</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 2.2:</strong> Detalle de GEO UBICACION TALLERES (Fase 2 de 6, 10% Avance) y OFICINA - APLICATIVOS (Fase 6 de 6, 100% Avance) con sus líneas de tiempo interactivas y botones de acción rápida.
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/aplicativos_etapas_abiertas.jpg', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: FIGURA 2.2 -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="git-pull-request"></i> Paso a Paso: Líneas de Tiempo de Fases y Acciones</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">04</div>
+              <div class="step-body">
+                <h4>Lectura de la Línea de Tiempo de Fases</h4>
+                <p>Cada tarjeta cuenta con una barra de progreso de 6 hitos con iconos dinámicos:</p>
+                <ul>
+                  <li><strong>Círculo Verde con Check:</strong> Fase completada y aprobada por auditoría QA.</li>
+                  <li><strong>Círculo Azul Numerado:</strong> Fase actual en desarrollo activo.</li>
+                  <li><strong>Círculo Gris:</strong> Fases futuras pendientes de iniciar.</li>
+                  <li>Por ejemplo: <em>GEO UBICACION TALLERES</em> se encuentra en <code>Fase 2 de 6 · Arquitectura & Mapas Satelitales (10% Avance)</code>.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">05</div>
+              <div class="step-body">
+                <h4>Alertas de Retraso y Semáforo de Fechas</h4>
+                <p>El sistema calcula los días hábiles restantes (excluyendo domingos y festivos colombianos):</p>
+                <ul>
+                  <li><strong>Badge Rojo (Retraso Crítico):</strong> Indica que la fecha límite se venció y el aplicativo requiere atención urgente.</li>
+                  <li><strong>Badge Gris/Azul (Fecha Límite):</strong> Indica el plazo pactado y los días hábiles disponibles (ej. <em>30 de dic · 26d hábiles</em>).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="manual-step-card">
+              <div class="step-number">06</div>
+              <div class="step-body">
+                <h4>Botones de Acción en cada Tarjeta</h4>
+                <p>En el extremo derecho de cada aplicativo dispones de 3 acciones:</p>
+                <ul>
+                  <li><strong>↗ Web:</strong> Abre el aplicativo en vivo en el navegador para pruebas directas en planta.</li>
+                  <li><strong>👁️ Ver Fases:</strong> Abre el modal de auditoría de fases con los porcentajes matemáticos (10%, 15%, 30%, 25%, 18%, 2%).</li>
+                  <li><strong>Badge de Estado:</strong> Muestra la etapa actual (<em>Puesta en Planta</em>, <em>En Prueba</em>, <em>En Producción</em>).</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIGURA 2.3: ETAPA 3 EN PRODUCCIÓN -->
+        <div class="manual-screenshot-card">
+          <div class="msc-frame">
+            <img src="assets/manual/aplicativos_en_produccion.png" alt="Etapa En Producción desplegada (COLCHAS)" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+            <div class="msc-badge-overlay">📸 Figura 2.3 · Despliegue de Etapa 3: En Producción Continua</div>
+          </div>
+          <div class="msc-footer">
+            <div class="msc-caption">
+              <strong>Figura 2.3:</strong> Sistema COLCHAS (STF-COL-02 · Manufactura & Producción) en fase 6 de 6 con 98% de avance consolidado y estado oficial "En Producción".
+            </div>
+            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/aplicativos_en_produccion.png', '_blank')">
+              <i data-lucide="maximize-2"></i> Ver Imagen Completa
+            </button>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN PASO A PASO: FIGURA 2.3 -->
+        <div class="manual-guide-block">
+          <h3 class="manual-block-title"><i data-lucide="check-check"></i> Paso a Paso: Salida en Vivo y Certificación Final</h3>
+          <div class="manual-steps-grid">
+            <div class="manual-step-card">
+              <div class="step-number">07</div>
+              <div class="step-body">
+                <h4>Requisitos para Salida en Vivo (Producción)</h4>
+                <p>Para que un aplicativo pase a <strong>3. EN PRODUCCIÓN</strong>, debe haber superado exitosamente la <em>Fase 5: Pruebas QA con Operarios de Planta</em>. Una vez en este bloque, el sistema opera de forma continua y recibe tickets de soporte desde la mesa de ayuda.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-callout callout-dev">
+          <div class="callout-icon"><i data-lucide="info"></i></div>
+          <div class="callout-content">
+            <h4>Ponderación Auditable y Trazabilidad</h4>
+            <p>
+              El avance promedio general (ej. <strong>69%</strong>) es el promedio ponderado exacto de todos tus aplicativos asignados en Google Sheets. Si necesitas cambiar la fecha límite o reportar una fase terminada, comunícalo al Jefe TI para que asigne el dictamen formal.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // VISTA DEL ADMINISTRADOR (PORTAFOLIO GENERAL)
   return `
     <div class="manual-view-section">
       <div class="manual-header-banner">
         <div class="mhb-title-row">
           <div class="mhb-icon-badge"><i data-lucide="folder-git-2"></i></div>
           <div>
-            <h2>Portafolio de Sistemas Industriales, Marcas y Ciclo de Vida</h2>
+            <h2>Portafolio de Sistemas Industriales · Supervisión del Administrador</h2>
             <p class="mhb-subtitle">
-              Visualización multi-modo (Pipeline por Fases, Matriz Operativa y Cuadrícula de Marcas) con control de fases del 10% al 100%.
+              Gestión centralizada del portafolio completo (${allSystems.length || 7} sistemas), marcas corporativas (*Studio F, ELA, Top Mark*), asignación de ingenieros y ciclo de vida de 6 fases.
             </p>
           </div>
         </div>
@@ -554,11 +731,11 @@ function renderManualSectionProjects(isAdmin, allSystems, myApps, userName) {
       <div class="manual-screenshot-card">
         <div class="msc-frame">
           <img src="assets/manual/proyectos.png" alt="Portafolio de Sistemas STF GROUP" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real: Portafolio de Proyectos y Fases</div>
+          <div class="msc-badge-overlay">📸 Figura 2.1 · Portafolio General y Pipeline de Marcas</div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
-            <strong>Figura 2.1:</strong> Módulo de Portafolio Industrial, agrupado por marcas corporativas y desglose de las 6 fases de desarrollo.
+            <strong>Figura 2.1:</strong> Vista general del portafolio agrupado por marcas corporativas y desglose de las 6 fases de desarrollo.
           </div>
           <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/proyectos.png', '_blank')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
@@ -580,30 +757,13 @@ function renderManualSectionProjects(isAdmin, allSystems, myApps, userName) {
         </div>
       </div>
 
-      <div class="manual-guide-block">
-        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso para Inspeccionar y Gestionar un Sistema</h3>
-        <div class="manual-steps-grid">
-          <div class="manual-step-card">
-            <div class="step-number">01</div>
-            <div class="step-body">
-              <h4>Filtro Rápido por Marca</h4>
-              <p>Haz clic en las pestañas superiores (<em>Todas, Studio F, ELA, Top Mark</em>) para segmentar el portafolio según la línea de negocio textil a la que pertenece cada desarrollo.</p>
-            </div>
-          </div>
-          <div class="manual-step-card">
-            <div class="step-number">02</div>
-            <div class="step-body">
-              <h4>Alternar Vistas (Pipeline vs Cuadrícula)</h4>
-              <p>Usa los botones de la esquina derecha para ver los sistemas como tarjetas agrupadas por su fase actual o como una tabla detallada con fechas y entregables.</p>
-            </div>
-          </div>
-          <div class="manual-step-card">
-            <div class="step-number">03</div>
-            <div class="step-body">
-              <h4>Abrir la Ficha Técnica de Auditoría</h4>
-              <p>Haz clic en cualquier tarjeta para abrir el modal de desglose completo. Allí podrás ver el enlace oficial al sistema web, la fecha límite exacta y los módulos entregados.</p>
-            </div>
-          </div>
+      <div class="manual-callout callout-admin">
+        <div class="callout-icon"><i data-lucide="eye"></i></div>
+        <div class="callout-content">
+          <h4>Inspeccionar la Vista de tus Desarrolladores</h4>
+          <p>
+            Usa el botón superior <strong>"👁️ Ver como Desarrollador"</strong> para comprobar cómo Jose Guzman, Juan David o Esteban visualizan el acordeón de macro-etapas, las líneas de tiempo y las alertas de retraso crítico.
+          </p>
         </div>
       </div>
     </div>
