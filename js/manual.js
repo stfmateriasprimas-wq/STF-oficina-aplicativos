@@ -1520,7 +1520,7 @@ function renderManualSectionAnalytics(isAdmin, allSystems, myApps, userName) {
 }
 
 // ============================================================================
-// APARTADO 7: BASE DE DATOS EN GOOGLE SHEETS & ARQUITECTURA
+// APARTADO 8: BASE DE DATOS EN GOOGLE SHEETS & ARQUITECTURA
 // ============================================================================
 function renderManualSectionSheets(isAdmin) {
   return `
@@ -1534,21 +1534,6 @@ function renderManualSectionSheets(isAdmin) {
               Estructura relacional de 6 hojas maestras conectadas en tiempo real sin servidores complejos.
             </p>
           </div>
-        </div>
-      </div>
-
-      <div class="manual-screenshot-card">
-        <div class="msc-frame">
-          <img src="assets/manual/sheets.jpg" alt="Hoja USUARIOS en Google Sheets" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real: Base de Datos Maestra en Google Sheets</div>
-        </div>
-        <div class="msc-footer">
-          <div class="msc-caption">
-            <strong>Figura 7.1:</strong> Hoja USUARIOS en Google Sheets mostrando las columnas blindadas contra sobreescritura (Columna A: ID).
-          </div>
-          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/sheets.jpg', '_blank')">
-            <i data-lucide="maximize-2"></i> Ver Imagen Completa
-          </button>
         </div>
       </div>
 
