@@ -1117,7 +1117,7 @@ function renderManualSectionCalendar(isAdmin, userName) {
 }
 
 // ============================================================================
-// APARTADO 5: MESA DE AYUDA Y SOPORTE TÉCNICO DE PLANTA
+// APARTADO 7: MESA DE AYUDA Y SOPORTE TÉCNICO DE PLANTA
 // ============================================================================
 function renderManualSectionSupport(isAdmin, userName, myApps) {
   return `
@@ -1128,20 +1128,81 @@ function renderManualSectionSupport(isAdmin, userName, myApps) {
           <div>
             <h2>Mesa de Ayuda, Soporte Técnico de Planta & Evidencias Drive</h2>
             <p class="mhb-subtitle">
-              Atención directa a solicitudes reportadas por operarios y supervisores textiles desde planta de producción.
+              ${isAdmin 
+                ? 'Supervisión de tickets de planta textil, depuración de incidencias y trazabilidad de SLA de respuesta.' 
+                : `Bandeja de atención técnica para ${userName}: recepción automática, visor de evidencias fotográficas en Drive y dictámenes.`}
             </p>
           </div>
         </div>
       </div>
 
+      <!-- FIGURA 7.1: BANDEJA DEV -->
       <div class="manual-screenshot-card">
         <div class="msc-frame">
-          <img src="assets/manual/soporte.jpg" alt="Mesa de Ayuda y Soporte" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
-          <div class="msc-badge-overlay">📸 Pantallazo Real: Bandeja de Soporte Técnico y SLA</div>
+          <img src="assets/manual/soporte_bandeja_dev.jpg" alt="Bandeja de Soporte Técnico del Desarrollador" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 7.1 · Bandeja de Soporte de Planta y Telemetría en Vivo</div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
-            <strong>Figura 5.1:</strong> Módulo de Soporte Técnico con tarjetas de incidencias, SLA de respuesta, botón de visor de evidencias y dictámenes.
+            <strong>Figura 7.1:</strong> Bandeja de Soporte de ${userName} con barra de telemetría (7 terminales conectadas, enlace activo), 4 tarjetas de conteo y auto-enrutamiento de aplicativos a cargo.
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/soporte_bandeja_dev.jpg', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
+
+      <!-- EXPLICACIÓN PASO A PASO: BANDEJA Y TELEMETRÍA -->
+      <div class="manual-guide-block">
+        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Paso a Paso: Telemetría y Recepción de Incidencias</h3>
+        <div class="manual-steps-grid">
+          <div class="manual-step-card">
+            <div class="step-number">01</div>
+            <div class="step-body">
+              <h4>Barra de Telemetría en Vivo</h4>
+              <p>En el extremo superior se visualiza la conexión con planta textil:</p>
+              <ul>
+                <li><strong>Enlace Planta Industrial STF:</strong> Comunicación directa sin intermediarios.</li>
+                <li><strong>Terminales Conectadas:</strong> Número de computadores y tablets en planta interactuando con el sistema.</li>
+                <li><strong>Protocolo SLA Activo:</strong> Cronómetro de respuesta en horas hábiles.</li>
+                <li><strong>Botón Sincronizar Planta:</strong> Fuerza la actualización inmediata trayendo nuevos tickets de Google Sheets.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">02</div>
+            <div class="step-body">
+              <h4>Auto-Enrutamiento por Aplicativo</h4>
+              <p>No tienes que clasificar manualmente los tickets. Si un operario reporta un problema en <em>COLCHAS, GEO UBICACIÓN o OFICINA</em>, el sistema lo dirige automáticamente a la bandeja del programador responsable.</p>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">03</div>
+            <div class="step-body">
+              <h4>Contadores de Estado Operativo</h4>
+              <p>Tarjetas numéricas clasificadas por estado:</p>
+              <ul>
+                <li><strong>Total Solicitudes:</strong> Histórico acumulado.</li>
+                <li><strong>Pendientes por Atender:</strong> Novedades que requieren dictamen inmediato.</li>
+                <li><strong>Aceptadas en Solución:</strong> Solicitudes en proceso de ajuste.</li>
+                <li><strong>Rechazadas / No Aplica:</strong> Desestimadas con justificación técnica.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIGURA 7.2: ATENCIÓN DE TICKETS Y EVIDENCIAS -->
+      <div class="manual-screenshot-card">
+        <div class="msc-frame">
+          <img src="assets/manual/soporte.jpg" alt="Atención de Tickets y Evidencias Drive" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
+          <div class="msc-badge-overlay">📸 Figura 7.2 · Protocolo de Atención y Visor de Evidencias</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 7.2:</strong> Tarjeta de solicitud de planta con código TCK, visor de fotos en Google Drive, SLA de respuesta y botones de resolución técnica.
           </div>
           <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/soporte.jpg', '_blank')">
             <i data-lucide="maximize-2"></i> Ver Imagen Completa
@@ -1149,35 +1210,41 @@ function renderManualSectionSupport(isAdmin, userName, myApps) {
         </div>
       </div>
 
+      <!-- EXPLICACIÓN PASO A PASO: PROTOCOLO -->
       <div class="manual-guide-block">
-        <h3 class="manual-block-title"><i data-lucide="list-ordered"></i> Protocolo de Atención para Desarrolladores</h3>
+        <h3 class="manual-block-title"><i data-lucide="check-circle-2"></i> Protocolo Formal de Atención para Desarrolladores</h3>
         <div class="manual-steps-grid">
-          <div class="manual-step-card">
-            <div class="step-number">01</div>
-            <div class="step-body">
-              <h4>Recepción Automática de Incidencias</h4>
-              <p>Los operarios de planta envían tickets desde <code>solicitud-soporte.html</code>. El sistema lee el aplicativo reportado y lo asigna automáticamente al desarrollador responsable.</p>
-            </div>
-          </div>
-          <div class="manual-step-card">
-            <div class="step-number">02</div>
-            <div class="step-body">
-              <h4>Inspección de Evidencia Fotográfica</h4>
-              <p>Haz clic en el botón <strong>"Ver Evidencia"</strong> de la tarjeta. Se abrirá el visor fotográfico con la imagen capturada por el operario en planta (almacenada en Google Drive).</p>
-            </div>
-          </div>
-          <div class="manual-step-card">
-            <div class="step-number">03</div>
-            <div class="step-body">
-              <h4>Aceptar en Solución</h4>
-              <p>Si la falla es válida, haz clic en <strong>Aceptar en Solución</strong> (botón verde). Define el tiempo estimado de entrega (ETA). El solicitante recibe un correo automático de confirmación.</p>
-            </div>
-          </div>
           <div class="manual-step-card">
             <div class="step-number">04</div>
             <div class="step-body">
-              <h4>Rechazar Solicitud (Con Justificación Obligatoria)</h4>
-              <p>Si la solicitud no procede (por ejemplo, error operativo o mal uso), haz clic en <strong>Rechazar</strong>. Es <strong>estrictamente obligatorio escribir una justificación técnica clara</strong> para informar al operario.</p>
+              <h4>Inspección de la Evidencia Fotográfica</h4>
+              <p>Haz clic en el botón <strong>"Ver Evidencia"</strong> de la tarjeta. Se abrirá el modal fotográfico con la imagen capturada por la jefa de área u operario en planta, almacenada directamente en Google Drive.</p>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">05</div>
+            <div class="step-body">
+              <h4>Aceptar en Solución</h4>
+              <p>Si la novedad corresponde a un ajuste de software válido:</p>
+              <ul>
+                <li>Haz clic en el botón verde <strong>Aceptar en Solución</strong>.</li>
+                <li>Ingresa el tiempo estimado de entrega (ETA).</li>
+                <li>El operario recibe confirmación por correo y el ticket pasa a estado resuelto al desplegar la corrección.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="manual-step-card">
+            <div class="step-number">06</div>
+            <div class="step-body">
+              <h4>Rechazar Solicitud (Justificación Obligatoria)</h4>
+              <p>Si la solicitud no procede (por ejemplo, mala digitación o problema de hardware local):</p>
+              <ul>
+                <li>Haz clic en el botón rojo <strong>Rechazar</strong>.</li>
+                <li>Es <strong>estrictamente obligatorio redactar una justificación técnica fundamentada</strong>.</li>
+                <li>Puedes adjuntar una foto de contra-evidencia técnica si es necesario.</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -1186,11 +1253,11 @@ function renderManualSectionSupport(isAdmin, userName, myApps) {
       <div class="manual-callout ${isAdmin ? 'callout-admin' : 'callout-dev'}">
         <div class="callout-icon"><i data-lucide="shield-alert"></i></div>
         <div class="callout-content">
-          <h4>${isAdmin ? 'Gestión de Eliminación Exclusiva para Administradores' : '¿Por qué no puedo eliminar tickets?'}</h4>
+          <h4>${isAdmin ? 'Permiso de Eliminación (Exclusivo Administrador)' : 'Seguridad: ¿Por qué no veo el botón Eliminar?'}</h4>
           <p>
             ${isAdmin 
-              ? 'Solo el Super Administrador tiene visible la pestaña <code>🗑️ Eliminadas</code> y los botones de borrado para depurar tickets duplicados o de prueba.' 
-              : 'Por políticas de auditoría y trazabilidad industrial en STF GROUP, los desarrolladores <strong>no pueden eliminar tickets</strong>. Toda solicitud debe ser resuelta mediante Aceptación o Rechazo fundamentado.'}
+              ? 'Solo el Super Administrador tiene habilitada la pestaña <code>🗑️ Eliminadas</code> y los botones de borrado para depurar tickets de prueba o duplicados.' 
+              : 'Por auditoría de planta y bitácora industrial en STF GROUP, los desarrolladores <strong>no pueden eliminar tickets ni acceder a la papelera</strong>. Todas las solicitudes deben ser atendidas formalmente mediante Aceptación o Rechazo fundamentado.'}
           </p>
         </div>
       </div>
