@@ -143,17 +143,17 @@ function renderManualNativeView() {
     </div>
   `;
 
-  // 3. Barra de Navegación por Apartados (Pestañas nativas)
+  // 3. Barra de Navegación por Apartados (Pestañas nativas con nombres oficiales del sistema)
   const tabs = [
-    { key: 'dashboard', label: '1. Dashboard & Curva S', icon: 'layout-dashboard' },
-    { key: 'projects', label: '2. Portafolio & Fases', icon: 'folder-git-2' },
-    { key: 'tasks', label: '3. Tareas & Dictamen QA', icon: 'check-square' },
-    { key: 'calendar', label: '4. Cronograma & Calendario', icon: 'calendar' },
-    { key: 'developers', label: '5. Equipo TI & Rendimiento', icon: 'users' },
-    { key: 'analytics', label: '6. Métricas de Calidad & QA', icon: 'bar-chart-2' },
-    { key: 'support', label: '7. Mesa de Ayuda de Planta', icon: 'headphones' },
-    { key: 'sheets', label: '8. Base de Datos & Sheets', icon: 'database' },
-    { key: 'intro', label: '9. Credenciales & Seguridad', icon: 'key-round' }
+    { key: 'dashboard', label: '1. Inicio', icon: 'home' },
+    { key: 'projects', label: '2. Aplicativos', icon: 'layers' },
+    { key: 'tasks', label: '3. Tareas', icon: 'check-square' },
+    { key: 'calendar', label: '4. Calendario', icon: 'calendar' },
+    { key: 'developers', label: '5. Equipo', icon: 'users' },
+    { key: 'analytics', label: '6. Métricas', icon: 'bar-chart-2' },
+    { key: 'support', label: '7. Soporte Técnico', icon: 'headphones' },
+    { key: 'sheets', label: '8. Google Sheets', icon: 'database' },
+    { key: 'intro', label: '9. Credenciales', icon: 'key-round' }
   ];
 
   let navTabsHtml = `
@@ -851,22 +851,6 @@ function renderManualSectionTasks(isAdmin, allSystems, myApps, userName) {
           </div>
         </div>
 
-        <!-- FIGURA 3.2: TAREAS ACTIVAS Y DICTAMEN QA -->
-        <div class="manual-screenshot-card">
-          <div class="msc-frame">
-            <img src="assets/manual/tareas.png" alt="Control de Tareas y Dictamen QA" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar en tamaño completo" />
-            <div class="msc-badge-overlay">📸 Figura 3.2 · Control de Tareas, Días Transcurridos y Dictamen QA</div>
-          </div>
-          <div class="msc-footer">
-            <div class="msc-caption">
-              <strong>Figura 3.2:</strong> Visualización de tareas asignadas con semáforo de días transcurridos vs deadline, porcentaje de ponderación y dictamen formal de calidad.
-            </div>
-            <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas.png', '_blank')">
-              <i data-lucide="maximize-2"></i> Ver Imagen Completa
-            </button>
-          </div>
-        </div>
-
         <!-- EXPLICACIÓN PASO A PASO: DICTAMEN QA -->
         <div class="manual-guide-block">
           <h3 class="manual-block-title"><i data-lucide="sliders"></i> Flujo de Estados y Calificación de Calidad</h3>
@@ -926,8 +910,18 @@ function renderManualSectionTasks(isAdmin, allSystems, myApps, userName) {
 
       <div class="manual-screenshot-card">
         <div class="msc-frame">
-          <img src="assets/manual/tareas.png" alt="Control de Tareas y Dictamen QA" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
+          <img src="assets/manual/tareas_dev.jpg" alt="Bandeja de Tareas y Auditoría QA" class="msc-img" onclick="window.open(this.src, '_blank')" title="Clic para ampliar" />
           <div class="msc-badge-overlay">📸 Figura 3.1 · Bandeja de Tareas y Auditoría QA</div>
+        </div>
+        <div class="msc-footer">
+          <div class="msc-caption">
+            <strong>Figura 3.1:</strong> Bandeja de Tareas del Desarrollador con filtros de estado (*Todas, En Desarrollo, En Riesgo, Auditadas*) y convenciones del semáforo.
+          </div>
+          <button type="button" class="btn-zoom-img" onclick="window.open('assets/manual/tareas_dev.jpg', '_blank')">
+            <i data-lucide="maximize-2"></i> Ver Imagen Completa
+          </button>
+        </div>
+      </div>
         </div>
         <div class="msc-footer">
           <div class="msc-caption">
